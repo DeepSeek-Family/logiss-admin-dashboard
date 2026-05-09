@@ -300,28 +300,43 @@ const TripDetailsModal = ({ trip, drivers, onClose }) => {
               {/* Financial & Billing */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <h3 className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <CreditCard size={14} /> Billing & Payment
+                  <CreditCard size={14} /> Billing & Operational Financials
                 </h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-end justify-between bg-bg p-4 rounded-xl border border-line-2">
-                    <div>
-                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Total Trip Cost</p>
-                      <p className="text-2xl font-extrabold text-primary leading-none">{money(trip.cost)}</p>
+                  <div className="bg-bg p-5 rounded-2xl border border-line-2 shadow-inner">
+                    <div className="flex items-center justify-between mb-4">
+                       <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Total Invoice Amount</p>
+                       <Badge variant={trip.paymentStatus === 'Paid' || trip.paymentStatus === 'Approved' ? 'accent' : 'warning'} className="font-black">
+                         {trip.paymentStatus || 'Pending Approval'}
+                       </Badge>
                     </div>
-                    <Badge variant={trip.paymentStatus === 'Paid' || trip.paymentStatus === 'Approved' || trip.paymentStatus === 'charged' ? 'accent' : 'warning'}>
-                      {trip.paymentStatus || 'Pending'}
-                    </Badge>
+                    <p className="text-3xl font-black text-ink leading-none mb-6">{money(trip.cost)}</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 border-t border-line-2 pt-4">
+                       <div className="bg-white p-3 rounded-xl border border-line-2">
+                          <p className="text-[9px] font-bold text-ink-4 uppercase tracking-widest mb-1">Customer Copay</p>
+                          <p className="text-lg font-black text-ink">{money(trip?.copay || 0)}</p>
+                       </div>
+                       <div className="bg-primary/5 p-3 rounded-xl border border-primary/20">
+                          <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Cost to Source</p>
+                          <p className="text-lg font-black text-primary">{money((trip.cost || 0) - (trip.copay || 0))}</p>
+                       </div>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Payment Method</p>
-                      <p className="text-sm font-bold text-ink truncate" title={trip.paymentMethod || 'N/A'}>{trip.paymentMethod || 'N/A'}</p>
+                  <div className="grid grid-cols-1 gap-4 px-1">
+                    <div className="flex items-center justify-between py-2 border-b border-line-2 border-dashed">
+                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Billing Source</p>
+                      <p className="text-xs font-black text-ink uppercase">{trip?.source || 'Chesterfield County'}</p>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Auth / Claim ID</p>
-                      <p className="text-sm font-bold font-mono text-ink truncate" title={trip.authId || 'N/A'}>{trip.authId || 'N/A'}</p>
+                    <div className="flex items-center justify-between py-2 border-b border-line-2 border-dashed">
+                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Auth / Claim ID</p>
+                      <p className="text-xs font-black font-mono text-primary uppercase tracking-tighter">{trip.authId || 'N/A'}</p>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Billing Class</p>
+                      <p className="text-xs font-bold text-ink truncate">{trip.paymentMethod || 'Program Authorized'}</p>
                     </div>
                   </div>
                 </div>
@@ -579,12 +594,11 @@ const TripHistory = () => {
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Trip ID</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Date & Time</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Rider</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Driver</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Route</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Type</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">IDs (Auth/Pass)</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Date / Time</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Rider / Source</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Reason / Space</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Route / Miles</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest text-right">Cost</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Status</th>
                 <th className="px-6 py-4"></th>
@@ -606,58 +620,44 @@ const TripHistory = () => {
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-mono text-xs font-bold text-ink tracking-tight uppercase">#{trip.id}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-mono text-[10px] font-black text-ink tracking-tight uppercase">#{trip.id}</span>
+                      <span className="font-mono text-[9px] font-bold text-primary uppercase">{trip?.authId || 'NO-AUTH'}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-ink">{formatShortDate(trip.scheduledTime)}</span>
-                      <span className="text-[10px] text-ink-3">{formatTime(trip.scheduledTime)}</span>
+                      <span className="text-xs font-black text-ink leading-tight">{formatShortDate(trip.scheduledTime)}</span>
+                      <span className="text-[10px] text-ink-3 font-bold">Appt: {trip?.appointmentTime || '---'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={trip.rider.initials} size="xs" />
-                      <span className="text-xs font-bold text-ink whitespace-nowrap">{trip.rider.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {trip.driverId ? (
-                      <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-                          <Avatar initials={(drivers || []).find(d => String(d?.id) === String(trip?.driverId))?.initials} size="xs" />
-                          <span className="text-xs font-bold text-ink whitespace-nowrap">{(drivers || []).find(d => String(d?.id) === String(trip?.driverId))?.name}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Avatar initials={trip.rider.initials} size="xs" />
+                        <span className="text-xs font-black text-ink whitespace-nowrap">{trip.rider.name}</span>
                       </div>
-                    ) : (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedTripId(trip.id); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/5 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider"
-                      >
-                        <UserPlus size={12} /> Assign
-                      </button>
-                    )}
+                      <span className="text-[9px] font-bold text-ink-4 uppercase tracking-widest ml-7">{trip?.source || 'Chesterfield County'}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-ink-3">
+                    <div className="flex flex-col gap-1.5">
+                       <span className="text-[10px] font-bold text-ink truncate max-w-[120px]">{trip?.reason || 'Medical Visit'}</span>
+                       <Badge variant="primary-light" className="text-[8px] font-black w-fit px-1.5 py-0">{trip?.mobility || 'AMB'}</Badge>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-ink-3 mb-1">
                       <MapPin size={10} className="flex-shrink-0" />
-                      <span className="text-[10px] font-medium max-w-[150px] truncate">{trip.pickup}</span>
-                      <ArrowRight size={10} className="flex-shrink-0" />
-                      <span className="text-[10px] font-medium max-w-[150px] truncate">{trip.dropoff}</span>
+                      <span className="text-[10px] font-medium max-w-[120px] truncate">{trip.pickup} → {trip.dropoff}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {trip.type === 'round_trip' ? (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
-                        <Repeat size={10} strokeWidth={3} />
-                        <span className="text-[10px] font-black uppercase tracking-tight">Round Trip</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit">
-                        <MoveRight size={10} strokeWidth={3} />
-                        <span className="text-[10px] font-black uppercase tracking-tight">One Way</span>
-                      </div>
-                    )}
+                    <p className="text-[10px] font-black text-primary uppercase ml-3.5">{trip?.distance || '0.0'} Miles</p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="font-mono text-xs font-bold text-ink">{money(trip.cost)}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="font-mono text-xs font-black text-ink">{money(trip.cost)}</span>
+                      <span className="text-[8px] font-bold text-ink-4 uppercase tracking-tighter">Copay: {money(trip?.copay || 0)}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <TripStatusBadge status={trip.status} />

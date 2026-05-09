@@ -37,7 +37,7 @@ const Login = ({ setRole }) => {
             Logistics &<br/>Fleet Operations
           </h1>
           <p className="text-white/70 text-lg max-w-md">
-            The market-standard SaaS platform for modern NEMT and fleet dispatching. Manage routes, drivers, and bookings in one place.
+            Authorized passenger programs and source-based transportation management for LOGISS operations.
           </p>
         </div>
       </div>

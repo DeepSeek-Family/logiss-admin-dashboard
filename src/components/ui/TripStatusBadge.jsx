@@ -12,7 +12,7 @@ export const TripStatusBadge = ({ status }) => {
     in_trip: { variant: 'solid_accent', label: 'In Trip', dot: true },
     completed: { variant: 'accent', label: 'Completed' },
     cancelled: { variant: 'neutral', label: 'Cancelled' },
-    no_show: { variant: 'urgent', label: 'No Show' },
+    no_show: { variant: 'warning', label: 'No Show' },
   };
 
   const { variant, label, dot } = config[status] || { variant: 'neutral', label: status };

@@ -107,26 +107,82 @@ const Operations = () => {
                 <thead>
                   <tr className="bg-bg/60 border-b border-line-2">
                     <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Status</th>
-                    <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Rider</th>
+                    <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Rider & ID</th>
+                    <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest hidden lg:table-cell">Source / County</th>
                     <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest hidden md:table-cell">Route</th>
-                    <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Time</th>
+                    <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Time (Appt)</th>
                     <th className="px-5 py-2.5 text-[10px] font-bold text-ink-4 uppercase tracking-widest hidden md:table-cell">Driver</th>
                     <th className="px-5 py-2.5"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line-2">
                   {paginatedActiveTrips.length === 0 ? (
-                    <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-ink-4 font-medium">No active trips today.</td></tr>
+                    <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-ink-4 font-medium">No active trips today.</td></tr>
                   ) : paginatedActiveTrips.map(trip => {
                     const driver = (drivers || []).find(d => d.id === trip?.driverId);
                     return (
                       <tr key={trip?.id} onClick={() => navigate(trip?.status === 'pending_review' ? '/bookings' : '/live')} className="hover:bg-bg cursor-pointer transition-colors group">
-                        <td className="px-5 py-3"><div className="flex items-center gap-2">{statusIcon(trip?.status)}<TripStatusBadge status={trip?.status} /></div></td>
-                        <td className="px-5 py-3"><div className="flex items-center gap-2.5 min-w-0"><Avatar initials={trip?.rider?.initials || '?'} size="xs" /><div className="min-w-0"><p className="text-xs font-bold text-ink truncate">{trip?.rider?.name || 'Unknown'}</p><div className="flex items-center gap-2 mt-0.5"><p className="text-[10px] text-ink-4">{trip?.mobility || 'Standard'}</p>{trip?.type === 'round_trip' ? <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100"><Repeat size={8} strokeWidth={3} /><span className="text-[8px] font-black uppercase">Round Trip</span></div> : <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100"><MoveRight size={8} strokeWidth={3} /><span className="text-[8px] font-black uppercase">One Way</span></div>}</div></div></div></td>
-                        <td className="px-5 py-3 hidden md:table-cell max-w-[180px]"><p className="text-[10px] font-semibold text-ink truncate">{trip?.pickup || '---'}</p><p className="text-[10px] text-ink-4 flex items-center gap-1 truncate"><MapPin size={8} className="flex-shrink-0" /> {trip?.dropoff || '---'}</p></td>
-                        <td className="px-5 py-3 whitespace-nowrap"><p className="text-xs font-bold text-ink">{formatTime(trip?.scheduledTime)}</p><p className="text-[10px] text-ink-4">{formatShortDate(trip?.scheduledTime)}</p></td>
-                        <td className="px-5 py-3 hidden md:table-cell">{driver ? <p className="text-xs font-bold text-ink whitespace-nowrap">{driver.name}</p> : <span className="text-[10px] italic text-ink-4">Unassigned</span>}</td>
-                        <td className="px-5 py-3 text-right"><ChevronRight size={15} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" /></td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            {statusIcon(trip?.status)}
+                            <TripStatusBadge status={trip?.status} />
+                            {trip?.isUrgent && <div className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" title="Urgent Priority"></div>}
+                          </div>
+                        </td>
+                        <td className="px-5 py-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar initials={trip?.rider?.initials || '?'} size="xs" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-ink leading-none truncate flex items-center gap-2">
+                                {trip?.rider?.name || 'Unknown'}
+                                <span className="font-mono text-[9px] font-medium text-ink-4 bg-bg px-1 rounded uppercase tracking-tighter">#{trip?.id?.split('-')[1]}</span>
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-[9px] font-bold text-primary uppercase tracking-tighter">ID: {trip?.rider?.passengerId || '---'}</p>
+                                <span className="w-1 h-1 rounded-full bg-line-3"></span>
+                                <p className="text-[9px] text-ink-3 font-medium uppercase tracking-widest">{trip?.mobility || 'AMB'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-2 hidden lg:table-cell">
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-[10px] font-bold text-ink-3 uppercase tracking-wider">{trip?.source || 'Chesterfield'}</p>
+                            </div>
+                            {trip?.dropoff && trip?.source && !trip.dropoff.toLowerCase().includes(trip.source.split(' ')[0].toLowerCase()) && (
+                              <p className="text-[7px] font-bold text-indigo-500 uppercase tracking-tighter mt-0.5">Cross-Jurisdiction</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-2.5 hidden lg:table-cell">
+                          <div className="flex flex-col gap-0.5 relative pl-3.5">
+                            <div className="absolute left-[4.5px] top-[6px] bottom-[6px] w-[1px] bg-line-2"></div>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-ink relative"><div className="absolute -left-[12px] w-1.5 h-1.5 rounded-full bg-primary border border-white"></div><span className="truncate max-w-[120px]">{trip?.pickup}</span></div>
+                            
+                            {trip?.stops?.map((stop, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-[8px] font-medium text-ink-4 relative">
+                                <div className="absolute -left-[10.5px] w-1 h-1 rounded-full bg-line-3 border border-white"></div>
+                                <span className="truncate max-w-[120px] italic">{stop.address}</span>
+                              </div>
+                            ))}
+
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-ink-3 relative"><div className="absolute -left-[12px] w-1.5 h-1.5 rounded-full bg-indigo-500 border border-white"></div><span className="truncate max-w-[120px]">{trip?.dropoff}</span></div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <p className="text-xs font-black text-ink">{formatTime(trip?.scheduledTime)}</p>
+                          <p className="text-[10px] text-ink font-bold">Appt: {trip?.appointmentTime || '---'}</p>
+                        </td>
+                        <td className="px-5 py-3 hidden md:table-cell">
+                          {driver ? 
+                            <p className="text-xs font-bold text-ink whitespace-nowrap">{driver.name}</p> : 
+                            <span className="text-[10px] italic text-ink-4">Unassigned</span>
+                          }
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <ChevronRight size={15} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+                        </td>
                       </tr>
                     );
                   })}

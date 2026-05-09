@@ -123,6 +123,7 @@ const Settings = ({ role, onLogout }) => {
   const TABS = [
     { id: 'security',      label: 'Security & Privacy', icon: Lock  },
     { id: 'notifications', label: 'Notifications',       icon: Bell  },
+    { id: 'financials',    label: 'Financial Rules',     icon: CreditCard },
     { id: 'coverage',      label: 'Service Coverage',    icon: MapPin },
     { id: 'contacts',      label: 'Emergency Contacts',  icon: Phone },
   ];
@@ -317,68 +318,78 @@ const Settings = ({ role, onLogout }) => {
             </div>
           )}
 
-          {/* ── EMERGENCY CONTACTS ───────────────────── */}
-          {tab === 'contacts' && (
-            <div className="animate-in slide-in-from-bottom-2 duration-200">
-              <Card className="p-8 space-y-6">
-                <div>
-                  <h3 className="text-lg font-black text-ink tracking-tight">Organization Contact Channels</h3>
-                  <p className="text-xs text-ink-4 mt-1 font-medium">Platform-wide support and emergency communication parameters.</p>
+          {/* ── FINANCIAL RULES ─────────────────────── */}
+          {tab === 'financials' && (
+            <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-4">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-ink uppercase tracking-widest">Program Pricing Matrix</h3>
+                    <p className="text-xs text-ink-3 mt-1">Define billing rates for each contract source / county</p>
+                  </div>
+                  <Badge variant="primary">Admin Only</Badge>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 mt-6">
-                  <div className="flex items-center gap-5 p-6 bg-urgent-light/40 rounded-3xl border border-urgent/10 group hover:border-urgent/30 transition-all">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-urgent shadow-lg shadow-urgent/10 group-hover:scale-105 transition-transform">
-                      <AlertTriangle size={24} />
+                <div className="space-y-4">
+                  {[
+                    { id: 'chesterfield', label: 'Chesterfield County', base: 25.00, mile: 2.50, noshow: 15.00, color: 'border-primary/20' },
+                    { id: 'hanover', label: 'Hanover County', base: 30.00, mile: 2.75, noshow: 20.00, color: 'border-accent/20' },
+                    { id: 'private', label: 'Private Pay (Standard)', base: 45.00, mile: 3.50, noshow: 30.00, color: 'border-line-2' },
+                  ].map(source => (
+                    <div key={source.id} className={`p-5 rounded-2xl border-2 ${source.color} bg-white shadow-sm`}>
+                       <div className="flex items-center justify-between mb-5">
+                          <p className="text-sm font-extrabold text-ink">{source.label}</p>
+                          <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase">Edit Rules</Button>
+                       </div>
+                       <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-bg p-3 rounded-xl border border-line-2">
+                             <p className="text-[9px] font-bold text-ink-4 uppercase mb-1">Base Rate</p>
+                             <p className="text-sm font-black text-ink">${source.base.toFixed(2)}</p>
+                          </div>
+                          <div className="bg-bg p-3 rounded-xl border border-line-2">
+                             <p className="text-[9px] font-bold text-ink-4 uppercase mb-1">Per Mile</p>
+                             <p className="text-sm font-black text-ink">${source.mile.toFixed(2)}</p>
+                          </div>
+                          <div className="bg-bg p-3 rounded-xl border border-line-2">
+                             <p className="text-[9px] font-bold text-ink-4 uppercase mb-1">No-Show Fee</p>
+                             <p className="text-sm font-black text-ink">${source.noshow.toFixed(2)}</p>
+                          </div>
+                       </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black text-urgent uppercase tracking-[0.2em] mb-1">Emergency Operational Hotline</p>
-                      <p className="text-xl font-black text-ink tracking-tight font-mono">(804) 555-9110</p>
-                      <p className="text-[10px] font-bold text-urgent/60 uppercase tracking-widest mt-1">Direct Priority Access · 24/7 Monitoring</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-5 p-6 bg-primary-tint/20 rounded-3xl border border-primary/10 group hover:border-primary/30 transition-all">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-primary shadow-lg shadow-primary/10 group-hover:scale-105 transition-transform">
-                      <Phone size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">General Dispatch Control</p>
-                      <p className="text-xl font-black text-ink tracking-tight font-mono">(804) 555-LOGI</p>
-                      <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mt-1">Standard Operations · 6 AM – 10 PM EST</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-all">
-                      <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-all">
-                        <Bell size={18} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black text-ink-4 uppercase tracking-[0.15em]">Support Email</p>
-                        <p className="text-sm font-black text-ink truncate">support@loggiskabir.com</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-all">
-                      <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-all">
-                        <MapPin size={18} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black text-ink-4 uppercase tracking-[0.15em]">HQ Address</p>
-                        <p className="text-sm font-black text-ink truncate">Richmond, VA 23230</p>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                <div className="pt-6 border-t border-line-2">
-                  <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest text-center italic">
-                    These contact parameters are managed globally by Platform Administrators via the CMS.
-                  </p>
+                <div className="mt-8 p-4 bg-primary-tint/10 rounded-2xl border border-primary/20 flex items-start gap-3">
+                   <Shield className="text-primary mt-0.5 shrink-0" size={16} />
+                   <div>
+                      <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">Automatic Calculation</p>
+                      <p className="text-xs font-medium text-primary/80 leading-relaxed">
+                        These rates are used to automatically calculate the "Cost to Source" for all completed trips. 
+                        Changes will only apply to future bookings.
+                      </p>
+                   </div>
                 </div>
+              </Card>
+
+              <Card className="p-6">
+                 <p className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.18em] mb-4">Financial Split Defaults</p>
+                 <ToggleRow 
+                    label="Auto-Calculate Copay" 
+                    desc="Automatically subtract rider copay from total source invoice" 
+                    on={true} 
+                    onChange={() => {}} 
+                 />
+                 <ToggleRow 
+                    label="Wait Time Billing" 
+                    desc="Bill source for driver wait time exceeding 15 minutes" 
+                    on={false} 
+                    onChange={() => {}} 
+                 />
               </Card>
             </div>
           )}
+
+          {/* ── EMERGENCY CONTACTS ───────────────────── */}
 
         </div>
       </div>

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   AlertTriangle, ShieldAlert, Clock, ChevronRight, MessageSquare,
   Phone, CheckCircle2, Flag, ArrowRight, ShieldCheck, AlertOctagon,
-  MoreVertical, Ban, Slash, Navigation, X, Loader2, Search, Plus
+  MoreVertical, Slash, Navigation, X, Search,
+  Download, CreditCard, TrendingUp
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button } from '../components/UI';
 import { useReports } from '../hooks/useReports';
-import { timeAgo, formatDateTime } from '../utils/helpers';
+import { useTrips } from '../hooks/useTrips';
+import { timeAgo, formatDateTime, money } from '../utils/helpers';
 
 const CreateReportModal = ({ onClose, onSave }) => {
   const [reason, setReason] = useState('Rider not present');
@@ -288,25 +290,17 @@ const DetailPanel = ({ report, onResolve }) => {
 // --- MAIN COMPONENT ---
 
 const Reports = () => {
-  const { reports = [], loading, error } = useReports();
+  const { reports = [], loading: reportsLoading } = useReports();
+  const { trips = [], loading: tripsLoading } = useTrips();
+  const [reportMode, setReportMode] = useState('operational'); // 'operational' or 'incidents'
   const [activeTab, setActiveTab] = useState('open');
   const [filterType, setFilterType] = useState('all');
+  const [selectedSource, setSelectedSource] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <div className="w-16 h-16 bg-urgent-light rounded-full flex items-center justify-center text-urgent mb-4">
-          <AlertTriangle size={32} />
-        </div>
-        <h3 className="text-xl font-bold text-ink">Connection Issue</h3>
-        <p className="text-ink-3 max-w-xs mt-2 mb-6">We encountered an error while fetching the incident reports. Please try refreshing the page.</p>
-        <Button variant="primary" onClick={() => window.location.reload()}>Refresh Dashboard</Button>
-      </div>
-    );
-  }
+  const loading = reportsLoading || tripsLoading;
 
   if (loading && reports.length === 0) {
     return (
@@ -323,6 +317,21 @@ const Reports = () => {
     );
   }
 
+  // --- OPERATIONAL CALCULATIONS ---
+  const filteredTrips = trips.filter(t => 
+    (selectedSource === 'all' || t.source === selectedSource) &&
+    t.status === 'completed'
+  );
+
+  const stats = {
+    totalRevenue: filteredTrips.reduce((acc, t) => acc + (t.cost || 0), 0),
+    totalCopay: filteredTrips.reduce((acc, t) => acc + (t.copay || 0), 0),
+    totalSourceCost: filteredTrips.reduce((acc, t) => acc + ((t.cost || 0) - (t.copay || 0)), 0),
+    totalMiles: filteredTrips.reduce((acc, t) => acc + parseFloat(t.distance || 0), 0).toFixed(1),
+    avgTrip: filteredTrips.length ? (filteredTrips.reduce((acc, t) => acc + (t.cost || 0), 0) / filteredTrips.length).toFixed(2) : 0
+  };
+
+  // --- INCIDENT CALCULATIONS ---
   const openCount     = (reports || []).filter(r => r?.status === 'open').length;
   const reviewCount   = (reports || []).filter(r => r?.status === 'reviewing').length;
   const resolvedCount = (reports || []).filter(r => r?.status === 'resolved').length;
@@ -344,13 +353,6 @@ const Reports = () => {
     ? (reports || []).find(r => r?.id === selectedReportId)
     : filteredReports[0] ?? null;
 
-  const TABS = [
-    { id: 'open',      label: 'Open',        count: openCount,     dot: openCount > 0 },
-    { id: 'reviewing', label: 'Reviewing',    count: reviewCount,   dot: false },
-    { id: 'resolved',  label: 'Resolved',     count: resolvedCount, dot: false },
-    { id: 'all',       label: 'All Reports',  count: (reports || []).length, dot: false },
-  ];
-
   return (
     <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
       {showCreateModal && (
@@ -361,67 +363,153 @@ const Reports = () => {
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black font-display text-ink tracking-tight">Incident Reports</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Monitor and resolve safety alerts and operational reports</p>
+          <h1 className="text-4xl font-black font-display text-ink tracking-tight">Business Intelligence</h1>
+          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Operational financials and incident logs for LOGISS</p>
         </div>
-        <Button variant="danger" icon={Plus} onClick={() => setShowCreateModal(true)}>
-          File Report
-        </Button>
+        <div className="flex bg-bg p-1.5 rounded-2xl border border-line shadow-inner w-fit">
+          <button 
+            onClick={() => setReportMode('operational')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${reportMode === 'operational' ? 'bg-white shadow-md text-primary' : 'text-ink-4 hover:text-ink-2'}`}
+          >
+            Operational
+          </button>
+          <button 
+            onClick={() => setReportMode('incidents')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${reportMode === 'incidents' ? 'bg-white shadow-md text-primary' : 'text-ink-4 hover:text-ink-2'}`}
+          >
+            Incidents {openCount > 0 && <span className="ml-1.5 bg-urgent text-white px-1.5 py-0.5 rounded-full text-[9px]">{openCount}</span>}
+          </button>
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Open',         value: openCount,           sub: 'needs action',      icon: AlertOctagon,  color: 'bg-urgent-light text-urgent',   highlight: openCount > 0 },
-          { label: 'Under Review', value: reviewCount,         sub: 'being investigated', icon: Clock,         color: 'bg-warning-light text-warning',  highlight: false },
-          { label: 'Resolved',     value: resolvedCount,       sub: 'cases closed',       icon: CheckCircle2,  color: 'bg-accent-light text-accent',    highlight: false },
-          { label: 'Total Reports',value: (reports || []).length,      sub: 'all time',           icon: Flag,          color: 'bg-primary-light text-primary',  highlight: false },
-        ].map(s => (
-          <Card key={s.label} className={`p-5 flex items-center gap-4 ${s.highlight ? 'border-urgent/20' : ''}`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}>
-              <s.icon size={20} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider leading-none">{s.label}</p>
-              <p className="text-3xl font-extrabold text-ink mt-1 leading-none">{s.value}</p>
-              <p className="text-[10px] text-ink-4 mt-1">{s.sub}</p>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {reportMode === 'operational' ? (
+        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+          {/* Source Filter & Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-line-2 shadow-sm">
+             <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black text-ink-4 uppercase tracking-widest">Select Program Source:</span>
+                <div className="flex gap-2">
+                   {['all', 'Chesterfield County', 'Hanover County'].map(s => (
+                     <button 
+                        key={s} 
+                        onClick={() => setSelectedSource(s)}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all border ${selectedSource === s ? 'bg-primary border-primary text-white shadow-md' : 'bg-bg border-line-2 text-ink-3 hover:border-line'}`}
+                     >
+                       {s === 'all' ? 'Consolidated View' : s}
+                     </button>
+                   ))}
+                </div>
+             </div>
+             <Button variant="outline" size="sm" icon={Download}>Download Financial Export</Button>
+          </div>
 
-      {/* Main Panel */}
-      <Card className="overflow-hidden border-line-2 flex flex-col" style={{ minHeight: '520px' }}>
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2 bg-bg/30 shrink-0">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1">
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSelectedReportId(null); }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-white shadow-sm text-primary border border-line'
-                    : 'text-ink-3 hover:text-ink'
-                }`}
-              >
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-                    activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2 text-ink-4'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-                {tab.dot && activeTab !== tab.id && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-urgent" />
-                )}
-              </button>
+          {/* Operational KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Program Revenue', value: money(stats.totalSourceCost), sub: 'Billable to Source', icon: CreditCard, color: 'bg-primary-light text-primary' },
+              { label: 'Rider Copays',     value: money(stats.totalCopay),      sub: 'Collected on-site',  icon: TrendingUp,  color: 'bg-accent-light text-accent' },
+              { label: 'Operational Miles', value: `${stats.totalMiles} mi`,     sub: 'Total trip distance', icon: Navigation, color: 'bg-indigo-50 text-indigo-600' },
+              { label: 'Avg Trip Value',   value: money(stats.avgTrip),         sub: 'Consolidated average', icon: ShieldCheck, color: 'bg-bg text-ink-2' },
+            ].map(s => (
+              <Card key={s.label} className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}>
+                    <s.icon size={20} />
+                  </div>
+                  <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest leading-none">{s.label}</p>
+                </div>
+                <p className="text-3xl font-black text-ink leading-none">{s.value}</p>
+                <p className="text-[10px] font-bold text-ink-4 mt-2">{s.sub}</p>
+              </Card>
             ))}
           </div>
+
+          {/* Financial Breakdown Charts (Mock UI) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <Card className="p-6">
+                <h3 className="text-xs font-black text-ink uppercase tracking-widest mb-6">Revenue by Source</h3>
+                <div className="space-y-6">
+                   {[
+                     { name: 'Chesterfield County', amount: stats.totalSourceCost * 0.65, color: 'bg-primary', percent: 65 },
+                     { name: 'Hanover County', amount: stats.totalSourceCost * 0.25, color: 'bg-accent', percent: 25 },
+                     { name: 'Private Pay / Other', amount: stats.totalSourceCost * 0.10, color: 'bg-line', percent: 10 },
+                   ].map(source => (
+                     <div key={source.name}>
+                        <div className="flex justify-between items-end mb-2">
+                           <div>
+                              <p className="text-xs font-black text-ink leading-tight">{source.name}</p>
+                              <p className="text-[10px] font-bold text-ink-4 uppercase tracking-tighter mt-0.5">{money(source.amount)}</p>
+                           </div>
+                           <p className="text-[10px] font-black text-ink-2">{source.percent}%</p>
+                        </div>
+                        <div className="w-full bg-bg h-2 rounded-full overflow-hidden">
+                           <div className={`${source.color} h-full transition-all duration-1000`} style={{ width: `${source.percent}%` }} />
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </Card>
+
+             <Card className="p-6">
+                <h3 className="text-xs font-black text-ink uppercase tracking-widest mb-6">Mileage & Efficiency</h3>
+                <div className="grid grid-cols-2 gap-8">
+                   <div className="flex flex-col items-center justify-center py-4 border-r border-line-2">
+                      <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-2">Inside County</p>
+                      <p className="text-2xl font-black text-ink">84%</p>
+                      <p className="text-[9px] font-bold text-accent uppercase mt-1">Highly Efficient</p>
+                   </div>
+                   <div className="flex flex-col items-center justify-center py-4">
+                      <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-2">Outside County</p>
+                      <p className="text-2xl font-black text-ink">16%</p>
+                      <p className="text-[9px] font-bold text-urgent uppercase mt-1">High Mileage</p>
+                   </div>
+                </div>
+                <div className="mt-8 p-4 bg-bg rounded-2xl border border-line-2">
+                   <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-2">Operational Insight</p>
+                   <p className="text-xs font-medium text-ink-2 leading-relaxed">
+                     Chesterfield County shows a 12% increase in out-of-county medical trips this month compared to the previous period.
+                   </p>
+                </div>
+             </Card>
+          </div>
+        </div>
+      ) : (
+        <Card className="overflow-hidden border-line-2 flex flex-col animate-in fade-in slide-in-from-left-4 duration-500" style={{ minHeight: '520px' }}>
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2 bg-bg/30 shrink-0">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1">
+              {[
+                { id: 'open',      label: 'Open',        count: openCount,     dot: openCount > 0 },
+                { id: 'reviewing', label: 'Reviewing',    count: reviewCount,   dot: false },
+                { id: 'resolved',  label: 'Resolved',     count: resolvedCount, dot: false },
+                { id: 'all',       label: 'All Reports',  count: (reports || []).length, dot: false },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); setSelectedReportId(null); }}
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-white shadow-sm text-primary border border-line'
+                      : 'text-ink-3 hover:text-ink'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                      activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2 text-ink-4'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                  {tab.dot && activeTab !== tab.id && (
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-urgent" />
+                  )}
+                </button>
+              ))}
+            </div>
 
           {/* Right Controls */}
           <div className="flex items-center gap-2">
@@ -497,8 +585,9 @@ const Reports = () => {
           </div>
         </div>
       </Card>
-    </div>
-  );
+    )}
+  </div>
+);
 };
 
 export default Reports;

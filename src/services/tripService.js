@@ -17,6 +17,13 @@ export const tripService = {
     return Promise.resolve(trip);
   },
 
+  updateTrip(id, updates) {
+    const index = tripsDB.findIndex(t => t.id === id);
+    if (index === -1) return Promise.reject(new Error('Trip not found'));
+    tripsDB[index] = { ...tripsDB[index], ...updates };
+    return Promise.resolve(tripsDB[index]);
+  },
+
   updateTripStatus: (id, status) => {
     const index = tripsDB.findIndex(t => t.id === id);
     if (index === -1) return Promise.reject(new Error('Trip not found'));

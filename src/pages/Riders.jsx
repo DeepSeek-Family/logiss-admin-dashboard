@@ -90,33 +90,48 @@ const Riders = ({ role }) => {
           <div className="pt-14 px-8 pb-8 space-y-8">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-3xl font-extrabold font-display text-ink leading-tight">{selectedRider?.name || 'Unknown Rider'}</h2>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="font-mono text-sm font-bold text-ink-4 tracking-tight uppercase">{selectedRider?.id || '---'}</span>
-                  <span className="text-sm text-ink-3">Joined {selectedRider?.joinedDate ? new Date(selectedRider.joinedDate).toLocaleDateString() : '—'}</span>
+                <h2 className="text-3xl font-black font-display text-ink leading-tight">{selectedRider?.name || 'Unknown Rider'}</h2>
+                <div className="flex items-center gap-4 mt-1.5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Passenger ID</span>
+                    <span className="font-mono text-sm font-black text-primary tracking-tighter uppercase">{selectedRider?.passengerId || 'P-NOTFOUND'}</span>
+                  </div>
+                  <div className="w-px h-8 bg-line-2"></div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">Source / Program</span>
+                    <span className="text-sm font-black text-ink uppercase tracking-tight">{selectedRider?.source || 'Chesterfield County'}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className="flex items-center gap-1.5 text-xl font-bold text-warning">
-                  <Star size={20} fill="currentColor" />
-                  {selectedRider?.rating || 0}
-                </span>
-                {selectedRider?.status === 'active' ? <Badge variant="accent" dot>Active</Badge> : <Badge variant="neutral">Inactive</Badge>}
+                {selectedRider?.status === 'active' ? (
+                  <Badge variant="accent" className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest" dot>Eligible</Badge>
+                ) : (
+                  <Badge variant="neutral" className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">Inactive</Badge>
+                )}
+                <span className="text-[10px] text-ink-4 font-bold">Joined {selectedRider?.joinedDate ? new Date(selectedRider.joinedDate).toLocaleDateString() : '—'}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-bg rounded-xl p-5 border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 uppercase tracking-wider mb-1">Total Trips</p>
-                <p className="text-2xl font-extrabold text-ink">{selectedRider?.totalTrips || 0}</p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-bg rounded-xl p-5 border border-line-2">
+                <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-1">Total Trips</p>
+                <p className="text-2xl font-black text-ink">{(selectedRider?.totalTrips || 0).toLocaleString()}</p>
               </div>
-              <div className="bg-bg rounded-xl p-5 border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 uppercase tracking-wider mb-1">Mobility Need</p>
-                <p className="text-xl font-extrabold text-primary mt-1">{selectedRider?.mobility || 'Ambulatory'}</p>
+              <div className="bg-bg rounded-xl p-5 border border-line-2">
+                <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-1">Space Type</p>
+                <p className="text-xl font-black text-primary uppercase">{selectedRider?.mobility || 'AMB'}</p>
               </div>
-              <div className="bg-bg rounded-xl p-5 border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 uppercase tracking-wider mb-1">Default Payment</p>
-                <p className="text-xl font-extrabold text-ink mt-1 truncate">{selectedRider?.paymentMethod || 'N/A'}</p>
+              <div className="bg-bg rounded-xl p-5 border border-line-2">
+                <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-1">Rating</p>
+                <div className="flex items-center gap-1.5 mt-1">
+                   <Star size={18} fill="#F59E0B" className="text-warning" />
+                   <p className="text-xl font-black text-ink">{selectedRider?.rating || 0}</p>
+                </div>
+              </div>
+              <div className="bg-bg rounded-xl p-5 border border-line-2">
+                <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-1">Billing Class</p>
+                <p className="text-sm font-black text-ink mt-1 uppercase truncate">{selectedRider?.paymentMethod || 'N/A'}</p>
               </div>
             </div>
 
@@ -274,7 +289,7 @@ const Riders = ({ role }) => {
           <table className="w-full text-left">
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
-                {['Rider', 'Rider ID', 'Status', 'Mobility', 'Contact', 'Trips', 'Rating', ''].map(h => (
+                {['Rider', 'Passenger ID', 'Source / Program', 'Status', 'Mobility', 'Trips', ''].map(h => (
                   <th key={h} className="px-5 py-3 text-[10px] font-bold text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -293,33 +308,31 @@ const Riders = ({ role }) => {
                         {rider.status === 'active' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-ink truncate">{rider.name}</p>
-                        <p className="text-[10px] font-medium text-ink-4 truncate">{rider.email}</p>
+                        <p className="text-sm font-black text-ink truncate leading-tight">{rider.name}</p>
+                        <p className="text-[10px] font-medium text-ink-4 truncate">{rider.phone || '---'}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="font-mono text-[11px] font-bold text-ink-3 uppercase">{rider.id}</span>
+                    <span className="font-mono text-[11px] font-black text-ink-3 uppercase tracking-tighter">{rider?.passengerId || 'P-NOTFOUND'}</span>
                   </td>
                   <td className="px-5 py-4">
-                     <Badge variant={rider.status === 'active' ? 'accent' : 'neutral'}>{rider.status}</Badge>
+                    <div className="flex items-center gap-1.5">
+                       <div className="w-1.5 h-1.5 rounded-full bg-primary/40"></div>
+                       <span className="text-[10px] font-black text-ink-2 uppercase tracking-wide">{rider?.source || 'Chesterfield'}</span>
+                    </div>
                   </td>
                   <td className="px-5 py-4">
-                    <p className="text-xs font-bold text-ink whitespace-nowrap">{rider.mobility || 'Ambulatory'}</p>
+                     <Badge variant={rider.status === 'active' ? 'accent' : 'neutral'} className="text-[9px] font-black uppercase tracking-widest">{rider.status === 'active' ? 'Eligible' : 'Inactive'}</Badge>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-xs font-medium text-ink-3 whitespace-nowrap">{rider?.phone || '---'}</span>
+                    <p className="text-xs font-bold text-ink whitespace-nowrap uppercase tracking-tighter">{rider.mobility || 'AMB'}</p>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-sm font-bold text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="flex items-center gap-1 text-xs font-bold text-warning">
-                      <Star size={12} fill="currentColor" /> {rider?.rating || 0}
-                    </span>
+                    <span className="text-sm font-black text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ChevronRight size={16} className="text-ink-4 group-hover:translate-x-1 transition-transform" />
                   </td>
                 </tr>
               ))}

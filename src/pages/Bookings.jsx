@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
   AlertOctagon, Navigation, Repeat, MoveRight,
-  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink
+  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, ShieldAlert
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '../components/UI';
 import { ManualTripModal } from '../components/ManualTripModal';
@@ -45,14 +45,30 @@ const Bookings = () => {
   const [toast, setToast] = useState(null);
   const itemsPerPage = 8;
 
-  const { trips, loading: tripsLoading } = useTrips();
+  const { trips: initialTrips, loading: tripsLoading } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
+  const [localTrips, setLocalTrips] = useState([]);
 
   const loading = tripsLoading || driversLoading;
+
+  useEffect(() => {
+    if (initialTrips?.length > 0 && localTrips.length === 0) setLocalTrips(initialTrips);
+  }, [initialTrips, localTrips.length]);
+
+  // Sync local trips when initialTrips changes
+  const trips = localTrips.length > 0 ? localTrips : initialTrips;
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const updateTripStatus = (ids, newStatus, extra = {}) => {
+    const idArray = Array.isArray(ids) ? ids : [ids];
+    setLocalTrips(prev => {
+      const source = prev.length > 0 ? prev : initialTrips;
+      return source.map(t => idArray.includes(t.id) ? { ...t, status: newStatus, ...extra } : t);
+    });
   };
 
   const filteredTrips = (trips || []).filter(t => {
@@ -68,6 +84,7 @@ const Bookings = () => {
 
   const handleBulkAction = (action) => {
     if (action === 'approve') {
+      updateTripStatus(selectedTrips, 'confirmed');
       showToast(`${selectedTrips.length} bookings approved`);
       setSelectedTrips([]);
     } else if (action === 'cancel') {
@@ -90,8 +107,9 @@ const Bookings = () => {
   };
 
   const handleAssign = (driverId) => {
+    updateTripStatus(selectedBookingId, 'confirmed', { driverId });
     setIsAssigning(false);
-    showToast('Driver assigned — trip moved to Live Trips');
+    showToast('Driver assigned successfully');
   };
 
   const openBooking = (id) => {
@@ -105,6 +123,7 @@ const Bookings = () => {
   };
 
   const handleDispatch = () => {
+    updateTripStatus(selectedBookingId, 'en_route');
     showToast('Trip dispatched successfully');
     closeBooking();
   };
@@ -113,8 +132,11 @@ const Bookings = () => {
     setShowCancelModal(true);
   };
 
-  const handleApprove = () => {
+  const handleApprove = (id) => {
+    const targetId = id || selectedBookingId;
+    updateTripStatus(targetId, 'confirmed');
     showToast('Booking approved — moved to Ready to Assign');
+    if (targetId === selectedBookingId) closeBooking();
   };
 
   const selectedBooking = selectedBookingId ? (trips || []).find(t => t?.id === selectedBookingId) : null;
@@ -233,12 +255,12 @@ const Bookings = () => {
                         className="w-4 h-4 rounded border-line text-primary cursor-pointer"
                       />
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Trip ID</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Created</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">IDs</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Rider</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Source / Program</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Route</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Type</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Scheduled</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Space Type</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-ink-4 uppercase tracking-widest">Scheduled (Appt)</th>
                     <th className="px-6 py-4 text-right"></th>
                   </tr>
                 </thead>
@@ -252,39 +274,81 @@ const Bookings = () => {
                       <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
                       </td>
-                      <td className="px-6 py-6 font-mono text-xs font-bold text-ink uppercase">#{booking?.id || '---'}</td>
                       <td className="px-6 py-6">
-                        <p className="text-xs font-bold text-ink">{booking?.submittedTime ? formatShortDate(booking.submittedTime) : '-'}</p>
-                        <p className="text-[10px] text-ink-4">{booking?.submittedTime ? formatTime(booking.submittedTime) : '-'}</p>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono text-xs font-black text-ink uppercase tracking-tight">#{booking?.id || '---'}</span>
+                          <span className="text-[9px] font-bold text-ink-4 uppercase tracking-widest flex items-center gap-1">
+                            <ShieldAlert size={8} className="text-primary" /> {booking?.authId || 'PENDING AUTH'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-6">
-                        <div className="flex items-center gap-3"><Avatar initials={booking?.rider?.initials || '?'} size="xs" /><span className="text-sm font-extrabold text-ink leading-tight">{booking?.rider?.name || 'Unknown'}</span></div>
+                        <div className="flex items-center gap-3">
+                          <Avatar initials={booking?.rider?.initials || '?'} size="xs" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-black text-ink leading-tight truncate">{booking?.rider?.name || 'Unknown'}</p>
+                            <p className="text-[10px] font-bold text-ink-4 mt-0.5">ID: {booking?.rider?.passengerId || '---'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/40"></div>
+                            <span className="text-[11px] font-black text-ink-2 uppercase tracking-wide">{booking?.source || 'Chesterfield County'}</span>
+                          </div>
+                          {booking?.dropoff && booking?.source && !booking.dropoff.toLowerCase().includes(booking.source.split(' ')[0].toLowerCase()) && (
+                            <span className="text-[8px] font-black text-white bg-indigo-600 px-1.5 py-0.5 rounded shadow-sm w-fit uppercase tracking-tighter ml-3.5">Outside County</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex flex-col gap-0.5 relative pl-4">
                           <div className="absolute left-[5px] top-[7px] bottom-[7px] w-0.5 bg-line-2"></div>
-                          <div className="flex items-center gap-2 text-xs font-bold text-ink relative"><div className="absolute -left-[14px] w-2 h-2 rounded-full bg-primary border-2 border-white shadow-sm"></div><span className="truncate max-w-[150px]">{booking?.pickup || '---'}</span></div>
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-ink-3 relative mt-2"><div className="absolute -left-[14px] w-2 h-2 rounded-full bg-urgent border-2 border-white shadow-sm"></div><span className="truncate max-w-[150px]">{booking?.dropoff || '---'}</span></div>
+                          <div className="flex items-center gap-2 text-xs font-bold text-ink relative">
+                            <div className="absolute -left-[14px] w-2 h-2 rounded-full bg-primary border-2 border-white shadow-sm"></div>
+                            <span className="truncate max-w-[150px]">{booking?.pickup || '---'}</span>
+                          </div>
+                          
+                          {booking?.stops?.map((stop, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-[10px] font-bold text-ink-4 relative mt-1">
+                              <div className="absolute -left-[12.5px] w-1.5 h-1.5 rounded-full bg-line-3 border border-white shadow-sm"></div>
+                              <span className="truncate max-w-[150px]">{stop.address}</span>
+                            </div>
+                          ))}
+
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-ink-3 relative mt-1.5">
+                            <div className="absolute -left-[14px] w-2 h-2 rounded-full bg-indigo-500 border-2 border-white shadow-sm"></div>
+                            <span className="truncate max-w-[150px]">{booking?.dropoff || '---'}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex flex-col gap-1.5">
-                          <Badge variant="primary" className="w-fit">{booking?.mobility || 'Standard'}</Badge>
-                          {booking?.type === 'round_trip' ? <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit"><Repeat size={10} strokeWidth={3} /><span className="text-[9px] font-black uppercase">Round Trip</span></div> : <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit"><MoveRight size={10} strokeWidth={3} /><span className="text-[9px] font-black uppercase">One Way</span></div>}
+                          <Badge variant="primary-light" className="w-fit text-[9px] font-black">{booking?.mobility || 'AMB'}</Badge>
+                          <div className="flex items-center gap-1.5">
+                            {booking?.type === 'round_trip' ? 
+                              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100"><Repeat size={8} strokeWidth={3} /><span className="text-[8px] font-black uppercase">Round Trip</span></div> : 
+                              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100"><MoveRight size={8} strokeWidth={3} /><span className="text-[8px] font-black uppercase">One Way</span></div>
+                            }
+                            {booking?.returnType === 'will_call' && 
+                              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-warning-light text-warning-dark border border-warning/20"><Phone size={8} strokeWidth={3} /><span className="text-[8px] font-black uppercase tracking-tighter">Will Call</span></div>
+                            }
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-6 whitespace-nowrap">
-                        <p className="text-xs font-bold text-ink">{formatShortDate(booking?.scheduledTime)}</p>
-                        <p className="text-[10px] text-ink-4">{formatTime(booking?.scheduledTime)}</p>
+                        <p className="text-xs font-black text-ink">{formatTime(booking?.scheduledTime)}</p>
+                        <p className="text-[10px] text-ink-3 font-bold">Appt: {booking?.appointmentTime || '---'}</p>
                       </td>
                       <td className="px-6 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
                           {activeTab === 'pending' ? (
-                            <button className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); handleApprove(); }}><Check size={18} /></button>
+                            <button className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); handleApprove(booking.id); }} title="Confirm Booking"><Check size={18} /></button>
                           ) : (
                             <button className="p-2 text-primary hover:bg-primary-light rounded-xl transition-all flex items-center gap-1.5 px-3" onClick={(e) => { e.stopPropagation(); openBooking(booking.id); setIsAssigning(true); }}><Users size={16} /><span className="text-[10px] font-bold uppercase">Assign Driver</span></button>
                           )}
-                          <ChevronRight size={15} className="text-ink-4" />
+                          <ChevronRight size={15} className="text-ink-4 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </td>
                     </tr>
@@ -338,20 +402,56 @@ const Bookings = () => {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
                   <section className="bg-bg rounded-xl p-4 border border-line-2">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3"><Avatar initials={selectedBooking.rider.initials} size="md" /><div><h3 className="text-sm font-bold text-ink">{selectedBooking.rider.name}</h3><p className="text-xs text-ink-3">{selectedBooking.rider.age} yrs · {selectedBooking.rider.phone}</p></div></div>
+                      <div className="flex items-center gap-3">
+                        <Avatar initials={selectedBooking.rider.initials} size="md" />
+                        <div>
+                          <h3 className="text-sm font-bold text-ink">{selectedBooking.rider.name}</h3>
+                          <p className="text-xs text-ink-3">ID: {selectedBooking.rider.passengerId || '---'} · {selectedBooking.rider.phone}</p>
+                        </div>
+                      </div>
                       <Button variant="outline" size="sm" icon={Phone}>Call</Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Pickup Time</p><p className="text-xs font-bold text-ink">{formatDateTime(selectedBooking.scheduledTime)}</p></div>
-                      <div><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Trip Type</p><p className="text-xs font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p></div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
+                      <div><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Authorization ID</p><p className="text-xs font-black text-primary uppercase">{selectedBooking.authId || 'PENDING'}</p></div>
+                      <div><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Source / Program</p><p className="text-xs font-bold text-ink">{selectedBooking.source || 'Chesterfield County'}</p></div>
+                      <div className="pt-2 border-t border-line-2"><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Pickup Time</p><p className="text-xs font-black text-ink">{formatDateTime(selectedBooking.scheduledTime)}</p></div>
+                      <div className="pt-2 border-t border-line-2"><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Appointment</p><p className="text-xs font-black text-ink-2">{selectedBooking.appointmentTime || '---'}</p></div>
+                      <div className="pt-2 border-t border-line-2"><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Trip Type</p><p className="text-xs font-bold text-ink uppercase">{tripTypeLabel(selectedBooking.type)}</p></div>
+                      <div className="pt-2 border-t border-line-2"><p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider mb-1">Mobility Need</p><Badge variant="primary-light" className="text-[10px] font-black">{selectedBooking.mobility || 'AMB'}</Badge></div>
                     </div>
                   </section>
 
                   <section>
                     <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Navigation size={11} className="text-primary" /> Trip Route</p>
                     <div className="bg-bg rounded-xl p-4 border border-line-2 space-y-4">
-                      <div className="flex gap-3"><div className="w-2 h-2 rounded-full bg-primary mt-1.5"></div><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-ink-4 uppercase mb-0.5">Pickup</p><p className="text-xs font-bold text-ink">{selectedBooking.pickup}</p></div></div>
-                      <div className="flex gap-3"><div className="w-2 h-2 rounded-full bg-urgent mt-1.5"></div><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-ink-4 uppercase mb-0.5">Drop-off</p><p className="text-xs font-bold text-ink">{selectedBooking.dropoff}</p></div></div>
+                      <div className="flex gap-3">
+                        <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0 shadow-sm border border-white"></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-ink-4 uppercase mb-0.5">Pickup</p>
+                          <p className="text-xs font-bold text-ink">{selectedBooking.pickup}</p>
+                        </div>
+                      </div>
+                      
+                      {selectedBooking?.stops?.map((stop, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-line-3 mt-1.5 shrink-0 ml-0.5"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-bold text-ink-4 uppercase mb-0.5 flex items-center gap-1.5">
+                              Stop {idx + 1} 
+                              <span className="px-1 py-0.5 bg-white border border-line-2 rounded text-[7px] tracking-tighter">{stop.type.toUpperCase()}</span>
+                            </p>
+                            <p className="text-xs font-medium text-ink-3 italic">{stop.address}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex gap-3 pt-1">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0 shadow-sm border border-white"></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-ink-4 uppercase mb-0.5">Drop-off</p>
+                          <p className="text-xs font-bold text-ink">{selectedBooking.dropoff}</p>
+                        </div>
+                      </div>
                     </div>
                   </section>
 
