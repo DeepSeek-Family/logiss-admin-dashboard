@@ -619,14 +619,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Trip ID</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Date & Time</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Rider</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Driver</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Route</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Type</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap text-right">Cost</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap text-center">Status</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Time</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Type</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Cost</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
                 <th className="px-6 py-4"></th>
               </tr>
             </thead>

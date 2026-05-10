@@ -97,7 +97,7 @@ const Operations = ({ role }: { role?: string | null }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
-            <div className="px-5 py-4 border-b border-line-2 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
               <h2 className="text-sm font-bold text-ink">Active Trips</h2>
               <button onClick={() => navigate('/trips')} className="text-xs font-bold text-primary hover:underline">View all →</button>
             </div>
@@ -106,12 +106,12 @@ const Operations = ({ role }: { role?: string | null }) => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-bg/60 border-b border-line-2">
-                    <th className="px-5 py-2.5 text-xs font-bold text-ink-2">ID</th>
-                    <th className="px-5 py-2.5 text-xs font-bold text-ink-2">Rider</th>
-                    <th className="px-5 py-2.5 text-xs font-bold text-ink-2">Time</th>
-                    <th className="px-5 py-2.5 text-xs font-bold text-ink-2">Status</th>
-                    <th className="px-5 py-2.5 text-xs font-bold text-ink-2">Driver</th>
-                    <th className="px-5 py-2.5"></th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">ID</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Rider</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Time</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Driver</th>
+                    <th className="px-6 py-4"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line-2">
@@ -121,29 +121,29 @@ const Operations = ({ role }: { role?: string | null }) => {
                     const driver = (drivers || []).find((d: any) => d.id === trip?.driverId);
                     return (
                       <tr key={trip.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={() => navigate('/live')}>
-                        <td className="px-5 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-mono text-xs font-bold text-ink-3 tracking-tighter uppercase">#{trip.id}</span>
                         </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <Avatar initials={trip?.rider?.initials || '?'} size="xs" />
                             <span className="text-sm font-bold text-ink">{trip?.rider?.name || 'Unknown'}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <p className="text-sm font-bold text-ink">{formatTime(trip?.scheduledTime)}</p>
                           <p className="text-xs text-ink-4">{formatShortDate(trip?.scheduledTime)}</p>
                         </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <TripStatusBadge status={trip.status} />
                         </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Truck size={14} className="text-ink-4" />
                             <span className="text-sm font-medium text-ink-3">{driver?.name || 'Unassigned'}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-right whitespace-nowrap">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
                         </td>
                       </tr>

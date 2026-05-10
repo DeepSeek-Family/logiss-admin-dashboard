@@ -275,14 +275,14 @@ const Riders = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Rider', 'Rider ID', 'Status', 'Mobility', 'Contact', 'Trips', 'Rating', ''].map(h => (
-                  <th key={h} className="px-5 py-3 text-xs font-bold text-ink-4 whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
               {paginatedRiders.map(rider => (
                 <tr key={rider.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={() => setSelectedRiderId(rider.id)}>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative shrink-0 w-10 h-10">
                         {rider.image ? (
@@ -298,27 +298,27 @@ const Riders = ({ role }: { role?: string | null }) => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="font-mono text-xs font-bold text-ink-3 uppercase">{rider.id}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <Badge variant={rider.status === 'active' ? 'accent' : 'neutral'}>{rider.status}</Badge>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <p className="text-xs font-bold text-ink whitespace-nowrap">{rider.mobility || 'Ambulatory'}</p>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="text-xs font-medium text-ink-3 whitespace-nowrap">{rider?.phone || '---'}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="text-sm font-bold text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="flex items-center gap-1 text-xs font-bold text-warning">
                       <Star size={12} fill="currentColor" /> {rider?.rating || 0}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-6 py-4 text-right">
                     <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </td>
                 </tr>

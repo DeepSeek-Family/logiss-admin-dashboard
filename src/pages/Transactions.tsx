@@ -104,12 +104,12 @@ const Transactions = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left">
             <thead className="bg-bg/50 border-b border-line-2">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4">Transaction ID</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4">Customer</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4">Amount</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-ink-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Transaction ID</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Date</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Amount</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">

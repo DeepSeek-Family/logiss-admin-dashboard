@@ -399,7 +399,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
                   disabled={updatingStatus || vehicle.status === s.id}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all border-2 text-left group ${vehicle.status === s.id
+                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all border-2 text-left group ${vehicle.status === s.id
                       ? 'bg-ink border-ink text-white shadow-xl translate-x-1'
                       : 'bg-white border-line-2 text-ink-4 hover:border-primary/20 hover:text-primary hover:bg-bg/30'
                     }`}

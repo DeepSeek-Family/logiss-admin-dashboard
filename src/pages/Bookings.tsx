@@ -233,12 +233,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         className="w-4 h-4 rounded border-line text-primary cursor-pointer"
                       />
                     </th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Trip ID</th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Created</th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Rider</th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Route</th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Type</th>
-                    <th className="px-6 py-4 text-xs font-bold text-ink-2 whitespace-nowrap">Scheduled</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Created</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Type</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Scheduled</th>
                     <th className="px-6 py-4 text-right"></th>
                   </tr>
                 </thead>
@@ -329,7 +329,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
           <div className="relative w-full max-w-lg bg-white shadow-2xl h-full animate-in slide-in-from-right duration-300">
             {selectedBooking ? (
               <div className="h-full flex flex-col overflow-hidden">
-                <div className="px-5 py-4 border-b border-line-2 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-0.5"><span className="font-mono text-xs font-bold text-ink-4">#{selectedBooking.id}</span><TripStatusBadge status={selectedBooking.status} /></div>
                     <h2 className="text-base font-bold text-ink">Booking Details</h2>

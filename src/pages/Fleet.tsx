@@ -378,7 +378,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Asset Details', 'Vehicle Type', 'Status', 'Operator', 'Telematics', 'Next Service', 'Compliance', ''].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-bold text-ink-4 whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>

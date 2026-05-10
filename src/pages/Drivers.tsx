@@ -578,14 +578,14 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Driver', 'Driver ID', 'Status', 'Vehicle', 'Rating', 'Today', 'Total Trips', 'Contact', 'Docs', ''].map(h => (
-                  <th key={h} className="px-5 py-3 text-xs font-bold text-ink-4 whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
               {paginatedDrivers.map((driver: any) => (
                 <tr key={driver.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={() => setSelectedDriverId(driver.id)}>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative shrink-0">
                         <Avatar initials={driver.initials} size="sm" />
@@ -597,30 +597,30 @@ const Drivers = ({ role }: { role?: string | null }) => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="font-mono text-xs font-bold text-ink-3 uppercase">{driver.id}</span>
                   </td>
-                  <td className="px-5 py-4">{getStatusBadge(driver.status)}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">{getStatusBadge(driver.status)}</td>
+                  <td className="px-6 py-4">
                     <p className="text-sm font-bold text-ink whitespace-nowrap">{driver?.vehicle?.make || '---'}</p>
                     <p className="font-mono text-xs font-bold text-ink-4 uppercase">{driver?.vehicle?.plate || '---'}</p>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="flex items-center gap-1 text-sm font-bold text-warning">
                       <Star size={14} fill="currentColor" /> {driver?.rating || 0}
                     </span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="text-sm font-bold text-ink">{driver?.tripsToday || 0}</span>
                     <span className="text-ink-4 text-xs font-medium"> / {driver?.completedToday || 0}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="text-sm font-bold text-ink">{(driver?.totalTrips || 0).toLocaleString()}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="text-sm font-medium text-ink-3 whitespace-nowrap">{driver?.phone || '---'}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     {(driver?.pendingDocUpdates || 0) > 0 ? (
                       <span className="flex items-center gap-1 text-xs font-bold text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit whitespace-nowrap">
                         <AlertTriangle size={10} /> Attention
@@ -631,7 +631,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-6 py-4 text-right">
                     <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </td>
                 </tr>

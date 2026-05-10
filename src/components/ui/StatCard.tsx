@@ -20,7 +20,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
   };
 
   return (
-    <Card className="p-4 relative">
+    <Card className="p-6 relative">
       <div className="flex justify-between items-start mb-1">
         <span className="text-xs font-bold text-ink-4 uppercase tracking-wider">{label}</span>
         {Icon && (
