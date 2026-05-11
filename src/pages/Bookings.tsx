@@ -401,12 +401,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-0.5">Appt</p>
+                            <p className="type-label text-ink-4 mb-0.5">Appt</p>
                             <p className="text-sm font-black text-primary">{booking?.appointmentTime || 'N/A'}</p>
                           </div>
                           <div className="w-px h-8 bg-line-2" />
                           <div className="text-right">
-                            <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-0.5">Pickup</p>
+                            <p className="type-label text-ink-4 mb-0.5">Pickup</p>
                             <p className="text-sm font-black text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
                           </div>
                         </div>
@@ -499,19 +499,19 @@ const Bookings = ({ role }: { role?: string | null }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-line-2">
                       <div className="p-4">
-                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Pickup Time</p>
+                        <p className="type-label text-ink-4 mb-1">Pickup Time</p>
                         <p className="text-base font-black text-ink">{selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime)}</p>
                       </div>
                       <div className="p-4">
-                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Appointment</p>
+                        <p className="type-label text-ink-4 mb-1">Appointment</p>
                         <p className="text-base font-black text-primary">{selectedBooking.appointmentTime || 'N/A'}</p>
                       </div>
                       <div className="p-4">
-                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Trip Type</p>
+                        <p className="type-label text-ink-4 mb-1">Trip Type</p>
                         <p className="text-sm font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p>
                       </div>
                       <div className="p-4">
-                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Mobility</p>
+                        <p className="type-label text-ink-4 mb-1">Mobility</p>
                         <Badge variant="warning" className="text-xs px-2 py-0.5 uppercase font-black">{selectedBooking.mobility || 'Ambulatory'}</Badge>
                       </div>
                     </div>

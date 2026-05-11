@@ -30,6 +30,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
   const [vehicle, setVehicle] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [assigning, setAssigning] = useState(false);
+  const [assigningDriverId, setAssigningDriverId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showSuccess, setShowSuccess] = useState<string | null>(null);
 
@@ -70,6 +71,43 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
 
   const driver = (drivers || []).find((d: any) => d.id === vehicle?.assignedDriverId);
   const vehicleTrips = (trips || []).filter((t: any) => t.vehicleId === vehicle?.id);
+  const assignmentOptions = [...(drivers || [])].sort((a: any, b: any) => {
+    const rank = (d: any) => {
+      if (d.id === vehicle?.assignedDriverId) return 0;
+      if (d.status === 'available' && d.onDuty) return 1;
+      if (d.onDuty) return 2;
+      if (d.status === 'off_duty') return 3;
+      return 4;
+    };
+
+    return rank(a) - rank(b);
+  });
+
+  const getAssignedVehicle = (driverId: string) => (
+    (vehicles || []).find((v: any) => v.assignedDriverId === driverId)
+  );
+
+  const isDriverUnavailable = (driverOption: any) => (
+    driverOption.id !== vehicle?.assignedDriverId && driverOption.status === 'in_trip'
+  );
+
+  const assignOperator = async (driverOption: any) => {
+    if (isDriverUnavailable(driverOption)) return;
+
+    try {
+      setAssigningDriverId(driverOption.id);
+      const updatedVehicle = await handleAssign(vehicle.id, driverOption.id);
+      setVehicle(updatedVehicle);
+      setAssigning(false);
+      setShowSuccess(`Driver ${driverOption.name} assigned successfully!`);
+      setTimeout(() => setShowSuccess(null), 3000);
+    } catch {
+      setShowSuccess('Unable to assign this operator. Please try again.');
+      setTimeout(() => setShowSuccess(null), 3000);
+    } finally {
+      setAssigningDriverId(null);
+    }
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     setUpdatingStatus(true);
@@ -213,11 +251,11 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                                 <MapIcon size={20} />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest">Last Known Base</p>
+                                <p className="type-label text-ink-4">Last Known Base</p>
                                 <p className="text-xs font-bold text-ink mt-0.5">Loggiskabir Main Dispatch Base</p>
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                  <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Stationary · Signal High</p>
+                                  <p className="type-label text-accent">Stationary · Signal High</p>
                                 </div>
                               </div>
                             </div>
@@ -380,7 +418,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                 {vehicle.status === 'available' ? <Power size={24} /> : vehicle.status === 'maintenance' ? <Wrench size={24} /> : <Clock size={24} />}
               </div>
               <div>
-                <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest">Vehicle State</p>
+                <p className="type-label text-ink-4">Vehicle State</p>
                 <p className="text-lg font-black text-ink capitalize mt-0.5">{vehicle.status.replace('_', ' ')}</p>
               </div>
             </div>
@@ -421,8 +459,8 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   <div>
                     <p className="text-sm font-bold text-ink">{driver.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant="primary-light" className="text-[10px] font-black uppercase">Lvl 4 Dispatch</Badge>
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-warning"><Star size={10} fill="currentColor" /> {driver.rating} Avg</span>
+                      <Badge variant="primary-light" className="font-black uppercase">Lvl 4 Dispatch</Badge>
+                      <span className="flex items-center gap-1 type-action text-warning"><Star size={12} fill="currentColor" /> {driver.rating} Avg</span>
                     </div>
                   </div>
                 </div>
@@ -438,7 +476,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Reassign Operator</Button>
+                <Button variant="outline" icon={User} className="w-full h-11 rounded-lg type-body-sm font-semibold" onClick={() => setAssigning(true)}>Reassign Operator</Button>
               </div>
             ) : (
               <div className="text-center py-10">
@@ -447,7 +485,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                 </div>
                 <p className="text-lg font-black text-ink mb-1.5 tracking-normal">Operator Vacancy</p>
                 <p className="text-xs text-ink-3 mb-10 font-medium px-4">Vehicle requires an authorized driver assignment to resume active duties.</p>
-                <Button variant="primary" className="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Initialize Assignment</Button>
+                <Button variant="primary" icon={User} className="w-full h-11 rounded-lg type-body-sm font-semibold" onClick={() => setAssigning(true)}>Initialize Assignment</Button>
               </div>
             )}
           </Card>
@@ -456,45 +494,68 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
 
       {/* Modern Assignment Modal */}
       {assigning && (
-        <div className="fixed inset-0 bg-ink/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <Card className="w-full max-w-xl bg-white rounded-[40px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border-line-2 ring-1 ring-ink/5">
-            <div className="p-10 border-b border-line-2 flex items-center justify-between bg-bg/40 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <User size={120} />
+        <div className="fixed inset-0 bg-ink/55 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <Card className="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border-line-2 ring-1 ring-ink/5">
+            <div className="px-6 py-5 border-b border-line-2 flex items-start justify-between bg-white">
+              <div>
+                <h3 className="type-panel-title">Operator Assignment</h3>
+                <p className="type-caption text-ink-3 mt-1">Deploying driver for unit <span className="text-primary font-bold">#{vehicle.plate}</span></p>
               </div>
-              <div className="relative z-10">
-                <h3 className="text-2xl font-black text-ink tracking-normal">Operator Assignment</h3>
-                <p className="text-xs text-ink-3 font-medium mt-1">Deploying driver for unit <span className="text-primary font-bold">#{vehicle.plate}</span></p>
-              </div>
-              <button onClick={() => setAssigning(false)} className="w-14 h-14 rounded-2xl bg-white border border-line-2 flex items-center justify-center text-ink-4 hover:text-urgent hover:border-urgent/20 transition-all shadow-sm">
-                <X size={24} />
+              <button
+                onClick={() => setAssigning(false)}
+                className="w-10 h-10 rounded-lg bg-bg border border-line-2 flex items-center justify-center text-ink-4 hover:text-urgent hover:border-urgent/20 transition-all"
+                aria-label="Close operator assignment"
+              >
+                <X size={20} />
               </button>
             </div>
-            <div className="p-10 space-y-3 max-h-[500px] overflow-y-auto scrollbar-hide">
-              {drivers.filter((d: any) => !d.vehicleId || d.vehicleId === vehicle.id).map((d: any) => (
+            <div className="p-4 space-y-2 max-h-[520px] overflow-y-auto">
+              {assignmentOptions.map((d: any) => {
+                const assignedVehicle = getAssignedVehicle(d.id);
+                const unavailable = isDriverUnavailable(d);
+                const isCurrent = d.id === vehicle.assignedDriverId;
+
+                return (
                 <button
                   key={d.id}
-                  onClick={() => { handleAssign(vehicle.id, d.id); setAssigning(false); setShowSuccess(`Driver ${d.name} assigned successfully!`); setTimeout(() => setShowSuccess(null), 3000); }}
-                  className="w-full flex items-center gap-6 p-6 rounded-[32px] hover:bg-bg transition-all border-2 border-transparent hover:border-primary/20 text-left group"
+                  onClick={() => assignOperator(d)}
+                  disabled={unavailable || assigningDriverId === d.id}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all group ${
+                    isCurrent
+                      ? 'bg-primary-light/40 border-primary/20'
+                      : unavailable
+                        ? 'bg-bg/50 border-line-2 opacity-60 cursor-not-allowed'
+                        : 'bg-white border-line-2 hover:border-primary/25 hover:bg-bg'
+                  }`}
                 >
                   <div className="relative">
                     <Avatar initials={d.initials} size="lg" online={d.onDuty} className="group-hover:scale-105 transition-transform" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-black text-ink group-hover:text-primary transition-colors tracking-normal">{d.name}</p>
-                    <div className="flex items-center gap-4 mt-1.5">
-                      <Badge variant={d.onDuty ? 'accent' : 'neutral'} className="text-xs font-black uppercase px-2 py-0.5">{d.status}</Badge>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-base font-bold text-ink group-hover:text-primary transition-colors truncate">{d.name}</p>
+                      {isCurrent && <Badge variant="primary" className="shrink-0">Current</Badge>}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 mt-2">
+                      <Badge variant={d.onDuty ? 'accent' : 'neutral'} className="uppercase">{d.status.replace('_', ' ')}</Badge>
                       <div className="flex items-center gap-1.5">
                         <Star size={12} className="text-warning fill-warning" />
-                        <span className="text-xs font-black text-ink-3">{d.rating}</span>
+                        <span className="type-action text-ink-3">{d.rating}</span>
                       </div>
+                      {assignedVehicle && (
+                        <span className="type-caption text-ink-4">
+                          Assigned to {assignedVehicle.id === vehicle.id ? 'this unit' : assignedVehicle.plate}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-bg flex items-center justify-center text-ink-3 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                    <ChevronRight size={20} />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                    unavailable ? 'bg-line-2 text-ink-4' : 'bg-bg text-ink-3 group-hover:bg-primary group-hover:text-white'
+                  }`}>
+                    {assigningDriverId === d.id ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18} />}
                   </div>
                 </button>
-              ))}
+              );})}
             </div>
           </Card>
         </div>

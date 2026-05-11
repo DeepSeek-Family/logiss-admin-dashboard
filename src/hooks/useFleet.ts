@@ -34,10 +34,22 @@ export const useFleet = () => {
 
   const handleAssign = async (vehicleId: string, driverId: string | null) => {
     try {
-      await fleetService.assignDriver(vehicleId, driverId);
-      setVehicles((prev: Vehicle[]) => prev.map((v: Vehicle) => v.id === vehicleId ? { ...v, assignedDriverId: driverId } : v));
+      const updatedVehicle = await fleetService.assignDriver(vehicleId, driverId);
+      setVehicles((prev: Vehicle[]) => prev.map((v: Vehicle) => {
+        if (v.id === vehicleId) {
+          return updatedVehicle;
+        }
+
+        if (driverId && v.assignedDriverId === driverId) {
+          return { ...v, assignedDriverId: null };
+        }
+
+        return v;
+      }));
+      return updatedVehicle;
     } catch (err: any) {
       setError(err.message);
+      throw err;
     }
   };
 

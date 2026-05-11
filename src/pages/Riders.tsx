@@ -1,15 +1,17 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Search, Phone, Mail, MapPin, Activity,
   Calendar, Star, ChevronRight, AlertTriangle, Users, History,
-  User, Repeat, ShieldCheck, Copy, ExternalLink
+  User, Repeat, ShieldCheck, Copy, ExternalLink,
+  UserX, UserCheck, Ban, ChevronDown
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Card, Avatar, Badge, Button, Pagination } from '../components/ui';
 import { useRiders } from '../hooks/useRiders';
 import { useTrips } from '../hooks/useTrips';
 
 const Riders = ({ role }: { role?: string | null }) => {
-  const { riders, loading, error } = useRiders();
+  const { riders, loading, error, updateRiderStatus } = useRiders();
   const { trips } = useTrips();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -17,6 +19,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [profileTab, setProfileTab] = useState<'overview' | 'trips'>('overview');
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const itemsPerPage = 8;
 
   const handleCopyPhone = (phone: string) => {
@@ -74,7 +77,7 @@ const Riders = ({ role }: { role?: string | null }) => {
             onClick={() => setSelectedRiderId(null)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-ink-3 hover:text-ink hover:bg-white rounded-xl transition-all shadow-sm border border-line-2 bg-bg"
           >
-            ← Back to Riders List
+            â† Back to Riders List
           </button>
           <div className="flex gap-3">
             <Button variant="outline" icon={Phone}>Call</Button>
@@ -104,7 +107,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                 <span className="flex items-center gap-1.5"><Star size={12} className="text-warning fill-warning" /> {selectedRider?.rating || 4.9} rating</span>
                 <span className="font-mono text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-ink-3">PX: {selectedRider?.passengerId || selectedRider?.id || '---'}</span>
                 <span className="font-mono text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-primary">Auth: {selectedRider?.authorizationId || selectedRider?.authId || '---'}</span>
-                <span className="text-ink-4">Joined {selectedRider?.joinedDate ? new Date(selectedRider.joinedDate).toLocaleDateString() : '—'}</span>
+                <span className="text-ink-4">Joined {selectedRider?.joinedDate ? new Date(selectedRider.joinedDate).toLocaleDateString() : 'â€”'}</span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -360,12 +363,41 @@ const Riders = ({ role }: { role?: string | null }) => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       {rider.county && <span className="text-xs font-bold text-ink whitespace-nowrap">{rider.county}</span>}
-                      {rider.source && <Badge variant="outline" className="text-[10px] font-black text-primary border-primary/20 bg-primary/5 uppercase w-fit">{rider.source}</Badge>}
-                      {!rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
+                      {rider.source && <Badge variant="outline" className="font-black text-primary border-primary/20 bg-primary/5 uppercase w-fit">{rider.source}</Badge>}
+                      {!rider.county && !rider.source && <span className="text-xs text-ink-4">â€”</span>}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <Badge variant={rider.status === 'active' ? 'accent' : 'neutral'}>{rider.status}</Badge>
+                  <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
+                    <div className="relative">
+                      <button
+                        onClick={() => setOpenStatusId(openStatusId === rider.id ? null : rider.id)}
+                        className={lex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black border transition-all }
+                      >
+                        <span className={w-1.5 h-1.5 rounded-full } />
+                        {(rider.status || 'inactive').toUpperCase()}
+                        <ChevronDown size={10} />
+                      </button>
+                      {openStatusId === rider.id && (
+                        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-xl w-44 py-1 animate-in fade-in duration-150">
+                          <p className="px-3 py-2 text-[10px] font-black text-ink-4 uppercase tracking-widest border-b border-line-2 mb-1">Change Status</p>
+                          {[
+                            { value: 'active', label: 'Set Active', icon: UserCheck, color: 'text-accent hover:bg-accent-light/30' },
+                            { value: 'suspended', label: 'Suspend Rider', icon: UserX, color: 'text-warning-dark hover:bg-warning-light/40' },
+                            { value: 'banned', label: 'Ban Rider', icon: Ban, color: 'text-urgent hover:bg-urgent-light/40' },
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              disabled={rider.status === opt.value}
+                              onClick={() => { updateRiderStatus(rider.id, opt.value); setOpenStatusId(null); toast.success(rider.name + ' marked as ' + opt.value); }}
+                              className={w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed }
+                            >
+                              <opt.icon size={13} />
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-xs font-bold text-ink whitespace-nowrap">{rider.mobility || 'Ambulatory'}</p>

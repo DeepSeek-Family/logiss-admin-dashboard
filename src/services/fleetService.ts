@@ -44,6 +44,9 @@ export const fleetService = {
   assignDriver: (vehicleId: string, driverId: string | null): Promise<Vehicle> => {
     const index = fleetDB.findIndex(v => v.id === vehicleId);
     if (index === -1) return Promise.reject(new Error('Vehicle not found'));
+    if (driverId) {
+      fleetDB = fleetDB.map(v => v.assignedDriverId === driverId ? { ...v, assignedDriverId: null } : v);
+    }
     fleetDB[index] = { ...fleetDB[index], assignedDriverId: driverId };
     return Promise.resolve(fleetDB[index]);
   }

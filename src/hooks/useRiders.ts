@@ -17,5 +17,9 @@ export const useRiders = () => {
     }
   }, []);
 
-  return { riders, loading, error };
+  const updateRiderStatus = (riderId: string, newStatus: string) => {
+    setRiders(prev => prev.map(r => r.id === riderId ? { ...r, status: newStatus } : r));
+  };
+
+  return { riders, loading, error, updateRiderStatus };
 };
