@@ -71,8 +71,8 @@ const Profile = ({ role }: { role?: string | null }) => {
       <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-4xl font-black font-display text-ink tracking-tight">{p.name}</h1>
-            <Badge variant="primary-light" className="text-[10px] uppercase tracking-widest">{p.role}</Badge>
+            <h1 className="text-4xl font-black font-display text-ink tracking-normal">{p.name}</h1>
+            <Badge variant="primary-light" className="text-xs uppercase tracking-widest">{p.role}</Badge>
           </div>
           <p className="text-ink-3 font-semibold mt-1 tracking-wide">{p.employeeId} · {p.department}</p>
         </div>
@@ -89,7 +89,7 @@ const Profile = ({ role }: { role?: string | null }) => {
 
         {/* Photo Upload */}
         <div>
-          <p className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.18em] mb-4">Profile Photo</p>
+          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.18em] mb-4">Profile Photo</p>
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-line shadow-md bg-bg">
@@ -115,19 +115,19 @@ const Profile = ({ role }: { role?: string | null }) => {
               {previewImg && (
                 <button
                   onClick={() => setPreviewImg(null)}
-                  className="block text-[11px] font-semibold text-ink-4 hover:text-urgent transition-colors"
+                  className="block text-xs font-semibold text-ink-4 hover:text-urgent transition-colors"
                 >
                   Remove
                 </button>
               )}
-              <p className="text-[11px] text-ink-4">JPG, PNG or WebP · Max 2MB</p>
+              <p className="text-xs text-ink-4">JPG, PNG or WebP · Max 2MB</p>
             </div>
           </div>
         </div>
 
         {/* Personal Info */}
         <div className="pt-5 border-t border-line-2">
-          <p className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.18em] mb-5">Personal Information</p>
+          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.18em] mb-5">Personal Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Full Name" icon={User} value={p.name} />
             <Field label="Email Address" icon={Mail} value={p.email} />

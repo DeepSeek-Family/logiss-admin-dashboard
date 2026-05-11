@@ -79,7 +79,7 @@ const CMS = ({ role }: { role?: string | null }) => {
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Global Configuration</h1>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Global Configuration</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-wide">Manage organization details, legal pages, and help content</p>
         </div>
         <div className="flex gap-3">
@@ -120,7 +120,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                 </div>
                 <div className="text-left">
                   <p className={`text-sm font-bold transition-colors ${activePage === page.id ? 'text-primary' : 'text-ink'}`}>{page.label}</p>
-                  <p className="text-[9px] font-bold text-ink-4 uppercase tracking-widest mt-0.5">Updated {page.lastUpdate}</p>
+                  <p className="text-xs font-bold text-ink-4 uppercase tracking-widest mt-0.5">Updated {page.lastUpdate}</p>
                 </div>
               </div>
               <ChevronRight size={14} className={activePage === page.id ? 'text-primary' : 'text-line'} />
@@ -144,7 +144,7 @@ const CMS = ({ role }: { role?: string | null }) => {
             <div className="p-8">
               {activePageData?.type === 'text' ? (
                 <div className="relative group">
-                  <div className="absolute -top-3 left-6 px-2 bg-white text-[10px] font-bold text-primary uppercase tracking-widest z-10">Page Markdown Content</div>
+                  <div className="absolute -top-3 left-6 px-2 bg-white text-xs font-bold text-primary uppercase tracking-widest z-10">Page Markdown Content</div>
                   <textarea
                     className="w-full h-[500px] p-6 bg-white border-2 border-line rounded-2xl text-ink font-mono text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none scrollbar-hide resize-none shadow-inner"
                     value={content[activePage] || ''}
@@ -158,7 +158,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                     <h4 className="text-xs font-black text-ink-4 uppercase tracking-[0.2em]">Contact Channels</h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Support Email</label>
+                        <label className="block text-xs font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Support Email</label>
                         <div className="relative group">
                           <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" />
                           <input
@@ -170,7 +170,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Urgent Dispatch Hotline</label>
+                        <label className="block text-xs font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Urgent Dispatch Hotline</label>
                         <div className="relative group">
                           <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" />
                           <input
@@ -182,7 +182,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">General Office Line</label>
+                        <label className="block text-xs font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">General Office Line</label>
                         <div className="relative group">
                           <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" />
                           <input
@@ -200,7 +200,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                     <h4 className="text-xs font-black text-ink-4 uppercase tracking-[0.2em]">Administrative Details</h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Organization Name</label>
+                        <label className="block text-xs font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Organization Name</label>
                         <div className="relative group">
                           <Building2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" />
                           <input
@@ -212,7 +212,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Headquarters Address</label>
+                        <label className="block text-xs font-bold text-ink-3 uppercase tracking-widest mb-1.5 ml-1">Headquarters Address</label>
                         <div className="relative group">
                           <MapPin size={16} className="absolute left-4 top-4 text-ink-4 group-focus-within:text-primary transition-colors" />
                           <textarea

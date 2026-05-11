@@ -31,7 +31,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
             <TripStatusBadge status={trip.status} />
             <div>
-              <h2 className="text-xl font-bold font-display text-ink tracking-tight flex items-center gap-2">
+              <h2 className="text-xl font-bold font-display text-ink tracking-normal flex items-center gap-2">
                 Trip #{trip.id}
                 {trip.rating && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"><TrendingUp size={12} /> ★ {trip.rating}</span>}
               </h2>
@@ -121,12 +121,12 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Scheduled Date</p>
-                    <p className="text-sm font-bold text-ink">{trip.scheduledTime ? formatShortDate(trip.scheduledTime) : 'N/A'}</p>
+                    <p className="text-xs font-bold text-ink-4 mb-1">Source / County</p>
+                    <p className="text-sm font-bold text-ink truncate">{trip.source || 'VA County'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Scheduled Time</p>
-                    <p className="text-sm font-bold text-ink">{trip.scheduledTime ? formatTime(trip.scheduledTime) : 'N/A'}</p>
+                    <p className="text-xs font-bold text-ink-4 mb-1">Pickup Time</p>
+                    <p className="text-sm font-bold text-ink">{trip.requestedPickup || (trip.scheduledTime ? formatTime(trip.scheduledTime) : 'N/A')}</p>
                   </div>
                   <div>
                     <p className="text-xs font-bold text-ink-4 mb-1">Appointment</p>
@@ -344,14 +344,25 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                     </Badge>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10">
+                    <div>
+                      <p className="text-xs font-black text-primary uppercase mb-1">Patient Copay</p>
+                      <p className="text-lg font-bold text-ink">{money(trip.copay || 0)}</p>
+                    </div>
+                    <div className="border-l border-primary/20 pl-4">
+                      <p className="text-xs font-black text-primary uppercase mb-1">Cost to County</p>
+                      <p className="text-lg font-bold text-ink">{money(trip.costToCounty || trip.cost || 0)}</p>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs font-bold text-ink-4 mb-1">Payment Method</p>
+                      <p className="text-xs font-bold text-ink-4 uppercase mb-1">Payment Method</p>
                       <p className="text-sm font-bold text-ink truncate" title={trip.paymentMethod || 'N/A'}>{trip.paymentMethod || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-ink-4 mb-1">Auth / Claim ID</p>
-                      <p className="text-sm font-bold font-mono text-ink truncate" title={trip.authId || 'N/A'}>{trip.authId || 'N/A'}</p>
+                      <p className="text-xs font-bold text-ink-4 uppercase mb-1">Authorization ID</p>
+                      <p className="text-sm font-bold font-mono text-ink truncate" title={trip.authorizationId || trip.authId || 'N/A'}>{trip.authorizationId || trip.authId || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -411,6 +422,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     const matchesSearch = !search ||
       (trip?.id || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.rider?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (trip?.passengerId || '').toLowerCase().includes(search.toLowerCase()) ||
+      (trip?.authorizationId || trip?.authId || '').toLowerCase().includes(search.toLowerCase()) ||
+      (trip?.source || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.pickup || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.dropoff || '').toLowerCase().includes(search.toLowerCase());
 
@@ -484,10 +498,13 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
     if (tripsToExport.length === 0) return;
 
-    const headers = ['Trip ID', 'Date', 'Time', 'Rider Name', 'Driver Name', 'Pickup', 'Dropoff', 'Status', 'Cost', 'Type'];
+    const headers = ['Trip ID', 'Source', 'Passenger ID', 'Auth ID', 'Date', 'Time', 'Rider Name', 'Driver Name', 'Pickup', 'Dropoff', 'Status', 'Total Cost', 'Copay', 'Cost to County', 'Type'];
 
     const rows = tripsToExport.map((trip: any) => [
       trip.id,
+      `"${trip.source || 'N/A'}"`,
+      `"${trip.passengerId || 'N/A'}"`,
+      `"${trip.authorizationId || trip.authId || 'N/A'}"`,
       formatShortDate(trip.scheduledTime),
       formatTime(trip.scheduledTime),
       trip?.rider?.name || 'Unknown',
@@ -495,7 +512,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       `"${trip.pickup}"`,
       `"${trip.dropoff}"`,
       trip.status,
-      trip.cost,
+      trip.cost || 0,
+      trip.copay || 0,
+      trip.costToCounty || trip.cost || 0,
       trip.type
     ]);
 
@@ -540,8 +559,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Trip History</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-tight">Archived and active records for LOGISS fleet</p>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Trip History</h1>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Archived and active records for LOGISS fleet</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" icon={Download} onClick={handleExport}>Export CSV</Button>
@@ -611,7 +630,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-bg/50 border-b border-line-2">
-                <th className="px-6 py-4 w-10">
+                <th className="pl-6 pr-3 py-4 w-10">
                   <input
                     type="checkbox"
                     checked={selectedIds.length === paginatedTrips.length && paginatedTrips.length > 0}
@@ -619,13 +638,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Time</th>
+                <th className="px-3 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Source</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Pickup</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Type</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Cost</th>
+                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Financials</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
                 <th className="px-6 py-4"></th>
               </tr>
@@ -637,7 +657,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                   onClick={() => setSelectedTripId(trip.id)}
                   className={`hover:bg-primary-tint/20 transition-colors group cursor-pointer ${selectedIds.includes(trip.id) ? 'bg-primary-tint/10' : ''}`}
                 >
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="pl-6 pr-3 py-4 w-10" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(trip.id)}
@@ -645,13 +665,19 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                       className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                     />
                   </td>
+                  <td className="px-3 py-4">
+                    <span className="font-mono text-xs font-bold text-ink tracking-normal uppercase whitespace-nowrap">#{trip.id}</span>
+                  </td>
                   <td className="px-6 py-4">
-                    <span className="font-mono text-xs font-bold text-ink tracking-tight uppercase">#{trip.id}</span>
+                    <Badge variant="outline" className="text-xs font-black text-primary border-primary/20 bg-primary/5 uppercase whitespace-nowrap">{trip.source || 'VA County'}</Badge>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-ink">{formatShortDate(trip.scheduledTime)}</span>
-                      <span className="text-xs text-ink-4">{formatTime(trip.scheduledTime)}</span>
+                      <span className="text-xs font-bold text-ink whitespace-nowrap">{formatShortDate(trip.scheduledTime)}</span>
+                      <div className="flex flex-col mt-0.5">
+                        <span className="text-xs font-black text-ink tracking-normal uppercase">Pickup: {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
+                        <span className="text-xs font-bold text-ink-4 tracking-normal uppercase">Appt: {trip.appointmentTime || 'N/A'}</span>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -676,29 +702,50 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                      <span className="text-[13px] font-semibold text-ink max-w-[140px] truncate">{trip.pickup}</span>
-                      <ArrowRight size={12} className="text-ink-4 shrink-0" />
+                      <span className="text-xs font-semibold text-ink max-w-[120px] truncate">{trip.pickup || '---'}</span>
+                      
+                      {/* Intermediate Stop Indicator */}
+                      {(trip.stop || (trip.stops && trip.stops.length > 0)) ? (
+                        <div className="flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+                          <span className="text-xs font-black text-warning-dark uppercase tracking-widest whitespace-nowrap">
+                            {Array.isArray(trip.stops) ? `+${trip.stops.length} Stop${trip.stops.length > 1 ? 's' : ''}` : '+1 Stop'}
+                          </span>
+                        </div>
+                      ) : (
+                        <ArrowRight size={12} className="text-ink-4 shrink-0 mx-1" />
+                      )}
+
                       <MapPin size={13} className="text-urgent shrink-0" />
-                      <span className="text-[13px] font-semibold text-ink-2 max-w-[140px] truncate">{trip.dropoff}</span>
+                      <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate">{trip.dropoff || '---'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {trip.type === 'round_trip' ? (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
-                        <Repeat size={10} strokeWidth={3} />
-                        <span className="text-xs font-bold">Round Trip</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit">
-                        <MoveRight size={10} strokeWidth={3} />
-                        <span className="text-xs font-bold">One Way</span>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="primary" className="w-fit px-2 py-0.5 text-xs uppercase font-black tracking-wider">{trip.mobility || 'Standard'}</Badge>
+                      {trip.type === 'round_trip' ? (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
+                          <Repeat size={10} strokeWidth={3} />
+                          <span className="text-xs font-black uppercase tracking-wider">Round Trip</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit">
+                          <MoveRight size={10} strokeWidth={3} />
+                          <span className="text-xs font-black uppercase tracking-wider">One Way</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="font-mono text-xs font-bold text-ink">{money(trip.cost)}</span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="font-mono text-xs font-bold text-ink">{money(trip.cost)}</span>
+                      <div className="flex items-center gap-1.5 opacity-80">
+                         <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
+                         <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty || trip.cost || 0)}</span>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <TripStatusBadge status={trip.status} />

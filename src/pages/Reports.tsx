@@ -42,7 +42,7 @@ const CreateReportModal = ({ onClose, onSave }: { onClose: () => void; onSave: (
               </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-ink">{r.label}</p>
-                <p className="text-[10px] font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
+                <p className="text-xs font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
               </div>
               <input type="radio" className="hidden" name="reason" checked={reason === r.id} onChange={() => setReason(r.id)} />
             </label>
@@ -91,7 +91,7 @@ const CancelTripModal = ({ onClose, onConfirm }: { onClose: () => void; onConfir
               </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-ink">{r.label}</p>
-                <p className="text-[10px] font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
+                <p className="text-xs font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
               </div>
               <input type="radio" className="hidden" name="reason" checked={reason === r.id} onChange={() => setReason(r.id)} />
             </label>
@@ -100,7 +100,7 @@ const CancelTripModal = ({ onClose, onConfirm }: { onClose: () => void; onConfir
         <div className="p-6 bg-bg/50 border-t border-line-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary">
             <Clock size={16} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Free cancellation window active</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Free cancellation window active</span>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose}>Keep Booking</Button>
@@ -137,7 +137,7 @@ const ReportCard = ({ report, selected, onClick }: { report: any; selected: bool
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <SevIcon size={16} className={sev.iconClass} />
-          <span className="font-mono text-[10px] font-bold text-ink-3 uppercase">#{report.id}</span>
+          <span className="font-mono text-xs font-bold text-ink-3 uppercase">#{report.id}</span>
         </div>
         <Badge variant={sev.badge}>{sev.label}</Badge>
       </div>
@@ -153,10 +153,10 @@ const ReportCard = ({ report, selected, onClick }: { report: any; selected: bool
           <Avatar initials={report?.subject?.name?.[0] || '?'} size="xs" className="ring-2 ring-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold text-ink truncate">{report?.filedBy?.name || 'Unknown'}</p>
-          <p className="text-[9px] text-ink-3 font-semibold uppercase tracking-wide">vs {report?.subject?.name || 'Unknown'}</p>
+          <p className="text-xs font-bold text-ink truncate">{report?.filedBy?.name || 'Unknown'}</p>
+          <p className="text-xs text-ink-3 font-semibold uppercase tracking-wide">vs {report?.subject?.name || 'Unknown'}</p>
         </div>
-        <span className="text-[9px] font-bold text-ink-4 whitespace-nowrap shrink-0">{timeAgo(report?.submitted)}</span>
+        <span className="text-xs font-bold text-ink-4 whitespace-nowrap shrink-0">{timeAgo(report?.submitted)}</span>
       </div>
     </button>
   );
@@ -186,7 +186,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
           <div>
             <h2 className="text-base font-extrabold font-display text-ink leading-tight">{report.type}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono text-[10px] font-bold text-ink-3 uppercase">#{report.id}</span>
+              <span className="font-mono text-xs font-bold text-ink-3 uppercase">#{report.id}</span>
               <span className="w-1 h-1 bg-line rounded-full" />
               <Badge variant={variant}>{report.status}</Badge>
             </div>
@@ -220,14 +220,14 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
           ].map(({ data, label, badge }) => (
             <div key={label} className="bg-bg rounded-2xl border border-line-2 p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest">{label}</p>
+                <p className="text-xs font-bold text-ink-4 uppercase tracking-widest">{label}</p>
                 {badge}
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Avatar initials={data?.name?.[0] || '?'} size="md" />
                 <div>
                   <p className="text-sm font-bold text-ink leading-tight">{data?.name || 'Unknown'}</p>
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-0.5">{data?.role || 'N/A'}</p>
+                  <p className="text-xs font-bold text-primary uppercase tracking-widest mt-0.5">{data?.role || 'N/A'}</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -240,7 +240,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
 
         {/* Statement */}
         <div>
-          <h4 className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
             <MessageSquare size={12} /> Statement of Incident
           </h4>
           <div className="bg-white rounded-2xl border-2 border-line-2 p-5 shadow-sm relative">
@@ -251,7 +251,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
 
         {/* Associated Trip */}
         <div>
-          <h4 className="text-[10px] font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
             <Flag size={12} /> Associated Record
           </h4>
           <div className="bg-bg rounded-xl border border-line-2 p-4 flex items-center justify-between group hover:border-primary/30 transition-colors cursor-pointer">
@@ -260,8 +260,8 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
                 <Navigation size={18} />
               </div>
               <div>
-                <p className="text-sm font-bold text-ink font-mono uppercase tracking-tighter">Trip #{report.tripId}</p>
-                <p className="text-[10px] text-ink-3 font-medium mt-0.5">Submitted {formatDateTime(report.submitted)}</p>
+                <p className="text-sm font-bold text-ink font-mono uppercase tracking-normal">Trip #{report.tripId}</p>
+                <p className="text-xs text-ink-3 font-medium mt-0.5">Submitted {formatDateTime(report.submitted)}</p>
               </div>
             </div>
             <ChevronRight size={16} className="text-ink-4 group-hover:translate-x-0.5 transition-transform" />
@@ -363,7 +363,7 @@ const Reports = ({ role }: { role?: string | null }) => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Incident Reports</h1>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Incident Reports</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-wide">Monitor and resolve safety alerts and operational reports</p>
         </div>
         <Button variant="danger" icon={Plus} onClick={() => setShowCreateModal(true)}>
@@ -384,9 +384,9 @@ const Reports = ({ role }: { role?: string | null }) => {
               <s.icon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold text-ink-4 uppercase tracking-wider leading-none">{s.label}</p>
+              <p className="text-xs font-bold text-ink-4 uppercase tracking-wider leading-none">{s.label}</p>
               <p className="text-3xl font-extrabold text-ink mt-1 leading-none">{s.value}</p>
-              <p className="text-[10px] text-ink-4 mt-1">{s.sub}</p>
+              <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
             </div>
           </Card>
         ))}
@@ -409,7 +409,7 @@ const Reports = ({ role }: { role?: string | null }) => {
               >
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2 text-ink-4'
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-black ${activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2 text-ink-4'
                     }`}>
                     {tab.count}
                   </span>
@@ -429,7 +429,7 @@ const Reports = ({ role }: { role?: string | null }) => {
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-3 py-1.5 text-[10px] font-bold transition-all capitalize ${filterType === type ? 'bg-primary text-white' : 'text-ink-3 hover:text-ink hover:bg-bg'
+                  className={`px-3 py-1.5 text-xs font-bold transition-all capitalize ${filterType === type ? 'bg-primary text-white' : 'text-ink-3 hover:text-ink hover:bg-bg'
                     }`}
                 >
                   {type === 'all' ? 'All' : `${type}s`}

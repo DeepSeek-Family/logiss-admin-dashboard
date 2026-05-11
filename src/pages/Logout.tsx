@@ -32,7 +32,7 @@ const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
           Back to Login
         </Button>
 
-        <p className="mt-8 text-[10px] font-bold text-ink-4 uppercase tracking-[0.2em]">
+        <p className="mt-8 text-xs font-bold text-ink-4 uppercase tracking-[0.2em]">
           &copy; 2026 LOGISS Transportation Inc.
         </p>
       </Card>

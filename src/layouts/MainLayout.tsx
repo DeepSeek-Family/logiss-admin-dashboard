@@ -45,7 +45,7 @@ const NavItem = ({ icon: Icon, label, badge, active, onClick, badgeVariant = 'ne
   >
     <div className="flex items-center gap-3">
       <Icon size={20} className={active ? 'text-white' : 'text-ink-3 group-hover:text-primary transition-colors'} />
-      <span className={`text-base tracking-tight ${active ? 'font-bold' : 'font-normal'}`}>
+      <span className={`text-base tracking-normal ${active ? 'font-bold' : 'font-normal'}`}>
         {label}
       </span>
     </div>
@@ -96,7 +96,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
     items: [
       { id: '/drivers', label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
       { id: '/riders', label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
-      { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin', 'dispatcher'] },
+      { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
       { id: '/fleet', label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
       { id: '/schedule', label: 'Shift Schedule', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
     ]

@@ -11,11 +11,14 @@ import {
   CreditCard,
   Shield,
   FileText,
+  Flag,
   RotateCcw,
   Settings,
   UserPlus,
   Wrench,
-  Loader2
+  Loader2,
+  CheckCircle2,
+  Truck
 } from 'lucide-react';
 import { Card, StatCard, Badge, Avatar, Button } from '../components/ui';
 import { useTrips } from '../hooks/useTrips';
@@ -78,7 +81,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-black font-display text-ink tracking-tight">Executive Dashboard</h1>
+          <h1 className="text-4xl font-black font-display text-ink tracking-normal">Executive Dashboard</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-wide">Platform-wide overview and business performance metrics</p>
         </div>
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-light/30 border border-accent/20 rounded-full">
@@ -235,18 +238,30 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6 border-line-2 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><FileCheck size={16} className="text-primary" /> Pending Driver Approvals</h3>
-            <button onClick={() => navigate('/applications')} className="text-xs font-bold text-primary uppercase hover:underline">View All</button>
+            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><Flag size={16} className="text-urgent" /> Active Incident Reports</h3>
+            <button onClick={() => navigate('/reports')} className="text-xs font-bold text-primary uppercase hover:underline">Full Audit</button>
           </div>
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-bg hover:bg-line-2 transition-colors rounded-xl cursor-pointer shadow-sm border border-transparent hover:border-line-2" onClick={() => navigate('/applications')}>
-                <Avatar initials={`D${i}`} size="xs" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-ink truncate">New Driver Registration #{1000 + i}</p>
-                  <p className="text-[9px] text-ink-4 uppercase tracking-widest">Awaiting Background Check · 2h ago</p>
+          <div className="space-y-4">
+            {[
+              { type: 'Safety Violation', id: 'REP-4821', severity: 'high', time: '14m ago' },
+              { type: 'Vehicle Damage', id: 'REP-4819', severity: 'medium', time: '1h ago' },
+              { type: 'No-Show Dispute', id: 'REP-4815', severity: 'low', time: '3h ago' },
+              { type: 'Late Arrival', id: 'REP-4812', severity: 'low', time: '5h ago' },
+              { type: 'Driver Feedback', id: 'REP-4809', severity: 'medium', time: 'Yesterday' },
+            ].map((rep, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-bg hover:bg-line-2 transition-colors rounded-xl cursor-pointer shadow-sm border border-transparent hover:border-line-2" onClick={() => navigate('/reports')}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${rep.severity === 'high' ? 'bg-urgent-light text-urgent' : rep.severity === 'medium' ? 'bg-warning-light text-warning-dark' : 'bg-primary-light text-primary'}`}>
+                    <AlertTriangle size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-ink">{rep.type}</p>
+                    <p className="text-xs text-ink-4 uppercase tracking-widest font-mono">{rep.id} · {rep.time}</p>
+                  </div>
                 </div>
-                <Badge variant="warning">Review</Badge>
+                <Badge variant={rep.severity === 'high' ? 'urgent' : rep.severity === 'medium' ? 'warning' : 'accent'}>
+                  {rep.severity}
+                </Badge>
               </div>
             ))}
           </div>
@@ -254,20 +269,22 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
 
         <Card className="p-6 border-line-2 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><Activity size={16} className="text-accent" /> Recent Activity</h3>
+            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><Activity size={16} className="text-accent" /> Recent Activity Feed</h3>
             <button onClick={() => navigate('/trips')} className="text-xs font-bold text-primary uppercase hover:underline">History</button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {[
               { icon: CreditCard, color: 'text-accent', text: 'New payment received from Rider #882', time: '5m ago' },
               { icon: AlertTriangle, color: 'text-urgent', text: 'Unassigned trip delay alert in Chesterfield', time: '12m ago' },
               { icon: UserPlus, color: 'text-primary', text: 'New dispatcher account created for Sarah J.', time: '1h ago' },
+              { icon: CheckCircle2, color: 'text-accent', text: 'Daily fleet inspection completed for Unit #VEH-003', time: '2h ago' },
+              { icon: Truck, color: 'text-primary', text: 'Trip LOGISS-2841 successfully completed by David W.', time: '4h ago' },
             ].map((act, i) => (
               <div key={i} className="flex items-start gap-3 p-1">
                 <div className={`mt-0.5 ${act.color} bg-bg p-1.5 rounded-lg shadow-sm`}><act.icon size={14} /></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-ink leading-tight">{act.text}</p>
-                  <p className="text-[10px] text-ink-4 mt-1 font-bold">{act.time}</p>
+                  <p className="text-xs text-ink-4 mt-1 font-bold">{act.time}</p>
                 </div>
               </div>
             ))}

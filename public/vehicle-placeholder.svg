@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
+  <title id="title">Medical transport vehicle placeholder</title>
+  <desc id="desc">A simplified medical transport van on a light background.</desc>
+  <rect width="320" height="240" fill="#f3f7fb"/>
+  <rect x="54" y="82" width="188" height="72" rx="16" fill="#ffffff" stroke="#d7e3ef" stroke-width="4"/>
+  <path d="M216 102h31c8 0 14 5 18 12l13 25v15h-62z" fill="#ffffff" stroke="#d7e3ef" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M236 112h14c4 0 7 2 9 6l7 14h-30z" fill="#dff1ff"/>
+  <rect x="77" y="101" width="47" height="26" rx="6" fill="#dff1ff"/>
+  <rect x="137" y="101" width="47" height="26" rx="6" fill="#dff1ff"/>
+  <rect x="148" y="92" width="20" height="46" rx="3" fill="#16a3b8"/>
+  <rect x="135" y="105" width="46" height="20" rx="3" fill="#16a3b8"/>
+  <path d="M50 154h234" stroke="#b8c7d8" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="97" cy="158" r="19" fill="#203040"/>
+  <circle cx="97" cy="158" r="8" fill="#ffffff"/>
+  <circle cx="240" cy="158" r="19" fill="#203040"/>
+  <circle cx="240" cy="158" r="8" fill="#ffffff"/>
+  <path d="M70 144h130" stroke="#16a3b8" stroke-width="5" stroke-linecap="round"/>
+</svg>

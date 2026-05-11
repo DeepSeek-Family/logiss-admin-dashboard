@@ -23,7 +23,7 @@ export const Badge = ({ variant = 'neutral', dot = false, children, className = 
   };
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${variants[variant] || variants.neutral} ${className}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full type-label border ${variants[variant] || variants.neutral} ${className}`}>
       {dot && <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${variant.startsWith('solid') ? 'bg-white' : (variant === 'accent' || variant === 'solid_accent' ? 'bg-accent' : (variant === 'primary' ? 'bg-primary' : 'bg-current'))}`}></span>}
       {children}
     </span>

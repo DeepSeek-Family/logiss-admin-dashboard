@@ -31,7 +31,7 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="w-16 h-16 bg-urgent-light text-urgent rounded-2xl flex items-center justify-center mb-6 shadow-sm">
             <AlertTriangle size={32} />
           </div>
-          <h2 className="text-xl font-bold text-ink mb-2 tracking-tight">Something went wrong</h2>
+          <h2 className="text-xl font-bold text-ink mb-2 tracking-normal">Something went wrong</h2>
           <p className="text-sm text-ink-3 mb-8 max-w-md mx-auto">
             The application encountered an unexpected error. Don't worry, your data is safe.
           </p>

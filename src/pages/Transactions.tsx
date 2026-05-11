@@ -63,8 +63,8 @@ const Transactions = ({ role }: { role?: string | null }) => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Financial Transactions</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-tight">Manage payments, refunds, and financial reports</p>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Financial Transactions</h1>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage payments, refunds, and financial reports</p>
         </div>
         <Button variant="outline" icon={Download}>Export CSV</Button>
       </div>

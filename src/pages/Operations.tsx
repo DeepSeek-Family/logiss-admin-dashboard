@@ -11,7 +11,6 @@ import { opsStats, drivers } from '../data/mockData';
 import { formatTime, formatShortDate } from '../utils/helpers';
 import { useTrips } from '../hooks/useTrips';
 import { useReports } from '../hooks/useReports';
-import { useApplications } from '../hooks/useApplications';
 
 const Operations = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -20,9 +19,8 @@ const Operations = ({ role }: { role?: string | null }) => {
 
   const { trips, loading: tripsLoading } = useTrips();
   const { reports, loading: reportsLoading } = useReports();
-  const { applications, loading: appsLoading } = useApplications();
 
-  const loading = tripsLoading || reportsLoading || appsLoading;
+  const loading = tripsLoading || reportsLoading;
 
   const today = new Date();
   const todayLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -60,8 +58,8 @@ const Operations = ({ role }: { role?: string | null }) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Fleet Operations</h1>
-          <p className="text-sm text-ink-3 font-medium mt-1 tracking-tight">Managing {trips.length} active and scheduled assignments</p>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Fleet Operations</h1>
+          <p className="text-sm text-ink-3 font-medium mt-1 tracking-normal">Managing {trips.length} active and scheduled assignments</p>
         </div>
       </div>
 
@@ -122,7 +120,7 @@ const Operations = ({ role }: { role?: string | null }) => {
                     return (
                       <tr key={trip.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={() => navigate('/live')}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-mono text-xs font-bold text-ink-3 tracking-tighter uppercase">#{trip.id}</span>
+                          <span className="font-mono text-xs font-bold text-ink-3 tracking-normal uppercase">#{trip.id}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -166,23 +164,13 @@ const Operations = ({ role }: { role?: string | null }) => {
               {pendingTrips.length === 0 && <p className="px-4 py-5 text-xs text-ink-4 text-center font-medium">All bookings reviewed ✓</p>}
             </div>
           </Card>
-
           <Card className="overflow-hidden">
             <div className="px-4 py-3.5 border-b border-line-2 flex items-center justify-between"><div className="flex items-center gap-2"><FileWarning size={14} className="text-urgent" /><h3 className="text-xs font-bold text-ink">Open Reports</h3></div><button onClick={() => navigate('/reports')} className="text-xs font-bold text-primary hover:underline">View all</button></div>
             <div className="divide-y divide-line-2">
-              {openReports.slice(0, 3).map(report => (
+              {openReports.slice(0, 4).map(report => (
                 <div key={report?.id} onClick={() => navigate('/reports')} className="px-4 py-3 flex items-center justify-between hover:bg-bg cursor-pointer transition-colors group"><div className="min-w-0"><p className="text-xs font-bold text-ink truncate">{report?.type || 'Incident'}</p><p className="text-xs text-ink-4">By {report?.filedBy?.name || 'Unknown'}</p></div><Badge variant={report?.severity === 'high' ? 'urgent' : 'warning'} className="flex-shrink-0 ml-2">{report?.severity || 'medium'}</Badge></div>
               ))}
               {openReports.length === 0 && <p className="px-4 py-5 text-xs text-ink-4 text-center font-medium">No open reports ✓</p>}
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <div className="px-4 py-3.5 border-b border-line-2 flex items-center justify-between"><div className="flex items-center gap-2"><UserPlus size={14} className="text-primary" /><h3 className="text-xs font-bold text-ink">Applications</h3></div><button onClick={() => navigate('/applications')} className="text-xs font-bold text-primary hover:underline">Review</button></div>
-            <div className="divide-y divide-line-2">
-              {(applications || []).slice(0, 3).map(app => (
-                <div key={app?.id} onClick={() => navigate('/applications')} className="px-4 py-3 flex items-center gap-3 hover:bg-bg cursor-pointer transition-colors"><Avatar initials={app?.initials || '?'} size="xs" /><div className="flex-1 min-w-0"><p className="text-xs font-bold text-ink truncate">{app?.name || 'Applicant'}</p><div className="w-full bg-line-2 h-1 rounded-full mt-1.5 overflow-hidden"><div className="bg-warning h-full rounded-full transition-all" style={{ width: `${((app?.stage || 0) / 4) * 100}%` }} /></div></div><span className="text-xs font-bold text-ink-4 flex-shrink-0">Step {app?.stage || 0}/4</span></div>
-              ))}
             </div>
           </Card>
         </div>

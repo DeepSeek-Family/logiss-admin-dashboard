@@ -53,8 +53,8 @@ const Applications = ({ role }: { role?: string | null }) => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Driver Applications</h1>
-        <p className="text-ink-3 font-semibold mt-1 tracking-tight">Review and approve new driver onboarding requests</p>
+        <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Driver Applications</h1>
+        <p className="text-ink-3 font-semibold mt-1 tracking-normal">Review and approve new driver onboarding requests</p>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[calc(100vh-250px)]">
@@ -68,7 +68,7 @@ const Applications = ({ role }: { role?: string | null }) => {
               className={`p-5 cursor-pointer transition-all border-2 rounded-2xl ${selectedAppId === app.id ? 'border-primary bg-primary-tint/20 shadow-lg shadow-primary/5' : 'border-line-2'}`}
             >
               <div className="flex justify-between items-start mb-3">
-                <span className="font-mono text-xs font-bold text-ink-4 tracking-tighter uppercase">#{app?.id || '---'}</span>
+                <span className="font-mono text-xs font-bold text-ink-4 tracking-normal uppercase">#{app?.id || '---'}</span>
                 <span className="text-xs font-bold text-ink-4">{app?.submitted ? timeAgo(app.submitted) : '---'}</span>
               </div>
               <div className="flex items-center gap-3 mb-4">
@@ -113,7 +113,7 @@ const Applications = ({ role }: { role?: string | null }) => {
             <Card className="flex flex-col h-fit rounded-2xl border-2 border-line-2 shadow-sm">
               <div className="p-6 border-b border-line-2 flex items-center justify-between bg-tint/10">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm font-bold text-ink-3 tracking-tighter">#{selectedApp?.id || '---'}</span>
+                  <span className="font-mono text-sm font-bold text-ink-3 tracking-normal">#{selectedApp?.id || '---'}</span>
                   <h2 className="text-lg font-bold font-display text-ink">Application Details</h2>
                 </div>
                 <Badge variant="warning">{stages.find(s => s.id === selectedApp?.stage)?.label || 'Pending'}</Badge>
@@ -172,7 +172,7 @@ const Applications = ({ role }: { role?: string | null }) => {
                     <div className="bg-bg rounded-xl border border-line-2 p-4 grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs font-bold text-ink-4 mb-0.5">License No.</p>
-                        <p className="text-xs font-bold font-mono text-ink tracking-tight uppercase">{selectedApp?.license?.number || '---'}</p>
+                        <p className="text-xs font-bold font-mono text-ink tracking-normal uppercase">{selectedApp?.license?.number || '---'}</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-ink-4 mb-0.5">Class</p>
@@ -197,7 +197,7 @@ const Applications = ({ role }: { role?: string | null }) => {
                       <div className="flex justify-between items-center border-t border-line-2 pt-2">
                         <div>
                           <p className="text-xs font-bold text-ink-4 mb-0.5">Policy</p>
-                          <p className="text-xs font-bold font-mono text-ink tracking-tight uppercase">INS-88291</p>
+                          <p className="text-xs font-bold font-mono text-ink tracking-normal uppercase">INS-88291</p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-bold text-ink-4 mb-0.5">Expires</p>

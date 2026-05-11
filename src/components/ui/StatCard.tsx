@@ -22,7 +22,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
   return (
     <Card className="p-6 relative">
       <div className="flex justify-between items-start mb-1">
-        <span className="text-xs font-bold text-ink-4 uppercase tracking-wider">{label}</span>
+        <span className="type-label text-ink-4">{label}</span>
         {Icon && (
           <div className={`p-1.5 rounded-lg ${accents[accent] || accents.primary}`}>
             <Icon size={16} />
@@ -33,12 +33,12 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
       {(sub || trend) && (
         <div className="flex items-center gap-2">
           {trend && (
-            <span className={`flex items-center text-xs font-bold ${trend.startsWith('+') ? 'text-accent' : 'text-urgent'}`}>
+            <span className={`flex items-center type-action ${trend.startsWith('+') ? 'text-accent' : 'text-urgent'}`}>
               {trend.startsWith('+') ? <TrendingUp size={10} className="mr-0.5" /> : <TrendingDown size={10} className="mr-0.5" />}
               {trend}
             </span>
           )}
-          {sub && <span className="text-xs font-medium text-ink-4">{sub}</span>}
+          {sub && <span className="type-caption text-ink-4">{sub}</span>}
         </div>
       )}
     </Card>

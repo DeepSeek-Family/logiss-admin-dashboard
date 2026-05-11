@@ -4,7 +4,7 @@ import {
   Accessibility, Bed, User as UserIcon, Disc, Info, 
   Clock, Navigation, ShieldCheck, Phone, ArrowRight
 } from 'lucide-react';
-import { Avatar, Button } from './UI';
+import { Avatar, Button } from './ui';
 
 interface ManualTripModalProps {
   trips: any[];
@@ -25,7 +25,7 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-1 h-3.5 bg-primary rounded-full" />
     {Icon && <Icon size={14} className="text-primary" />}
-    <h4 className="text-[11px] font-black text-ink uppercase tracking-wider">{title}</h4>
+    <h4 className="text-xs font-black text-ink uppercase tracking-wider">{title}</h4>
   </div>
 );
 
@@ -39,10 +39,13 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
     lastName: '',
     phone: '',
     authId: '',
+    passengerId: '',
+    source: '',
     pickup: '',
     stops: [] as string[],
     dropoff: '',
-    scheduledTime: '',
+    insideCounty: true,
+    requestedPickup: '',
     appointmentTime: '',
     returnTime: '',
     willCall: false,
@@ -105,8 +108,8 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden border border-line-2">
         <div className="flex items-center justify-between px-8 py-5 border-b border-line-2 bg-white sticky top-0 z-10">
           <div>
-            <h3 className="text-xl font-bold text-ink tracking-tight">Manual Booking Console</h3>
-            <p className="text-[11px] text-ink-4 font-bold uppercase tracking-widest mt-0.5">Administrator Entry</p>
+            <h3 className="text-xl font-bold text-ink tracking-normal">Manual Booking Console</h3>
+            <p className="text-xs text-ink-4 font-bold uppercase tracking-widest mt-0.5">Administrator Entry</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-xl text-ink-4 transition-colors"><X size={20} /></button>
         </div>
@@ -147,7 +150,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                           <Avatar initials={r?.initials || '??'} size="xs" />
                           <div>
                             <p className="text-xs font-bold text-ink">{r?.name || 'Unknown'}</p>
-                            <p className="text-[10px] text-ink-4">{r?.phone || 'No phone'}</p>
+                            <p className="text-xs text-ink-4">{r?.phone || 'No phone'}</p>
                           </div>
                         </button>
                       )) : (
@@ -170,15 +173,34 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                     </div>
                   </div>
                   <div className="relative">
-                    <ShieldCheck size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
-                    <input className={`${inputClass} pl-10`} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="Authorization ID / Insurance" />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 flex items-center font-bold text-xs">SRC</div>
+                    <input className={`${inputClass} pl-12`} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} placeholder="Source / County / Program (e.g. Chesterfield County)" required />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                      <ShieldCheck size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
+                      <input className={`${inputClass} pl-10`} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="Auth ID" />
+                    </div>
+                    <div className="relative">
+                      <UserIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
+                      <input className={`${inputClass} pl-10`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="Passenger ID" />
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="space-y-6">
-              <SectionHeader title="Route Selection" icon={Navigation} />
+              <div className="flex items-center justify-between mb-4">
+                <SectionHeader title="Route Selection" icon={Navigation} />
+                <button 
+                  type="button" 
+                  onClick={() => setForm({ ...form, insideCounty: !form.insideCounty })}
+                  className={`px-3 py-1 text-xs font-bold uppercase rounded-full border transition-all ${form.insideCounty ? 'bg-primary/10 text-primary border-primary/20' : 'bg-bg text-ink-4 border-line-2'}`}
+                >
+                  {form.insideCounty ? 'Inside County' : 'Outside County'}
+                </button>
+              </div>
               <div className="space-y-4">
                 <div className="relative pl-10">
                   <div className="absolute left-0 top-2.5 w-4 h-4 rounded-full border-2 border-primary bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary" /></div>
@@ -199,7 +221,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                   <div className="absolute left-0 top-2.5 w-4 h-4 rounded-full border-2 border-urgent bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-urgent" /></div>
                   <input required className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="Destination Address" />
                 </div>
-                <button type="button" onClick={addStop} className="ml-10 text-[11px] font-bold text-primary flex items-center gap-1"><Plus size={14} /> ADD STOP</button>
+                <button type="button" onClick={addStop} className="ml-10 text-xs font-bold text-primary flex items-center gap-1"><Plus size={14} /> ADD STOP</button>
               </div>
             </div>
 
@@ -207,7 +229,14 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
               <div className="space-y-4">
                 <SectionHeader title="Scheduling" icon={Clock} />
                 <div className="space-y-4">
-                  <input required type="datetime-local" className={inputClass} value={form.scheduledTime} onChange={e => setForm({ ...form, scheduledTime: e.target.value })} />
+                  <div className="relative">
+                     <p className="text-xs font-bold text-ink-4 uppercase mb-1 ml-1">Pickup</p>
+                     <input required type="datetime-local" className={inputClass} value={form.requestedPickup} onChange={e => setForm({ ...form, requestedPickup: e.target.value })} />
+                  </div>
+                  <div className="relative">
+                     <p className="text-xs font-bold text-ink-4 uppercase mb-1 ml-1">Appointment Time</p>
+                     <input type="datetime-local" className={inputClass} value={form.appointmentTime} onChange={e => setForm({ ...form, appointmentTime: e.target.value })} />
+                  </div>
                   <div className="flex bg-bg p-1 rounded-xl border border-line-2">
                     {['one_way', 'round_trip'].map(t => (
                       <button key={t} type="button" onClick={() => setForm({...form, type: t as any})} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${form.type === t ? 'bg-white shadow-sm text-primary' : 'text-ink-4'}`}>
@@ -231,7 +260,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                       <div className={`p-2 rounded-lg ${form.mobility === opt.id ? 'bg-primary text-white' : 'bg-bg text-ink-4'}`}>
                         <opt.icon size={16} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase">{opt.label}</span>
+                      <span className="text-xs font-bold uppercase">{opt.label}</span>
                     </button>
                   ))}
                 </div>

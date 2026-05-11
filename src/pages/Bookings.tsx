@@ -4,11 +4,12 @@ import {
   Search, Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
   AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
-  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink
+  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '../components/ui';
 import { ManualTripModal } from '../components/ManualTripModal';
 import { useTrips } from '../hooks/useTrips';
+import { tripService } from '../services/tripService';
 import { useDrivers } from '../hooks/useDrivers';
 import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from '../utils/helpers';
 import { CancelTripModal } from './Reports';
@@ -25,10 +26,10 @@ const hasTimeConflict = (existingTrip: any, candidateTime: string | null) => {
 
 // Helper: check if driver vehicle type matches trip mobility need
 const isVehicleMatch = (driver: any, booking: any) => {
-  if (!booking?.mobility) return false;
+  if (!booking?.mobility || booking.mobility.toLowerCase() === 'standard') return true;
   const need = booking.mobility.toLowerCase();
   const type = driver.vehicle?.type?.toLowerCase() || '';
-  if (need === 'wheelchair' || need === 'stretcher') return type.includes(need.split(' ')[0]);
+  if (need.includes('wheelchair') || need.includes('stretcher')) return type.includes(need.split(' ')[0]);
   return true; // ambulatory / cane can use any van
 };
 
@@ -42,10 +43,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const { trips, loading: tripsLoading } = useTrips();
+  const { trips, loading: tripsLoading, refresh } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
 
   const loading = tripsLoading || driversLoading;
@@ -62,6 +64,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
     const matchesSearch = !search ||
       (t?.rider?.name || '').toLowerCase().includes(search) ||
       (t?.id || '').toLowerCase().includes(search) ||
+      (t?.passengerId || '').toLowerCase().includes(search) ||
+      (t?.authorizationId || t?.authId || '').toLowerCase().includes(search) ||
+      (t?.source || '').toLowerCase().includes(search) ||
       (t?.pickup || '').toLowerCase().includes(search) ||
       (t?.dropoff || '').toLowerCase().includes(search);
 
@@ -71,12 +76,35 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
   const paginatedBookings = filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedTrips.length === 0) return;
 
     if (action === 'approve') {
-      toast.success(`${selectedTrips.length} bookings approved successfully`);
-      setSelectedTrips([]);
+      try {
+        await Promise.all(selectedTrips.map(id => tripService.updateTripStatus(id, 'confirmed')));
+        toast.success(`${selectedTrips.length} bookings approved successfully`);
+        setSelectedTrips([]);
+        refresh();
+      } catch (e) {
+        toast.error('Failed to approve bookings');
+      }
+    } else if (action === 'dispatch') {
+      const tripsToDispatch = selectedTrips.filter(id => {
+        const t = trips.find((trip: any) => trip.id === id);
+        return t && t.driverId;
+      });
+      if (tripsToDispatch.length === 0) {
+        toast.error('No selected trips have a driver assigned.');
+        return;
+      }
+      try {
+        await Promise.all(tripsToDispatch.map(id => tripService.updateTripStatus(id, 'en_route')));
+        toast.success(`${tripsToDispatch.length} trips dispatched to Live Trips`);
+        setSelectedTrips([]);
+        refresh();
+      } catch (e) {
+        toast.error('Failed to dispatch trips');
+      }
     } else if (action === 'cancel') {
       setShowBulkCancelModal(true);
     }
@@ -96,9 +124,17 @@ const Bookings = ({ role }: { role?: string | null }) => {
     setSelectedTrips(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
   };
 
-  const handleAssign = (driverId: string) => {
-    setIsAssigning(false);
-    toast.success('Driver assigned — trip moved to Live Trips');
+  const handleAssign = async (driverId: string) => {
+    if (!selectedBookingId) return;
+    try {
+      await tripService.assignDriver(selectedBookingId, driverId);
+      await tripService.updateTripStatus(selectedBookingId, 'confirmed');
+      toast.success('Driver assigned — ready to dispatch');
+      setIsAssigning(false);
+      refresh(); // keep sidebar open so dispatcher can confirm
+    } catch (e) {
+      toast.error('Failed to assign driver');
+    }
   };
 
   const openBooking = (id: string) => {
@@ -111,17 +147,42 @@ const Bookings = ({ role }: { role?: string | null }) => {
     setIsAssigning(false);
   };
 
-  const handleDispatch = () => {
-    toast.success('Trip dispatched successfully');
-    closeBooking();
+  const handleDispatch = async (id?: any) => {
+    const targetId = typeof id === 'string' ? id : selectedBookingId;
+    if (!targetId) return;
+    const targetTrip = trips.find((t: any) => t.id === targetId);
+    if (!targetTrip?.driverId) {
+      toast.error('Cannot dispatch: No driver assigned');
+      return;
+    }
+    try {
+      await tripService.updateTripStatus(targetId, 'en_route');
+      toast.success('Trip dispatched to Live Trips');
+      if (targetId === selectedBookingId) closeBooking();
+      refresh();
+    } catch (e) {
+      toast.error('Failed to dispatch trip');
+    }
   };
 
   const handleReject = () => {
     setShowCancelModal(true);
   };
 
-  const handleApprove = () => {
-    toast.success('Booking approved — moved to Ready to Assign');
+  const handleApprove = async (id?: any) => {
+    const targetId = typeof id === 'string' ? id : selectedBookingId;
+    if (!targetId) return;
+    try {
+      await tripService.updateTripStatus(targetId, 'confirmed');
+      toast.success('Booking approved — moved to Ready to Assign');
+      if (targetId === selectedBookingId) {
+        // Optionally keep it open to show the new state
+      }
+      refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to approve booking');
+    }
   };
 
   const selectedBooking = selectedBookingId ? (trips || []).find((t: any) => t?.id === selectedBookingId) : null;
@@ -129,6 +190,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const smartDrivers = (drivers || [])
     .filter((d: any) => d?.onDuty && isVehicleMatch(d, selectedBooking))
+    .filter((d: any) => {
+      const search = driverSearch.toLowerCase().trim();
+      return !search || d?.name?.toLowerCase().includes(search) || d?.id?.toLowerCase().includes(search);
+    })
     .map((driver: any) => {
       const activeTrips = (trips || []).filter((t: any) =>
         t?.driverId === driver?.id &&
@@ -166,10 +231,16 @@ const Bookings = ({ role }: { role?: string | null }) => {
       {showBulkCancelModal && (
         <CancelTripModal
           onClose={() => setShowBulkCancelModal(false)}
-          onConfirm={(reason) => {
-            toast.success(`${selectedTrips.length} bookings cancelled`);
-            setSelectedTrips([]);
-            setShowBulkCancelModal(false);
+          onConfirm={async (reason) => {
+            try {
+              await Promise.all(selectedTrips.map(id => tripService.updateTripStatus(id, 'cancelled')));
+              toast.success(`${selectedTrips.length} bookings cancelled`);
+              setSelectedTrips([]);
+              setShowBulkCancelModal(false);
+              refresh();
+            } catch (e) {
+              toast.error('Failed to cancel bookings');
+            }
           }}
         />
       )}
@@ -177,34 +248,43 @@ const Bookings = ({ role }: { role?: string | null }) => {
       {showCancelModal && (
         <CancelTripModal
           onClose={() => setShowCancelModal(false)}
-          onConfirm={(reason) => {
+          onConfirm={async (reason) => {
+            if (selectedBookingId) {
+              try {
+                await tripService.updateTripStatus(selectedBookingId, 'cancelled');
+                toast.success('Booking declined');
+                closeBooking();
+                refresh();
+              } catch (e) {
+                toast.error('Failed to decline booking');
+              }
+            }
             setShowCancelModal(false);
-            closeBooking();
           }}
         />
       )}
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-black font-display text-ink tracking-tight">Booking Requests</h1>
+          <h1 className="text-4xl font-black font-display text-ink tracking-normal">Booking Requests</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-wide">Review and dispatch medical transportation requests</p>
         </div>
         <Button variant="primary" icon={Plus} onClick={() => navigate('/create-booking')}>Manual Entry</Button>
       </div>
 
       <div className="flex items-center gap-1 border-b border-line-2">
-        {['pending', 'confirmed'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => { setActiveTab(tab); setCurrentPage(1); setSelectedBookingId(null); }}
-            className={`px-4 py-2 text-sm font-bold border-b-2 transition-all ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-ink-3 hover:text-ink-2'}`}
-          >
-            {tab === 'pending' ? 'Pending Review' : 'Ready to Assign'}
-            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${activeTab === tab ? 'bg-primary-light text-primary' : 'bg-bg text-ink-4'}`}>
-              {trips.filter((t: any) => tab === 'pending' ? t.status === 'pending_review' : t.status === 'confirmed').length}
-            </span>
-          </button>
-        ))}
+        <button
+          className={`pb-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-3 hover:text-ink hover:border-line-2'}`}
+          onClick={() => { setActiveTab('pending'); setCurrentPage(1); setSelectedBookingId(null); setSelectedTrips([]); }}
+        >
+          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-black ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'pending_review').length}</span>
+        </button>
+        <button
+          className={`pb-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-3 hover:text-ink hover:border-line-2'}`}
+          onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); setSelectedBookingId(null); setSelectedTrips([]); }}
+        >
+          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-black ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'confirmed').length}</span>
+        </button>
       </div>
 
       <div className="relative w-full max-w-sm">
@@ -224,21 +304,25 @@ const Bookings = ({ role }: { role?: string | null }) => {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-bg border-b border-line-2">
-                  <tr>
-                    <th className="px-6 py-4 w-10">
-                      <input
-                        type="checkbox"
-                        checked={paginatedBookings.length > 0 && paginatedBookings.every((b: any) => selectedTrips.includes(b.id))}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-line text-primary cursor-pointer"
-                      />
-                    </th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                  <tr className="border-b border-line-2 bg-bg/50">
+                    {activeTab === 'pending' && (
+                      <th className="px-6 py-4 w-12">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                            checked={paginatedBookings.length > 0 && paginatedBookings.every((b: any) => selectedTrips.includes(b.id))}
+                            onChange={toggleSelectAll}
+                          />
+                        </div>
+                      </th>
+                    )}
+                    <th className="px-3 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
                     <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Created</th>
                     <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
                     <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
                     <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Type</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Scheduled</th>
+                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Pickup Time</th>
                     <th className="px-6 py-4 text-right"></th>
                   </tr>
                 </thead>
@@ -247,42 +331,81 @@ const Bookings = ({ role }: { role?: string | null }) => {
                     <tr
                       key={booking.id}
                       onClick={() => openBooking(booking.id)}
-                      className={`cursor-pointer transition-colors group ${selectedBookingId === booking.id ? 'bg-primary-tint/20' : 'hover:bg-bg'} ${selectedTrips.includes(booking.id) ? 'bg-accent-light/10' : ''}`}
+                      className={`border-b border-line-2 hover:bg-line-2/20 transition-colors cursor-pointer ${selectedBookingId === booking.id ? 'bg-primary-tint/20' : 'hover:bg-bg'} ${selectedTrips.includes(booking.id) ? 'bg-accent-light/10' : ''} ${booking.isUrgent ? 'border-l-4 border-l-urgent border-urgent/30 bg-urgent-light/10' : ''}`}
                     >
-                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
+                      {activeTab === 'pending' && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                            <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
+                          </div>
+                        </td>
+                      )}
+                      <td className="px-3 py-4">
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <span className="font-mono text-xs font-bold text-ink uppercase whitespace-nowrap">#{booking?.id || '---'}</span>
+                          {booking.isUrgent && <span className="bg-urgent text-white text-xs font-black px-1.5 py-0.5 rounded uppercase tracking-widest shadow-sm shadow-urgent/30">URGENT</span>}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs font-bold text-ink uppercase">#{booking?.id || '---'}</td>
                       <td className="px-6 py-4">
                         <p className="text-xs font-bold text-ink">{booking?.submittedTime ? formatShortDate(booking.submittedTime) : '-'}</p>
                         <p className="text-xs text-ink-4">{booking?.submittedTime ? formatTime(booking.submittedTime) : '-'}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3"><Avatar initials={booking?.rider?.initials || '?'} size="xs" /><span className="text-sm font-bold text-ink leading-tight">{booking?.rider?.name || 'Unknown'}</span></div>
-                      </td>
-                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                          <span className="text-[13px] font-semibold text-ink max-w-[140px] truncate">{booking?.pickup || '---'}</span>
-                          <ArrowRight size={12} className="text-ink-4 shrink-0" />
-                          <MapPin size={13} className="text-urgent shrink-0" />
-                          <span className="text-[13px] font-semibold text-ink-2 max-w-[140px] truncate">{booking?.dropoff || '---'}</span>
+                          <Avatar initials={booking?.rider?.initials || '?'} size="xs" />
+                          <div>
+                            <p className="text-sm font-bold text-ink leading-tight">{booking?.rider?.name || 'Unknown'}</p>
+                            <p className="text-xs font-medium text-ink-4 tracking-normal mt-0.5">
+                              {booking?.passengerId ? `PX: ${booking.passengerId}` : booking?.authorizationId ? `Auth: ${booking.authorizationId}` : ''}
+                            </p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
-                          <Badge variant="primary" className="w-fit">{booking?.mobility || 'Standard'}</Badge>
-                          {booking?.type === 'round_trip' ? <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit"><Repeat size={10} strokeWidth={3} /><span className="text-xs font-bold">Round Trip</span></div> : <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit"><MoveRight size={10} strokeWidth={3} /><span className="text-xs font-bold">One Way</span></div>}
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
+                          <span className="text-xs font-semibold text-ink max-w-[120px] truncate">{booking?.pickup || '---'}</span>
+                          
+                          {/* Intermediate Stop Indicator */}
+                          {(booking?.stop || (booking?.stops && booking.stops.length > 0)) ? (
+                            <div className="flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+                              <span className="text-xs font-black text-warning-dark uppercase tracking-widest whitespace-nowrap">
+                                {Array.isArray(booking.stops) ? `+${booking.stops.length} Stop${booking.stops.length > 1 ? 's' : ''}` : '+1 Stop'}
+                              </span>
+                            </div>
+                          ) : (
+                            <ArrowRight size={12} className="text-ink-4 shrink-0 mx-1" />
+                          )}
+
+                          <MapPin size={13} className="text-urgent shrink-0" />
+                          <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate">{booking?.dropoff || '---'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="primary" className="w-fit px-2 py-0.5 text-xs uppercase font-black tracking-wider">{booking?.mobility || 'Standard'}</Badge>
+                          {booking?.type === 'round_trip' ? (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
+                              <Repeat size={10} strokeWidth={3} />
+                              <span className="text-xs font-black uppercase tracking-wider">Round Trip</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit">
+                              <MoveRight size={10} strokeWidth={3} />
+                              <span className="text-xs font-black uppercase tracking-wider">One Way</span>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-xs font-bold text-ink">{formatShortDate(booking?.scheduledTime)}</p>
-                        <p className="text-xs text-ink-4">{formatTime(booking?.scheduledTime)}</p>
+                        <p className="text-xs font-bold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
+                        <p className="text-xs font-bold text-ink-4 mt-0.5 tracking-normal uppercase">Appt: {booking?.appointmentTime || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
                           {activeTab === 'pending' ? (
-                            <button className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); handleApprove(); }}><Check size={18} /></button>
+                            <button className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); handleApprove(booking.id); }}><Check size={18} /></button>
                           ) : (
                             <button className="p-2 text-primary hover:bg-primary-light rounded-xl transition-all flex items-center gap-1.5 px-3" onClick={(e) => { e.stopPropagation(); openBooking(booking.id); setIsAssigning(true); }}><Users size={16} /><span className="text-xs font-bold">Assign Driver</span></button>
                           )}
@@ -315,8 +438,14 @@ const Bookings = ({ role }: { role?: string | null }) => {
               <div><p className="text-sm font-bold">Trips Selected</p><p className="text-xs font-bold text-white/50 uppercase">Ready for action</p></div>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="primary" size="md" icon={Check} className="bg-accent border-none px-6" onClick={() => handleBulkAction('approve')}>Approve All</Button>
-              <Button variant="outline" size="md" icon={Trash2} className="border-white/20 text-white hover:bg-white/10 px-6" onClick={() => handleBulkAction('cancel')}>Cancel All</Button>
+              {activeTab === 'pending' ? (
+                <>
+                  <Button variant="primary" size="md" icon={Check} className="bg-accent border-none px-6" onClick={() => handleBulkAction('approve')}>Approve All</Button>
+                  <Button variant="outline" size="md" icon={Trash2} className="border-white/20 text-white hover:bg-white/10 px-6" onClick={() => handleBulkAction('cancel')}>Cancel All</Button>
+                </>
+              ) : (
+                <Button variant="outline" size="md" icon={Trash2} className="border-white/20 text-white hover:bg-white/10 px-6" onClick={() => handleBulkAction('cancel')}>Cancel All</Button>
+              )}
               <button onClick={() => setSelectedTrips([])} className="text-xs font-bold text-white/40 hover:text-white transition-colors ml-4">Deselect</button>
             </div>
           </div>
@@ -339,13 +468,40 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
                   <section className="bg-bg rounded-xl p-4 border border-line-2">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3"><Avatar initials={selectedBooking.rider.initials} size="md" /><div><h3 className="text-sm font-bold text-ink">{selectedBooking.rider.name}</h3><p className="text-xs text-ink-4">{selectedBooking.rider.age} yrs · {selectedBooking.rider.phone}</p></div></div>
-                      <Button variant="outline" size="sm" icon={Phone}>Call</Button>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar initials={selectedBooking.rider.initials} size="md" className="shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h3 className="text-sm font-bold text-ink">{selectedBooking.rider.name}</h3>
+                            {selectedBooking.source && <Badge variant="outline" className="text-xs font-bold text-primary border-primary/20 bg-primary/5 uppercase">{selectedBooking.source}</Badge>}
+                          </div>
+                          <p className="text-xs text-ink-4 mt-1">
+                            {selectedBooking.rider.phone} · ID: {selectedBooking.passengerId || 'PX-N/A'}
+                          </p>
+                          <p className="text-xs font-bold text-ink-4 mt-0.5">
+                            Auth: <span className="text-primary">{selectedBooking.authorizationId || selectedBooking.authId || '---'}</span>
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><p className="text-xs font-bold text-ink-4 mb-1">Pickup Time</p><p className="text-xs font-bold text-ink">{formatDateTime(selectedBooking.scheduledTime)}</p></div>
-                      <div><p className="text-xs font-bold text-ink-4 mb-1">Trip Type</p><p className="text-xs font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p></div>
+                    <div className="grid grid-cols-4 gap-3 border-t border-line-2 pt-4">
+                      <div>
+                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Pickup</p>
+                        <p className="text-xs font-bold text-ink">{selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Appointment</p>
+                        <p className="text-xs font-bold text-primary">{selectedBooking.appointmentTime || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Trip Type</p>
+                        <p className="text-xs font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Mobility</p>
+                        <Badge variant="warning" className="text-xs px-1.5 py-0 uppercase font-black">{selectedBooking.mobility || 'Ambulatory'}</Badge>
+                      </div>
                     </div>
                   </section>
 
@@ -411,14 +567,40 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         <Button variant="outline" size="sm">Select</Button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between mb-2"><p className="text-xs font-bold text-ink-3">Recommended Drivers</p><button onClick={() => setIsAssigning(false)} className="text-xs font-bold text-primary">Cancel</button></div>
-                        {smartDrivers.map((driver: any) => (
-                          <div key={driver.id} className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${driver.hasConflict ? 'border-line-2 opacity-50' : 'border-line-2 hover:border-primary/30 hover:bg-primary-tint/10'}`}>
-                            <div className="flex items-center gap-2.5"><Avatar initials={driver.initials} size="sm" online={driver.onDuty} /><div><p className="text-sm font-bold text-ink">{driver.name}</p><p className="text-xs text-ink-4">{driver.vehicle.type} · {driver.rating} ★</p></div></div>
-                            <Button variant="outline" size="sm" onClick={() => handleAssign(driver.id)} disabled={driver.hasConflict}>{driver.hasConflict ? 'Busy' : 'Assign'}</Button>
-                          </div>
-                        ))}
+                      <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-bold text-ink-3">Recommended Drivers</p>
+                          <button onClick={() => { setIsAssigning(false); setDriverSearch(''); }} className="text-xs font-bold text-primary hover:underline">Cancel</button>
+                        </div>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={13} />
+                          <input
+                            type="text"
+                            placeholder="Search by name or ID..."
+                            value={driverSearch}
+                            onChange={(e) => setDriverSearch(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+                          />
+                        </div>
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                          {smartDrivers.length > 0 ? smartDrivers.map((driver: any) => (
+                            <div key={driver.id} className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${driver.hasConflict ? 'border-line-2 opacity-60 bg-bg/50' : 'border-line-2 bg-white hover:border-primary/30 hover:bg-primary-tint/10'}`}>
+                              <div className="flex items-center gap-2.5">
+                                <Avatar initials={driver.initials} size="sm" online={driver.onDuty} />
+                                <div>
+                                  <p className="text-sm font-bold text-ink">{driver.name}</p>
+                                  <p className="text-xs font-semibold text-ink-4 uppercase tracking-normal mt-0.5">{driver.vehicle.type} · {driver.rating} ★</p>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" onClick={() => handleAssign(driver.id)} disabled={driver.hasConflict}>{driver.hasConflict ? 'Busy' : 'Assign'}</Button>
+                            </div>
+                          )) : (
+                            <div className="py-6 flex flex-col items-center justify-center text-ink-4 border border-dashed border-line-2 rounded-xl">
+                              <Search size={24} className="opacity-20 mb-2" />
+                              <p className="text-xs font-bold">No drivers found</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </section>
@@ -426,9 +608,17 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
                 <div className="p-6 border-t border-line-2 bg-white space-y-3">
                   {selectedBooking.status === 'pending_review' ? (
-                    <div className="flex gap-3"><Button variant="ghost" className="text-urgent flex-1" onClick={handleReject}>Decline</Button><Button variant="primary" className="flex-1" onClick={handleApprove}>Confirm</Button></div>
+                    <div className="flex gap-3">
+                      <Button variant="ghost" className="text-urgent flex-1" onClick={() => handleReject()}>Decline</Button>
+                      <Button variant="primary" className="flex-1" onClick={() => handleApprove()}>Confirm</Button>
+                    </div>
+                  ) : selectedBooking.driverId ? (
+                    <div className="space-y-2">
+                      <Button variant="accent" className="w-full py-3.5 text-sm font-bold" icon={Navigation} onClick={() => handleDispatch()}>Confirm & Dispatch Trip</Button>
+                      <Button variant="ghost" className="w-full text-urgent text-xs" onClick={() => handleReject()}>Cancel Trip</Button>
+                    </div>
                   ) : (
-                    <Button variant="accent" className="w-full py-4 text-base" icon={Navigation} onClick={handleDispatch} disabled={!selectedBooking.driverId}>Dispatch Trip</Button>
+                    <Button variant="ghost" className="w-full text-urgent" onClick={() => handleReject()}>Cancel Trip</Button>
                   )}
                 </div>
               </div>

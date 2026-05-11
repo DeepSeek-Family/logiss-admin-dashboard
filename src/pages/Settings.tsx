@@ -133,8 +133,8 @@ const Settings = ({ role }: { role?: string | null }) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">System Settings</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-tight">Security, notifications, and operational preferences</p>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">System Settings</h1>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Security, notifications, and operational preferences</p>
         </div>
         <Button variant="primary" onClick={handleSave}>
           {saved ? <><CheckCircle2 size={14} className="inline mr-1.5" />Saved</> : 'Save Changes'}
@@ -321,7 +321,7 @@ const Settings = ({ role }: { role?: string | null }) => {
             <div className="animate-in slide-in-from-bottom-2 duration-200">
               <Card className="p-8 space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-ink tracking-tight">Organization Contact Channels</h3>
+                  <h3 className="text-lg font-bold text-ink tracking-normal">Organization Contact Channels</h3>
                   <p className="text-xs text-ink-4 mt-1 font-medium">Platform-wide support and emergency communication parameters.</p>
                 </div>
 
@@ -332,7 +332,7 @@ const Settings = ({ role }: { role?: string | null }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-bold text-urgent mb-1">Emergency Operational Hotline</p>
-                      <p className="text-xl font-bold text-ink tracking-tight font-mono">(804) 555-9110</p>
+                      <p className="text-xl font-bold text-ink tracking-normal font-mono">(804) 555-9110</p>
                       <p className="text-xs font-bold text-urgent/60 mt-1">Direct Priority Access · 24/7 Monitoring</p>
                     </div>
                   </div>
@@ -343,7 +343,7 @@ const Settings = ({ role }: { role?: string | null }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-bold text-primary mb-1">General Dispatch Control</p>
-                      <p className="text-xl font-bold text-ink tracking-tight font-mono">(804) 555-LOGI</p>
+                      <p className="text-xl font-bold text-ink tracking-normal font-mono">(804) 555-LOGI</p>
                       <p className="text-xs font-bold text-ink-4 mt-1">Standard Operations · 6 AM – 10 PM EST</p>
                     </div>
                   </div>

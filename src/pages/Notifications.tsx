@@ -136,7 +136,7 @@ const Notifications = ({ role }: { role?: string | null }) => {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Communication Hub</h1>
+            <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Communication Hub</h1>
             {unreadCount > 0 && (
               <span className="px-2.5 py-1 bg-urgent text-white text-xs font-extrabold rounded-full leading-none">{unreadCount}</span>
             )}
@@ -167,7 +167,7 @@ const Notifications = ({ role }: { role?: string | null }) => {
             >
               {cat}
               {count > 0 && (
-                <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full leading-none ${activeFilter === cat ? 'bg-white/20 text-white' : 'bg-urgent/10 text-urgent'}`}>
+                <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full leading-none ${activeFilter === cat ? 'bg-white/20 text-white' : 'bg-urgent/10 text-urgent'}`}>
                   {count}
                 </span>
               )}
@@ -211,14 +211,14 @@ const Notifications = ({ role }: { role?: string | null }) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4 mb-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${notif.bg} ${notif.color}`}>
+                  <span className={`text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${notif.bg} ${notif.color}`}>
                     {notif.category}
                   </span>
                   {!notif.read && (
-                    <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/5 text-primary">New</span>
+                    <span className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/5 text-primary">New</span>
                   )}
                 </div>
-                <span className="text-[10px] font-bold text-ink-4 flex items-center gap-1 uppercase tracking-widest shrink-0 bg-bg px-2 py-1 rounded-lg">
+                <span className="text-xs font-bold text-ink-4 flex items-center gap-1 uppercase tracking-widest shrink-0 bg-bg px-2 py-1 rounded-lg">
                   <Clock size={10} /> {timeAgo(notif.time)}
                 </span>
               </div>
@@ -231,13 +231,13 @@ const Notifications = ({ role }: { role?: string | null }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   {notif.action && (
-                    <button className={`text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 transition-colors ${notif.color} hover:opacity-70`}>
+                    <button className={`text-xs font-extrabold uppercase tracking-widest flex items-center gap-1 transition-colors ${notif.color} hover:opacity-70`}>
                       {notif.action} <ChevronRight size={11} />
                     </button>
                   )}
                   {!notif.read && (
                     <button
-                      className="text-[10px] font-bold text-ink-4 uppercase tracking-widest hover:text-ink transition-colors"
+                      className="text-xs font-bold text-ink-4 uppercase tracking-widest hover:text-ink transition-colors"
                       onClick={e => { e.stopPropagation(); markRead(notif.id); }}
                     >
                       Mark read
@@ -245,7 +245,7 @@ const Notifications = ({ role }: { role?: string | null }) => {
                   )}
                 </div>
                 <button
-                  className="text-[10px] font-bold text-ink-4 uppercase tracking-widest hover:text-urgent transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-xs font-bold text-ink-4 uppercase tracking-widest hover:text-urgent transition-colors opacity-0 group-hover:opacity-100"
                   onClick={e => { e.stopPropagation(); deleteItem(notif.id); }}
                 >
                   <Trash2 size={13} />
@@ -258,7 +258,7 @@ const Notifications = ({ role }: { role?: string | null }) => {
 
       {items.length > 0 && (
         <div className="pt-4 text-center">
-          <p className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.2em]">Showing last 30 days of activity</p>
+          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.2em]">Showing last 30 days of activity</p>
         </div>
       )}
     </div>

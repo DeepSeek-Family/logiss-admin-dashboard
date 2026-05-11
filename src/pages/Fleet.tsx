@@ -37,7 +37,7 @@ const EMPTY_FORM: FleetForm = {
   insuranceProvider: '', insurancePolicy: '', insuranceExpiry: '',
 };
 
-const VEHICLE_PLACEHOLDER = "C:\\Users\\being\\.gemini\\antigravity\\brain\\f72299ac-f7db-4b11-8522-53b8903b8c83\\modern_medical_transport_van_1777469722489.png";
+const VEHICLE_PLACEHOLDER = '/vehicle-placeholder.svg';
 
 const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) => {
   const [form, setForm] = useState<FleetForm>(EMPTY_FORM);
@@ -53,7 +53,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
               <Plus size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold font-display text-ink tracking-tight">Register New Unit</h2>
+              <h2 className="text-xl font-bold font-display text-ink tracking-normal">Register New Unit</h2>
               <p className="text-xs text-ink-3 font-semibold mt-1">Deployment Step {step} of 2</p>
             </div>
           </div>
@@ -128,11 +128,11 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Current Odometer</label>
+                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Current Odometer</label>
                     <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="number" placeholder="0" value={form.mileage} onChange={e => set('mileage', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Next Service Date</label>
+                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Next Service Date</label>
                     <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="date" value={form.nextService} onChange={e => set('nextService', e.target.value)} />
                   </div>
                 </div>
@@ -142,16 +142,16 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                   <ShieldCheck size={14} className="text-accent" /> Insurance Records
                 </p>
                 <div>
-                  <label className="block text-[9px] font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Carrier Provider</label>
+                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Carrier Provider</label>
                   <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" placeholder="e.g., Progressive Commercial" value={form.insuranceProvider} onChange={e => set('insuranceProvider', e.target.value)} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Policy Number</label>
+                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Policy Number</label>
                     <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" placeholder="POL-00000" value={form.insurancePolicy} onChange={e => set('insurancePolicy', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Expiration Date</label>
+                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Expiration Date</label>
                     <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="date" value={form.insuranceExpiry} onChange={e => set('insuranceExpiry', e.target.value)} />
                   </div>
                 </div>
@@ -220,7 +220,7 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
         <div className="flex items-center gap-3">
           <Avatar initials={driver.initials} size="xs" online={driver.onDuty} className="ring-2 ring-white shadow-sm" />
           <div className="min-w-0">
-            <p className="text-xs font-bold text-ink truncate tracking-tight">{driver.name}</p>
+            <p className="text-xs font-bold text-ink truncate tracking-normal">{driver.name}</p>
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-ink-4 font-semibold flex items-center gap-0.5"><Star size={8} className="fill-warning text-warning" /> {driver.rating}</span>
               <span className="text-xs text-primary font-bold">#{driver.totalTrips}T</span>
@@ -321,7 +321,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Fleet Management</h1>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Fleet Management</h1>
           <p className="text-ink-3 text-sm mt-1">Real-time asset tracking, compliance auditing, and operator logistics</p>
         </div>
         {role === 'admin' && (
@@ -343,7 +343,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
             </div>
             <div className="min-w-0 relative z-10">
               <p className="text-xs font-bold text-ink-4 leading-none mb-2">{s.label}</p>
-              <p className="text-2xl font-bold text-ink tracking-tight leading-none">{s.value}</p>
+              <p className="text-2xl font-bold text-ink tracking-normal leading-none">{s.value}</p>
               <p className="text-xs font-medium text-ink-3 mt-2 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-line-2" /> {s.sub}</p>
             </div>
           </Card>
@@ -397,7 +397,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                           <img src={v.image || VEHICLE_PLACEHOLDER} alt={v.plate} className="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink truncate tracking-tight">{v.year} {v.make} {v.model}</p>
+                          <p className="text-sm font-bold text-ink truncate tracking-normal">{v.year} {v.make} {v.model}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="font-mono text-xs font-bold text-ink-2 bg-bg px-1.5 py-0.5 rounded border border-line-2">{v.plate}</span>
                             <span className="text-xs text-ink-4 font-medium">ID: {v.id.slice(0, 8)}</span>
@@ -422,7 +422,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-ink tracking-tight">{(v?.mileage || 0).toLocaleString()}<span className="text-xs text-ink-4 font-medium ml-1">mi</span></p>
+                      <p className="text-sm font-bold text-ink tracking-normal">{(v?.mileage || 0).toLocaleString()}<span className="text-xs text-ink-4 font-medium ml-1">mi</span></p>
                       <p className="text-xs font-medium text-ink-4 mt-0.5">{v?.seats || 0} Capacity</p>
                     </td>
 
@@ -458,7 +458,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     <div className="w-20 h-20 bg-bg rounded-[32px] flex items-center justify-center text-ink-4 mx-auto mb-6 shadow-inner border-2 border-dashed border-line group">
                       <Truck size={40} className="group-hover:text-primary transition-colors" />
                     </div>
-                    <p className="text-lg font-black text-ink tracking-tight">No Matching Assets Identified</p>
+                    <p className="text-lg font-black text-ink tracking-normal">No Matching Assets Identified</p>
                     <p className="text-sm font-medium text-ink-3 mt-1">Refine your search parameters or filter criteria.</p>
                   </td>
                 </tr>

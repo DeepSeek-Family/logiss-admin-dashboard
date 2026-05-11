@@ -106,7 +106,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-black font-display text-ink tracking-tight">{vehicle.make} {vehicle.model}</h1>
+              <h1 className="text-3xl font-black font-display text-ink tracking-normal">{vehicle.make} {vehicle.model}</h1>
               <Badge variant={vehicle.status === 'available' ? 'accent' : vehicle.status === 'maintenance' ? 'urgent' : 'primary'}>
                 {vehicle.status.replace('_', ' ')}
               </Badge>
@@ -146,14 +146,15 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
           </div>
 
           {/* Main Content Area */}
-          <Card className="overflow-hidden border-line-2 shadow-sm ring-1 ring-ink/5">
-            <div className="flex border-b border-line-2 bg-bg/30 p-1">
+          <Card className="overflow-hidden border-none shadow-sm">
+            <div className="flex items-center gap-1 bg-bg p-1 rounded-xl border border-line-2 mb-6 w-fit mx-6 mt-6">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] transition-all relative ${activeTab === tab.id ? 'text-primary bg-white shadow-sm ring-1 ring-ink/5' : 'text-ink-4 hover:text-ink hover:bg-white/50'
-                    }`}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === tab.id ? 'bg-white text-primary shadow-sm border border-line-2' : 'text-ink-4 hover:text-ink'
+                  }`}
                 >
                   <tab.icon size={14} />
                   <span className="hidden md:inline">{tab.label}</span>
@@ -163,61 +164,58 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
 
             <div className="p-8">
               {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in duration-500">
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Vehicle Specifications</h3>
-                      <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+                  <div className="space-y-6">
+                    <Card className="p-6">
+                      <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Vehicle Specifications</h4>
+                      <div className="space-y-4">
                         {[
-                          ['Category', vehicle.type, Truck],
-                          ['Max Occupancy', `${vehicle.seats} Riders`, User],
-                          ['Exterior Color', vehicle.color, Fuel],
-                          ['VIN Identification', vehicle.vin, Hash],
-                          ['Model Year', vehicle.year, Calendar],
-                          ['Service Status', vehicle.status, Activity]
-                        ].map(([l, v, Icon]) => (
-                          <div key={l} className="flex items-center justify-between p-3.5 rounded-xl hover:bg-bg/50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <Icon size={14} className="text-ink-4" />
-                              <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wider">{l}</span>
-                            </div>
-                            <span className="text-xs font-bold text-ink">{v}</span>
+                          ['Category', vehicle.type],
+                          ['Max Occupancy', `${vehicle.seats} Riders`],
+                          ['Exterior Color', vehicle.color],
+                          ['VIN Identification', vehicle.vin],
+                          ['Model Year', vehicle.year],
+                          ['Service Status', vehicle.status.replace('_', ' ')]
+                        ].map(([l, v]) => (
+                          <div key={l} className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
+                            <span className="text-xs font-bold text-ink-4">{l}</span>
+                            <span className="text-xs font-bold text-ink capitalize">{v}</span>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </Card>
 
-                    <div className="p-5 bg-primary-tint/10 rounded-2xl border border-primary/10">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Info size={16} className="text-primary" />
-                        <p className="text-sm font-bold text-primary">Special Equipment</p>
+                    <Card className="p-6">
+                      <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Special Equipment</h4>
+                      <div className="p-4 bg-primary-tint/10 rounded-2xl border border-primary/10 flex gap-3">
+                        <Info size={16} className="text-primary shrink-0 mt-0.5" />
+                        <p className="text-xs font-medium text-ink-3 leading-relaxed">
+                          Equipped with hydraulic wheelchair lift, emergency oxygen supply, and reinforced cabin floor for medical safety compliance.
+                        </p>
                       </div>
-                      <p className="text-xs font-medium text-ink-3 leading-relaxed">
-                        Equipped with hydraulic wheelchair lift, emergency oxygen supply, and reinforced cabin floor for medical safety compliance.
-                      </p>
-                    </div>
+                    </Card>
                   </div>
 
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Operational Context</h3>
-                      <div className="aspect-[4/3] bg-bg rounded-3xl border border-line-2 relative overflow-hidden group shadow-inner">
+                  <div className="space-y-6">
+                    <Card className="p-6">
+                      <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Operational Context</h4>
+                      <div className="aspect-[4/3] bg-bg rounded-xl border border-line-2 relative overflow-hidden group shadow-sm">
                         <img
                           src={VEHICLE_IMAGE}
                           alt="Fleet Vehicle"
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
-                        <div className="absolute bottom-6 left-6 right-6">
-                          <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-white/50 shadow-2xl transition-all duration-300 transform group-hover:-translate-y-2">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-primary rounded-xl shadow-lg flex items-center justify-center text-white ring-4 ring-primary/10">
-                                <MapIcon size={24} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="bg-white p-4 rounded-xl shadow-sm border border-line-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                                <MapIcon size={20} />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] leading-none">Last Known Base</p>
-                                <p className="text-sm font-bold text-ink mt-1.5">Loggiskabir Main Dispatch Base</p>
-                                <div className="flex items-center gap-2 mt-1">
+                                <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest">Last Known Base</p>
+                                <p className="text-xs font-bold text-ink mt-0.5">Loggiskabir Main Dispatch Base</p>
+                                <div className="flex items-center gap-1.5 mt-1">
                                   <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                                   <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Stationary · Signal High</p>
                                 </div>
@@ -226,7 +224,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   </div>
                 </div>
               )}
@@ -250,11 +248,11 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                           <div className="flex items-center justify-between mb-1.5">
                             <p className="text-sm font-bold text-ink">{log.type}</p>
                             <div className="flex items-center gap-4">
-                              <Badge variant="neutral" className="text-[9px] font-black">{log.shop}</Badge>
-                              <p className="text-sm font-black text-ink tracking-tight">${log.cost}</p>
+                              <Badge variant="neutral" className="text-xs font-black">{log.shop}</Badge>
+                              <p className="text-sm font-black text-ink tracking-normal">${log.cost}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 text-[10px] font-bold text-ink-4 uppercase tracking-[0.15em]">
+                          <div className="flex items-center gap-4 text-xs font-bold text-ink-4 uppercase tracking-[0.15em]">
                             <span className="flex items-center gap-1.5"><Calendar size={12} /> {log.date}</span>
                             <span className="w-1 h-1 rounded-full bg-line-2" />
                             <span className="flex items-center gap-1.5"><Gauge size={12} /> {log.mileage.toLocaleString()} mi</span>
@@ -286,24 +284,24 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
                           <div className="col-span-1">
                             <p className="text-xs font-black text-ink">{trip.rider.name}</p>
-                            <p className="text-[9px] text-ink-4 font-bold uppercase tracking-widest mt-1">Ref: #{trip.id.slice(-6)}</p>
+                            <p className="text-xs text-ink-4 font-bold uppercase tracking-widest mt-1">Ref: #{trip.id.slice(-6)}</p>
                           </div>
                           <div className="col-span-2 space-y-1">
                             <div className="flex items-center gap-2">
                               <div className="w-1.5 h-1.5 rounded-full bg-line-2 shrink-0" />
-                              <p className="text-[10px] font-bold text-ink-3 truncate uppercase">{trip.pickup}</p>
+                              <p className="text-xs font-bold text-ink-3 truncate uppercase">{trip.pickup}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                              <p className="text-[10px] font-black text-ink truncate uppercase">{trip.dropoff}</p>
+                              <p className="text-xs font-black text-ink truncate uppercase">{trip.dropoff}</p>
                             </div>
                           </div>
                           <div className="flex justify-end gap-4">
                             <div className="text-right mr-2">
-                              <p className="text-[10px] font-black text-ink uppercase tracking-wider">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
-                              <p className="text-[9px] text-ink-4 font-bold uppercase tracking-widest">Completed</p>
+                              <p className="text-xs font-black text-ink uppercase tracking-wider">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
+                              <p className="text-xs text-ink-4 font-bold uppercase tracking-widest">Completed</p>
                             </div>
-                            <Badge variant="accent" className="text-[9px] font-black uppercase px-3">VAL</Badge>
+                            <Badge variant="accent" className="text-xs font-black uppercase px-3">VAL</Badge>
                           </div>
                         </div>
                       </div>
@@ -315,7 +313,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
               {activeTab === 'compliance' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in duration-500">
                   <div className="space-y-8">
-                    <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Insurance & Coverage</h3>
+                    <h3 className="text-xs font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Insurance & Coverage</h3>
                     <div className="bg-bg/40 rounded-3xl border border-line-2 p-8 space-y-6 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Shield size={120} />
@@ -325,20 +323,20 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                           <Shield size={32} />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] leading-none">Policy Number</p>
-                          <p className="text-2xl font-black text-ink mt-2 tracking-tighter">{vehicle.insurance?.policy || 'N/A'}</p>
+                          <p className="text-xs font-black text-ink-4 uppercase tracking-[0.2em] leading-none">Policy Number</p>
+                          <p className="text-2xl font-black text-ink mt-2 tracking-normal">{vehicle.insurance?.policy || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="pt-6 border-t border-line-2 space-y-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black text-ink-4 uppercase tracking-[0.15em]">Expiration Date</span>
+                          <span className="text-xs font-black text-ink-4 uppercase tracking-[0.15em]">Expiration Date</span>
                           <span className="text-sm font-black text-ink">{vehicle.insurance?.expires || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black text-ink-4 uppercase tracking-[0.15em]">Carrier</span>
+                          <span className="text-xs font-black text-ink-4 uppercase tracking-[0.15em]">Carrier</span>
                           <span className="text-sm font-black text-primary">{vehicle.insurance?.provider || 'N/A'}</span>
                         </div>
-                        <Badge variant={vehicle.insurance?.status === 'valid' ? 'accent' : 'warning'} className="w-full justify-center py-3 text-[10px] font-black tracking-[0.2em] rounded-xl">
+                        <Badge variant={vehicle.insurance?.status === 'valid' ? 'accent' : 'warning'} className="w-full justify-center py-3 text-xs font-black tracking-[0.2em] rounded-xl">
                           {vehicle.insurance?.status.toUpperCase() || 'UNKNOWN'} PROTECTION ACTIVE
                         </Badge>
                       </div>
@@ -346,7 +344,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   </div>
 
                   <div className="space-y-8">
-                    <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Operating Authorities</h3>
+                    <h3 className="text-xs font-black text-ink-4 uppercase tracking-[0.25em] mb-5 border-b border-line-2 pb-2">Operating Authorities</h3>
                     <div className="grid grid-cols-1 gap-3">
                       {[
                         ['DOT Operating Authority', 'Active', 'accent', ClipboardCheck],
@@ -359,7 +357,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                             <Icon size={16} className="text-ink-3 group-hover:text-primary" />
                             <span className="text-xs font-bold text-ink">{label}</span>
                           </div>
-                          <Badge variant={color as any} className="text-[9px] font-black uppercase tracking-widest px-3">{status}</Badge>
+                          <Badge variant={color as any} className="text-xs font-black uppercase tracking-widest px-3">{status}</Badge>
                         </div>
                       ))}
                     </div>
@@ -370,26 +368,24 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
           </Card>
         </div>
 
-        {/* Right Column: Control Center */}
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-6">
           {/* Dynamic Control Hub */}
-          <Card className="p-8 border-line-2 shadow-sm relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
-            <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-8">Operational Control</h3>
+          <Card className="p-6 border-line-2 shadow-sm">
+            <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-6">Operational Control</h4>
 
-            <div className="flex items-center gap-5 mb-10">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-lg transform hover:scale-105 duration-300 ${vehicle.status === 'available' ? 'bg-accent text-white ring-4 ring-accent/10' :
-                  vehicle.status === 'maintenance' ? 'bg-urgent text-white ring-4 ring-urgent/10' : 'bg-ink text-white ring-4 ring-ink/10'
+            <div className="flex items-center gap-4 mb-6">
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all shadow-sm ${vehicle.status === 'available' ? 'bg-accent-light text-accent' :
+                  vehicle.status === 'maintenance' ? 'bg-urgent-light text-urgent' : 'bg-ink/5 text-ink'
                 }`}>
-                {vehicle.status === 'available' ? <Power size={28} /> : vehicle.status === 'maintenance' ? <Wrench size={28} /> : <Clock size={28} />}
+                {vehicle.status === 'available' ? <Power size={24} /> : vehicle.status === 'maintenance' ? <Wrench size={24} /> : <Clock size={24} />}
               </div>
               <div>
-                <p className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] leading-none">Vehicle State</p>
-                <p className="text-2xl font-black text-ink mt-2 capitalize tracking-tight">{vehicle.status.replace('_', ' ')}</p>
+                <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest">Vehicle State</p>
+                <p className="text-lg font-black text-ink capitalize mt-0.5">{vehicle.status.replace('_', ' ')}</p>
               </div>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {[
                 { id: 'available', label: 'Set to Active / Available', icon: Power, color: 'accent' },
                 { id: 'maintenance', label: 'Flag for Maintenance', icon: Wrench, color: 'urgent' },
@@ -399,68 +395,59 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
                   disabled={updatingStatus || vehicle.status === s.id}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all border-2 text-left group ${vehicle.status === s.id
-                      ? 'bg-ink border-ink text-white shadow-xl translate-x-1'
-                      : 'bg-white border-line-2 text-ink-4 hover:border-primary/20 hover:text-primary hover:bg-bg/30'
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border text-left group ${vehicle.status === s.id
+                      ? 'bg-ink border-ink text-white shadow-sm'
+                      : 'bg-white border-line-2 text-ink-4 hover:border-primary/20 hover:text-primary hover:bg-bg'
                     }`}
                 >
-                  <s.icon size={20} className={vehicle.status === s.id ? 'text-white' : 'group-hover:text-primary transition-colors'} />
-                  <span className="text-[11px] font-black uppercase tracking-wider">{s.label}</span>
-                  {updatingStatus && vehicle.status === s.id && <Loader2 size={16} className="ml-auto animate-spin" />}
-                  {vehicle.status === s.id && !updatingStatus && <CheckCircle2 size={16} className="ml-auto text-primary" />}
+                  <s.icon size={16} className={vehicle.status === s.id ? 'text-white' : 'group-hover:text-primary transition-colors'} />
+                  <span className="text-xs font-bold">{s.label}</span>
+                  {updatingStatus && vehicle.status === s.id && <Loader2 size={14} className="ml-auto animate-spin" />}
+                  {vehicle.status === s.id && !updatingStatus && <CheckCircle2 size={14} className="ml-auto text-primary" />}
                 </button>
               ))}
             </div>
           </Card>
 
           {/* Assignment & Driver Hub */}
-          <Card className="p-8 border-line-2 shadow-sm">
-            <h3 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.25em] mb-8">Operator Fulfillment</h3>
+          <Card className="p-6 border-line-2 shadow-sm">
+            <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-6">Operator Fulfillment</h4>
             {driver ? (
-              <div className="space-y-8">
-                <div className="flex items-center gap-5">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
                   <div className="relative">
-                    <Avatar initials={driver.initials} size="xl" online={driver.onDuty} className="ring-4 ring-bg border-2 border-primary/10 shadow-lg" />
-                    <div className="absolute -bottom-1 -right-1 bg-accent text-white p-1 rounded-lg shadow-lg border-2 border-white">
-                      <Star size={12} className="fill-white" />
-                    </div>
+                    <Avatar initials={driver.initials} size="lg" online={driver.onDuty} className="ring-2 ring-bg" />
                   </div>
                   <div>
-                    <p className="text-xl font-black text-ink tracking-tight">{driver.name}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <Badge variant="primary-light" className="text-[9px] font-black tracking-widest px-2 uppercase">Lvl 4 Dispatch</Badge>
-                      <span className="text-[10px] font-bold text-ink-4 uppercase">{driver.rating} Avg</span>
+                    <p className="text-sm font-bold text-ink">{driver.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge variant="primary-light" className="text-[10px] font-black uppercase">Lvl 4 Dispatch</Badge>
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-warning"><Star size={10} fill="currentColor" /> {driver.rating} Avg</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-bg/40 rounded-3xl border border-line-2 p-6 space-y-4 shadow-inner">
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <Phone size={14} className="text-ink-4 group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.15em]">Terminal</span>
-                    </div>
-                    <span className="text-xs font-black text-ink">{driver.phone}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-bg rounded-xl border border-line-2">
+                    <span className="text-xs font-bold text-ink-4 flex items-center gap-2"><Phone size={14} /> Terminal</span>
+                    <span className="text-xs font-bold text-ink">{driver.phone}</span>
                   </div>
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <Package size={14} className="text-ink-4 group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] font-bold text-ink-4 uppercase tracking-[0.15em]">Assignments</span>
-                    </div>
-                    <span className="text-xs font-black text-ink">{driver.totalTrips} Trips</span>
+                  <div className="flex items-center justify-between p-3 bg-bg rounded-xl border border-line-2">
+                    <span className="text-xs font-bold text-ink-4 flex items-center gap-2"><Package size={14} /> Assignments</span>
+                    <span className="text-xs font-bold text-ink">{driver.totalTrips} Trips</span>
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Reassign Operator</Button>
+                <Button variant="outline" className="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Reassign Operator</Button>
               </div>
             ) : (
               <div className="text-center py-10">
                 <div className="w-20 h-20 bg-bg rounded-3xl flex items-center justify-center text-ink-4 mx-auto mb-6 border-2 border-dashed border-line shadow-inner group hover:border-primary/30 transition-all">
                   <User size={32} className="group-hover:text-primary transition-colors" />
                 </div>
-                <p className="text-lg font-black text-ink mb-1.5 tracking-tight">Operator Vacancy</p>
-                <p className="text-[11px] text-ink-3 mb-10 font-medium px-4">Vehicle requires an authorized driver assignment to resume active duties.</p>
-                <Button variant="primary" className="w-full rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Initialize Assignment</Button>
+                <p className="text-lg font-black text-ink mb-1.5 tracking-normal">Operator Vacancy</p>
+                <p className="text-xs text-ink-3 mb-10 font-medium px-4">Vehicle requires an authorized driver assignment to resume active duties.</p>
+                <Button variant="primary" className="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em]" onClick={() => setAssigning(true)}>Initialize Assignment</Button>
               </div>
             )}
           </Card>
@@ -476,7 +463,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                 <User size={120} />
               </div>
               <div className="relative z-10">
-                <h3 className="text-2xl font-black text-ink tracking-tighter">Operator Assignment</h3>
+                <h3 className="text-2xl font-black text-ink tracking-normal">Operator Assignment</h3>
                 <p className="text-xs text-ink-3 font-medium mt-1">Deploying driver for unit <span className="text-primary font-bold">#{vehicle.plate}</span></p>
               </div>
               <button onClick={() => setAssigning(false)} className="w-14 h-14 rounded-2xl bg-white border border-line-2 flex items-center justify-center text-ink-4 hover:text-urgent hover:border-urgent/20 transition-all shadow-sm">
@@ -494,12 +481,12 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                     <Avatar initials={d.initials} size="lg" online={d.onDuty} className="group-hover:scale-105 transition-transform" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-black text-ink group-hover:text-primary transition-colors tracking-tight">{d.name}</p>
+                    <p className="text-lg font-black text-ink group-hover:text-primary transition-colors tracking-normal">{d.name}</p>
                     <div className="flex items-center gap-4 mt-1.5">
-                      <Badge variant={d.onDuty ? 'accent' : 'neutral'} className="text-[8px] font-black uppercase px-2 py-0.5">{d.status}</Badge>
+                      <Badge variant={d.onDuty ? 'accent' : 'neutral'} className="text-xs font-black uppercase px-2 py-0.5">{d.status}</Badge>
                       <div className="flex items-center gap-1.5">
                         <Star size={12} className="text-warning fill-warning" />
-                        <span className="text-[10px] font-black text-ink-3">{d.rating}</span>
+                        <span className="text-xs font-black text-ink-3">{d.rating}</span>
                       </div>
                     </div>
                   </div>

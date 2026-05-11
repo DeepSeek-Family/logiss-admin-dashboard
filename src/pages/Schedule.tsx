@@ -140,8 +140,8 @@ const Schedule = ({ role }: { role?: string | null }) => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Fleet Schedule</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-tight">Coordinate shifts, vehicle availability, and operator assignments</p>
+          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Fleet Schedule</h1>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Coordinate shifts, vehicle availability, and operator assignments</p>
         </div>
 
         <div className="flex items-center gap-2">

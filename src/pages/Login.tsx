@@ -33,7 +33,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
           <div className="mb-8">
             <img src="/logo.png" alt="Logiss Rides" className="h-24 w-auto drop-shadow-lg bg-white/80 p-2 rounded-xl backdrop-blur-sm" />
           </div>
-          <h1 className="font-display font-black text-5xl tracking-tight text-white mb-4 leading-tight">
+          <h1 className="font-display font-black text-5xl tracking-normal text-white mb-4 leading-tight">
             Logistics &<br />Fleet Operations
           </h1>
           <p className="text-white/70 text-lg max-w-md">
@@ -53,7 +53,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
           {step === 1 ? (
             <div className="animate-fade-in">
               <div className="mb-8">
-                <h2 className="text-2xl font-extrabold text-ink tracking-tight mb-2">Select your role</h2>
+                <h2 className="text-2xl font-extrabold text-ink tracking-normal mb-2">Select your role</h2>
                 <p className="text-ink-3 text-sm font-medium">Choose your workspace to continue.</p>
               </div>
 
@@ -99,7 +99,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
                     {selectedRole === 'admin' ? <ShieldAlert size={20} /> : <Navigation size={20} />}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-extrabold text-ink tracking-tight capitalize">{selectedRole} Login</h2>
+                    <h2 className="text-2xl font-extrabold text-ink tracking-normal capitalize">{selectedRole} Login</h2>
                     <p className="text-ink-3 text-xs font-bold uppercase tracking-wider">Accessing {selectedRole} Portal</p>
                   </div>
                 </div>

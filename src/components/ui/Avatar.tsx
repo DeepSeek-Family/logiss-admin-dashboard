@@ -27,7 +27,7 @@ interface AvatarProps {
 
 export const Avatar: React.FC<AvatarProps> = ({ initials, src, size = 'md', online = false, className = '', shape = 'circle' }) => {
   const sizes: { [key in NonNullable<AvatarProps['size']>]: string } = {
-    xs: 'w-6 h-6 text-[10px]',
+    xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
     lg: 'w-12 h-12 text-base',
@@ -43,7 +43,7 @@ export const Avatar: React.FC<AvatarProps> = ({ initials, src, size = 'md', onli
       {imageSrc ? (
         <img src={imageSrc} alt={initials} className={`${sizes[size]} ${roundedClass} object-cover shadow-sm ring-1 ring-black/5`} />
       ) : (
-        <div className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold tracking-tighter shadow-sm`}>
+        <div className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold tracking-normal shadow-sm`}>
           {initials}
         </div>
       )}

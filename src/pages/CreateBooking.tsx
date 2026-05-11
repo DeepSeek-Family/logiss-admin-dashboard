@@ -99,7 +99,7 @@ export default function CreateBooking() {
     <div className="flex items-center gap-2 mb-4">
       <div className="w-1 h-3.5 bg-primary rounded-full" />
       {Icon && <Icon size={16} className="text-primary/80" />}
-      <h3 className="text-xs font-bold text-ink-2 tracking-tight">{title}</h3>
+      <h3 className="text-xs font-bold text-ink-2 tracking-normal">{title}</h3>
     </div>
   );
 
@@ -110,7 +110,7 @@ export default function CreateBooking() {
           <button onClick={() => navigate(-1)} className="p-2 bg-white border border-line-2 rounded-lg text-ink-2 hover:text-primary transition-all shadow-sm">
             <ArrowLeft size={16} />
           </button>
-          <h1 className="text-xl font-bold text-ink tracking-tight">Manual Dispatch</h1>
+          <h1 className="text-xl font-bold text-ink tracking-normal">Manual Dispatch</h1>
         </div>
         <Badge variant="bg" className="bg-bg text-ink-2 border border-line-2 px-4 py-1 text-xs">Live Console</Badge>
       </div>
@@ -201,7 +201,7 @@ export default function CreateBooking() {
               {mobilityOptions.map(opt => (
                 <button key={opt.id} type="button" onClick={() => setForm({ ...form, mobility: opt.id })} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all whitespace-nowrap ${form.mobility === opt.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-line-2 bg-bg hover:border-primary/20'}`}>
                   <opt.icon size={16} className={form.mobility === opt.id ? 'text-primary' : 'text-ink-2'} />
-                  <span className="text-xs font-bold text-ink-2 tracking-tight">{opt.label}</span>
+                  <span className="text-xs font-bold text-ink-2 tracking-normal">{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -299,7 +299,7 @@ export default function CreateBooking() {
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-bold text-ink truncate">{d.name}</p>
                         {selectedDriver?.id === d.id && (
-                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-md font-black uppercase tracking-tighter">Assigned</span>
+                          <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded-md font-black uppercase tracking-normal">Assigned</span>
                         )}
                       </div>
                       <p className="text-xs text-ink-3 font-bold">{d.vehicle?.plate || 'Active'}</p>
@@ -315,7 +315,7 @@ export default function CreateBooking() {
                 ))}
               </div>
               {!selectedDriver && (
-                <p className="text-[12px] font-bold text-ink-4 italic px-1">Optional: Leave unselected to dispatch later</p>
+                <p className="text-xs font-bold text-ink-4 italic px-1">Optional: Leave unselected to dispatch later</p>
               )}
             </div>
           </Card>
@@ -341,7 +341,7 @@ export default function CreateBooking() {
                 <div className="flex justify-between items-end pt-2">
                   <div>
                     <p className="text-xs font-bold text-ink-3">Total Copay</p>
-                    <p className="text-xl font-black text-primary tracking-tighter">{money(totalCopay)}</p>
+                    <p className="text-xl font-black text-primary tracking-normal">{money(totalCopay)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-ink-3 mb-2">Advance</p>
