@@ -327,7 +327,7 @@ const Riders = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left">
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
-                {['Rider', 'IDs & Source', 'Status', 'Mobility', 'Contact', 'Trips', 'Rating', ''].map(h => (
+                {['Rider', 'IDs', 'County / Source', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
                   <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -355,7 +355,13 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <div className="flex flex-col gap-0.5">
                       <span className="font-mono text-xs font-bold text-ink-3 uppercase tracking-normal">PX: {rider.passengerId || rider.id}</span>
                       <span className="font-mono text-xs font-bold text-primary uppercase tracking-normal">Auth: {rider.authorizationId || rider.authId || '---'}</span>
-                      {rider.source && <span className="text-xs font-bold text-ink-4 uppercase mt-1">{rider.source}</span>}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      {rider.county && <span className="text-xs font-bold text-ink whitespace-nowrap">{rider.county}</span>}
+                      {rider.source && <Badge variant="outline" className="text-[10px] font-black text-primary border-primary/20 bg-primary/5 uppercase w-fit">{rider.source}</Badge>}
+                      {!rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -365,15 +371,10 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <p className="text-xs font-bold text-ink whitespace-nowrap">{rider.mobility || 'Ambulatory'}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs font-medium text-ink-3 whitespace-nowrap">{rider?.phone || '---'}</span>
+                    <span className="text-xs font-bold text-ink-3 whitespace-nowrap">{rider?.phone || '---'}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-1 text-xs font-bold text-warning">
-                      <Star size={12} fill="currentColor" /> {rider?.rating || 0}
-                    </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
