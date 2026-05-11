@@ -399,8 +399,17 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-xs font-bold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
-                        <p className="text-xs font-bold text-ink-4 mt-0.5 tracking-normal uppercase">Appt: {booking?.appointmentTime || 'N/A'}</p>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-0.5">Appt</p>
+                            <p className="text-sm font-black text-primary">{booking?.appointmentTime || 'N/A'}</p>
+                          </div>
+                          <div className="w-px h-8 bg-line-2" />
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-0.5">Pickup</p>
+                            <p className="text-sm font-black text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
@@ -467,17 +476,20 @@ const Bookings = ({ role }: { role?: string | null }) => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
-                  <section className="bg-bg rounded-xl p-4 border border-line-2">
-                    <div className="flex items-start justify-between mb-4">
+                  <section className="bg-bg rounded-2xl border border-line-2 overflow-hidden">
+                    <div className="flex items-start justify-between p-5 border-b border-line-2">
                       <div className="flex items-center gap-3">
                         <Avatar initials={selectedBooking.rider.initials} size="md" className="shrink-0" />
                         <div>
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-sm font-bold text-ink">{selectedBooking.rider.name}</h3>
-                            {selectedBooking.source && <Badge variant="outline" className="text-xs font-bold text-primary border-primary/20 bg-primary/5 uppercase">{selectedBooking.source}</Badge>}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {selectedBooking.source && <Badge variant="outline" className="text-xs font-black text-primary border-primary/20 bg-primary/5 uppercase">{selectedBooking.source}</Badge>}
+                            {selectedBooking.county && <Badge variant="neutral" className="text-xs font-black uppercase">{selectedBooking.county}</Badge>}
                           </div>
                           <p className="text-xs text-ink-4 mt-1">
-                            {selectedBooking.rider.phone} · ID: {selectedBooking.passengerId || 'PX-N/A'}
+                            {selectedBooking.rider.phone} · PX: {selectedBooking.passengerId || 'N/A'}
                           </p>
                           <p className="text-xs font-bold text-ink-4 mt-0.5">
                             Auth: <span className="text-primary">{selectedBooking.authorizationId || selectedBooking.authId || '---'}</span>
@@ -485,22 +497,22 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-3 border-t border-line-2 pt-4">
-                      <div>
-                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Pickup</p>
-                        <p className="text-xs font-bold text-ink">{selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime)}</p>
+                    <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-line-2">
+                      <div className="p-4">
+                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Pickup Time</p>
+                        <p className="text-base font-black text-ink">{selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime)}</p>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Appointment</p>
-                        <p className="text-xs font-bold text-primary">{selectedBooking.appointmentTime || 'N/A'}</p>
+                      <div className="p-4">
+                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Appointment</p>
+                        <p className="text-base font-black text-primary">{selectedBooking.appointmentTime || 'N/A'}</p>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Trip Type</p>
-                        <p className="text-xs font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p>
+                      <div className="p-4">
+                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Trip Type</p>
+                        <p className="text-sm font-bold text-ink">{tripTypeLabel(selectedBooking.type)}</p>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-ink-4 mb-0.5 uppercase tracking-wider">Mobility</p>
-                        <Badge variant="warning" className="text-xs px-1.5 py-0 uppercase font-black">{selectedBooking.mobility || 'Ambulatory'}</Badge>
+                      <div className="p-4">
+                        <p className="text-[10px] font-black text-ink-4 uppercase tracking-widest mb-1">Mobility</p>
+                        <Badge variant="warning" className="text-xs px-2 py-0.5 uppercase font-black">{selectedBooking.mobility || 'Ambulatory'}</Badge>
                       </div>
                     </div>
                   </section>
