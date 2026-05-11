@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   Search, Phone, Mail, MapPin, Activity,
   Calendar, Star, ChevronRight, AlertTriangle, Users, History,
@@ -364,16 +364,16 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <div className="flex flex-col gap-1">
                       {rider.county && <span className="text-xs font-bold text-ink whitespace-nowrap">{rider.county}</span>}
                       {rider.source && <Badge variant="outline" className="font-black text-primary border-primary/20 bg-primary/5 uppercase w-fit">{rider.source}</Badge>}
-                      {!rider.county && !rider.source && <span className="text-xs text-ink-4">â€”</span>}
+                      {!rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                     <div className="relative">
                       <button
                         onClick={() => setOpenStatusId(openStatusId === rider.id ? null : rider.id)}
-                        className={lex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black border transition-all }
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black border transition-all ${rider.status === 'active' ? 'text-accent border-accent/30 bg-accent-light/30' : rider.status === 'suspended' ? 'text-warning-dark border-warning/30 bg-warning-light/30' : rider.status === 'banned' ? 'text-urgent border-urgent/30 bg-urgent-light/30' : 'text-ink-4 border-line-2 bg-bg'}`}
                       >
-                        <span className={w-1.5 h-1.5 rounded-full } />
+                        <span className={`w-1.5 h-1.5 rounded-full ${rider.status === 'active' ? 'bg-accent' : rider.status === 'suspended' ? 'bg-warning' : rider.status === 'banned' ? 'bg-urgent' : 'bg-ink-4'}`} />
                         {(rider.status || 'inactive').toUpperCase()}
                         <ChevronDown size={10} />
                       </button>
@@ -389,7 +389,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                               key={opt.value}
                               disabled={rider.status === opt.value}
                               onClick={() => { updateRiderStatus(rider.id, opt.value); setOpenStatusId(null); toast.success(rider.name + ' marked as ' + opt.value); }}
-                              className={w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed }
+                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${opt.color}`}
                             >
                               <opt.icon size={13} />
                               {opt.label}

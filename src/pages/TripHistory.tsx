@@ -639,7 +639,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                   />
                 </th>
                 <th className="px-3 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Source</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Pickup</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
                 <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
@@ -666,18 +665,16 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     />
                   </td>
                   <td className="px-3 py-4">
-                    <span className="font-mono text-xs font-bold text-ink tracking-normal uppercase whitespace-nowrap">#{trip.id}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-mono text-xs font-bold text-ink tracking-normal uppercase whitespace-nowrap">#{trip.id}</span>
+                      {trip.source && <span className="text-xs text-ink-4 whitespace-nowrap">{trip.source}</span>}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="outline" className="text-xs font-black text-primary border-primary/20 bg-primary/5 uppercase whitespace-nowrap">{trip.source || 'VA County'}</Badge>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-ink whitespace-nowrap">{formatShortDate(trip.scheduledTime)}</span>
-                      <div className="flex flex-col mt-0.5">
-                        <span className="text-xs font-black text-ink tracking-normal uppercase">Pickup: {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
-                        <span className="text-xs font-bold text-ink-4 tracking-normal uppercase">Appt: {trip.appointmentTime || 'N/A'}</span>
-                      </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium text-ink whitespace-nowrap">{formatShortDate(trip.scheduledTime)}</span>
+                      <span className="text-xs font-semibold text-ink">Pickup: {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
+                      <span className="text-xs text-ink-4">Appt: {trip.appointmentTime || 'N/A'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">

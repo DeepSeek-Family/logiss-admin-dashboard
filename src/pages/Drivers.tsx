@@ -394,7 +394,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
           {[
             { id: 'overview', label: 'Profile Overview', icon: User },
             { id: 'trips', label: 'Trip History', icon: Repeat },
-            { id: 'docs', label: 'Documents', icon: FileCheck }
+            { id: 'docs', label: 'Licence', icon: ShieldCheck }
           ].map(tab => (
             <button
               key={tab.id}
@@ -581,15 +581,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-300">
               {[
                 { label: 'Driver License', icon: ShieldCheck, status: 'valid', expiry: 'Jan 2026', id: 'DL-0123-456',
-                  mockContent: 'Virginia DMV · Class C Commercial\nExpiry: January 15, 2026\nEndorsements: Passenger (P), School Bus (S)\nRestrictions: None' },
-                { label: 'Insurance Policy', icon: FileCheck, status: 'expiring', expiry: 'Next Month', id: 'INS-9908-11',
-                  mockContent: 'Carrier: State Farm Insurance\nPolicy #: INS-9908-11\nCoverage: $1M Liability, $500K Bodily Injury\nExpiry: June 1, 2026' },
-                { label: 'NEMT Certification', icon: Star, status: 'valid', expiry: 'Nov 2025', id: 'NEMT-441-VA',
-                  mockContent: 'Virginia NEMT Authority\nCert #: NEMT-441-VA\nScope: Non-Emergency Medical Transport\nExpiry: November 30, 2025' },
-                { label: 'Drug Test Results', icon: ShieldCheck, status: 'valid', expiry: 'Jan 2025', id: 'LAB-776-XX',
-                  mockContent: 'LabCorp Reference #: LAB-776-XX\nTest Type: 10-Panel DOT Screen\nResult: NEGATIVE — All Panels\nDate Collected: January 5, 2025' },
-                { label: 'Vehicle Registration', icon: Car, status: 'valid', expiry: 'May 2025', id: 'REG-VA-009',
-                  mockContent: 'Virginia DMV\nReg #: REG-VA-009\nVehicle: 2022 Toyota Sienna — Ambulatory Van\nExpiry: May 31, 2025' }
+                  mockContent: 'Virginia DMV · Class C Commercial\nExpiry: January 15, 2026\nEndorsements: Passenger (P), School Bus (S)\nRestrictions: None' }
               ].map((doc) => (
                 <Card key={doc.label} className="p-5 group hover:border-primary/30 transition-all">
                   <div className="flex items-start justify-between mb-4">
