@@ -5,21 +5,15 @@ import {
   AlertTriangle,
   Info,
   Trash2,
-  CheckSquare,
-  Clock,
   Navigation,
   ChevronRight,
   Truck,
   FileCheck,
   CreditCard,
-  Activity,
   UserCheck,
   MapPin,
   ShieldAlert,
-  Phone,
-  Filter,
 } from 'lucide-react';
-import { Card, Badge, Button } from '../components/ui';
 import { timeAgo } from '../utils/helpers';
 
 const ALL_NOTIFICATIONS = [
@@ -131,43 +125,39 @@ const Notifications = ({ role }: { role?: string | null }) => {
   const filtered = activeFilter === 'All' ? items : items.filter(n => n.category === activeFilter);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-500 pb-12">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Communication Hub</h1>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-1 bg-urgent text-white text-xs font-extrabold rounded-full leading-none">{unreadCount}</span>
-            )}
-          </div>
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Stay updated with fleet, trip, and system operational alerts</p>
+          <h1 className="text-2xl font-semibold text-ink flex items-center gap-2">
+            Notifications
+            {unreadCount > 0 && <span className="text-sm font-medium text-white bg-urgent rounded-full px-2 py-0.5 leading-none">{unreadCount}</span>}
+          </h1>
+          <p className="text-sm text-ink-4 mt-0.5">Fleet, trip, and system alerts</p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2">
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm" icon={CheckSquare} onClick={markAllRead}>Mark All Read</Button>
+            <button onClick={markAllRead} className="text-xs text-primary hover:underline font-medium">Mark all read</button>
           )}
-          <Button variant="ghost" size="sm" icon={Trash2} className="text-ink-4" onClick={clearAll}>Clear All</Button>
+          <button onClick={clearAll} className="text-xs text-ink-4 hover:text-ink font-medium">Clear all</button>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <Filter size={14} className="text-ink-4 shrink-0" />
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         {CATEGORIES.map(cat => {
           const count = cat === 'All' ? items.filter(n => !n.read).length : items.filter(n => n.category === cat && !n.read).length;
           return (
             <button
               key={cat}
               onClick={() => setActiveFilter(cat)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activeFilter === cat
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-white text-ink-3 border border-line-2 hover:border-line hover:text-ink'
-                }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
+                activeFilter === cat ? 'bg-primary text-white' : 'text-ink-4 hover:text-ink hover:bg-bg'
+              }`}
             >
               {cat}
               {count > 0 && (
-                <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full leading-none ${activeFilter === cat ? 'bg-white/20 text-white' : 'bg-urgent/10 text-urgent'}`}>
+                <span className={`text-xs font-semibold px-1.5 rounded-full leading-none ${activeFilter === cat ? 'bg-white/20 text-white' : 'bg-line-2 text-ink-3'}`}>
                   {count}
                 </span>
               )}
@@ -177,90 +167,71 @@ const Notifications = ({ role }: { role?: string | null }) => {
       </div>
 
       {/* Notification List */}
-      <div className="space-y-3">
+      <div className="space-y-1">
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-bg rounded-full flex items-center justify-center text-ink-4 mb-6">
-              <Bell size={36} className="opacity-20" />
-            </div>
-            <h3 className="text-xl font-bold text-ink">All caught up!</h3>
-            <p className="text-ink-3 max-w-xs mt-2 text-sm">No notifications in this category. Check back later.</p>
+            <Bell size={32} className="text-ink-4 opacity-20 mb-4" />
+            <p className="text-sm font-medium text-ink">All caught up</p>
+            <p className="text-xs text-ink-4 mt-1">No notifications here.</p>
           </div>
         )}
 
         {filtered.map(notif => (
           <div
             key={notif.id}
-            className={`relative flex gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer group hover:shadow-md ${notif.read
-                ? 'bg-white border-line-2 opacity-80'
-                : 'bg-white border-primary/10 shadow-sm'
-              }`}
+            className={`flex gap-3 px-4 py-3.5 rounded-xl border transition-all cursor-pointer group ${
+              notif.read ? 'border-transparent hover:bg-bg' : 'border-transparent bg-primary/[0.03] hover:bg-primary/[0.05]'
+            }`}
             onClick={() => markRead(notif.id)}
           >
-            {/* Unread dot */}
-            {!notif.read && (
-              <span className="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-            )}
-
             {/* Icon */}
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105 ${notif.bg} ${notif.color}`}>
-              <notif.icon size={22} />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${notif.bg} ${notif.color}`}>
+              <notif.icon size={15} />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4 mb-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${notif.bg} ${notif.color}`}>
-                    {notif.category}
-                  </span>
-                  {!notif.read && (
-                    <span className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/5 text-primary">New</span>
-                  )}
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <div className="flex items-center gap-2">
+                  {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                  <span className={`text-xs font-medium ${notif.color}`}>{notif.category}</span>
                 </div>
-                <span className="text-xs font-bold text-ink-4 flex items-center gap-1 uppercase tracking-widest shrink-0 bg-bg px-2 py-1 rounded-lg">
-                  <Clock size={10} /> {timeAgo(notif.time)}
-                </span>
+                <span className="text-xs text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
               </div>
 
-              <h4 className={`text-sm font-extrabold mb-1.5 leading-snug ${notif.read ? 'text-ink-2' : 'text-ink'}`}>
+              <p className={`text-sm leading-snug mb-1 ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-medium'}`}>
                 {notif.title}
-              </h4>
-              <p className="text-xs font-medium text-ink-3 leading-relaxed mb-3">{notif.message}</p>
+              </p>
+              <p className="text-xs text-ink-4 leading-relaxed">{notif.message}</p>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              {(notif.action || !notif.read) && (
+                <div className="flex items-center gap-3 mt-2">
                   {notif.action && (
-                    <button className={`text-xs font-extrabold uppercase tracking-widest flex items-center gap-1 transition-colors ${notif.color} hover:opacity-70`}>
+                    <button className={`text-xs font-medium flex items-center gap-0.5 ${notif.color} hover:opacity-70 transition-opacity`}>
                       {notif.action} <ChevronRight size={11} />
                     </button>
                   )}
                   {!notif.read && (
                     <button
-                      className="text-xs font-bold text-ink-4 uppercase tracking-widest hover:text-ink transition-colors"
+                      className="text-xs text-ink-4 hover:text-ink transition-colors"
                       onClick={e => { e.stopPropagation(); markRead(notif.id); }}
                     >
                       Mark read
                     </button>
                   )}
                 </div>
-                <button
-                  className="text-xs font-bold text-ink-4 uppercase tracking-widest hover:text-urgent transition-colors opacity-0 group-hover:opacity-100"
-                  onClick={e => { e.stopPropagation(); deleteItem(notif.id); }}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
+              )}
             </div>
+
+            <button
+              className="text-ink-4 hover:text-urgent transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-0.5"
+              onClick={e => { e.stopPropagation(); deleteItem(notif.id); }}
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
         ))}
       </div>
-
-      {items.length > 0 && (
-        <div className="pt-4 text-center">
-          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.2em]">Showing last 30 days of activity</p>
-        </div>
-      )}
     </div>
   );
 };

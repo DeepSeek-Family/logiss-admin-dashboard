@@ -415,7 +415,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <>
               <div className="lg:col-span-1 space-y-6">
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-xs font-black text-ink uppercase tracking-widest px-1">Current Assignment</h4>
+                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Current Unit</h4>
                   <div className="p-5 bg-primary-tint/10 rounded-2xl border border-primary/10">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm"><Car size={24} /></div>
@@ -435,7 +435,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 </Card>
 
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-xs font-black text-ink uppercase tracking-widest px-1">Service Counties</h4>
+                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
+
                   <div className="flex flex-wrap gap-2">
                     {(selectedDriver?.counties || ['Richmond', 'Henrico']).map((c: string) => (
                       <div key={c} className="px-4 py-2 bg-bg rounded-xl border border-line-2 text-xs font-black text-ink-3 uppercase tracking-normal flex items-center gap-2">
@@ -449,7 +450,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Personal Details</h4>
+                    <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-6 px-1 border-l-2 border-primary ml-[-1px]">Personal Details</h4>
+
                     <div className="space-y-4">
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
                         <span className="text-xs font-bold text-ink-4">Email Address</span>
@@ -471,9 +473,10 @@ const Drivers = ({ role }: { role?: string | null }) => {
                   </Card>
 
                   <Card className="p-6 border-urgent/10 bg-urgent-light/5">
-                    <h4 className="text-xs font-black text-urgent uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <AlertTriangle size={14} /> Emergency Contact
+                    <h4 className="text-[10px] font-black text-urgent uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                      <AlertTriangle size={14} className="text-urgent" /> Emergency Contact
                     </h4>
+
                     <div className="p-4 bg-white rounded-2xl border border-urgent/10">
                       <p className="text-sm font-black text-ink">{selectedDriver?.emergencyContact?.name || 'Robert Wilson'}</p>
                       <p className="text-xs font-black text-ink-4 uppercase mt-0.5">{selectedDriver?.emergencyContact?.relation || 'Brother'}</p>
@@ -495,7 +498,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 </div>
 
                 <Card className="p-6">
-                  <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Experience & Certification</h4>
+                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-6 px-1 border-l-2 border-accent ml-[-1px]">Experience & Certification</h4>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
                       <p className="text-xs font-black text-ink-4 uppercase mb-1">License Class</p>
@@ -734,8 +738,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left">
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
-                {['Driver', 'Driver ID', 'Status', 'Vehicle', 'Rating', 'Today', 'Total Trips', 'Contact', 'Docs', ''].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
+                {['Info', 'Vehicle', 'Status', 'Activity', 'Compliance'].map(h => (
+                  <th key={h} className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -750,46 +754,56 @@ const Drivers = ({ role }: { role?: string | null }) => {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-ink truncate">{driver.name}</p>
-                        <p className="text-xs font-medium text-ink-4 truncate">{driver.email}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="font-mono text-[10px] font-bold text-ink-3 uppercase bg-bg px-1.5 py-0.5 rounded border border-line-2">{driver.id}</span>
+                          <span className="text-[10px] font-medium text-ink-4 truncate">{driver.email}</span>
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-mono text-xs font-bold text-ink-3 uppercase">{driver.id}</span>
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(driver.status)}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-ink whitespace-nowrap">{driver?.vehicle?.make || '---'}</p>
-                    <p className="font-mono text-xs font-bold text-ink-4 uppercase">{driver?.vehicle?.plate || '---'}</p>
+                    <div className="flex flex-col">
+                      <p className="text-sm font-bold text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
+                      <p className="font-mono text-[10px] font-bold text-ink-4 uppercase mt-0.5 tracking-wider">{driver?.vehicle?.plate || '---'}</p>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="flex items-center gap-1 text-sm font-bold text-warning">
-                      <Star size={14} fill="currentColor" /> {driver?.rating || 0}
-                    </span>
+                    <div className="flex flex-col gap-1.5">
+                      {getStatusBadge(driver.status)}
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-warning">
+                        <Star size={10} fill="currentColor" /> {driver?.rating || 0}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-ink">{driver?.tripsToday || 0}</span>
-                    <span className="text-ink-4 text-xs font-medium"> / {driver?.completedToday || 0}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-ink">{(driver?.totalTrips || 0).toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-ink-3 whitespace-nowrap">{driver?.phone || '---'}</span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-ink">{driver?.tripsToday || 0}</span>
+                        <span className="text-[10px] font-black text-ink-4 uppercase tracking-tighter">Today</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-ink-4 mt-0.5">{(driver?.totalTrips || 0).toLocaleString()} Total Trips</p>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     {(driver?.pendingDocUpdates || 0) > 0 ? (
-                      <span className="flex items-center gap-1 text-xs font-bold text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit whitespace-nowrap">
-                        <AlertTriangle size={10} /> Attention
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit uppercase tracking-wider">
+                          <AlertTriangle size={10} /> Needs Review
+                        </span>
+                        <p className="text-[10px] font-bold text-ink-4 ml-2">{driver.pendingDocUpdates} Doc(s)</p>
+                      </div>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs font-bold text-accent bg-accent-light px-2 py-1 rounded-full w-fit whitespace-nowrap">
-                        <ShieldCheck size={10} /> OK
+                      <span className="flex items-center gap-1.5 text-[10px] font-black text-accent bg-accent-light px-2 py-1 rounded-full w-fit uppercase tracking-wider">
+                        <ShieldCheck size={10} /> Verified
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 group-hover:text-primary group-hover:bg-primary-light transition-all">
+                        <ChevronRight size={18} />
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ))}

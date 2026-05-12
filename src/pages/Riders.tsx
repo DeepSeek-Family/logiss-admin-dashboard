@@ -148,7 +148,7 @@ const Riders = ({ role }: { role?: string | null }) => {
             <>
               <div className="lg:col-span-1 space-y-6">
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-xs font-black text-ink uppercase tracking-widest px-1">Mobility & Payment</h4>
+                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Mobility & Payment</h4>
                   <div className="space-y-4">
                      <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
                         <span className="text-xs font-bold text-ink-4">Mobility Need</span>
@@ -162,7 +162,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                 </Card>
 
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-xs font-black text-ink uppercase tracking-widest px-1">Default Locations</h4>
+                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Default Locations</h4>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                       <div className="p-2 bg-white rounded-lg text-ink-3 shadow-sm shrink-0"><MapPin size={14} /></div>
@@ -185,7 +185,7 @@ const Riders = ({ role }: { role?: string | null }) => {
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h4 className="text-xs font-black text-ink uppercase tracking-widest mb-4">Contact Details</h4>
+                    <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Contact Details</h4>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
                         <span className="text-xs font-bold text-ink-4">Phone Number</span>
@@ -231,12 +231,12 @@ const Riders = ({ role }: { role?: string | null }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-bg border-b border-line-2">
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Trip ID</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Date & Time</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Type</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Route</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Actions</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Type</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Route</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-2">
@@ -289,6 +289,8 @@ const Riders = ({ role }: { role?: string | null }) => {
         {[
           { label: 'Total Riders', value: (riders || []).length, sub: 'registered accounts', icon: Users, color: 'bg-primary-light text-primary' },
           { label: 'Active', value: (riders || []).filter(r => r?.status === 'active').length, sub: 'active passengers', icon: Activity, color: 'bg-accent-light text-accent' },
+          { label: 'Suspended', value: (riders || []).filter(r => r?.status === 'suspended').length, sub: 'temporarily restricted', icon: AlertTriangle, color: 'bg-warning-light text-warning-dark' },
+          { label: 'Banned', value: (riders || []).filter(r => r?.status === 'banned').length, sub: 'access revoked', icon: Star, color: 'bg-urgent-light text-urgent' },
         ].map(s => (
           <Card key={s.label} className="p-5 flex items-center gap-4">
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${s.color}`}>
@@ -331,7 +333,7 @@ const Riders = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Rider', 'IDs', 'County / Source', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
