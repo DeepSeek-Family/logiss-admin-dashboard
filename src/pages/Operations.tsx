@@ -104,11 +104,11 @@ const Operations = ({ role }: { role?: string | null }) => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-bg/60 border-b border-line-2">
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">ID</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Rider</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Time</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Driver</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">ID</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Rider</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Time</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Driver</th>
                     <th className="px-6 py-4"></th>
                   </tr>
                 </thead>

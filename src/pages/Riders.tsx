@@ -231,12 +231,12 @@ const Riders = ({ role }: { role?: string | null }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-bg border-b border-line-2">
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Type</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Route</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Status</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em]">Actions</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Type</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Route</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-2">

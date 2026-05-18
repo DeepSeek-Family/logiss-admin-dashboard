@@ -54,11 +54,11 @@ const UserAccess = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left">
             <thead className="bg-bg/50 border-b border-line-2">
               <tr>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">User Profile</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Role Level</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Status</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Last Active</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Access</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">User Profile</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Role Level</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Status</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Last Active</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Access</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">

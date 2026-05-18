@@ -324,13 +324,13 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-bg/50 border-b border-line-2">
-                            <th className="px-4 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Pickup</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Cost</th>
-                            <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
+                            <th className="px-4 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Pickup</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Cost</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-line-2">

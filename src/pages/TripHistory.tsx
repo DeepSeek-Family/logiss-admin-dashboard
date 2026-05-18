@@ -42,7 +42,7 @@ const StatusUpdateModal = ({ item, date, onClose }: { item: any; date: Date; onC
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
       <Card className="w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-4 border-b border-line-2 flex justify-between items-center bg-bg">
-          <h3 className="font-bold text-sm text-ink">Update Status</h3>
+          <h3 className="font-semibold text-sm text-ink">Update Status</h3>
           <button onClick={onClose} className="text-ink-4 hover:text-ink transition-colors p-1 rounded-lg hover:bg-line-2"><X size={16} /></button>
         </div>
         <div className="p-5 space-y-5">
@@ -51,25 +51,25 @@ const StatusUpdateModal = ({ item, date, onClose }: { item: any; date: Date; onC
               {item.plate ? <Truck size={18} className="text-primary" /> : <Users size={18} className="text-primary" />}
             </div>
             <div>
-              <p className="font-bold text-sm text-ink">{item.name || item.plate}</p>
-              <p className="text-xs font-bold text-ink-4 mt-0.5">{date.toDateString()}</p>
+              <p className="font-medium text-sm text-ink">{item.name || item.plate}</p>
+              <p className="text-xs text-ink-4 mt-0.5">{date.toDateString()}</p>
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <label className="text-xs font-bold text-ink-3">Set Status For This Day</label>
+            <label className="text-xs font-medium text-ink-4">Set Status For This Day</label>
             <div className="grid grid-cols-2 gap-2">
               {item.plate ? (
                 <>
-                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-bold text-xs bg-bg text-ink-3 hover:text-primary transition-all">Active Duty</button>
-                  <button className="py-3 rounded-xl border-2 border-transparent font-bold text-xs bg-urgent-light/40 text-urgent hover:bg-urgent-light transition-all flex flex-col items-center justify-center gap-1">
+                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-all">Active Duty</button>
+                  <button className="py-3 rounded-xl border-2 border-transparent font-medium text-xs bg-urgent-light/40 text-urgent hover:bg-urgent-light transition-all flex flex-col items-center justify-center gap-1">
                     <Wrench size={14} /> Maintenance
                   </button>
                 </>
               ) : (
                 <>
-                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-bold text-xs bg-bg text-ink-3 hover:text-primary transition-all">Assign Shift</button>
-                  <button className="py-3 rounded-xl border-2 border-line font-bold text-xs bg-white text-ink-4 hover:border-ink-4 hover:text-ink transition-all flex flex-col items-center justify-center gap-1">
+                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-all">Assign Shift</button>
+                  <button className="py-3 rounded-xl border-2 border-line font-medium text-xs bg-white text-ink-4 hover:border-ink-4 hover:text-ink transition-all flex flex-col items-center justify-center gap-1">
                     <Coffee size={14} /> Weekend / Off
                   </button>
                 </>
@@ -783,11 +783,11 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               <div className="flex items-center gap-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-ink-4 whitespace-nowrap">Time Period</span>
+                    <span className="text-xs text-ink-4 whitespace-nowrap">Time Period</span>
                     <select
                       value={timeFilter}
                       onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
-                      className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-bold text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
+                      className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
                     >
                       <option value="all">All Time</option>
                       <option value="today">Today</option>
@@ -804,15 +804,15 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                         type="date"
                         value={startDate}
                         onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-                        className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-bold text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
+                        className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
                         title="Start Date"
                       />
-                      <span className="text-xs font-bold text-ink-4">to</span>
+                      <span className="text-xs text-ink-4">to</span>
                       <input
                         type="date"
                         value={endDate}
                         onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-                        className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-bold text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
+                        className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
                         title="End Date"
                       />
                     </div>
@@ -820,11 +820,11 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-ink-4 whitespace-nowrap">Sort By</span>
+                  <span className="text-xs text-ink-4 whitespace-nowrap">Sort By</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-bold text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
+                    className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
                   >
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
@@ -839,7 +839,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                   <button
                     key={f}
                     onClick={() => { setFilter(f); setCurrentPage(1); }}
-                    className={`px-5 py-2 rounded-lg text-xs font-bold capitalize transition-all ${filter === f ? 'bg-white shadow-md text-primary' : 'text-ink-3 hover:text-ink-2 hover:bg-white/50'}`}
+                    className={`px-5 py-2 rounded-lg text-xs font-medium capitalize transition-all ${filter === f ? 'bg-white shadow-md text-primary' : 'text-ink-4 hover:text-ink hover:bg-white/50'}`}
                   >
                     {f}
                   </button>
@@ -860,14 +860,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                       className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                     />
                   </th>
-                  <th className="px-3 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Date & Pickup</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Driver</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Type</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-right">Financials</th>
-                  <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
+                  <th className="px-3 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date & Pickup</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Financials</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>
@@ -888,7 +888,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     </td>
                     <td className="px-3 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-ink tracking-normal uppercase whitespace-nowrap">#{trip.id}</span>
+                        <span className="font-mono text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
                         {trip.source && <span className="text-xs text-ink-4 whitespace-nowrap">{trip.source}</span>}
                       </div>
                     </td>
@@ -902,19 +902,19 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar initials={trip.rider.initials} size="xs" />
-                        <span className="text-xs font-bold text-ink whitespace-nowrap">{trip.rider.name}</span>
+                        <span className="text-xs font-medium text-ink whitespace-nowrap">{trip.rider.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {trip.driverId ? (
                         <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
                           <Avatar initials={(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.initials} size="xs" />
-                          <span className="text-xs font-bold text-ink whitespace-nowrap">{(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.name}</span>
+                          <span className="text-xs font-medium text-ink whitespace-nowrap">{(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.name}</span>
                         </div>
                       ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); setSelectedTripId(trip.id); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/5 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all text-xs font-bold"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/5 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all text-xs font-medium"
                         >
                           <UserPlus size={12} /> Assign
                         </button>
@@ -929,7 +929,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                         {(trip.stop || (trip.stops && trip.stops.length > 0)) ? (
                           <div className="flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                            <span className="text-xs font-black text-warning-dark uppercase tracking-widest whitespace-nowrap">
+                            <span className="text-xs font-medium text-warning-dark whitespace-nowrap">
                               {Array.isArray(trip.stops) ? `+${trip.stops.length} Stop${trip.stops.length > 1 ? 's' : ''}` : '+1 Stop'}
                             </span>
                           </div>
@@ -943,8 +943,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1 items-start">
-                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">{trip.mobility || 'Standard'}</Badge>
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-ink-3">
+                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5">{trip.mobility || 'Standard'}</Badge>
+                        <div className="flex items-center gap-1 text-[10px] text-ink-4">
                           {trip.type === 'round_trip' ? (
                             <>
                               <Repeat size={10} className="text-indigo-500" strokeWidth={2.5} />
@@ -961,7 +961,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex flex-col items-end gap-0.5">
-                        <span className="font-mono text-xs font-bold text-ink">{money(trip.cost)}</span>
+                        <span className="font-mono text-xs font-medium text-ink">{money(trip.cost)}</span>
                         <div className="flex items-center gap-1.5 opacity-80">
                            <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
                            <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty || trip.cost || 0)}</span>
@@ -988,7 +988,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             {filteredTrips.length === 0 && !loading && (
               <div className="p-12 text-center text-ink-4">
                 <Search size={48} className="mx-auto mb-4 opacity-20" />
-                <p className="font-bold">No trips found</p>
+                <p className="font-medium text-ink">No trips found</p>
                 <p className="text-sm">Try adjusting your search or filters.</p>
               </div>
             )}
@@ -1011,8 +1011,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                   <s.icon size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-ink-4">{s.label}</p>
-                  <p className="text-2xl font-bold text-ink mt-0.5">{s.value}</p>
+                  <p className="text-xs text-ink-4">{s.label}</p>
+                  <p className="text-2xl font-semibold text-ink mt-0.5">{s.value}</p>
                 </div>
               </Card>
             ))}
@@ -1027,10 +1027,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                 <button
                   key={tab.id}
                   onClick={() => setScheduleActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all ${
                     scheduleActiveTab === tab.id
                       ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-                      : 'text-ink-3 hover:text-ink'
+                      : 'text-ink-4 hover:text-ink'
                   }`}
                 >
                   <tab.icon size={14} />
@@ -1053,7 +1053,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           <Card className="overflow-hidden">
             <div className="grid border-b border-line-2/40 bg-bg/20" style={{ gridTemplateColumns: '220px repeat(7, 1fr)' }}>
               <div className="px-4 py-3 border-r border-line-2/30">
-                <p className="text-xs font-bold text-ink-4">
+                <p className="text-xs text-ink-4">
                   {scheduleActiveTab === 'driver' ? 'Driver' : 'Vehicle'}
                 </p>
               </div>
@@ -1062,10 +1062,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                   key={i}
                   className={`px-3 py-3 text-center border-r border-line-2/30 last:border-r-0 ${isToday(d) ? 'bg-primary-tint/20' : ''}`}
                 >
-                  <p className={`text-xs font-bold ${isToday(d) ? 'text-primary' : 'text-ink-4'}`}>
+                  <p className={`text-xs font-medium ${isToday(d) ? 'text-primary' : 'text-ink-4'}`}>
                     {DAYS[i]}
                   </p>
-                  <p className={`text-sm font-bold mt-0.5 ${isToday(d) ? 'text-primary' : 'text-ink'}`}>
+                  <p className={`text-sm font-semibold mt-0.5 ${isToday(d) ? 'text-primary' : 'text-ink'}`}>
                     {d.getDate()}
                   </p>
                   {isToday(d) && (
@@ -1077,7 +1077,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
             <div className="divide-y divide-line-2/40">
               {filteredSchedule.length === 0 && !loading && (
-                <div className="py-16 text-center text-sm font-bold text-ink-3">
+                <div className="py-16 text-center text-sm text-ink-4">
                   No results match your search.
                 </div>
               )}
@@ -1093,8 +1093,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                       <>
                         <Avatar initials={item.initials} size="sm" online={item.onDuty} />
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-ink truncate">{item.name}</p>
-                          <p className="text-xs text-ink-4 font-semibold truncate">{item.vehicle?.type}</p>
+                          <p className="text-xs font-medium text-ink truncate">{item.name}</p>
+                          <p className="text-xs text-ink-4 truncate">{item.vehicle?.type}</p>
                         </div>
                       </>
                     ) : (
@@ -1109,8 +1109,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-ink truncate">{item.plate}</p>
-                          <p className="text-xs text-ink-4 font-semibold truncate">{item.make} · {item.type}</p>
+                          <p className="text-xs font-medium text-ink truncate">{item.plate}</p>
+                          <p className="text-xs text-ink-4 truncate">{item.make} · {item.type}</p>
                         </div>
                       </>
                     )}
@@ -1127,16 +1127,16 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                         }`}
                       >
                         {shift ? (
-                          <div className={`rounded-lg border px-2 py-1.5 text-xs font-bold leading-tight ${shiftStyle[shift.color]}`}>
+                          <div className={`rounded-lg border px-2 py-1.5 text-xs font-medium leading-tight ${shiftStyle[shift.color]}`}>
                             <div className="flex items-center gap-1 mb-1 opacity-70">
                               <Clock size={9} />
                               <span className="whitespace-pre-line text-[10px]">{shift.time}</span>
                             </div>
-                            <p className="font-bold">{shift.label}</p>
+                            <p className="font-medium">{shift.label}</p>
                           </div>
                         ) : (
                           <div className="h-full flex items-center justify-center">
-                            <span className="text-xs font-bold text-line">Off</span>
+                            <span className="text-xs text-ink-4">Off</span>
                           </div>
                         )}
                       </div>
@@ -1158,11 +1158,11 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               ].map(l => (
                 <div key={l.label} className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-sm ${l.color}`} />
-                  <span className="text-xs font-bold text-ink-4">{l.label}</span>
+                  <span className="text-xs text-ink-4">{l.label}</span>
                 </div>
               ))}
             </div>
-            <p className="text-xs font-bold text-ink-4">Last sync: Just now</p>
+            <p className="text-xs text-ink-4">Last sync: Just now</p>
           </div>
         </div>
       )}

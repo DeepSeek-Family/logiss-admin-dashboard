@@ -317,12 +317,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         </div>
                       </th>
                     )}
-                    <th className="px-3 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Created</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Type</th>
-                    <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Pickup Time</th>
+                    <th className="px-3 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Trip ID</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Created</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Rider</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest whitespace-nowrap">Route</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Type</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Pickup Time</th>
                     <th className="px-6 py-4 text-right"></th>
                   </tr>
                 </thead>

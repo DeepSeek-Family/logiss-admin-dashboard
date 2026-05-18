@@ -189,13 +189,13 @@ const Transactions = ({ role }: { role?: string | null }) => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-bg/50 border-b border-line-2">
               <tr>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Transaction ID</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Date</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Rider</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Breakdown</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Amount</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest text-right"></th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Transaction ID</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Date</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Rider</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Breakdown</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Amount</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
