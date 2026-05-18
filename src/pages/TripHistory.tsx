@@ -860,14 +860,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
                       className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                     />
                   </th>
-                  <th className="px-3 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date & Pickup</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Financials</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
+                  <th className="px-3 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Trip ID</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Date & Pickup</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Rider</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Driver</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Route</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap">Type</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap text-right">Financials</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider whitespace-nowrap text-center">Status</th>
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>

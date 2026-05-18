@@ -209,7 +209,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm font-bold text-ink-3">Loading Bookings...</p>
+          <p className="text-sm text-ink-4">Loading bookings...</p>
         </div>
       </div>
     );
@@ -266,21 +266,21 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-black font-display text-ink tracking-normal">Booking Requests</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Review and dispatch medical transportation requests</p>
+          <h1 className="text-2xl font-semibold text-ink">Booking Requests</h1>
+          <p className="text-sm text-ink-4 mt-0.5">Review and dispatch medical transportation requests</p>
         </div>
         <Button variant="primary" icon={Plus} onClick={() => navigate('/create-booking')}>Manual Entry</Button>
       </div>
 
       <div className="flex items-center gap-1 border-b border-line-2">
         <button
-          className={`pb-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-3 hover:text-ink hover:border-line-2'}`}
+          className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('pending'); setCurrentPage(1); setSelectedBookingId(null); setSelectedTrips([]); }}
         >
           <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-black ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'pending_review').length}</span>
         </button>
         <button
-          className={`pb-4 px-1 border-b-2 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-3 hover:text-ink hover:border-line-2'}`}
+          className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); setSelectedBookingId(null); setSelectedTrips([]); }}
         >
           Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-black ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'confirmed').length}</span>
