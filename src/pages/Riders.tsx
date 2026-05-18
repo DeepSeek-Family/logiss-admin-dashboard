@@ -75,7 +75,7 @@ const Riders = ({ role }: { role?: string | null }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => setSelectedRiderId(null)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-ink-3 hover:text-ink hover:bg-white rounded-xl transition-all shadow-sm border border-line-2 bg-bg"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-ink-4 hover:text-ink hover:bg-white rounded-xl transition-all shadow-sm border border-line-2 bg-bg"
           >
             â† Back to Riders List
           </button>
@@ -99,9 +99,9 @@ const Riders = ({ role }: { role?: string | null }) => {
             </div>
             <div className="flex-1 text-center md:text-left">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-2xl font-bold font-display text-ink tracking-normal">{selectedRider?.name || 'Unknown Rider'}</h2>
+                <h2 className="text-2xl font-semibold text-ink">{selectedRider?.name || 'Unknown Rider'}</h2>
                 <Badge variant={selectedRider?.status === 'active' ? 'accent' : 'neutral'}>{selectedRider?.status === 'active' ? 'Active' : 'Inactive'}</Badge>
-                {selectedRider?.source && <Badge variant="outline" className="text-xs font-bold text-primary border-primary/20 bg-primary/5 uppercase">{selectedRider.source}</Badge>}
+                {selectedRider?.source && <Badge variant="outline" className="text-xs font-medium text-primary border-primary/20 bg-primary/5">{selectedRider.source}</Badge>}
               </div>
               <div className="flex flex-wrap items-center gap-4 text-ink-4 text-xs font-medium">
                 <span className="flex items-center gap-1.5"><Star size={12} className="text-warning fill-warning" /> {selectedRider?.rating || 4.9} rating</span>
@@ -113,11 +113,11 @@ const Riders = ({ role }: { role?: string | null }) => {
             <div className="flex gap-3">
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
                 <p className="text-xs text-ink-4 mb-0.5">Trips</p>
-                <p className="text-xl font-bold text-ink">{selectedRider?.totalTrips || 0}</p>
+                <p className="text-xl font-semibold text-ink">{selectedRider?.totalTrips || 0}</p>
               </div>
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
                 <p className="text-xs text-ink-4 mb-0.5">Mobility</p>
-                <p className="text-sm font-bold text-primary mt-1">{selectedRider?.mobility || 'Ambulatory'}</p>
+                <p className="text-sm font-semibold text-primary mt-1">{selectedRider?.mobility || 'Ambulatory'}</p>
               </div>
             </div>
           </div>
@@ -167,14 +167,14 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                       <div className="p-2 bg-white rounded-lg text-ink-3 shadow-sm shrink-0"><MapPin size={14} /></div>
                       <div className="min-w-0">
-                        <p className="text-xs font-black text-ink-4 uppercase tracking-widest mb-0.5">Home/Pickup</p>
+                        <p className="text-xs text-ink-4 mb-0.5">Home/Pickup</p>
                         <p className="text-xs font-medium text-ink truncate">{selectedRider?.defaultPickup || 'N/A'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                       <div className="p-2 bg-white rounded-lg text-primary shadow-sm shrink-0"><Activity size={14} /></div>
                       <div className="min-w-0">
-                        <p className="text-xs font-black text-ink-4 uppercase tracking-widest mb-0.5">Primary Facility</p>
+                        <p className="text-xs text-ink-4 mb-0.5">Primary Facility</p>
                         <p className="text-xs font-medium text-ink truncate">{selectedRider?.defaultDropoff || 'N/A'}</p>
                       </div>
                     </div>
@@ -199,14 +199,14 @@ const Riders = ({ role }: { role?: string | null }) => {
                   </Card>
 
                   <Card className="p-6 border-urgent/10 bg-urgent-light/5">
-                    <h4 className="text-xs font-black text-urgent uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <h4 className="text-[10px] font-medium text-urgent uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
                       <AlertTriangle size={14} /> Emergency Contact
                     </h4>
                     <div className="p-4 bg-white rounded-2xl border border-urgent/10">
-                      <p className="text-sm font-black text-ink">{selectedRider?.emergencyContact?.name || 'N/A'}</p>
-                      <p className="text-xs font-black text-ink-4 uppercase mt-0.5">{selectedRider?.emergencyContact?.relation || 'N/A'}</p>
+                      <p className="text-sm font-semibold text-ink">{selectedRider?.emergencyContact?.name || 'N/A'}</p>
+                      <p className="text-xs text-ink-4 mt-0.5">{selectedRider?.emergencyContact?.relation || 'N/A'}</p>
                       <div className="mt-4 flex items-center gap-2">
-                        <div className="flex-1 p-3 bg-bg rounded-xl border border-line-2 text-xs font-black text-primary text-center tracking-widest">
+                        <div className="flex-1 p-3 bg-bg rounded-xl border border-line-2 text-xs font-medium text-primary text-center">
                           {selectedRider?.emergencyContact?.phone || 'N/A'}
                         </div>
                         <button
@@ -242,20 +242,20 @@ const Riders = ({ role }: { role?: string | null }) => {
                   <tbody className="divide-y divide-line-2">
                     {(() => {
                       const riderTrips = (trips || []).filter((t: any) => t.rider?.name === selectedRider?.name || (t.rider && selectedRider && t.rider.initials === selectedRider.initials));
-                      if (riderTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-bold text-ink-4">No Trip History Available</td></tr>;
+                      if (riderTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-medium text-ink-4">No Trip History Available</td></tr>;
                       return riderTrips.map((trip: any) => (
                         <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-6 py-4 font-mono text-xs font-medium text-ink">#{trip.id.slice(-4)}</td>
+                          <td className="px-6 py-4 font-mono text-xs text-ink-3">#{trip.id.slice(-4)}</td>
                           <td className="px-6 py-4">
                             <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
-                            <p className="text-xs text-ink-4 uppercase">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-xs text-ink-4">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-xs font-medium text-ink capitalize">{trip.type?.replace('_', ' ')}</p>
                           </td>
                           <td className="px-6 py-4 max-w-xs">
-                            <p className="text-xs font-black text-ink-4 truncate mb-0.5">{trip.pickup}</p>
-                            <p className="text-xs font-black text-primary truncate uppercase">To: {trip.dropoff}</p>
+                            <p className="text-xs text-ink-4 truncate mb-0.5">{trip.pickup}</p>
+                            <p className="text-xs text-primary truncate">→ {trip.dropoff}</p>
                           </td>
                           <td className="px-6 py-4"><Badge variant={trip.status === 'completed' ? 'accent' : 'neutral'}>{trip.status}</Badge></td>
                           <td className="px-6 py-4">
@@ -279,8 +279,8 @@ const Riders = ({ role }: { role?: string | null }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Rider Directory</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage patient profiles, mobility needs, and trip history</p>
+          <h1 className="text-2xl font-semibold text-ink">Rider Directory</h1>
+          <p className="text-sm text-ink-4 mt-0.5">Manage patient profiles, mobility needs, and trip history</p>
         </div>
       </div>
 
@@ -298,7 +298,7 @@ const Riders = ({ role }: { role?: string | null }) => {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-ink-4 leading-none">{s.label}</p>
-              <p className="text-2xl font-bold text-ink mt-1 leading-none">{s.value}</p>
+              <p className="text-2xl font-semibold text-ink mt-1 leading-none">{s.value}</p>
               <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
             </div>
           </Card>
@@ -315,7 +315,7 @@ const Riders = ({ role }: { role?: string | null }) => {
               { id: 'inactive', label: 'Inactive' },
             ].map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setCurrentPage(1); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-3 hover:text-ink'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-4 hover:text-ink'}`}>
                 {tab.label}
               </button>
             ))}
@@ -333,7 +333,7 @@ const Riders = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/10 border-b border-line-2/50">
               <tr>
                 {['Rider', 'IDs', 'County / Source', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
-                  <th key={h} className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -351,7 +351,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                         {rider.status === 'active' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink truncate">{rider.name}</p>
+                        <p className="text-sm font-medium text-ink truncate">{rider.name}</p>
                         <p className="text-xs font-medium text-ink-4 truncate">{rider.email}</p>
                       </div>
                     </div>
@@ -359,17 +359,17 @@ const Riders = ({ role }: { role?: string | null }) => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs font-medium text-ink-3"><span className="text-ink-4 mr-0.5">PX:</span> {rider.passengerId || rider.id}</span>
-                      <span className="text-xs font-bold text-primary"><span className="text-primary-dark/60 mr-0.5">AUTH:</span> {rider.authorizationId || rider.authId || '---'}</span>
+                      <span className="text-xs text-primary"><span className="text-primary-dark/60 mr-0.5">AUTH:</span> {rider.authorizationId || rider.authId || '---'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1.5">
                       {rider.county && (
-                        <span className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-extrabold uppercase tracking-wider rounded-full w-fit">
+                        <span className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-medium rounded-full w-fit">
                           {rider.county}
                         </span>
                       )}
-                      {rider.source && <Badge variant="outline" className="font-black text-primary border-primary/20 bg-primary/5 uppercase w-fit">{rider.source}</Badge>}
+                      {rider.source && <Badge variant="outline" className="font-medium text-primary border-primary/20 bg-primary/5 w-fit">{rider.source}</Badge>}
                       {!rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
                     </div>
                   </td>
@@ -377,7 +377,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <div className="relative">
                       <button
                         onClick={() => setOpenStatusId(openStatusId === rider.id ? null : rider.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black border-0 transition-all ${rider.status === 'active' ? 'text-accent bg-accent-light/35' : rider.status === 'suspended' ? 'text-warning border-warning/15 bg-warning-light/40' : rider.status === 'banned' ? 'text-urgent bg-urgent-light/45' : 'text-ink-4 bg-bg'}`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 transition-all ${rider.status === 'active' ? 'text-accent bg-accent-light/35' : rider.status === 'suspended' ? 'text-warning border-warning/15 bg-warning-light/40' : rider.status === 'banned' ? 'text-urgent bg-urgent-light/45' : 'text-ink-4 bg-bg'}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full ${rider.status === 'active' ? 'bg-accent' : rider.status === 'suspended' ? 'bg-warning' : rider.status === 'banned' ? 'bg-urgent' : 'bg-ink-4'}`} />
                         {(rider.status || 'inactive').toUpperCase()}
@@ -385,7 +385,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                       </button>
                       {openStatusId === rider.id && (
                         <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-xl w-44 py-1 animate-in fade-in duration-150">
-                          <p className="px-3 py-2 text-[10px] font-black text-ink-4 uppercase tracking-widest border-b border-line-2 mb-1">Change Status</p>
+                          <p className="px-3 py-2 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] border-b border-line-2 mb-1">Change Status</p>
                           {[
                             { value: 'active', label: 'Set Active', icon: UserCheck, color: 'text-accent hover:bg-accent-light/30' },
                             { value: 'suspended', label: 'Suspend Rider', icon: UserX, color: 'text-warning hover:bg-warning-light/40' },
@@ -395,7 +395,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                                key={opt.value}
                                disabled={rider.status === opt.value}
                                onClick={() => { updateRiderStatus(rider.id, opt.value); setOpenStatusId(null); toast.success(rider.name + ' marked as ' + opt.value); }}
-                               className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${opt.color}`}
+                               className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${opt.color}`}
                             >
                               <opt.icon size={13} />
                               {opt.label}
@@ -411,7 +411,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                         rider.mobility === 'Wheelchair' ? 'accent' :
                         rider.mobility === 'Ambulatory' ? 'neutral' : 'warning'
                       }
-                      className="font-bold py-0.5 px-2 text-xs rounded-full"
+                      className="font-medium py-0.5 px-2 text-xs rounded-full"
                     >
                       {rider.mobility || 'Ambulatory'}
                     </Badge>
@@ -420,7 +420,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                     <span className="text-xs font-medium text-ink-3">{rider?.phone || '---'}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
+                    <span className="text-sm font-medium text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -431,7 +431,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                 <tr>
                   <td colSpan={8} className="px-6 py-16 text-center text-ink-4">
                     <Search size={32} className="mx-auto mb-3 opacity-30" />
-                    <p className="text-sm font-bold text-ink-3">No riders match your filter</p>
+                    <p className="text-sm font-medium text-ink-4">No riders match your filter</p>
                   </td>
                 </tr>
               )}
