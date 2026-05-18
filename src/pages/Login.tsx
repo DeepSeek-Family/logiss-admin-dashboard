@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Truck, ShieldAlert, Navigation, ArrowRight, Mail, Lock } from 'lucide-react';
-import { Button } from '../components/ui';
+import { Button } from '@/shared/components/ui';
 
 const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const [step, setStep] = useState(1);

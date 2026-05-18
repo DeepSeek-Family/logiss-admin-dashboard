@@ -4,7 +4,7 @@ import {
   Accessibility, Bed, User as UserIcon, Disc, Info, 
   Clock, Navigation, ShieldCheck, Phone, ArrowRight
 } from 'lucide-react';
-import { Avatar, Button } from './ui';
+import { Avatar, Button } from '@/shared/components/ui';
 
 interface ManualTripModalProps {
   trips: any[];

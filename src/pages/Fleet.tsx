@@ -8,7 +8,7 @@ import {
   Settings, Zap, ShieldAlert, ClipboardCheck, LayoutGrid, List,
   Activity
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button, Pagination } from '../components/ui';
+import { Card, Badge, Avatar, Button, Pagination } from '@/shared/components/ui';
 import { useFleet } from '../hooks/useFleet';
 import { useDrivers } from '../hooks/useDrivers';
 import { useTrips } from '../hooks/useTrips';
@@ -53,7 +53,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
               <Plus size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold font-display text-ink tracking-normal">Register New Unit</h2>
+              <h2 className="text-xl font-semibold text-ink">Register New Unit</h2>
               <p className="text-xs text-ink-3 font-semibold mt-1">Deployment Step {step} of 2</p>
             </div>
           </div>
@@ -64,7 +64,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
           {['Vehicle Specifications', 'Compliance & Safety'].map((s, i) => (
             <div key={s} className="flex-1">
               <div className={`h-1.5 rounded-full transition-all duration-500 ${step > i ? 'bg-primary' : 'bg-line-2'}`} />
-              <p className={`text-xs font-bold mt-2 ${step === i + 1 ? 'text-primary' : 'text-ink-4'}`}>{s}</p>
+              <p className={`text-xs font-medium mt-2 ${step === i + 1 ? 'text-primary' : 'text-ink-4'}`}>{s}</p>
             </div>
           ))}
         </div>
@@ -79,7 +79,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                 { label: 'License Plate', key: 'plate', ph: 'VA · AAA-0000' }
               ].map(field => (
                 <div key={field.key}>
-                  <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">{field.label}</label>
+                  <label className="block text-xs text-ink-4 mb-2.5 ml-1">{field.label}</label>
                   <input
                     className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all placeholder:text-ink-4/50"
                     type="text"
@@ -90,16 +90,16 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                 </div>
               ))}
               <div className="col-span-2">
-                <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">VIN Number (17 Characters)</label>
+                <label className="block text-xs text-ink-4 mb-2.5 ml-1">VIN Number (17 Characters)</label>
                 <input
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm font-bold text-ink font-mono outline-none transition-all placeholder:text-ink-4/50 uppercase"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink font-mono outline-none transition-all placeholder:text-ink-4/50 uppercase"
                   placeholder="1FD..."
                   value={form.vin}
                   onChange={e => set('vin', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">Configuration Type</label>
+                <label className="block text-xs text-ink-4 mb-2.5 ml-1">Configuration Type</label>
                 <select
                   className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all cursor-pointer"
                   value={form.type}
@@ -109,7 +109,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">Max Passengers</label>
+                <label className="block text-xs text-ink-4 mb-2.5 ml-1">Max Passengers</label>
                 <input
                   className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all"
                   type="number"
@@ -407,7 +407,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <Badge variant={typeBadge[v.type] || 'neutral'} className="text-xs font-bold px-2 py-0.5">{v.type}</Badge>
+                      <Badge variant={typeBadge[v.type] || 'neutral'} className="text-xs font-medium px-2 py-0.5">{v.type}</Badge>
                     </td>
 
                     <td className="px-6 py-4">
@@ -435,7 +435,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <Badge variant={insuranceBadge[v.insurance?.status] || 'neutral'} className="text-xs font-bold px-2 py-0.5">
+                      <Badge variant={insuranceBadge[v.insurance?.status] || 'neutral'} className="text-xs font-medium px-2 py-0.5">
                         {v.insurance?.status}
                       </Badge>
                       <p className="text-xs text-ink-4 mt-1 font-medium italic">Exp {v.insurance?.expires || 'N/A'}</p>

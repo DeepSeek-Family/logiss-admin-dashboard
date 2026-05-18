@@ -6,7 +6,7 @@ import {
   AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
   Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List
 } from 'lucide-react';
-import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '../components/ui';
+import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '@/shared/components/ui';
 import { ManualTripModal } from '../components/ManualTripModal';
 import { useTrips } from '../hooks/useTrips';
 import { tripService } from '../services/tripService';

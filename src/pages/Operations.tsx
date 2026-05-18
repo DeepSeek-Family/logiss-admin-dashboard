@@ -6,7 +6,7 @@ import {
   Loader2, FileWarning, UserPlus,
   CalendarDays, MoveRight, Repeat
 } from 'lucide-react';
-import { Card, StatCard, Avatar, Badge, TripStatusBadge, Button, Pagination } from '../components/ui';
+import { Card, StatCard, Avatar, Badge, TripStatusBadge, Button, Pagination } from '@/shared/components/ui';
 import { opsStats, drivers } from '../data/mockData';
 import { formatTime, formatShortDate } from '../utils/helpers';
 import { useTrips } from '../hooks/useTrips';

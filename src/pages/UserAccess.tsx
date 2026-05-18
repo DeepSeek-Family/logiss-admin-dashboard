@@ -9,7 +9,7 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button } from '../components/ui';
+import { Card, Badge, Avatar, Button } from '@/shared/components/ui';
 import { useUsers } from '../hooks/useUsers';
 
 const UserAccess = ({ role }: { role?: string | null }) => {

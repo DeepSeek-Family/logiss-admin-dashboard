@@ -8,7 +8,7 @@ import {
   MoveRight, Repeat, MessageSquare, UserPlus, Loader2,
   ChevronLeft, Users, AlertTriangle, Coffee, Wrench
 } from 'lucide-react';
-import { Card, Badge, Avatar, TripStatusBadge, Pagination, Button } from '../components/ui';
+import { Card, Badge, Avatar, TripStatusBadge, Pagination, Button } from '@/shared/components/ui';
 import { CancelTripModal } from './Reports';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
@@ -135,7 +135,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
               <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
                 <input
                   placeholder="Reason for cancellation..."
-                  className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]"
+                  className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                 />
@@ -181,12 +181,12 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
 
                 {editMode && (
                   <div className="mb-5 p-4 bg-primary-tint/10 rounded-xl border border-primary/20">
-                    <label className="block text-xs font-bold text-ink-3 mb-1">Reschedule Time</label>
+                    <label className="block text-xs text-ink-4 mb-1">Reschedule Time</label>
                     <input
                       type="time"
                       value={editedTime}
                       onChange={(e) => setEditedTime(e.target.value)}
-                      className="w-full max-w-xs bg-white border border-line rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full max-w-xs bg-white border border-line rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 )}
@@ -209,19 +209,19 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                     <p className="text-sm font-medium text-ink">{tripTypeLabel(trip.type)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Reason</p>
+                    <p className="text-xs text-ink-4 mb-1">Reason</p>
                     <p className="text-sm font-medium text-ink">{trip.reason || 'Medical Visit'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Est. Distance</p>
+                    <p className="text-xs text-ink-4 mb-1">Est. Distance</p>
                     <p className="text-sm font-medium text-ink">{trip.distance || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Est. Duration</p>
+                    <p className="text-xs text-ink-4 mb-1">Est. Duration</p>
                     <p className="text-sm font-medium text-ink">{trip.duration || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink-4 mb-1">Return Type</p>
+                    <p className="text-xs text-ink-4 mb-1">Return Type</p>
                     <p className="text-sm font-medium text-ink capitalize">{trip.returnType ? trip.returnType.replace('_', ' ') : 'N/A'}</p>
                   </div>
                 </div>
@@ -301,7 +301,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                     </div>
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Mobility Need</p>
-                      <p className="text-sm font-bold text-ink flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-ink flex items-center gap-1.5">
                         <Badge variant="primary">{trip?.mobility || 'Ambulatory'}</Badge>
                       </p>
                     </div>
@@ -349,7 +349,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                         <div className="flex items-center gap-3">
                           <Avatar initials={d.initials} size="xs" />
                           <div className="text-left">
-                            <p className="text-xs font-bold leading-tight">{d.name}</p>
+                            <p className="text-xs font-medium leading-tight">{d.name}</p>
                             <p className="text-xs font-medium opacity-80">{d.vehicle.type}</p>
                           </div>
                         </div>
@@ -449,7 +449,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                   <div className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-line-2 mt-1.5 shrink-0"></div>
                     <div>
-                      <p className="text-xs font-medium text-ink-3">Trip submitted by <span className="font-bold text-ink">Dispatcher Portal</span></p>
+                      <p className="text-xs font-medium text-ink-3">Trip submitted by <span className="font-medium text-ink">Dispatcher Portal</span></p>
                       <p className="text-xs text-ink-4">{trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p>
                     </div>
                   </div>
@@ -457,7 +457,7 @@ const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[
                     <div className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0"></div>
                       <div>
-                        <p className="text-xs font-medium text-ink-3">Assigned to <span className="font-bold text-ink">{driver?.name || trip.driverId}</span></p>
+                        <p className="text-xs font-medium text-ink-3">Assigned to <span className="font-medium text-ink">{driver?.name || trip.driverId}</span></p>
                         <p className="text-xs text-ink-4">System Auto-log</p>
                       </div>
                     </div>

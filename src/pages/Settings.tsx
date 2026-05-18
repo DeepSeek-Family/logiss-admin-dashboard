@@ -6,7 +6,7 @@ import {
   BellOff, CheckCircle2, Loader2, Eye, EyeOff,
   QrCode, Copy, ShieldCheck, X
 } from 'lucide-react';
-import { Card, Badge, Button } from '../components/ui';
+import { Card, Badge, Button } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
 
 // ─── Toggle Row ────────────────────────────────

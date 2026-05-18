@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogOut, ArrowRight, Truck } from 'lucide-react';
-import { Button, Card } from '../components/ui';
+import { Button, Card } from '@/shared/components/ui';
 
 const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
   return (

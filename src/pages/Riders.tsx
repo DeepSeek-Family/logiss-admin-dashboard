@@ -6,7 +6,7 @@ import {
   UserX, UserCheck, Ban, ChevronDown
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Card, Avatar, Badge, Button, Pagination } from '../components/ui';
+import { Card, Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { useRiders } from '../hooks/useRiders';
 import { useTrips } from '../hooks/useTrips';
 

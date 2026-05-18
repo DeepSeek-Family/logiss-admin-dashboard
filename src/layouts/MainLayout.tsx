@@ -24,7 +24,7 @@ import {
   UserPlus,
   Activity
 } from 'lucide-react';
-import { Avatar, Badge, Button } from '../components/ui';
+import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { trips, drivers } from '../data/mockData';
 

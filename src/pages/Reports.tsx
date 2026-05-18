@@ -4,7 +4,7 @@ import {
   Phone, CheckCircle2, Flag, ArrowRight, ShieldCheck, AlertOctagon,
   MoreVertical, Ban, Slash, Navigation, X, Loader2, Search, Plus
 } from 'lucide-react';
-import { Card, Avatar, Badge, Button } from '../components/ui';
+import { Card, Avatar, Badge, Button } from '@/shared/components/ui';
 import { useReports } from '../hooks/useReports';
 import { timeAgo, formatDateTime } from '../utils/helpers';
 
@@ -41,7 +41,7 @@ const CreateReportModal = ({ onClose, onSave }: { onClose: () => void; onSave: (
                 {reason === r.id && <div className="w-2.5 h-2.5 rounded-full bg-urgent" />}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-ink">{r.label}</p>
+                <p className="text-sm font-medium text-ink">{r.label}</p>
                 <p className="text-xs font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
               </div>
               <input type="radio" className="hidden" name="reason" checked={reason === r.id} onChange={() => setReason(r.id)} />
@@ -90,7 +90,7 @@ const CancelTripModal = ({ onClose, onConfirm }: { onClose: () => void; onConfir
                 {reason === r.id && <div className="w-2.5 h-2.5 rounded-full bg-urgent" />}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-ink">{r.label}</p>
+                <p className="text-sm font-medium text-ink">{r.label}</p>
                 <p className="text-xs font-medium text-ink-3 leading-tight mt-0.5">{r.sub}</p>
               </div>
               <input type="radio" className="hidden" name="reason" checked={reason === r.id} onChange={() => setReason(r.id)} />
@@ -100,7 +100,7 @@ const CancelTripModal = ({ onClose, onConfirm }: { onClose: () => void; onConfir
         <div className="p-6 bg-bg/50 border-t border-line-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary">
             <Clock size={16} />
-            <span className="text-xs font-bold uppercase tracking-wider">Free cancellation window active</span>
+            <span className="text-xs font-medium uppercase tracking-wider">Free cancellation window active</span>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose}>Keep Booking</Button>
@@ -136,7 +136,7 @@ const ReportCard = ({ report, selected, onClick }: { report: any; selected: bool
       }`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm font-bold text-ink line-clamp-1 flex-1 mr-2">{report.type}</p>
+        <p className="text-sm font-medium text-ink line-clamp-1 flex-1 mr-2">{report.type}</p>
         <Badge variant={sev.badge} className="text-[10px] px-1.5 py-0 shrink-0">{sev.label}</Badge>
       </div>
       <div className="flex items-center justify-between mt-1">
@@ -165,7 +165,7 @@ const SendWarningModal = ({ name, onClose }: { name: string; onClose: () => void
               <AlertTriangle size={16} className="text-warning" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-ink">Send Warning Notice</h3>
+              <h3 className="text-sm font-medium text-ink">Send Warning Notice</h3>
               <p className="text-xs text-ink-4">To: {name}</p>
             </div>
           </div>
@@ -217,7 +217,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
           <div>
             <h2 className="text-base font-extrabold font-display text-ink leading-tight">{report.type}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono text-xs font-bold text-ink-3 uppercase">#{report.id}</span>
+              <span className="font-mono text-xs font-medium text-ink-3 uppercase">#{report.id}</span>
               <span className="w-1 h-1 bg-line rounded-full" />
               <Badge variant={variant}>{report.status}</Badge>
               {report.severity === 'high' && (
@@ -257,7 +257,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
                 <Avatar initials={data?.name?.[0] || '?'} size="sm" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <p className="text-sm font-bold text-ink truncate">{data?.name || 'Unknown'}</p>
+                    <p className="text-sm font-medium text-ink truncate">{data?.name || 'Unknown'}</p>
                     {badge}
                   </div>
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{data?.role || 'N/A'}</p>
@@ -265,7 +265,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
               </div>
               <button
                 onClick={() => setWarningTarget(data?.name || 'User')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-warning/20 bg-warning-light hover:bg-warning hover:text-white text-warning text-xs font-bold transition-all shrink-0 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-warning/20 bg-warning-light hover:bg-warning hover:text-white text-warning text-xs font-medium transition-all shrink-0 whitespace-nowrap"
                 title="Send Warning"
               >
                 <AlertTriangle size={12} />
@@ -277,7 +277,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
 
         {/* Statement */}
         <div>
-          <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-3 flex items-center gap-2">
             <MessageSquare size={12} /> Statement of Incident
           </h4>
           <div className="bg-bg/40 rounded-2xl p-5 relative">
@@ -288,7 +288,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
 
         {/* Associated Trip */}
         <div>
-          <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-3 flex items-center gap-2">
             <Flag size={12} /> Associated Record
           </h4>
           <div className="bg-bg/60 rounded-xl p-4 flex items-center justify-between group hover:bg-primary-tint/30 transition-colors cursor-pointer">
@@ -297,7 +297,7 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
                 <Navigation size={18} />
               </div>
               <div>
-                <p className="text-sm font-bold text-ink font-mono uppercase tracking-normal">Trip #{report.tripId}</p>
+                <p className="text-sm font-medium text-ink font-mono uppercase tracking-normal">Trip #{report.tripId}</p>
                 <p className="text-xs text-ink-3 font-medium mt-0.5">Submitted {formatDateTime(report.submitted)}</p>
               </div>
             </div>
@@ -418,7 +418,7 @@ const Reports = ({ role }: { role?: string | null }) => {
               <s.icon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-ink-4 uppercase tracking-wider leading-none">{s.label}</p>
+              <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] leading-none">{s.label}</p>
               <p className="text-3xl font-extrabold text-ink mt-1 leading-none">{s.value}</p>
               <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
             </div>
@@ -436,7 +436,7 @@ const Reports = ({ role }: { role?: string | null }) => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setSelectedReportId(null); }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id
                     ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
                     : 'text-ink-3 hover:text-ink'
                   }`}
@@ -463,7 +463,7 @@ const Reports = ({ role }: { role?: string | null }) => {
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all capitalize ${filterType === type ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-3 hover:text-ink'
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all capitalize ${filterType === type ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-3 hover:text-ink'
                     }`}
                 >
                   {type === 'all' ? 'All' : `${type}s`}
@@ -503,7 +503,7 @@ const Reports = ({ role }: { role?: string | null }) => {
                 <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center mb-4">
                   <ShieldCheck size={28} className="text-ink-4" />
                 </div>
-                <p className="text-sm font-bold text-ink-3">No incidents found</p>
+                <p className="text-sm font-medium text-ink-3">No incidents found</p>
                 <p className="text-xs text-ink-4 mt-1">Try adjusting your filters</p>
               </div>
             )}
@@ -521,7 +521,7 @@ const Reports = ({ role }: { role?: string | null }) => {
                 <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center mb-4">
                   <ShieldAlert size={32} className="text-ink-4" />
                 </div>
-                <p className="text-sm font-bold text-ink-3">Select an incident to investigate</p>
+                <p className="text-sm font-medium text-ink-3">Select an incident to investigate</p>
                 <p className="text-xs text-ink-4 mt-1">Choose a report from the list on the left</p>
               </div>
             )}

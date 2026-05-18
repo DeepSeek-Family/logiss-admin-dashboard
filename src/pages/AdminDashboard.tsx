@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   Truck
 } from 'lucide-react';
-import { Card, StatCard, Badge, Avatar, Button } from '../components/ui';
+import { Card, StatCard, Badge, Avatar, Button } from '@/shared/components/ui';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { money } from '../utils/helpers';

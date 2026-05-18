@@ -4,7 +4,7 @@ import {
   CalendarClock, AlertTriangle, Star, ChevronRight, ExternalLink,
   X, User, UserPlus, Truck, FileCheck, Users, Repeat, Copy
 } from 'lucide-react';
-import { Card, Avatar, Badge, Button, Pagination } from '../components/ui';
+import { Card, Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { useDrivers } from '../hooks/useDrivers';
 import { useTrips } from '../hooks/useTrips';
 
@@ -190,7 +190,7 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
           {step === 3 && (
             <div className="space-y-6">
               <div className="p-6 bg-primary-tint/10 rounded-2xl border border-primary/10">
-                <p className="text-xs font-bold text-ink leading-relaxed">Select the counties where this driver will provide NEMT services. Multiple selection is allowed.</p>
+                <p className="text-xs text-ink leading-relaxed">Select the counties where this driver will provide NEMT services. Multiple selection is allowed.</p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {COUNTIES.map(c => (
@@ -224,7 +224,7 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
               </div>
               <div className="p-6 bg-bg rounded-2xl border border-dashed border-line-2 text-center group cursor-pointer hover:bg-white hover:border-primary transition-all">
                 <Car className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-colors" size={24} />
-                <p className="text-xs font-bold text-ink-4 group-hover:text-ink transition-colors">Click to upload vehicle registration documents</p>
+                <p className="text-xs text-ink-4 group-hover:text-ink transition-colors">Click to upload vehicle registration documents</p>
               </div>
             </div>
           )}
@@ -304,7 +304,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
-        <h3 className="text-lg font-bold text-ink mb-2">Failed to load drivers</h3>
+        <h3 className="text-lg font-semibold text-ink mb-2">Failed to load drivers</h3>
         <p className="text-ink-3 text-sm">{error}</p>
       </div>
     );
@@ -550,7 +550,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
                   <tbody className="divide-y divide-line-2">
                     {(() => {
                       const driverTrips = (trips || []).filter((t: any) => t.driverId === selectedDriver?.id);
-                      if (driverTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-bold text-ink-4">No Trip History Available</td></tr>;
+                      if (driverTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-medium text-ink-4">No Trip History Available</td></tr>;
                       return driverTrips.map((trip: any) => (
                         <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
                           <td className="px-6 py-4 font-mono text-xs text-ink-3">#{trip.id.slice(-4)}</td>

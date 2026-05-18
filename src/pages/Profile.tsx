@@ -3,7 +3,7 @@ import {
   User, Mail, Phone, MapPin,
   Camera, Loader2, CheckCircle2,
 } from 'lucide-react';
-import { Card, Badge, Button } from '../components/ui';
+import { Card, Badge, Button } from '@/shared/components/ui';
 
 const PROFILES = {
   admin: {

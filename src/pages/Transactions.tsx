@@ -10,7 +10,7 @@ import {
   DollarSign,
   ArrowRight
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button, StatCard } from '../components/ui';
+import { Card, Badge, Avatar, Button, StatCard } from '@/shared/components/ui';
 import { useTrips } from '../hooks/useTrips';
 import { formatShortDate, money } from '../utils/helpers';
 

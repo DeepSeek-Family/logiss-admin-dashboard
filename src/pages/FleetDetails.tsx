@@ -12,7 +12,7 @@ import {
   Package, Map as MapIcon, ArrowRight, UserPlus,
   Navigation, MessageSquare
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button, StatCard, TripStatusBadge } from '../components/ui';
+import { Card, Badge, Avatar, Button, StatCard, TripStatusBadge } from '@/shared/components/ui';
 import { useFleet } from '../hooks/useFleet';
 import { useDrivers } from '../hooks/useDrivers';
 import { useTrips } from '../hooks/useTrips';

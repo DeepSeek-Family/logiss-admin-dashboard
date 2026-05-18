@@ -18,7 +18,7 @@ import {
   MapPin,
   Smartphone
 } from 'lucide-react';
-import { Card, Button, Badge } from '../components/ui';
+import { Card, Button, Badge } from '@/shared/components/ui';
 
 interface ContentState {
   [key: string]: string;

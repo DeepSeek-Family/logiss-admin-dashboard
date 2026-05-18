@@ -10,7 +10,7 @@ import {
   Maximize2, Navigation, Clock, ChevronLeft, User, Check
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Card, Avatar, Badge, Button, TripStatusBadge } from '../components/ui';
+import { Card, Avatar, Badge, Button, TripStatusBadge } from '@/shared/components/ui';
 import { willCallQueue } from '../data/mockData';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';

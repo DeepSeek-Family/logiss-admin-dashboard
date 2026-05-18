@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
   Loader2
 } from 'lucide-react';
-import { Card, Avatar, Badge, Button, Pagination } from '../components/ui';
+import { Card, Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { useApplications } from '../hooks/useApplications';
 import { timeAgo } from '../utils/helpers';
 
