@@ -22,7 +22,7 @@ const TripHistory = lazy(() => import('../pages/TripHistory'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Fleet = lazy(() => import('../pages/Fleet'));
 const FleetDetails = lazy(() => import('../pages/FleetDetails'));
-const Schedule = lazy(() => import('../pages/Schedule'));
+const Schedule = TripHistory;
 const Notifications = lazy(() => import('../pages/Notifications'));
 const Profile = lazy(() => import('../pages/Profile'));
 const CMS = lazy(() => import('../pages/CMS'));
@@ -66,7 +66,7 @@ export const authenticatedRoutes: AppRouteConfig[] = [
       { path: ':id', Component: FleetDetails },
     ],
   },
-  { path: 'schedule', Component: Schedule },
+  { path: 'schedule', Component: TripHistory },
   { path: 'notifications', Component: Notifications },
   { path: 'dashboard', Component: AdminDashboard, allowedRoles: ['admin'] },
   { path: 'transactions', Component: Transactions, allowedRoles: ['admin'] },

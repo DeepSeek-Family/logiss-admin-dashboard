@@ -98,7 +98,6 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: '/riders', label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
       { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
       { id: '/fleet', label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
-      { id: '/schedule', label: 'Shift Schedule', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
     ]
   },
   {
@@ -181,7 +180,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   </div>
                 ) : item.badge;
 
-                const isActive = page === item.id || (item.id !== '/' && page.startsWith(item.id));
+                const isActive = item.id.includes('tab=schedule')
+                  ? (page === '/trips' && location.search.includes('tab=schedule'))
+                  : (item.id === '/trips'
+                    ? (page === '/trips' && !location.search.includes('tab=schedule'))
+                    : (page === item.id || (item.id !== '/' && page.startsWith(item.id))));
 
                 return (
                   <NavItem

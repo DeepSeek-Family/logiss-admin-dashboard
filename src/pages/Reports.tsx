@@ -129,36 +129,64 @@ const ReportCard = ({ report, selected, onClick }: { report: any; selected: bool
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-2xl border-2 transition-all hover:shadow-sm ${selected
-          ? 'border-primary bg-primary-tint/10 shadow-sm'
-          : 'border-line-2 bg-white hover:border-line'
-        }`}
+      className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+        selected
+          ? 'border-primary/40 bg-primary/5 shadow-sm'
+          : 'border-line-2 bg-white hover:border-line hover:bg-bg/40'
+      }`}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <SevIcon size={16} className={sev.iconClass} />
-          <span className="font-mono text-xs font-bold text-ink-3 uppercase">#{report.id}</span>
-        </div>
-        <Badge variant={sev.badge}>{sev.label}</Badge>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold text-ink line-clamp-1 flex-1 mr-2">{report.type}</p>
+        <Badge variant={sev.badge} className="text-[10px] px-1.5 py-0 shrink-0">{sev.label}</Badge>
       </div>
-
-      <p className="text-sm font-bold text-ink mb-3 line-clamp-1">{report.type}</p>
-
-      <div className="flex items-center gap-2.5">
-        <div className="flex -space-x-2">
-          <Avatar initials={report?.filedBy?.name?.[0] || '?'} size="xs" className="ring-2 ring-white" />
-          <div className="w-5 h-5 rounded-full bg-bg flex items-center justify-center ring-2 ring-white">
-            <ArrowRight size={8} className="text-ink-4" />
-          </div>
-          <Avatar initials={report?.subject?.name?.[0] || '?'} size="xs" className="ring-2 ring-white" />
+      <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center gap-1">
+          <SevIcon size={11} className={sev.iconClass} />
+          <span className="font-mono text-[10px] text-ink-4">{report.id}</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-ink truncate">{report?.filedBy?.name || 'Unknown'}</p>
-          <p className="text-xs text-ink-3 font-semibold uppercase tracking-wide">vs {report?.subject?.name || 'Unknown'}</p>
-        </div>
-        <span className="text-xs font-bold text-ink-4 whitespace-nowrap shrink-0">{timeAgo(report?.submitted)}</span>
+        <span className="text-[10px] text-ink-4">{timeAgo(report?.submitted)}</span>
       </div>
     </button>
+  );
+};
+
+// --- WARNING MODAL ---
+const SendWarningModal = ({ name, onClose }: { name: string; onClose: () => void }) => {
+  const [msg, setMsg] = useState(
+    `Dear ${name},\n\nThis is an official warning regarding a recent incident report filed against you. Please review the incident details and ensure compliance with our service guidelines.\n\nFurther violations may result in account suspension.\n\n— Logiss Operations Team`
+  );
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-line-2 animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line-2">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-warning-light rounded-xl flex items-center justify-center">
+              <AlertTriangle size={16} className="text-warning" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-ink">Send Warning Notice</h3>
+              <p className="text-xs text-ink-4">To: {name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-bg rounded-lg text-ink-4 transition-colors"><X size={16} /></button>
+        </div>
+        <div className="p-5">
+          <textarea
+            rows={8}
+            value={msg}
+            onChange={e => setMsg(e.target.value)}
+            className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink font-medium resize-none outline-none focus:border-warning/50 focus:ring-1 focus:ring-warning/20 transition-all leading-relaxed"
+          />
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-line-2 bg-bg/30">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" icon={AlertTriangle} className="border-warning/20 text-warning hover:bg-warning-light" onClick={onClose}>
+            Send Warning
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -167,6 +195,7 @@ const ReportCard = ({ report, selected, onClick }: { report: any; selected: bool
 const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void }) => {
   const sev = SEVERITY[report.severity as keyof typeof SEVERITY] || SEVERITY.low;
   const SevIcon = sev.icon;
+  const [warningTarget, setWarningTarget] = useState<string | null>(null);
 
   const statusVariant: { [key: string]: string } = {
     open: 'urgent',
@@ -177,6 +206,8 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
 
   return (
     <div className="h-full flex flex-col">
+      {warningTarget && <SendWarningModal name={warningTarget} onClose={() => setWarningTarget(null)} />}
+
       {/* Detail Header */}
       <div className="px-6 py-5 border-b border-line-2 flex items-center justify-between bg-bg/30 shrink-0">
         <div className="flex items-center gap-4">
@@ -189,6 +220,14 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
               <span className="font-mono text-xs font-bold text-ink-3 uppercase">#{report.id}</span>
               <span className="w-1 h-1 bg-line rounded-full" />
               <Badge variant={variant}>{report.status}</Badge>
+              {report.severity === 'high' && (
+                <>
+                  <span className="w-1 h-1 bg-line rounded-full" />
+                  <Badge variant="urgent" className="text-[10px] uppercase font-black tracking-wider animate-pulse flex items-center gap-1">
+                    <AlertTriangle size={10} /> Safety Alert
+                  </Badge>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -201,39 +240,37 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* High severity alert */}
         {report.severity === 'high' && (
-          <div className="bg-urgent-light/60 p-4 rounded-2xl border border-urgent/20 flex items-start gap-3">
-            <AlertTriangle className="text-urgent mt-0.5 shrink-0" size={18} />
-            <div>
-              <p className="text-xs font-extrabold text-urgent uppercase tracking-widest mb-1">Immediate Attention Required</p>
-              <p className="text-xs font-medium text-urgent/80 leading-relaxed">
-                This incident has been flagged for a potential safety violation. Review the details and contact the parties immediately.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-urgent-light/40 rounded-xl border border-urgent/10 text-urgent text-[11px] font-bold">
+            <AlertTriangle size={13} className="shrink-0 animate-pulse" />
+            <span>Urgent: Safety violation flagged — immediate dispatch follow-up required.</span>
           </div>
         )}
 
         {/* Filer vs Subject */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { data: report.filedBy, label: 'Claimant (Filer)', badge: <Badge variant="neutral">Filer</Badge> },
-            { data: report.subject, label: 'Subject (Accused)', badge: <Badge variant="urgent">Subject</Badge> },
+            { data: report.filedBy, label: 'Filed by', badge: <Badge variant="neutral" className="text-[10px]">Filer</Badge> },
+            { data: report.subject, label: 'Subject', badge: <Badge variant="urgent" className="text-[10px]">Subject</Badge> },
           ].map(({ data, label, badge }) => (
-            <div key={label} className="bg-bg rounded-2xl border border-line-2 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-ink-4 uppercase tracking-widest">{label}</p>
-                {badge}
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar initials={data?.name?.[0] || '?'} size="md" />
-                <div>
-                  <p className="text-sm font-bold text-ink leading-tight">{data?.name || 'Unknown'}</p>
-                  <p className="text-xs font-bold text-primary uppercase tracking-widest mt-0.5">{data?.role || 'N/A'}</p>
+            <div key={label} className="bg-bg/60 rounded-xl p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Avatar initials={data?.name?.[0] || '?'} size="sm" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-bold text-ink truncate">{data?.name || 'Unknown'}</p>
+                    {badge}
+                  </div>
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{data?.role || 'N/A'}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" icon={Phone} className="flex-1">Call</Button>
-                <Button variant="outline" size="sm" icon={MessageSquare} className="flex-1">Chat</Button>
-              </div>
+              <button
+                onClick={() => setWarningTarget(data?.name || 'User')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-warning/20 bg-warning-light hover:bg-warning hover:text-white text-warning text-xs font-bold transition-all shrink-0 whitespace-nowrap"
+                title="Send Warning"
+              >
+                <AlertTriangle size={12} />
+                Send Warning
+              </button>
             </div>
           ))}
         </div>
@@ -243,8 +280,8 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
           <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
             <MessageSquare size={12} /> Statement of Incident
           </h4>
-          <div className="bg-white rounded-2xl border-2 border-line-2 p-5 shadow-sm relative">
-            <span className="absolute -top-3 left-5 bg-white px-2 text-xl text-line font-serif">"</span>
+          <div className="bg-bg/40 rounded-2xl p-5 relative">
+            <span className="absolute -top-3 left-5 text-xl text-ink-4 font-serif">"</span>
             <p className="text-sm font-medium text-ink-2 leading-relaxed italic">{report.description}</p>
           </div>
         </div>
@@ -254,9 +291,9 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
           <h4 className="text-xs font-bold text-ink-4 uppercase tracking-widest mb-3 flex items-center gap-2">
             <Flag size={12} /> Associated Record
           </h4>
-          <div className="bg-bg rounded-xl border border-line-2 p-4 flex items-center justify-between group hover:border-primary/30 transition-colors cursor-pointer">
+          <div className="bg-bg/60 rounded-xl p-4 flex items-center justify-between group hover:bg-primary-tint/30 transition-colors cursor-pointer">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary border border-line-2">
+              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary">
                 <Navigation size={18} />
               </div>
               <div>
@@ -270,14 +307,11 @@ const DetailPanel = ({ report, onResolve }: { report: any; onResolve: () => void
       </div>
 
       {/* Action Footer */}
-      <div className="px-6 py-4 bg-white border-t border-line-2 flex gap-3 shrink-0">
-        <Button variant="outline" icon={Slash} className="flex-1 text-ink-3 hover:text-ink" onClick={onResolve}>
+      <div className="px-6 py-4 bg-white border-t border-line-2 flex items-center justify-end gap-2 shrink-0">
+        <Button variant="outline" icon={X} className="text-ink-3 hover:text-ink" onClick={onResolve}>
           Dismiss
         </Button>
-        <Button variant="outline" icon={AlertTriangle} className="flex-1 border-warning/20 text-warning hover:bg-warning-light">
-          Warning
-        </Button>
-        <Button variant="primary" icon={CheckCircle2} className="flex-1 shadow-sm shadow-primary/20" onClick={onResolve}>
+        <Button variant="primary" icon={CheckCircle2} className="shadow-sm shadow-primary/20" onClick={onResolve}>
           Resolve
         </Button>
       </div>
@@ -379,7 +413,7 @@ const Reports = ({ role }: { role?: string | null }) => {
           { label: 'Resolved', value: resolvedCount, sub: 'cases closed', icon: CheckCircle2, color: 'bg-accent-light text-accent', highlight: false },
           { label: 'Total Reports', value: (reports || []).length, sub: 'all time', icon: Flag, color: 'bg-primary-light text-primary', highlight: false },
         ].map(s => (
-          <Card key={s.label} className={`p-5 flex items-center gap-4 ${s.highlight ? 'border-urgent/20' : ''}`}>
+          <Card key={s.label} className={`p-5 flex items-center gap-4 ${s.highlight ? 'ring-2 ring-urgent/20' : ''}`}>
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}>
               <s.icon size={20} />
             </div>
@@ -393,43 +427,43 @@ const Reports = ({ role }: { role?: string | null }) => {
       </div>
 
       {/* Main Panel */}
-      <Card className="overflow-hidden border-line-2 flex flex-col" style={{ minHeight: '520px' }}>
+      <Card className="overflow-hidden flex flex-col" style={{ minHeight: '520px' }}>
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2 bg-bg/30 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2/50 bg-bg/20 shrink-0">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setSelectedReportId(null); }}
                 className={`relative px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id
-                    ? 'bg-white shadow-sm text-primary border border-line'
+                    ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
                     : 'text-ink-3 hover:text-ink'
                   }`}
               >
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-black ${activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2 text-ink-4'
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-black ${activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2/60 text-ink-4'
                     }`}>
                     {tab.count}
                   </span>
                 )}
                 {tab.dot && activeTab !== tab.id && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-urgent" />
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-urgent animate-pulse" />
                 )}
               </button>
             ))}
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {/* Source Filter */}
-            <div className="flex bg-white border border-line rounded-xl overflow-hidden">
+            <div className="flex bg-bg/60 p-0.5 rounded-xl">
               {['all', 'rider', 'driver'].map(type => (
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-3 py-1.5 text-xs font-bold transition-all capitalize ${filterType === type ? 'bg-primary text-white' : 'text-ink-3 hover:text-ink hover:bg-bg'
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all capitalize ${filterType === type ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-3 hover:text-ink'
                     }`}
                 >
                   {type === 'all' ? 'All' : `${type}s`}
@@ -445,7 +479,7 @@ const Reports = ({ role }: { role?: string | null }) => {
                 placeholder="Search reports..."
                 value={search}
                 onChange={e => { setSearch(e.target.value); setSelectedReportId(null); }}
-                className="pl-8 pr-3 py-1.5 bg-white border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/10 outline-none w-44"
+                className="pl-8 pr-3 py-1.5 bg-bg/60 focus:bg-white rounded-xl text-xs font-medium focus:ring-4 focus:ring-primary/10 outline-none w-44 transition-all"
               />
             </div>
           </div>
@@ -454,7 +488,7 @@ const Reports = ({ role }: { role?: string | null }) => {
         {/* Split Panel Body */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left — Report List */}
-          <div className="w-[320px] shrink-0 border-r border-line-2 overflow-y-auto p-4 space-y-2.5 bg-bg/20">
+          <div className="w-[300px] shrink-0 border-r border-line-2/40 overflow-y-auto p-3 space-y-1.5 bg-bg/10">
             {filteredReports.length > 0 ? (
               filteredReports.map(report => (
                 <ReportCard
@@ -466,7 +500,7 @@ const Reports = ({ role }: { role?: string | null }) => {
               ))
             ) : (
               <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center px-8 py-16">
-                <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center border border-line-2 mb-4">
+                <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center mb-4">
                   <ShieldCheck size={28} className="text-ink-4" />
                 </div>
                 <p className="text-sm font-bold text-ink-3">No incidents found</p>
@@ -476,15 +510,15 @@ const Reports = ({ role }: { role?: string | null }) => {
           </div>
 
           {/* Right — Detail View */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-white">
             {selectedReport ? (
               <DetailPanel
                 report={selectedReport}
                 onResolve={() => setActiveTab('resolved')}
               />
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-12">
-                <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center border border-line-2 mb-4">
+              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-bg/5">
+                <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center mb-4">
                   <ShieldAlert size={32} className="text-ink-4" />
                 </div>
                 <p className="text-sm font-bold text-ink-3">Select an incident to investigate</p>

@@ -71,7 +71,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm font-bold text-ink-3">Synchronizing Dashboard...</p>
+          <p className="text-sm text-ink-4">Synchronizing Dashboard...</p>
         </div>
       </div>
     );
@@ -81,12 +81,12 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-black font-display text-ink tracking-normal">Executive Dashboard</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Platform-wide overview and business performance metrics</p>
+          <h1 className="text-2xl font-semibold text-ink">Executive Dashboard</h1>
+          <p className="text-sm text-ink-4 mt-0.5">Platform-wide overview and business performance metrics</p>
         </div>
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-light/30 border border-accent/20 rounded-full">
           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-xs font-bold text-accent uppercase tracking-wide">Live System Feed</span>
+          <span className="text-xs font-medium text-accent">Live</span>
         </div>
       </div>
 
@@ -136,17 +136,17 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
           <Card className="p-6 border-line-2 h-full shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-lg font-bold text-ink">Trip Distribution</h3>
-                <p className="text-xs text-ink-4 font-medium">Monthly breakdown by type</p>
+                <h3 className="text-sm font-semibold text-ink">Trip Distribution</h3>
+                <p className="text-xs text-ink-4">Monthly breakdown by type</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span className="text-xs font-bold text-ink-4">Round Trip</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-accent" /><span className="text-xs font-bold text-ink-4">One Way</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span className="text-xs text-ink-4">Round Trip</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-accent" /><span className="text-xs text-ink-4">One Way</span></div>
               </div>
               <select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
-                className="bg-bg border border-line rounded-xl py-2 px-4 text-xs font-bold focus:ring-4 focus:ring-primary/10 outline-none cursor-pointer"
+                className="bg-bg border border-line rounded-xl py-2 px-4 text-xs font-medium focus:ring-4 focus:ring-primary/10 outline-none cursor-pointer"
               >
                 <option value="2026">2026 Fiscal</option>
                 <option value="2025">2025 Fiscal</option>
@@ -157,7 +157,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
               <div className="absolute inset-0 flex flex-col justify-between pb-8 z-0">
                 {[4, 3, 2, 1, 0].map(line => (
                   <div key={line} className="flex items-center w-full gap-4">
-                    <span className="w-12 text-right text-xs font-bold text-ink-4 font-mono">{money((maxRevenue / 4) * line)}</span>
+                    <span className="w-12 text-right text-xs text-ink-4 font-mono">{money((maxRevenue / 4) * line)}</span>
                     <div className="flex-1 border-t border-dashed border-line-2"></div>
                   </div>
                 ))}
@@ -173,7 +173,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
                         <div className="w-3 bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40" style={{ height: `${tripHeight}%` }}></div>
                         <div className="w-3 bg-accent rounded-t-sm transition-all group-hover:opacity-80 shadow-sm" style={{ height: `${revenueHeight}%` }}></div>
                       </div>
-                      <span className="absolute -bottom-8 text-xs font-bold text-ink-3 uppercase transition-colors group-hover:text-ink">{data.month}</span>
+                      <span className="absolute -bottom-8 text-xs text-ink-4 transition-colors group-hover:text-ink">{data.month}</span>
                     </div>
                   );
                 })}
@@ -185,23 +185,23 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
         {/* Action Tiles & Status */}
         <div className="space-y-6">
           <Card className="p-6 border-line-2 shadow-sm">
-            <h3 className="text-xs font-bold text-ink-3 uppercase tracking-wider mb-4">Quick Admin Actions</h3>
+            <h3 className="text-xs font-medium text-ink-4 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => navigate('/fleet')} className="p-4 bg-bg border border-line-2 rounded-2xl hover:border-primary/50 hover:bg-white transition-all text-center group shadow-sm hover:shadow-md">
                 <Car className="mx-auto mb-2 text-ink-3 group-hover:text-primary transition-colors" size={20} />
-                <p className="text-xs font-bold text-ink">Fleet Manager</p>
+                <p className="text-xs font-medium text-ink">Fleet Manager</p>
               </button>
               <button onClick={() => navigate('/bookings')} className="p-4 bg-bg border border-line-2 rounded-2xl hover:border-primary/50 hover:bg-white transition-all text-center group shadow-sm hover:shadow-md">
                 <Calendar className="mx-auto mb-2 text-ink-3 group-hover:text-primary transition-colors" size={20} />
-                <p className="text-xs font-bold text-ink">Trip Logs</p>
+                <p className="text-xs font-medium text-ink">Trip Logs</p>
               </button>
               <button onClick={() => navigate('/transactions')} className="p-4 bg-bg border border-line-2 rounded-2xl hover:border-primary/50 hover:bg-white transition-all text-center group shadow-sm hover:shadow-md">
                 <RotateCcw className="mx-auto mb-2 text-ink-3 group-hover:text-primary transition-colors" size={20} />
-                <p className="text-xs font-bold text-ink">Refunds</p>
+                <p className="text-xs font-medium text-ink">Refunds</p>
               </button>
               <button onClick={() => navigate('/settings')} className="p-4 bg-bg border border-line-2 rounded-2xl hover:border-primary/50 hover:bg-white transition-all text-center group shadow-sm hover:shadow-md">
                 <Settings className="mx-auto mb-2 text-ink-3 group-hover:text-primary transition-colors" size={20} />
-                <p className="text-xs font-bold text-ink">Global Config</p>
+                <p className="text-xs font-medium text-ink">Global Config</p>
               </button>
             </div>
           </Card>
@@ -211,7 +211,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="accent" dot>System Healthy</Badge>
               </div>
-              <h3 className="text-sm font-bold mb-1">Server Status</h3>
+              <h3 className="text-sm font-semibold mb-1">Server Status</h3>
               <p className="text-xs text-ink-4/80 mb-4">All nodes operating at peak capacity</p>
               <div className="flex gap-1 h-8 items-end">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => (
@@ -224,7 +224,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
 
           <Card className="p-6 border-urgent/20 bg-urgent-light/20 shadow-sm border border-dashed">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-bold text-urgent uppercase tracking-wide flex items-center gap-2">
+              <h3 className="text-xs font-medium text-urgent flex items-center gap-2">
                 <Wrench size={14} /> Fleet Maintenance
               </h3>
               <Badge variant="urgent">2 Pending</Badge>
@@ -238,8 +238,8 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6 border-line-2 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><Flag size={16} className="text-urgent" /> Active Incident Reports</h3>
-            <button onClick={() => navigate('/reports')} className="text-xs font-bold text-primary uppercase hover:underline">Full Audit</button>
+            <h3 className="text-sm font-semibold text-ink flex items-center gap-2"><Flag size={16} className="text-urgent" /> Active Incident Reports</h3>
+            <button onClick={() => navigate('/reports')} className="text-xs font-medium text-primary hover:underline">View all</button>
           </div>
           <div className="space-y-4">
             {[
@@ -255,8 +255,8 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
                     <AlertTriangle size={14} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-ink">{rep.type}</p>
-                    <p className="text-xs text-ink-4 uppercase tracking-widest font-mono">{rep.id} · {rep.time}</p>
+                    <p className="text-xs font-medium text-ink">{rep.type}</p>
+                    <p className="text-xs text-ink-4 font-mono">{rep.id} · {rep.time}</p>
                   </div>
                 </div>
                 <Badge variant={rep.severity === 'high' ? 'urgent' : rep.severity === 'medium' ? 'warning' : 'accent'}>
@@ -269,8 +269,8 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
 
         <Card className="p-6 border-line-2 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2"><Activity size={16} className="text-accent" /> Recent Activity Feed</h3>
-            <button onClick={() => navigate('/trips')} className="text-xs font-bold text-primary uppercase hover:underline">History</button>
+            <h3 className="text-sm font-semibold text-ink flex items-center gap-2"><Activity size={16} className="text-accent" /> Recent Activity</h3>
+            <button onClick={() => navigate('/trips')} className="text-xs font-medium text-primary hover:underline">View all</button>
           </div>
           <div className="space-y-5">
             {[
@@ -284,7 +284,7 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
                 <div className={`mt-0.5 ${act.color} bg-bg p-1.5 rounded-lg shadow-sm`}><act.icon size={14} /></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-ink leading-tight">{act.text}</p>
-                  <p className="text-xs text-ink-4 mt-1 font-bold">{act.time}</p>
+                  <p className="text-xs text-ink-4 mt-1">{act.time}</p>
                 </div>
               </div>
             ))}

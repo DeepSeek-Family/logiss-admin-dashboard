@@ -81,7 +81,7 @@ const Operations = ({ role }: { role?: string | null }) => {
           <div><p className="text-xs font-bold text-ink">Live Map</p><p className="text-xs font-medium text-accent">Real-time tracking</p></div>
         </button>
 
-        <button onClick={() => navigate('/schedule')} className="flex items-center gap-3 bg-primary-tint/40 hover:bg-primary-tint/70 border border-primary/10 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
+        <button onClick={() => navigate('/trips?tab=schedule')} className="flex items-center gap-3 bg-primary-tint/40 hover:bg-primary-tint/70 border border-primary/10 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
           <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0"><CalendarDays size={18} className="text-primary" /></div>
           <div><p className="text-xs font-bold text-ink">Fleet Schedule</p><p className="text-xs font-medium text-primary">Shift management</p></div>
         </button>

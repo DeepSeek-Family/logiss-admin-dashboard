@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, User as UserIcon, Navigation, Clock,
@@ -8,6 +8,7 @@ import {
   DollarSign, Activity, MapPin, Users
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button } from '../components/ui';
+import { MultiDatePicker } from '../components/ui/MultiDatePicker';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { money } from '../utils/helpers';
@@ -34,6 +35,14 @@ export default function CreateBooking() {
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [fleetSearch, setFleetSearch] = useState('');
 
+  // Recurring Booking state
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<string[]>([]);
+  const [recurringEndDate, setRecurringEndDate] = useState('');
+  const prevDayRef = useRef<string>('');
+  
+  const [selectedDates, setSelectedDates] = useState<Date[]>([new Date()]);
+
   const [form, setForm] = useState({
     firstName: '',
     middleName: '',
@@ -43,7 +52,6 @@ export default function CreateBooking() {
     pickup: '',
     dropoff: '',
     stops: [] as string[],
-    date: new Date().toISOString().split('T')[0],
     appointmentTime: '',
     requestedPickup: '',
     returnPickup: '',
@@ -61,6 +69,33 @@ export default function CreateBooking() {
 
   const baseRates: any = { Ambulatory: 45, Wheelchair: 65, Walker: 55, Rollator: 55, Cane: 45 };
 
+  // Calculate the dates for repeating booking
+  const getRecurringDates = () => {
+    if (selectedDates.length === 0 || selectedDates.length > 1 || !recurringEndDate || recurringDays.length === 0) return [];
+    
+    // Use the first selected date as the start for recurring logic
+    const startDate = new Date(selectedDates[0]);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const end = new Date(recurringEndDate + 'T00:00:00');
+    const dates: Date[] = [];
+    const current = new Date(startDate);
+
+    // Limit check to avoid infinite loops if end date is set far in the future
+    let iterations = 0;
+    while (current <= end && iterations < 365) {
+      const day = current.getDay().toString();
+      if (recurringDays.includes(day)) {
+        dates.push(new Date(current));
+      }
+      current.setDate(current.getDate() + 1);
+      iterations++;
+    }
+    return dates;
+  };
+
+  const recurringDates = isRecurring ? getRecurringDates() : [];
+
   useEffect(() => {
     if (!form.manualFareOverride && form.mobility) {
       const base = baseRates[form.mobility] || 50;
@@ -69,6 +104,26 @@ export default function CreateBooking() {
       setForm(prev => ({ ...prev, grossFare: Math.round(total) }));
     }
   }, [form.mobility, form.stops.length, form.tripType, form.manualFareOverride]);
+
+  // Auto-select the day of the week of the first Service Date
+  useEffect(() => {
+    if (isRecurring && selectedDates.length > 0) {
+      const dayOfWeek = selectedDates[0].getDay().toString();
+      setRecurringDays(prev => {
+        let updated = [...prev];
+        // If we auto-selected a day before, remove it
+        if (prevDayRef.current && prevDayRef.current !== dayOfWeek) {
+          updated = updated.filter(d => d !== prevDayRef.current);
+        }
+        // Add the new day if it's not already there
+        if (!updated.includes(dayOfWeek)) {
+          updated.push(dayOfWeek);
+        }
+        return updated;
+      });
+      prevDayRef.current = dayOfWeek;
+    }
+  }, [isRecurring, selectedDates]);
 
   const totalCopay = Math.max(0, form.grossFare - form.countyContribution);
   const dueToDriver = Math.max(0, totalCopay - form.advancePaid);
@@ -83,14 +138,40 @@ export default function CreateBooking() {
       toast.error('Please select mobility requirement');
       return;
     }
+    if (isRecurring && recurringDays.length === 0) {
+      toast.error('Please select at least one day for recurring booking');
+      return;
+    }
+    if (isRecurring && !recurringEndDate) {
+      toast.error('Please select an end date for recurring booking');
+      return;
+    }
+    if (isRecurring && new Date(recurringEndDate) < selectedDates[0]) {
+      toast.error('End date cannot be earlier than start date');
+      return;
+    }
+    
+    if (selectedDates.length === 0) {
+      toast.error('Please select at least one service date');
+      return;
+    }
 
-    const toastId = toast.loading('Dispatching trip record...');
+    const toastId = toast.loading(
+      isRecurring 
+        ? `Scheduling ${recurringDates.length} recurring trips...` 
+        : `Dispatching ${selectedDates.length > 1 ? selectedDates.length + ' trips' : 'trip record'}...`
+    );
     setTimeout(() => {
-      toast.success('Trip successfully dispatched!', {
-        id: toastId,
-        icon: '✅',
-        style: { borderRadius: '12px', background: '#059669', color: '#fff' },
-      });
+      toast.success(
+        isRecurring
+          ? `${recurringDates.length} recurring trips successfully scheduled!`
+          : `${selectedDates.length} trip(s) successfully dispatched!`, 
+        {
+          id: toastId,
+          icon: '✅',
+          style: { borderRadius: '12px', background: '#059669', color: '#fff' },
+        }
+      );
       setTimeout(() => navigate('/live'), 1000);
     }, 1200);
   };
@@ -247,12 +328,15 @@ export default function CreateBooking() {
             </div>
           </Card>
 
-          <Card className="p-6 border-line-2 bg-white shadow-none">
+          <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible">
             <SectionHeader title="6. Service Scheduling" icon={Clock} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-ink-3">Service Date</label>
-                <input type="date" className={inputClass} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+                <label className="text-xs font-bold text-ink-3">Service Date(s)</label>
+                <MultiDatePicker 
+                  selected={selectedDates} 
+                  onSelect={(days) => setSelectedDates(days || [])} 
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-ink-3">Appt Time</label>
@@ -275,6 +359,137 @@ export default function CreateBooking() {
                   </div>
                 </div>
                 <input type="time" disabled={form.isWillCall} className={form.isWillCall ? disabledInputClass : inputClass} value={form.isWillCall ? '' : form.returnPickup} onChange={e => setForm({ ...form, returnPickup: e.target.value })} />
+              </div>
+            )}
+
+            {/* Recurring Booking Option */}
+            <div className="mt-6 pt-5 border-t border-line-2">
+              <div className="flex justify-between items-center">
+                <div className={`flex items-center gap-2 ${selectedDates.length > 1 ? 'opacity-50' : ''}`}>
+                  <Repeat size={14} className={selectedDates.length > 1 ? 'text-ink-4' : 'text-primary'} />
+                  <div>
+                    <p className="text-xs font-bold text-ink-2">Recurring Booking</p>
+                    <p className="text-[10px] font-medium text-ink-4">
+                      {selectedDates.length > 1 
+                        ? "Disabled because multiple custom dates are selected" 
+                        : "Schedule repeating trips for dialysis, therapy, etc."}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  disabled={selectedDates.length > 1}
+                  onClick={() => setIsRecurring(!isRecurring)} 
+                  className={`w-9 h-5 rounded-full relative transition-all ${selectedDates.length > 1 ? 'bg-line-2 cursor-not-allowed' : isRecurring ? 'bg-primary' : 'bg-line-2'}`}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${isRecurring && selectedDates.length <= 1 ? 'right-0.5' : 'left-0.5'}`} />
+                </button>
+              </div>
+
+              {isRecurring && selectedDates.length <= 1 && (
+                <div className="mt-5 space-y-5 animate-in slide-in-from-top-2 duration-300">
+                  {/* Select Days of the Week */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-ink-3">Select Days of the Week</label>
+                    <div className="flex justify-between gap-1 bg-bg p-1.5 rounded-xl border border-line-2">
+                      {[
+                        { key: '1', short: 'Mon', label: 'M' },
+                        { key: '2', short: 'Tue', label: 'T' },
+                        { key: '3', short: 'Wed', label: 'W' },
+                        { key: '4', short: 'Thu', label: 'T' },
+                        { key: '5', short: 'Fri', label: 'F' },
+                        { key: '6', short: 'Sat', label: 'S' },
+                        { key: '0', short: 'Sun', label: 'S' }
+                      ].map(day => {
+                        const isSelected = recurringDays.includes(day.key);
+                        return (
+                          <button
+                            key={day.key}
+                            type="button"
+                            onClick={() => {
+                              setRecurringDays(prev => 
+                                prev.includes(day.key) 
+                                  ? prev.filter(k => k !== day.key) 
+                                  : [...prev, day.key]
+                              );
+                            }}
+                            className={`flex-1 aspect-square md:h-9 flex items-center justify-center text-xs font-black rounded-lg transition-all ${isSelected ? 'bg-primary text-white shadow-md' : 'text-ink-3 hover:bg-white'}`}
+                            title={day.short}
+                          >
+                            {day.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-ink-3">Repeat Until (End Date)</label>
+                    <input 
+                      type="date" 
+                      min={selectedDates.length > 0 ? selectedDates[0].toISOString().split('T')[0] : ''} 
+                      className={inputClass} 
+                      value={recurringEndDate} 
+                      onChange={e => setRecurringEndDate(e.target.value)} 
+                    />
+                  </div>
+
+                  {/* Real-time schedule preview */}
+                  {recurringDates.length > 0 && (
+                    <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-primary uppercase tracking-wider">🗓️ Schedule Preview</span>
+                        <Badge variant="primary" className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5">{recurringDates.length} Trips Total</Badge>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
+                        {recurringDates.map((date, idx) => (
+                          <span 
+                            key={idx} 
+                            className="bg-white border border-line-2 text-ink text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                          >
+                            {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <p className="text-[10px] text-ink-4 font-semibold italic">
+                        * Recurring trips will be generated at the scheduled time of {form.requestedPickup || form.appointmentTime || 'N/A'} for each date above.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Multi-Date Schedule Preview (when NOT recurring) */}
+            {!isRecurring && selectedDates.length > 0 && (
+              <div className="mt-6 pt-5 border-t border-line-2">
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-primary uppercase tracking-wider">🗓️ Selected Dates Preview</span>
+                    <Badge variant="primary" className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5">{selectedDates.length} {selectedDates.length === 1 ? 'Trip' : 'Trips'} Total</Badge>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
+                    {selectedDates.map((date, idx) => (
+                      <span 
+                        key={idx} 
+                        className="flex items-center gap-1 bg-white border border-line-2 text-ink text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                      >
+                        {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        <button 
+                          type="button" 
+                          onClick={() => setSelectedDates(selectedDates.filter(d => d.getTime() !== date.getTime()))} 
+                          className="hover:bg-urgent/10 hover:text-urgent p-0.5 rounded-full transition-colors ml-0.5"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </Card>
@@ -354,13 +569,23 @@ export default function CreateBooking() {
 
                 <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm mt-2">
                   <div>
-                    <p className="text-xs font-bold text-ink-3">Due to Driver</p>
+                    <p className="text-xs font-bold text-ink-3">Due to Driver (Per Trip)</p>
                     <p className="text-lg font-black text-ink">{money(dueToDriver)}</p>
                   </div>
                   <Badge variant={dueToDriver > 0 ? "warning" : "accent"} className="text-xs py-1.5 px-5 font-bold">
                     {dueToDriver > 0 ? "Cash" : "Paid"}
                   </Badge>
                 </div>
+
+                {isRecurring && recurringDates.length > 0 && (
+                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl flex justify-between items-center mt-2.5 animate-in zoom-in-95 duration-200">
+                    <div>
+                      <p className="text-xs font-black text-primary uppercase tracking-wider">Recurring Total</p>
+                      <p className="text-[10px] font-semibold text-ink-3">{money(form.grossFare)} × {recurringDates.length} trips</p>
+                    </div>
+                    <p className="text-lg font-black text-primary tracking-normal">{money(form.grossFare * recurringDates.length)}</p>
+                  </div>
+                )}
               </div>
             )}
           </Card>

@@ -81,7 +81,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
                 <div key={field.key}>
                   <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">{field.label}</label>
                   <input
-                    className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm font-bold text-ink outline-none transition-all placeholder:text-ink-4/50"
+                    className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all placeholder:text-ink-4/50"
                     type="text"
                     placeholder={field.ph}
                     value={form[field.key as keyof FleetForm]}
@@ -101,7 +101,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
               <div>
                 <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">Configuration Type</label>
                 <select
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm font-bold text-ink outline-none transition-all cursor-pointer"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all cursor-pointer"
                   value={form.type}
                   onChange={e => set('type', e.target.value)}
                 >
@@ -111,7 +111,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
               <div>
                 <label className="block text-xs font-bold text-ink-4 mb-2.5 ml-1">Max Passengers</label>
                 <input
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm font-bold text-ink outline-none transition-all"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all"
                   type="number"
                   placeholder="4"
                   value={form.seats}
@@ -123,36 +123,36 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
           {step === 2 && (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
               <div className="bg-bg/40 rounded-2xl p-6 border-2 border-line-2 space-y-5">
-                <p className="text-xs font-bold text-ink flex items-center gap-2 mb-2">
+                <p className="text-xs font-medium text-ink flex items-center gap-2 mb-2">
                   <Wrench size={14} className="text-primary" /> Maintenance Schedule
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Current Odometer</label>
-                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="number" placeholder="0" value={form.mileage} onChange={e => set('mileage', e.target.value)} />
+                    <label className="block text-xs font-medium text-ink-4 mb-2 ml-1">Current Odometer</label>
+                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm text-ink outline-none" type="number" placeholder="0" value={form.mileage} onChange={e => set('mileage', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Next Service Date</label>
-                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="date" value={form.nextService} onChange={e => set('nextService', e.target.value)} />
+                    <label className="block text-xs font-medium text-ink-4 mb-2 ml-1">Next Service Date</label>
+                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm text-ink outline-none" type="date" value={form.nextService} onChange={e => set('nextService', e.target.value)} />
                   </div>
                 </div>
               </div>
               <div className="bg-bg/40 rounded-3xl p-6 border-2 border-line-2 space-y-5">
-                <p className="text-xs font-bold text-ink flex items-center gap-2 mb-2">
+                <p className="text-xs font-medium text-ink flex items-center gap-2 mb-2">
                   <ShieldCheck size={14} className="text-accent" /> Insurance Records
                 </p>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Carrier Provider</label>
-                  <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" placeholder="e.g., Progressive Commercial" value={form.insuranceProvider} onChange={e => set('insuranceProvider', e.target.value)} />
+                  <label className="block text-xs font-medium text-ink-4 mb-2 ml-1">Carrier Provider</label>
+                  <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm text-ink outline-none" placeholder="e.g., Progressive Commercial" value={form.insuranceProvider} onChange={e => set('insuranceProvider', e.target.value)} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Policy Number</label>
-                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" placeholder="POL-00000" value={form.insurancePolicy} onChange={e => set('insurancePolicy', e.target.value)} />
+                    <label className="block text-xs font-medium text-ink-4 mb-2 ml-1">Policy Number</label>
+                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm text-ink outline-none" placeholder="POL-00000" value={form.insurancePolicy} onChange={e => set('insurancePolicy', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2 ml-1">Expiration Date</label>
-                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm font-bold text-ink outline-none" type="date" value={form.insuranceExpiry} onChange={e => set('insuranceExpiry', e.target.value)} />
+                    <label className="block text-xs font-medium text-ink-4 mb-2 ml-1">Expiration Date</label>
+                    <input className="w-full h-11 px-4 rounded-xl bg-white border border-line-2 focus:border-primary/30 text-sm text-ink outline-none" type="date" value={form.insuranceExpiry} onChange={e => set('insuranceExpiry', e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -161,7 +161,7 @@ const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSave: (da
         </div>
 
         <div className="px-8 py-7 border-t border-line-2 flex items-center justify-between bg-bg/10">
-          <button onClick={onClose} className="text-xs font-bold text-ink-4 hover:text-urgent transition-colors">Abort</button>
+          <button onClick={onClose} className="text-xs font-medium text-ink-4 hover:text-urgent transition-colors">Cancel</button>
           <div className="flex gap-4">
             {step > 1 && <Button variant="outline" className="rounded-xl px-6" onClick={() => setStep(s => s - 1)}>Back</Button>}
             {step < 2
@@ -220,10 +220,10 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
         <div className="flex items-center gap-3">
           <Avatar initials={driver.initials} size="xs" online={driver.onDuty} className="ring-2 ring-white shadow-sm" />
           <div className="min-w-0">
-            <p className="text-xs font-bold text-ink truncate tracking-normal">{driver.name}</p>
+            <p className="text-xs font-medium text-ink truncate">{driver.name}</p>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-ink-4 font-semibold flex items-center gap-0.5"><Star size={8} className="fill-warning text-warning" /> {driver.rating}</span>
-              <span className="text-xs text-primary font-bold">#{driver.totalTrips}T</span>
+              <span className="text-xs text-ink-4 flex items-center gap-0.5"><Star size={8} className="fill-warning text-warning" /> {driver.rating}</span>
+              <span className="text-xs text-primary">#{driver.totalTrips}T</span>
             </div>
           </div>
           <button onClick={() => setOpen(o => !o)} className="ml-1 w-6 h-6 rounded-lg bg-bg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all">
@@ -231,7 +231,7 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
           </button>
         </div>
       ) : (
-        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg border border-dashed border-line text-xs font-bold text-ink-4 hover:text-primary hover:border-primary/30 transition-all">
+        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg border border-dashed border-line text-xs font-medium text-ink-4 hover:text-primary hover:border-primary/30 transition-all">
           <User size={12} /> Assign Operator
         </button>
       )}
@@ -239,7 +239,7 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
       {open && (
         <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-[24px] border border-line-2 shadow-2xl z-50 py-2 animate-in slide-in-from-top-3 duration-200 ring-1 ring-ink/5">
           <div className="px-4 py-2 border-b border-line-2 mb-2">
-            <p className="text-xs font-bold text-ink-4">Select Deployment Operator</p>
+            <p className="text-xs font-medium text-ink-4">Select Operator</p>
           </div>
           <div className="max-h-60 overflow-y-auto scrollbar-hide">
             {allDrivers.map(d => (
@@ -247,8 +247,8 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-bg transition-colors group">
                 <Avatar initials={d.initials} size="xs" online={d.onDuty} />
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-xs font-bold text-ink truncate group-hover:text-primary transition-colors">{d.name}</p>
-                  <p className="text-xs text-ink-4 font-bold">{d.status.replace('_', ' ')}</p>
+                  <p className="text-xs font-medium text-ink truncate group-hover:text-primary transition-colors">{d.name}</p>
+                  <p className="text-xs text-ink-4">{d.status.replace('_', ' ')}</p>
                 </div>
                 {vehicle.assignedDriverId === d.id && <CheckCircle2 size={14} className="text-accent flex-shrink-0" />}
               </button>
@@ -256,7 +256,7 @@ const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: { vehicle: any; all
           </div>
           {vehicle.assignedDriverId && (
             <button onClick={() => { onAssign(vehicle.id, null); setOpen(false); }}
-              className="w-full px-4 py-3 text-xs font-bold text-urgent hover:bg-urgent-light transition-colors text-center border-t border-line-2 mt-2">
+              className="w-full px-4 py-3 text-xs font-medium text-urgent hover:bg-urgent-light transition-colors text-center border-t border-line-2 mt-2">
               Vacate Unit Assignment
             </button>
           )}
@@ -309,7 +309,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-primary animate-spin" />
-          <p className="text-sm font-bold text-ink-3 tracking-wide">Initializing Fleet Protocol...</p>
+          <p className="text-sm text-ink-4">Loading fleet...</p>
         </div>
       </div>
     );
@@ -321,8 +321,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Fleet Management</h1>
-          <p className="text-ink-3 text-sm mt-1">Real-time asset tracking, compliance auditing, and operator logistics</p>
+          <h1 className="text-2xl font-semibold text-ink">Fleet Management</h1>
+          <p className="text-sm text-ink-4 mt-0.5">Asset tracking, compliance auditing, and operator logistics</p>
         </div>
         {role === 'admin' && (
           <Button variant="primary" className="rounded-2xl px-8 py-6 shadow-xl shadow-primary/20" icon={Plus} onClick={() => setShowAddModal(true)}>Deploy New Unit</Button>
@@ -342,8 +342,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
               <s.icon size={24} className="text-white" />
             </div>
             <div className="min-w-0 relative z-10">
-              <p className="text-xs font-bold text-ink-4 leading-none mb-2">{s.label}</p>
-              <p className="text-2xl font-bold text-ink tracking-normal leading-none">{s.value}</p>
+              <p className="text-xs text-ink-4 leading-none mb-2">{s.label}</p>
+              <p className="text-2xl font-semibold text-ink leading-none">{s.value}</p>
               <p className="text-xs font-medium text-ink-3 mt-2 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-line-2" /> {s.sub}</p>
             </div>
           </Card>
@@ -360,7 +360,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
               { id: 'issues', label: `Maintenance${stats.issues ? ` (${stats.issues})` : ''}` },
             ].map(tab => (
               <button key={tab.id} onClick={() => { setFilter(tab.id); setCurrentPage(1); }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${filter === tab.id ? 'bg-primary text-white shadow-md' : 'text-ink-4 hover:text-ink hover:bg-bg'}`}>
+                className={`px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${filter === tab.id ? 'bg-primary text-white shadow-md' : 'text-ink-4 hover:text-ink hover:bg-bg'}`}>
                 {tab.label}
               </button>
             ))}
@@ -368,7 +368,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
           <div className="relative w-full lg:w-72 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" size={16} />
             <input type="text" placeholder="Search Assets, Plates, or IDs..."
-              className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-bold text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
+              className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-medium text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
               value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} />
           </div>
         </div>
@@ -378,7 +378,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Asset Details', 'Vehicle Type', 'Status', 'Operator', 'Telematics', 'Next Service', 'Compliance', ''].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -397,9 +397,9 @@ const Fleet = ({ role }: { role?: string | null }) => {
                           <img src={v.image || VEHICLE_PLACEHOLDER} alt={v.plate} className="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink truncate tracking-normal">{v.year} {v.make} {v.model}</p>
+                          <p className="text-sm font-medium text-ink truncate">{v.year} {v.make} {v.model}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="font-mono text-xs font-bold text-ink-2 bg-bg px-1.5 py-0.5 rounded border border-line-2">{v.plate}</span>
+                            <span className="font-mono text-xs text-ink-3 bg-bg px-1.5 py-0.5 rounded border border-line-2">{v.plate}</span>
                             <span className="text-xs text-ink-4 font-medium">ID: {v.id.slice(0, 8)}</span>
                           </div>
                         </div>
@@ -411,7 +411,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${s.bg}`}>
+                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${s.bg}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                         {s.label}
                       </span>
@@ -422,14 +422,14 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-ink tracking-normal">{(v?.mileage || 0).toLocaleString()}<span className="text-xs text-ink-4 font-medium ml-1">mi</span></p>
-                      <p className="text-xs font-medium text-ink-4 mt-0.5">{v?.seats || 0} Capacity</p>
+                      <p className="text-sm font-medium text-ink">{(v?.mileage || 0).toLocaleString()}<span className="text-xs text-ink-4 ml-1">mi</span></p>
+                      <p className="text-xs text-ink-4 mt-0.5">{v?.seats || 0} seats</p>
                     </td>
 
                     <td className="px-6 py-4">
                       <div className={`flex items-center gap-1.5 ${serviceWarning ? 'text-urgent' : 'text-ink-3'}`}>
                         {serviceWarning ? <ShieldAlert size={12} /> : <ClipboardCheck size={12} className="text-accent" />}
-                        <span className="text-xs font-bold">{v.nextService}</span>
+                        <span className="text-xs font-medium">{v.nextService}</span>
                       </div>
                       {serviceWarning && <p className="text-xs font-medium mt-0.5">Due in {nextServiceDays}d</p>}
                     </td>
@@ -458,8 +458,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
                     <div className="w-20 h-20 bg-bg rounded-[32px] flex items-center justify-center text-ink-4 mx-auto mb-6 shadow-inner border-2 border-dashed border-line group">
                       <Truck size={40} className="group-hover:text-primary transition-colors" />
                     </div>
-                    <p className="text-lg font-black text-ink tracking-normal">No Matching Assets Identified</p>
-                    <p className="text-sm font-medium text-ink-3 mt-1">Refine your search parameters or filter criteria.</p>
+                    <p className="text-sm font-medium text-ink">No units match your filter</p>
+                    <p className="text-xs text-ink-4 mt-1">Try adjusting your search or filter.</p>
                   </td>
                 </tr>
               )}

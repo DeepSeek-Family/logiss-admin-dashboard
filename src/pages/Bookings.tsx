@@ -383,19 +383,21 @@ const Bookings = ({ role }: { role?: string | null }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="primary" className="w-fit px-2 py-0.5 text-xs uppercase font-black tracking-wider">{booking?.mobility || 'Standard'}</Badge>
-                          {booking?.type === 'round_trip' ? (
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
-                              <Repeat size={10} strokeWidth={3} />
-                              <span className="text-xs font-black uppercase tracking-wider">Round Trip</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 w-fit">
-                              <MoveRight size={10} strokeWidth={3} />
-                              <span className="text-xs font-black uppercase tracking-wider">One Way</span>
-                            </div>
-                          )}
+                        <div className="flex flex-col gap-1 items-start">
+                          <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">{booking?.mobility || 'Standard'}</Badge>
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-ink-3">
+                            {booking?.type === 'round_trip' ? (
+                              <>
+                                <Repeat size={10} className="text-indigo-500" strokeWidth={2.5} />
+                                <span className="text-indigo-600/80">Round Trip</span>
+                              </>
+                            ) : (
+                              <>
+                                <MoveRight size={10} className="text-blue-500" strokeWidth={2.5} />
+                                <span className="text-blue-600/80">One Way</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

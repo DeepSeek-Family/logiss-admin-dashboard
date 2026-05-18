@@ -4,8 +4,10 @@ import {
   Key, Smartphone, AlertTriangle,
   FileCheck, Activity, Truck, CreditCard,
   BellOff, CheckCircle2, Loader2, Eye, EyeOff,
+  QrCode, Copy, ShieldCheck, X
 } from 'lucide-react';
 import { Card, Badge, Button } from '../components/ui';
+import { toast } from 'react-hot-toast';
 
 // ─── Toggle Row ────────────────────────────────
 const ToggleRow = ({ label, desc, on, onChange }: { label: string; desc: string; on: boolean; onChange: (val: boolean) => void }) => (
@@ -93,6 +95,8 @@ const Settings = ({ role }: { role?: string | null }) => {
   const [pwState, setPwState] = useState<string | null>(null);
   const [pwErr, setPwErr] = useState('');
 
+
+
   // Notifications state
   const [notifs, setNotifs] = useState(NOTIF_DEFAULTS);
 
@@ -104,6 +108,7 @@ const Settings = ({ role }: { role?: string | null }) => {
     setNotifs(prev => prev.map((g, i) =>
       i !== gi ? g : { ...g, items: g.items.map(it => it.id === id ? { ...it, on: !it.on } : it) }
     ));
+  
   const muteAll = () => setNotifs(prev => prev.map(g => ({ ...g, items: g.items.map(it => ({ ...it, on: false })) })));
 
   const handlePasswordSave = (e: React.FormEvent) => {
@@ -119,6 +124,7 @@ const Settings = ({ role }: { role?: string | null }) => {
       setTimeout(() => setPwState(null), 3000);
     }, 1000);
   };
+
 
   const TABS = [
     { id: 'security', label: 'Security & Privacy', icon: Lock },
@@ -149,14 +155,12 @@ const Settings = ({ role }: { role?: string | null }) => {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all text-left w-full ${tab === t.id ? 'bg-primary text-white' : 'text-ink-3 hover:bg-bg hover:text-ink'
-                }`}
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all text-left w-full ${tab === t.id ? 'bg-primary text-white' : 'text-ink-3 hover:bg-bg hover:text-ink'}`}
             >
               <t.icon size={16} />
               {t.label}
             </button>
           ))}
-          {/* Sign Out at bottom of nav */}
         </nav>
 
         {/* Content */}
@@ -165,6 +169,7 @@ const Settings = ({ role }: { role?: string | null }) => {
           {/* ── SECURITY ─────────────────────────────── */}
           {tab === 'security' && (
             <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-200">
+              
               {/* Change Password */}
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -200,19 +205,7 @@ const Settings = ({ role }: { role?: string | null }) => {
                 </form>
               </Card>
 
-              {/* 2FA */}
-              <Card className="p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-primary-light rounded-xl flex items-center justify-center text-primary shrink-0">
-                    <Smartphone size={17} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-ink">Two-Factor Authentication</p>
-                    <p className="text-xs text-ink-4 mt-0.5">Not enabled — recommended for your account</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="shrink-0">Enable</Button>
-              </Card>
+
 
               {/* Notice */}
               <div className="flex items-start gap-3 p-4 bg-urgent-light/40 rounded-xl border border-urgent/10">
@@ -291,31 +284,6 @@ const Settings = ({ role }: { role?: string | null }) => {
             </div>
           )}
 
-          {/* ── DISPLAY PREFERENCES ──────────────────── */}
-          {tab === 'display' && (
-            <div className="animate-in slide-in-from-bottom-2 duration-200">
-              <Card className="p-6">
-                <p className="text-xs font-bold text-ink-4 mb-5">Display Preferences</p>
-                <div className="space-y-0">
-                  {[
-                    { label: 'Time Format', value: '12-hour (AM/PM)', sub: 'How times appear in trip cards and schedules' },
-                    { label: 'Date Format', value: 'MM/DD/YYYY', sub: 'Date display across the platform' },
-                    { label: 'Distance Unit', value: 'Miles (mi)', sub: 'Used in trip distance and mileage fields' },
-                    { label: 'Timezone', value: 'Eastern Time (ET)', sub: 'All times shown in this timezone' },
-                  ].map(row => (
-                    <div key={row.label} className="flex items-center justify-between py-4 border-b border-line-2 last:border-0">
-                      <div>
-                        <p className="text-sm font-semibold text-ink">{row.label}</p>
-                        <p className="text-xs text-ink-4 mt-0.5">{row.sub}</p>
-                      </div>
-                      <button className="text-sm font-bold text-primary hover:opacity-70 transition-opacity">{row.value} ›</button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          )}
-
           {/* ── EMERGENCY CONTACTS ───────────────────── */}
           {tab === 'contacts' && (
             <div className="animate-in slide-in-from-bottom-2 duration-200">
@@ -381,6 +349,9 @@ const Settings = ({ role }: { role?: string | null }) => {
 
         </div>
       </div>
+
+
+
     </div>
   );
 };

@@ -8,7 +8,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', hover = fa
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border border-line-2 overflow-hidden ${hover ? 'hover:border-primary/30 hover:shadow-sm cursor-pointer transition-all' : ''} ${className}`}
+      className={`bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02),0_1px_3px_rgb(0,0,0,0.01)] overflow-hidden transition-all duration-300 ${hover ? 'hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] cursor-pointer' : ''} ${className}`}
       {...props}
     >
       {children}

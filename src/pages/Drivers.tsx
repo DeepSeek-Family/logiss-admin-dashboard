@@ -91,8 +91,8 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
                 <UserPlus size={24} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-ink tracking-normal">Driver Onboarding</h2>
-                <p className="text-xs text-ink-4 font-bold uppercase tracking-widest mt-1">Step {step} of 4 — {steps[step - 1]}</p>
+                <h2 className="text-xl font-semibold text-ink">Driver Onboarding</h2>
+                <p className="text-xs text-ink-4 mt-1">Step {step} of 4 — {steps[step - 1]}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-bg text-ink-4 transition-all hover:rotate-90">
@@ -114,38 +114,38 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">First Name *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.firstName} onChange={e => set('firstName', e.target.value)} placeholder="David" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">First Name *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.firstName} onChange={e => set('firstName', e.target.value)} placeholder="David" />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Middle Name</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.middleName} onChange={e => set('middleName', e.target.value)} placeholder="A." />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Middle Name</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.middleName} onChange={e => set('middleName', e.target.value)} placeholder="A." />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Last Name *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="Wilson" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Last Name *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="Wilson" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Date of Birth *</label>
-                  <input type="date" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.dob} onChange={e => set('dob', e.target.value)} />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Date of Birth *</label>
+                  <input type="date" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.dob} onChange={e => set('dob', e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">SSN (Last 4) *</label>
-                  <input maxLength={4} className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all font-mono" value={form.ssnLast4} onChange={e => set('ssnLast4', e.target.value)} placeholder="0000" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">SSN (Last 4) *</label>
+                  <input maxLength={4} className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all font-mono" value={form.ssnLast4} onChange={e => set('ssnLast4', e.target.value)} placeholder="0000" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Phone *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(804) 555-0000" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Phone *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(804) 555-0000" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Email *</label>
-                  <input type="email" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.email} onChange={e => set('email', e.target.value)} placeholder="david.w@logiss.com" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Email *</label>
+                  <input type="email" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.email} onChange={e => set('email', e.target.value)} placeholder="david.w@logiss.com" />
                 </div>
               </div>
             </div>
@@ -155,12 +155,12 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">License Number *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all font-mono" value={form.licenseNumber} onChange={e => set('licenseNumber', e.target.value)} placeholder="T000-000-000" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">License Number *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all font-mono" value={form.licenseNumber} onChange={e => set('licenseNumber', e.target.value)} placeholder="T000-000-000" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">License Class *</label>
-                  <select className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all appearance-none" value={form.licenseClass} onChange={e => set('licenseClass', e.target.value)}>
+                  <label className="block text-xs font-medium text-ink-4 mb-2">License Class *</label>
+                  <select className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all appearance-none" value={form.licenseClass} onChange={e => set('licenseClass', e.target.value)}>
                     <option>Class A</option>
                     <option>Class B</option>
                     <option>Class C</option>
@@ -169,11 +169,11 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
               </div>
 
               <div>
-                <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-3">Endorsements</label>
+                <label className="block text-xs font-medium text-ink-4 mb-3">Endorsements</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {['Van', 'Bus', 'T-Endors', 'N-Endors'].map(item => (
                     <button key={item} onClick={() => toggleItem('endorsements', item)}
-                      className={`px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-normal transition-all ${form.endorsements.includes(item) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-bg text-ink-3 border-line-2 hover:border-line'}`}>
+                      className={`px-4 py-3 rounded-xl border text-xs font-medium transition-all ${form.endorsements.includes(item) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-bg text-ink-3 border-line-2 hover:border-line'}`}>
                       {item}
                     </button>
                   ))}
@@ -181,8 +181,8 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
               </div>
 
               <div>
-                <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Expiration Date *</label>
-                <input type="date" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.licenseExpiry} onChange={e => set('licenseExpiry', e.target.value)} />
+                <label className="block text-xs font-medium text-ink-4 mb-2">Expiration Date *</label>
+                <input type="date" className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.licenseExpiry} onChange={e => set('licenseExpiry', e.target.value)} />
               </div>
             </div>
           )}
@@ -195,7 +195,7 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {COUNTIES.map(c => (
                   <button key={c} onClick={() => toggleItem('counties', c)}
-                    className={`px-4 py-4 rounded-2xl border text-xs font-black uppercase tracking-normal transition-all flex items-center justify-between group ${form.counties.includes(c) ? 'bg-white border-primary text-primary shadow-md' : 'bg-bg text-ink-4 border-line-2 hover:border-line'}`}>
+                    className={`px-4 py-4 rounded-2xl border text-xs font-medium transition-all flex items-center justify-between group ${form.counties.includes(c) ? 'bg-white border-primary text-primary shadow-md' : 'bg-bg text-ink-4 border-line-2 hover:border-line'}`}>
                     {c}
                     {form.counties.includes(c) && <div className="w-2 h-2 rounded-full bg-primary" />}
                   </button>
@@ -208,18 +208,18 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Vehicle Type *</label>
-                  <select className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all appearance-none" value={form.vehicleType} onChange={e => set('vehicleType', e.target.value)}>
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Vehicle Type *</label>
+                  <select className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all appearance-none" value={form.vehicleType} onChange={e => set('vehicleType', e.target.value)}>
                     {VEHICLE_TYPES.map(t => <option key={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Make *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all" value={form.vehicleMake} onChange={e => set('vehicleMake', e.target.value)} placeholder="Ford" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Make *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all" value={form.vehicleMake} onChange={e => set('vehicleMake', e.target.value)} placeholder="Ford" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-ink-4 uppercase tracking-widest mb-2">Plate *</label>
-                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm font-bold text-ink outline-none focus:border-primary transition-all font-mono" value={form.vehiclePlate} onChange={e => set('vehiclePlate', e.target.value)} placeholder="VA-0000" />
+                  <label className="block text-xs font-medium text-ink-4 mb-2">Plate *</label>
+                  <input className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all font-mono" value={form.vehiclePlate} onChange={e => set('vehiclePlate', e.target.value)} placeholder="VA-0000" />
                 </div>
               </div>
               <div className="p-6 bg-bg rounded-2xl border border-dashed border-line-2 text-center group cursor-pointer hover:bg-white hover:border-primary transition-all">
@@ -231,13 +231,13 @@ const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (dat
         </div>
 
         {stepError && (
-          <div className="mx-8 mb-4 px-4 py-3 bg-urgent-light rounded-xl border border-urgent/20 text-xs font-black text-urgent uppercase tracking-widest flex items-center gap-2 animate-in slide-in-from-top-2">
+          <div className="mx-8 mb-4 px-4 py-3 bg-urgent-light rounded-xl border border-urgent/20 text-xs font-medium text-urgent flex items-center gap-2 animate-in slide-in-from-top-2">
             <AlertTriangle size={14} className="shrink-0" /> {stepError}
           </div>
         )}
 
         <div className="px-8 py-6 border-t border-line-2 bg-bg/30 flex items-center justify-between">
-          <button onClick={onClose} className="text-xs font-black text-ink-4 uppercase tracking-widest hover:text-ink transition-colors">Cancel</button>
+          <button onClick={onClose} className="text-xs font-medium text-ink-4 hover:text-ink transition-colors">Cancel</button>
           <div className="flex gap-3">
             {step > 1 && (
               <Button variant="outline" onClick={() => { setStepError(''); setStep(s => s - 1); }}>← Previous</Button>
@@ -333,7 +333,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
       off_duty: { variant: 'neutral', label: 'Off Duty' },
     };
     const { variant, label } = config[status] || { variant: 'neutral', label: status };
-    return <Badge variant={variant}>{label}</Badge>;
+    return <Badge variant={variant} className="w-fit">{label}</Badge>;
   };
 
 
@@ -344,7 +344,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => { setSelectedDriverId(null); setProfileTab('overview'); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-ink-3 hover:text-ink hover:bg-white rounded-xl transition-all shadow-sm border border-line-2 bg-bg"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-ink-4 hover:text-ink hover:bg-white rounded-xl transition-all shadow-sm border border-line-2 bg-bg"
           >
             ← Back to Drivers List
           </button>
@@ -367,7 +367,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
             </div>
             <div className="flex-1 text-center md:text-left">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-2xl font-bold font-display text-ink tracking-normal">{selectedDriver?.name}</h2>
+                <h2 className="text-2xl font-semibold text-ink">{selectedDriver?.name}</h2>
                 <Badge variant="accent">Active</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-ink-4 text-xs font-medium">
@@ -378,12 +378,12 @@ const Drivers = ({ role }: { role?: string | null }) => {
             </div>
             <div className="flex gap-3">
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 mb-0.5">Trips</p>
-                <p className="text-xl font-bold text-ink">{selectedDriver?.totalTrips || 0}</p>
+                <p className="text-xs text-ink-4 mb-0.5">Trips</p>
+                <p className="text-xl font-semibold text-ink">{selectedDriver?.totalTrips || 0}</p>
               </div>
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 mb-0.5">Reports</p>
-                <p className="text-xl font-bold text-warning">0</p>
+                <p className="text-xs text-ink-4 mb-0.5">Reports</p>
+                <p className="text-xl font-semibold text-warning">0</p>
               </div>
             </div>
           </div>
@@ -415,18 +415,18 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <>
               <div className="lg:col-span-1 space-y-6">
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Current Unit</h4>
+                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Current Unit</h4>
                   <div className="p-5 bg-primary-tint/10 rounded-2xl border border-primary/10">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm"><Car size={24} /></div>
                       <div>
-                        <p className="text-sm font-bold text-ink">{selectedDriver?.vehicle?.make || 'No Vehicle Assigned'}</p>
-                        <p className="text-xs font-black text-ink-4 uppercase tracking-widest">{selectedDriver?.vehicle?.type || 'N/A'}</p>
+                        <p className="text-sm font-medium text-ink">{selectedDriver?.vehicle?.make || 'No Vehicle Assigned'}</p>
+                        <p className="text-xs text-ink-4">{selectedDriver?.vehicle?.type || 'N/A'}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-line-2">
-                      <span className="text-xs font-black text-ink-4 uppercase">License Plate</span>
-                      <span className="text-xs font-black text-primary font-mono uppercase">{selectedDriver?.vehicle?.plate || '---'}</span>
+                      <span className="text-xs text-ink-4">License Plate</span>
+                      <span className="text-xs font-medium text-primary font-mono">{selectedDriver?.vehicle?.plate || '---'}</span>
                     </div>
                     {role === 'admin' && (
                       <Button variant="outline" size="sm" className="w-full mt-4 bg-white" icon={Repeat}>Change Assignment</Button>
@@ -435,11 +435,11 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 </Card>
 
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
+                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
 
                   <div className="flex flex-wrap gap-2">
                     {(selectedDriver?.counties || ['Richmond', 'Henrico']).map((c: string) => (
-                      <div key={c} className="px-4 py-2 bg-bg rounded-xl border border-line-2 text-xs font-black text-ink-3 uppercase tracking-normal flex items-center gap-2">
+                      <div key={c} className="px-4 py-2 bg-bg rounded-xl border border-line-2 text-xs font-medium text-ink-3 flex items-center gap-2">
                         <MapPin size={12} /> {c}
                       </div>
                     ))}
@@ -450,38 +450,38 @@ const Drivers = ({ role }: { role?: string | null }) => {
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-6 px-1 border-l-2 border-primary ml-[-1px]">Personal Details</h4>
+                    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6 px-1 border-l-2 border-primary ml-[-1px]">Personal Details</h4>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Email Address</span>
-                        <span className="text-xs font-bold text-ink">{selectedDriver?.email}</span>
+                        <span className="text-xs text-ink-4">Email Address</span>
+                        <span className="text-xs text-ink">{selectedDriver?.email}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Phone Number</span>
-                        <span className="text-xs font-bold text-ink">{selectedDriver?.phone}</span>
+                        <span className="text-xs text-ink-4">Phone Number</span>
+                        <span className="text-xs text-ink">{selectedDriver?.phone}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Date of Birth</span>
-                        <span className="text-xs font-bold text-ink">{selectedDriver?.dob || 'Jan 12, 1988'}</span>
+                        <span className="text-xs text-ink-4">Date of Birth</span>
+                        <span className="text-xs text-ink">{selectedDriver?.dob || 'Jan 12, 1988'}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">SSN (Last 4)</span>
-                        <span className="text-xs font-bold text-ink">***-**-4421</span>
+                        <span className="text-xs text-ink-4">SSN (Last 4)</span>
+                        <span className="text-xs text-ink">***-**-4421</span>
                       </div>
                     </div>
                   </Card>
 
                   <Card className="p-6 border-urgent/10 bg-urgent-light/5">
-                    <h4 className="text-[10px] font-black text-urgent uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                    <h4 className="text-[10px] font-medium text-urgent uppercase tracking-[0.1em] mb-6 flex items-center gap-2">
                       <AlertTriangle size={14} className="text-urgent" /> Emergency Contact
                     </h4>
 
                     <div className="p-4 bg-white rounded-2xl border border-urgent/10">
-                      <p className="text-sm font-black text-ink">{selectedDriver?.emergencyContact?.name || 'Robert Wilson'}</p>
-                      <p className="text-xs font-black text-ink-4 uppercase mt-0.5">{selectedDriver?.emergencyContact?.relation || 'Brother'}</p>
+                      <p className="text-sm font-medium text-ink">{selectedDriver?.emergencyContact?.name || 'Robert Wilson'}</p>
+                      <p className="text-xs text-ink-4 mt-0.5">{selectedDriver?.emergencyContact?.relation || 'Brother'}</p>
                       <div className="mt-4 flex items-center gap-2">
-                        <div className="flex-1 p-3 bg-bg rounded-xl border border-line-2 text-xs font-black text-primary text-center tracking-widest">
+                        <div className="flex-1 p-3 bg-bg rounded-xl border border-line-2 text-xs font-medium text-primary text-center">
                           {selectedDriver?.emergencyContact?.phone || '(804) 555-0012'}
                         </div>
                         <button
@@ -498,18 +498,18 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 </div>
 
                 <Card className="p-6">
-                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-6 px-1 border-l-2 border-accent ml-[-1px]">Experience & Certification</h4>
+                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6 px-1 border-l-2 border-accent ml-[-1px]">Experience & Certification</h4>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
-                      <p className="text-xs font-black text-ink-4 uppercase mb-1">License Class</p>
-                      <Badge variant="primary" className="text-xs font-black">{selectedDriver?.licenseClass || 'Class C'}</Badge>
+                      <p className="text-xs text-ink-4 mb-1">License Class</p>
+                      <Badge variant="primary">{selectedDriver?.licenseClass || 'Class C'}</Badge>
                     </div>
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
-                      <p className="text-xs font-black text-ink-4 uppercase mb-1">Endorsements</p>
+                      <p className="text-xs text-ink-4 mb-1">Endorsements</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {(selectedDriver?.endorsements || ['Van', 'Bus']).map((e: string) => (
-                          <span key={e} className="px-2 py-0.5 bg-accent-light text-accent text-xs font-black uppercase rounded">{e}</span>
+                          <span key={e} className="px-2 py-0.5 bg-accent-light text-accent text-xs font-medium rounded">{e}</span>
                         ))}
                       </div>
                     </div>
@@ -529,8 +529,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
                   { label: 'Incident Reports', val: '0', color: 'text-urgent' }
                 ].map(stat => (
                   <Card key={stat.label} className="p-6 text-center">
-                    <p className="text-xs font-black text-ink-4 uppercase tracking-widest mb-1">{stat.label}</p>
-                    <p className={`text-3xl font-black ${stat.color}`}>{stat.val}</p>
+                    <p className="text-xs text-ink-4 mb-1">{stat.label}</p>
+                    <p className={`text-2xl font-semibold ${stat.color}`}>{stat.val}</p>
                   </Card>
                 ))}
               </div>
@@ -539,12 +539,12 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-bg border-b border-line-2">
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Trip ID</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Date & Time</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Rider</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Route</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Status</th>
-                      <th className="px-6 py-4 text-xs font-black text-ink-4 uppercase tracking-widest">Actions</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Rider</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Route</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-2">
@@ -553,20 +553,20 @@ const Drivers = ({ role }: { role?: string | null }) => {
                       if (driverTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-bold text-ink-4">No Trip History Available</td></tr>;
                       return driverTrips.map((trip: any) => (
                         <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-6 py-4 font-mono text-xs font-bold text-ink">#{trip.id.slice(-4)}</td>
+                          <td className="px-6 py-4 font-mono text-xs text-ink-3">#{trip.id.slice(-4)}</td>
                           <td className="px-6 py-4">
-                            <p className="text-xs font-bold text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
-                            <p className="text-xs font-bold text-ink-4 uppercase">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
+                            <p className="text-xs text-ink-4">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <Avatar initials={trip.rider?.name?.[0] || 'R'} size="xs" />
-                              <span className="text-xs font-bold text-ink">{trip.rider?.name}</span>
+                              <span className="text-xs font-medium text-ink">{trip.rider?.name}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 max-w-xs">
-                            <p className="text-xs font-black text-ink-4 truncate mb-0.5">{trip.pickup}</p>
-                            <p className="text-xs font-black text-primary truncate uppercase">To: {trip.dropoff}</p>
+                            <p className="text-xs text-ink-4 truncate mb-0.5">{trip.pickup}</p>
+                            <p className="text-xs text-primary truncate">→ {trip.dropoff}</p>
                           </td>
                           <td className="px-6 py-4"><Badge variant={trip.status === 'completed' ? 'accent' : 'neutral'}>{trip.status}</Badge></td>
                           <td className="px-6 py-4">
@@ -594,7 +594,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
                     </div>
                     <Badge variant={doc.status === 'valid' ? 'accent' : 'warning'}>{doc.status}</Badge>
                   </div>
-                  <h4 className="text-sm font-bold text-ink mb-1">{doc.label}</h4>
+                  <h4 className="text-sm font-semibold text-ink mb-1">{doc.label}</h4>
                   <p className="text-xs text-ink-4 mb-4 font-mono">ID: {doc.id} · Exp: {doc.expiry}</p>
                   <div className="flex gap-2">
                     <button
@@ -623,7 +623,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
                     <viewingDoc.icon size={16} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-ink">{viewingDoc.label}</h3>
+                    <h3 className="text-sm font-semibold text-ink">{viewingDoc.label}</h3>
                     <p className="text-xs text-ink-4 font-mono">{viewingDoc.id}</p>
                   </div>
                 </div>
@@ -643,12 +643,12 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 {/* Document Meta */}
                 <div className="bg-bg rounded-2xl border border-line-2 p-4 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-ink-4 uppercase tracking-widest">Document ID</span>
-                    <span className="text-xs font-bold text-ink font-mono">{viewingDoc.id}</span>
+                    <span className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Document ID</span>
+                    <span className="text-xs font-mono text-ink">{viewingDoc.id}</span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs font-black text-ink-4 uppercase tracking-widest">Expiry Date</span>
-                    <span className="text-xs font-bold text-ink">{viewingDoc.expiry}</span>
+                    <span className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Expiry Date</span>
+                    <span className="text-xs text-ink">{viewingDoc.expiry}</span>
                   </div>
                 </div>
                 <Badge variant={viewingDoc.status === 'valid' ? 'accent' : 'warning'} className="w-full justify-center py-2">
@@ -681,8 +681,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-display text-ink tracking-normal">Driver Network</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage driver accounts and compliance auditing</p>
+          <h1 className="text-2xl font-semibold text-ink">Driver Network</h1>
+          <p className="text-sm text-ink-4 mt-0.5">Manage driver accounts and compliance auditing</p>
         </div>
         {role === 'admin' && (
           <Button variant="primary" icon={UserPlus} onClick={() => setShowAddModal(true)}>Create Driver Account</Button>
@@ -702,8 +702,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
               <s.icon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-ink-4 leading-none">{s.label}</p>
-              <p className="text-2xl font-bold text-ink mt-1 leading-none">{s.value}</p>
+              <p className="text-xs text-ink-4 leading-none">{s.label}</p>
+              <p className="text-2xl font-semibold text-ink mt-1 leading-none">{s.value}</p>
               <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
             </div>
           </Card>
@@ -721,7 +721,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
               { id: 'attention', label: `Needs Attention${(drivers || []).some((d: any) => (d?.pendingDocUpdates || 0) > 0) ? ' (1)' : ''}` },
             ].map((tab: any) => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setCurrentPage(1); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id ? 'bg-white shadow-sm text-primary border border-line' : 'text-ink-3 hover:text-ink'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id ? 'bg-white shadow-sm text-primary border border-line' : 'text-ink-4 hover:text-ink'}`}>
                 {tab.label}
               </button>
             ))}
@@ -739,7 +739,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <thead className="bg-bg/40 border-b border-line-2">
               <tr>
                 {['Info', 'Vehicle', 'Status', 'Activity', 'Compliance'].map(h => (
-                  <th key={h} className="px-6 py-4 text-[10px] font-black text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -753,9 +753,9 @@ const Drivers = ({ role }: { role?: string | null }) => {
                         {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink truncate">{driver.name}</p>
+                        <p className="text-sm font-medium text-ink truncate">{driver.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-[10px] font-bold text-ink-3 uppercase bg-bg px-1.5 py-0.5 rounded border border-line-2">{driver.id}</span>
+                          <span className="font-mono text-[10px] text-ink-3 bg-bg px-1.5 py-0.5 rounded border border-line-2">{driver.id}</span>
                           <span className="text-[10px] font-medium text-ink-4 truncate">{driver.email}</span>
                         </div>
                       </div>
@@ -763,14 +763,14 @@ const Drivers = ({ role }: { role?: string | null }) => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <p className="text-sm font-bold text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
-                      <p className="font-mono text-[10px] font-bold text-ink-4 uppercase mt-0.5 tracking-wider">{driver?.vehicle?.plate || '---'}</p>
+                      <p className="text-sm font-medium text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
+                      <p className="font-mono text-[10px] text-ink-4 mt-0.5">{driver?.vehicle?.plate || '---'}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1.5">
                       {getStatusBadge(driver.status)}
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-warning">
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-warning">
                         <Star size={10} fill="currentColor" /> {driver?.rating || 0}
                       </span>
                     </div>
@@ -778,22 +778,22 @@ const Drivers = ({ role }: { role?: string | null }) => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-ink">{driver?.tripsToday || 0}</span>
-                        <span className="text-[10px] font-black text-ink-4 uppercase tracking-tighter">Today</span>
+                        <span className="text-sm font-medium text-ink">{driver?.tripsToday || 0}</span>
+                        <span className="text-[10px] text-ink-4">today</span>
                       </div>
-                      <p className="text-[10px] font-bold text-ink-4 mt-0.5">{(driver?.totalTrips || 0).toLocaleString()} Total Trips</p>
+                      <p className="text-[10px] text-ink-4 mt-0.5">{(driver?.totalTrips || 0).toLocaleString()} total</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     {(driver?.pendingDocUpdates || 0) > 0 ? (
                       <div className="flex flex-col gap-1">
-                        <span className="flex items-center gap-1.5 text-[10px] font-black text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit uppercase tracking-wider">
+                        <span className="flex items-center gap-1.5 text-[10px] font-medium text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit">
                           <AlertTriangle size={10} /> Needs Review
                         </span>
-                        <p className="text-[10px] font-bold text-ink-4 ml-2">{driver.pendingDocUpdates} Doc(s)</p>
+                        <p className="text-[10px] text-ink-4 ml-2">{driver.pendingDocUpdates} doc(s)</p>
                       </div>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-[10px] font-black text-accent bg-accent-light px-2 py-1 rounded-full w-fit uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5 text-[10px] font-medium text-accent bg-accent-light px-2 py-1 rounded-full w-fit">
                         <ShieldCheck size={10} /> Verified
                       </span>
                     )}
@@ -811,7 +811,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
                 <tr>
                   <td colSpan={10} className="px-6 py-16 text-center text-ink-4">
                     <Search size={32} className="mx-auto mb-3 opacity-30" />
-                    <p className="text-sm font-bold text-ink-3">No drivers match your filter</p>
+                    <p className="text-sm text-ink-4">No drivers match your filter</p>
                   </td>
                 </tr>
               )}
