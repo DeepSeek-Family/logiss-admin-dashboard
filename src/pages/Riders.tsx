@@ -49,7 +49,7 @@ const Riders = ({ role }: { role?: string | null }) => {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
-        <h3 className="text-lg font-bold text-ink mb-2">Failed to load riders</h3>
+        <h3 className="text-lg font-semibold text-ink mb-2">Failed to load riders</h3>
         <p className="text-ink-3 text-sm">{error}</p>
       </div>
     );
@@ -112,11 +112,11 @@ const Riders = ({ role }: { role?: string | null }) => {
             </div>
             <div className="flex gap-3">
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 mb-0.5">Trips</p>
+                <p className="text-xs text-ink-4 mb-0.5">Trips</p>
                 <p className="text-xl font-bold text-ink">{selectedRider?.totalTrips || 0}</p>
               </div>
               <div className="px-4 py-3 bg-bg rounded-xl border border-line-2 text-center">
-                <p className="text-xs font-bold text-ink-4 mb-0.5">Mobility</p>
+                <p className="text-xs text-ink-4 mb-0.5">Mobility</p>
                 <p className="text-sm font-bold text-primary mt-1">{selectedRider?.mobility || 'Ambulatory'}</p>
               </div>
             </div>
@@ -148,34 +148,34 @@ const Riders = ({ role }: { role?: string | null }) => {
             <>
               <div className="lg:col-span-1 space-y-6">
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Mobility & Payment</h4>
+                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Mobility & Payment</h4>
                   <div className="space-y-4">
                      <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Mobility Need</span>
-                        <span className="text-xs font-bold text-ink">{selectedRider?.mobility || 'Ambulatory'}</span>
+                        <span className="text-xs text-ink-4">Mobility Need</span>
+                        <span className="text-xs font-medium text-ink">{selectedRider?.mobility || 'Ambulatory'}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Default Payment</span>
-                        <span className="text-xs font-bold text-ink">{selectedRider?.paymentMethod || 'N/A'}</span>
+                        <span className="text-xs text-ink-4">Default Payment</span>
+                        <span className="text-xs font-medium text-ink">{selectedRider?.paymentMethod || 'N/A'}</span>
                       </div>
                   </div>
                 </Card>
 
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Default Locations</h4>
+                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Default Locations</h4>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                       <div className="p-2 bg-white rounded-lg text-ink-3 shadow-sm shrink-0"><MapPin size={14} /></div>
                       <div className="min-w-0">
                         <p className="text-xs font-black text-ink-4 uppercase tracking-widest mb-0.5">Home/Pickup</p>
-                        <p className="text-xs font-bold text-ink truncate">{selectedRider?.defaultPickup || 'N/A'}</p>
+                        <p className="text-xs font-medium text-ink truncate">{selectedRider?.defaultPickup || 'N/A'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                       <div className="p-2 bg-white rounded-lg text-primary shadow-sm shrink-0"><Activity size={14} /></div>
                       <div className="min-w-0">
                         <p className="text-xs font-black text-ink-4 uppercase tracking-widest mb-0.5">Primary Facility</p>
-                        <p className="text-xs font-bold text-ink truncate">{selectedRider?.defaultDropoff || 'N/A'}</p>
+                        <p className="text-xs font-medium text-ink truncate">{selectedRider?.defaultDropoff || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -185,15 +185,15 @@ const Riders = ({ role }: { role?: string | null }) => {
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h4 className="text-[10px] font-black text-ink-4 uppercase tracking-[0.2em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Contact Details</h4>
+                    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Contact Details</h4>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Phone Number</span>
-                        <span className="text-xs font-bold text-ink">{selectedRider?.phone || 'N/A'}</span>
+                        <span className="text-xs text-ink-4">Phone Number</span>
+                        <span className="text-xs font-medium text-ink">{selectedRider?.phone || 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs font-bold text-ink-4">Email Address</span>
-                        <span className="text-xs font-bold text-ink">{selectedRider?.email || 'N/A'}</span>
+                        <span className="text-xs text-ink-4">Email Address</span>
+                        <span className="text-xs font-medium text-ink">{selectedRider?.email || 'N/A'}</span>
                       </div>
                     </div>
                   </Card>
@@ -231,12 +231,12 @@ const Riders = ({ role }: { role?: string | null }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-bg border-b border-line-2">
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Trip ID</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Route</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-ink-4 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Type</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Route</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-2">
@@ -245,13 +245,13 @@ const Riders = ({ role }: { role?: string | null }) => {
                       if (riderTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-bold text-ink-4">No Trip History Available</td></tr>;
                       return riderTrips.map((trip: any) => (
                         <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-6 py-4 font-mono text-xs font-bold text-ink">#{trip.id.slice(-4)}</td>
+                          <td className="px-6 py-4 font-mono text-xs font-medium text-ink">#{trip.id.slice(-4)}</td>
                           <td className="px-6 py-4">
-                            <p className="text-xs font-bold text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
-                            <p className="text-xs font-bold text-ink-4 uppercase">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
+                            <p className="text-xs text-ink-4 uppercase">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <p className="text-xs font-bold text-ink capitalize">{trip.type?.replace('_', ' ')}</p>
+                            <p className="text-xs font-medium text-ink capitalize">{trip.type?.replace('_', ' ')}</p>
                           </td>
                           <td className="px-6 py-4 max-w-xs">
                             <p className="text-xs font-black text-ink-4 truncate mb-0.5">{trip.pickup}</p>
@@ -297,7 +297,7 @@ const Riders = ({ role }: { role?: string | null }) => {
               <s.icon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-ink-4 leading-none">{s.label}</p>
+              <p className="text-xs text-ink-4 leading-none">{s.label}</p>
               <p className="text-2xl font-bold text-ink mt-1 leading-none">{s.value}</p>
               <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
             </div>
@@ -358,7 +358,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-bold text-ink-3"><span className="text-ink-4 mr-0.5">PX:</span> {rider.passengerId || rider.id}</span>
+                      <span className="text-xs font-medium text-ink-3"><span className="text-ink-4 mr-0.5">PX:</span> {rider.passengerId || rider.id}</span>
                       <span className="text-xs font-bold text-primary"><span className="text-primary-dark/60 mr-0.5">AUTH:</span> {rider.authorizationId || rider.authId || '---'}</span>
                     </div>
                   </td>
@@ -417,7 +417,7 @@ const Riders = ({ role }: { role?: string | null }) => {
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-ink-3">{rider?.phone || '---'}</span>
+                    <span className="text-xs font-medium text-ink-3">{rider?.phone || '---'}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
