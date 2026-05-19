@@ -71,6 +71,14 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
           >
             <ChevronRight size={16} />
           </button>
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="px-3.5 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 border border-primary/20"
+            >
+              Today
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -222,20 +230,36 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
                   <div
                     key={dayIdx}
                     onClick={() => setEditingCell({ item, date: d })}
-                    className={`px-2 py-2 border-r border-line-2/30 last:border-r-0 min-h-[72px] flex flex-col justify-center cursor-pointer hover:bg-bg transition-colors ${isToday(d) ? 'bg-primary-tint/10' : ''
-                      }`}
+                    className={`px-2 py-2 border-r border-line-2/30 last:border-r-0 min-h-[80px] flex flex-col justify-center cursor-pointer hover:bg-bg transition-all relative group ${
+                      isToday(d) ? 'bg-primary/[0.03] border-x border-primary/10' : ''
+                    }`}
                   >
+                    {/* Visual Hover Edit Indicator */}
+                    <div className="absolute right-1.5 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 shadow-sm rounded-md p-0.5 text-primary border border-line-2 z-10">
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </div>
+
                     {shift ? (
-                      <div className={`rounded-lg border px-2 py-1.5 text-xs font-medium leading-tight ${shiftStyle[shift.color]}`}>
-                        <div className="flex items-center gap-1 mb-1 opacity-70">
-                          <Clock size={9} />
-                          <span className="whitespace-pre-line text-[10px]">{shift.time}</span>
+                      <div className={`rounded-lg border px-2 py-1.5 text-xs font-semibold leading-tight transition-all hover:scale-[1.02] shadow-sm relative overflow-hidden ${shiftStyle[shift.color]}`}>
+                        {/* Soft visual type decorations */}
+                        <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1 translate-y-1">
+                          {shift.type === 'heavy' ? <Truck size={28} /> : <Clock size={28} />}
                         </div>
-                        <p className="font-medium">{shift.label}</p>
+
+                        <div className="flex items-center gap-1 mb-1 opacity-80">
+                          <Clock size={10} className="shrink-0 text-current" />
+                          <span className="whitespace-pre-line text-[9px] font-bold">{shift.time}</span>
+                        </div>
+                        <p className="font-bold text-[10px] tracking-wide uppercase flex items-center gap-1">
+                          {shift.type === 'heavy' ? '⚡ ' : shift.type === 'split' ? '🔁 ' : shift.type === 'leave' ? '✈️ ' : '✅ '}
+                          {shift.label}
+                        </p>
                       </div>
                     ) : (
                       <div className="h-full flex items-center justify-center">
-                        <span className="text-xs text-ink-4">Off</span>
+                        <span className="text-xs text-ink-4 font-medium opacity-60">Off</span>
                       </div>
                     )}
                   </div>
