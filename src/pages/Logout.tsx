@@ -10,16 +10,16 @@ const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
           <LogOut size={40} className="text-primary" />
         </div>
 
-        <h1 className="text-4xl font-black font-display text-ink mb-2">Successfully Signed Out</h1>
-        <p className="text-ink-3 font-semibold mb-8">
+        <h1 className="text-2xl font-semibold text-ink mb-2">Successfully Signed Out</h1>
+        <p className="text-sm text-ink-4 mb-8">
           Your dispatch session has been securely ended. See you next time!
         </p>
 
         <div className="bg-bg/50 rounded-2xl p-6 border border-line-2 mb-8 flex items-center gap-4">
           <img src="/logo.png" alt="Logiss Rides" className="h-10 w-auto" />
           <div className="text-left">
-            <p className="text-xs font-bold text-ink-4 uppercase tracking-widest leading-none mb-1">LOGISS Console</p>
-            <p className="text-sm font-bold text-ink">v1.0.4 Production Build</p>
+            <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] leading-none mb-1">LOGISS Console</p>
+            <p className="text-sm font-medium text-ink">v1.0.4 Production Build</p>
           </div>
         </div>
 
@@ -32,7 +32,7 @@ const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
           Back to Login
         </Button>
 
-        <p className="mt-8 text-xs font-bold text-ink-4 uppercase tracking-[0.2em]">
+        <p className="mt-8 text-xs text-ink-4">
           &copy; 2026 LOGISS Transportation Inc.
         </p>
       </Card>

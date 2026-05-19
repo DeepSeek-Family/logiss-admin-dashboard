@@ -71,10 +71,10 @@ const Profile = ({ role }: { role?: string | null }) => {
       <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-4xl font-black font-display text-ink tracking-normal">{p.name}</h1>
-            <Badge variant="primary-light" className="text-xs uppercase tracking-widest">{p.role}</Badge>
+            <h1 className="text-2xl font-semibold text-ink">{p.name}</h1>
+            <Badge variant="primary-light" className="text-xs">{p.role}</Badge>
           </div>
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">{p.employeeId} · {p.department}</p>
+          <p className="text-sm text-ink-4 mt-0.5">{p.employeeId} · {p.department}</p>
         </div>
         <Button variant="primary" onClick={handleSave} disabled={saving} className="shrink-0">
           {saving
@@ -89,7 +89,7 @@ const Profile = ({ role }: { role?: string | null }) => {
 
         {/* Photo Upload */}
         <div>
-          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.18em] mb-4">Profile Photo</p>
+          <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-4">Profile Photo</p>
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-line shadow-md bg-bg">
@@ -127,7 +127,7 @@ const Profile = ({ role }: { role?: string | null }) => {
 
         {/* Personal Info */}
         <div className="pt-5 border-t border-line-2">
-          <p className="text-xs font-bold text-ink-4 uppercase tracking-[0.18em] mb-5">Personal Information</p>
+          <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5">Personal Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Full Name" icon={User} value={p.name} />
             <Field label="Email Address" icon={Mail} value={p.email} />

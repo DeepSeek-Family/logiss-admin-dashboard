@@ -31,28 +31,28 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="w-16 h-16 bg-urgent-light text-urgent rounded-2xl flex items-center justify-center mb-6 shadow-sm">
             <AlertTriangle size={32} />
           </div>
-          <h2 className="text-xl font-bold text-ink mb-2 tracking-normal">Something went wrong</h2>
+          <h2 className="text-xl font-semibold text-ink mb-2 tracking-normal">Something went wrong</h2>
           <p className="text-sm text-ink-3 mb-8 max-w-md mx-auto">
             The application encountered an unexpected error. Don't worry, your data is safe.
           </p>
           <div className="flex gap-3">
             <button
               onClick={() => window.location.reload()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-md shadow-primary/20 hover:scale-105 transition-transform"
             >
               <RotateCcw size={18} />
               Reload Page
             </button>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="px-6 py-2.5 bg-bg text-ink-2 rounded-xl font-bold hover:bg-line-2 transition-colors"
+              className="px-6 py-2.5 bg-bg text-ink rounded-xl font-medium hover:bg-line-2 transition-colors"
             >
               Try Again
             </button>
           </div>
           {import.meta.env.DEV && (
             <div className="mt-8 p-4 bg-bg rounded-xl border border-line-2 text-left w-full overflow-auto max-h-40">
-              <p className="text-xs font-mono text-urgent font-bold">{this.state.error?.toString()}</p>
+              <p className="text-xs font-mono text-urgent">{this.state.error?.toString()}</p>
             </div>
           )}
         </div>

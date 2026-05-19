@@ -55,7 +55,7 @@ export function MultiDatePicker({ selected = [], onSelect }: MultiDatePickerProp
               <button 
                 type="button" 
                 onClick={() => setIsOpen(false)} 
-                className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                className="bg-primary text-white text-xs font-medium px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
               >
                 Done
               </button>

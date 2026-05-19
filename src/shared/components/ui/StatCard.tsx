@@ -29,7 +29,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
           </div>
         )}
       </div>
-      <div className="text-2xl font-extrabold font-display text-ink mb-1">{value}</div>
+      <div className="text-2xl font-semibold text-ink mb-1">{value}</div>
       {(sub || trend) && (
         <div className="flex items-center gap-2">
           {trend && (

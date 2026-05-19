@@ -43,7 +43,7 @@ export const Avatar: React.FC<AvatarProps> = ({ initials, src, size = 'md', onli
       {imageSrc ? (
         <img src={imageSrc} alt={initials} className={`${sizes[size]} ${roundedClass} object-cover shadow-sm ring-1 ring-black/5`} />
       ) : (
-        <div className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold tracking-normal shadow-sm`}>
+        <div className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-medium shadow-sm`}>
           {initials}
         </div>
       )}

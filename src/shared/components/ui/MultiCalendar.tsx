@@ -51,7 +51,7 @@ export function MultiCalendar({ selected = [], onSelect, className }: MultiCalen
         <button type="button" onClick={() => setCurrentMonth(new Date(year, month - 1))} className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink">
           <ChevronLeft size={18} />
         </button>
-        <span className="text-sm font-bold text-ink tracking-normal">
+        <span className="text-sm font-semibold text-ink">
           {monthNames[month]} {year}
         </span>
         <button type="button" onClick={() => setCurrentMonth(new Date(year, month + 1))} className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink">
@@ -61,7 +61,7 @@ export function MultiCalendar({ selected = [], onSelect, className }: MultiCalen
 
       <div className="grid grid-cols-7 gap-1 mb-2 text-center">
         {dayNames.map(day => (
-          <div key={day} className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+          <div key={day} className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">
             {day}
           </div>
         ))}
@@ -82,7 +82,7 @@ export function MultiCalendar({ selected = [], onSelect, className }: MultiCalen
               onClick={() => !isPast && toggleDate(date)}
               disabled={isPast}
               className={`
-                h-8 w-8 rounded-md text-xs font-bold flex items-center justify-center transition-all
+                h-8 w-8 rounded-md text-xs font-medium flex items-center justify-center transition-all
                 ${isSel ? 'bg-primary text-white shadow-md' : 'text-ink hover:bg-bg'}
                 ${isTod && !isSel ? 'border border-primary/30 text-primary' : ''}
                 ${isPast ? 'opacity-30 cursor-not-allowed hover:bg-transparent' : 'cursor-pointer'}

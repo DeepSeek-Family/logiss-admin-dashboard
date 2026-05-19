@@ -25,8 +25,8 @@ import {
   Activity
 } from 'lucide-react';
 import { Avatar, Badge, Button } from '@/shared/components/ui';
-import ErrorBoundary from '../components/ErrorBoundary';
-import { trips, drivers } from '../data/mockData';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { trips, drivers } from '@/data/mockData';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -45,7 +45,7 @@ const NavItem = ({ icon: Icon, label, badge, active, onClick, badgeVariant = 'ne
   >
     <div className="flex items-center gap-3">
       <Icon size={20} className={active ? 'text-white' : 'text-ink-3 group-hover:text-primary transition-colors'} />
-      <span className={`text-base tracking-normal ${active ? 'font-bold' : 'font-normal'}`}>
+      <span className={`text-base ${active ? 'font-semibold' : 'font-normal'}`}>
         {label}
       </span>
     </div>
@@ -246,7 +246,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                       {r.type === 'trip' ? <Truck size={12} /> : <Users size={12} />}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-ink truncate">{r.label}</p>
+                      <p className="text-xs font-medium text-ink truncate">{r.label}</p>
                       <p className="text-xs text-ink-4">{r.sub}</p>
                     </div>
                   </button>
@@ -258,7 +258,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-light rounded-full border border-accent/10">
               <span className="w-2 h-2 rounded-full bg-accent pulse-dot"></span>
-              <span className="text-xs font-bold text-accent">{liveTripsCount} Live · {activeDriversCount} Drivers Active</span>
+              <span className="text-xs font-medium text-accent">{liveTripsCount} Live · {activeDriversCount} Drivers Active</span>
             </div>
 
             <button
@@ -290,8 +290,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                     <div className="flex items-center gap-3 mb-3">
                       <Avatar initials={role === 'admin' ? 'MH' : 'SR'} size="md" />
                       <div>
-                        <p className="text-sm font-bold text-ink leading-none">{role === 'admin' ? 'Marcus A. Holloway' : 'Sandra K. Reynolds'}</p>
-                        <p className="text-xs font-bold text-ink-4 mt-1">ID: #{role === 'admin' ? 'LOGISS-882' : 'LOGISS-941'}</p>
+                        <p className="text-sm font-medium text-ink leading-none">{role === 'admin' ? 'Marcus A. Holloway' : 'Sandra K. Reynolds'}</p>
+                        <p className="text-xs text-ink-4 mt-1">ID: #{role === 'admin' ? 'LOGISS-882' : 'LOGISS-941'}</p>
                       </div>
                     </div>
                     <Badge variant="primary-light" className="w-full justify-center py-1 text-xs uppercase tracking-wide">
@@ -302,14 +302,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   <div className="p-2">
                     <button
                       onClick={() => { navigate('/profile'); setProfileOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-ink-2 hover:bg-bg transition-all group"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-ink hover:bg-bg transition-all group"
                     >
                       <User size={15} className="text-ink-3 group-hover:text-primary" />
                       <span>Account Info</span>
                     </button>
                     <button
                       onClick={onLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-urgent hover:bg-urgent-light transition-all"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-urgent hover:bg-urgent-light transition-all"
                     >
                       <LogOut size={15} /> Sign Out
                     </button>

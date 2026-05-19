@@ -46,7 +46,7 @@ export const Pagination = ({
         <button 
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-2 py-1.5 text-xs font-bold text-ink-3 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-ink-4 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft size={14} /> Previous
         </button>
@@ -59,7 +59,7 @@ export const Pagination = ({
               <button
                 key={page}
                 onClick={() => typeof page === 'number' && onPageChange(page)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
                   currentPage === page 
                     ? 'bg-primary text-white shadow-md shadow-primary/20 scale-110' 
                     : 'text-ink-3 hover:bg-bg hover:text-ink'
@@ -74,14 +74,14 @@ export const Pagination = ({
         <button 
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-2 py-1.5 text-xs font-bold text-ink-3 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-ink-4 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Next <ChevronRight size={14} />
         </button>
       </div>
 
       <div className="text-xs font-semibold text-ink-4">
-        Showing <span className="text-ink font-bold">{startItem}–{endItem}</span> of <span className="text-ink font-bold">{totalItems.toLocaleString()}</span> results
+        Showing <span className="text-ink font-medium">{startItem}–{endItem}</span> of <span className="text-ink font-medium">{totalItems.toLocaleString()}</span> results
       </div>
     </div>
   );

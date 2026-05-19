@@ -2,7 +2,7 @@ import React, { useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import MainLayout from './layouts/MainLayout';
+import MainLayout from '@/shared/components/layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import {
   AppRouteConfig,
@@ -17,7 +17,7 @@ import {
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] w-full gap-4 animate-in fade-in duration-500">
     <Loader2 className="w-10 h-10 text-primary animate-spin" />
-    <p className="text-sm font-bold text-ink-3 tracking-normal">Initializing module...</p>
+    <p className="text-sm text-ink-4">Initializing module...</p>
   </div>
 );
 
@@ -104,26 +104,26 @@ function App() {
       <Router>
         <ErrorBoundary>
           <Routes>
-          <Route path={loginRoute.path} element={role ? <Navigate to="/" replace /> : <LoginPage setRole={handleRoleSet} />} />
+            <Route path={loginRoute.path} element={role ? <Navigate to="/" replace /> : <LoginPage setRole={handleRoleSet} />} />
 
-          {/* Main Layout containing the Sidebar and Topbar */}
-          <Route path="/" element={<ProtectedRoute role={role}><MainLayout role={role} onLogout={handleLogout} /></ProtectedRoute>}>
+            {/* Main Layout containing the Sidebar and Topbar */}
+            <Route path="/" element={<ProtectedRoute role={role}><MainLayout role={role} onLogout={handleLogout} /></ProtectedRoute>}>
 
-            {/* Default Route based on role */}
-            <Route index element={<Navigate to={getDefaultRoute(role)} replace />} />
+              {/* Default Route based on role */}
+              <Route index element={<Navigate to={getDefaultRoute(role)} replace />} />
 
-            {/* Application routes are defined in src/routes/appRoutes.tsx. */}
-            {authenticatedRoutes.map(renderAppRoute)}
+              {/* Application routes are defined in src/routes/appRoutes.tsx. */}
+              {authenticatedRoutes.map(renderAppRoute)}
 
-            {/* 404 Fallback */}
-            <Route path="*" element={
-              <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <h1 className="text-6xl font-extrabold text-ink opacity-20 mb-4 font-display">404</h1>
-                <p className="text-lg font-bold text-ink-3 mb-6 tracking-normal">Resource not found</p>
-                <button onClick={() => window.history.back()} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform">Go Back</button>
-              </div>
-            } />
-          </Route>
+              {/* 404 Fallback */}
+              <Route path="*" element={
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <h1 className="text-6xl font-semibold text-ink opacity-20 mb-4">404</h1>
+                  <p className="text-lg text-ink-4 mb-6">Resource not found</p>
+                  <button onClick={() => window.history.back()} className="px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-md shadow-primary/20 hover:scale-105 transition-transform">Go Back</button>
+                </div>
+              } />
+            </Route>
           </Routes>
         </ErrorBoundary>
       </Router>
