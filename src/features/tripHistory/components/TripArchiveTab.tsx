@@ -159,14 +159,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <Button variant="outline" size="sm" icon={Download} onClick={handleExport}>Export CSV</Button>
-      </div>
-
       <Card className="overflow-hidden border-line-2 shadow-sm">
         <div className="p-6 border-b border-line-2 bg-bg/30 space-y-5">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-6">
-            <div className="flex-1 max-w-md relative">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex-1 max-w-2xl relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" size={20} />
               <input
                 type="text"
@@ -255,6 +251,16 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   <option value="rider">Rider Name (A-Z)</option>
                 </select>
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Download}
+                onClick={handleExport}
+                className="h-10 px-4 rounded-xl border-line text-ink-3 hover:text-ink hover:bg-bg transition-all"
+              >
+                Export CSV
+              </Button>
             </div>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-6 pt-2">
@@ -386,8 +392,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="font-mono text-xs font-medium text-ink">{money(trip.cost)}</span>
                       <div className="flex items-center gap-1.5 opacity-80">
-                         <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
-                         <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty || trip.cost || 0)}</span>
+                        <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
+                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty || trip.cost || 0)}</span>
                       </div>
                     </div>
                   </td>
