@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronRight, MapPin, ArrowRight, UserPlus, Repeat, MoveRight } from 'lucide-react';
+import { Search, Download, ChevronRight, MapPin, ArrowRight, UserPlus, Repeat, MoveRight, Calendar } from 'lucide-react';
 import { Card, Badge, Avatar, TripStatusBadge, Pagination, Button } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
 
@@ -181,18 +181,31 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-ink-4 whitespace-nowrap">Time Period</span>
-                  <select
-                    value={timeFilter}
-                    onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
-                    className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
-                  >
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="tomorrow">Tomorrow</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="custom">Custom Range</option>
-                  </select>
+                  <div className="relative flex items-center">
+                    <select
+                      value={timeFilter}
+                      onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
+                      className="bg-white border border-line rounded-xl py-2.5 pl-4 pr-10 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px] appearance-none"
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="tomorrow">Tomorrow</option>
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeFilter('custom');
+                        setCurrentPage(1);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary transition-colors focus:outline-none"
+                      title="Select Custom Range"
+                    >
+                      <Calendar size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {timeFilter === 'custom' && (
@@ -201,6 +214,13 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       type="date"
                       value={startDate}
                       onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                      onClick={(e) => {
+                        try {
+                          e.currentTarget.showPicker();
+                        } catch (err) {
+                          console.log(err);
+                        }
+                      }}
                       className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
                       title="Start Date"
                     />
@@ -209,6 +229,13 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       type="date"
                       value={endDate}
                       onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                      onClick={(e) => {
+                        try {
+                          e.currentTarget.showPicker();
+                        } catch (err) {
+                          console.log(err);
+                        }
+                      }}
                       className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
                       title="End Date"
                     />

@@ -79,7 +79,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-bg/40">
 
           {trip.cancelReason && (
             <div className="mb-6 bg-urgent-light/40 border border-urgent/20 p-4 rounded-xl flex items-start gap-3">
@@ -98,7 +98,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
 
               {/* Trip Overview */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <Calendar size={14} /> Trip Overview
                 </h3>
 
@@ -117,7 +117,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div><p className="text-xs text-ink-4 mb-1">Source / County</p><p className="text-sm font-medium text-ink truncate">{trip.source || 'VA County'}</p></div>
                   <div><p className="text-xs text-ink-4 mb-1">Pickup Time</p><p className="text-sm font-medium text-ink">{trip.requestedPickup || (trip.scheduledTime ? formatTime(trip.scheduledTime) : 'N/A')}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Appointment</p><p className="text-sm font-medium text-primary">{trip.appointmentTime || 'N/A'}</p></div>
+                  <div><p className="text-xs text-ink-4 mb-1">Appointment</p><p className="text-sm font-medium text-primary">{trip.appointmentTime || <span className="text-ink-4">N/A</span>}</p></div>
                   <div><p className="text-xs text-ink-4 mb-1">Trip Type</p><p className="text-sm font-medium text-ink">{tripTypeLabel(trip.type)}</p></div>
                   <div><p className="text-xs text-ink-4 mb-1">Reason</p><p className="text-sm font-medium text-ink">{trip.reason || 'Medical Visit'}</p></div>
                   <div><p className="text-xs text-ink-4 mb-1">Est. Distance</p><p className="text-sm font-medium text-ink">{trip.distance || 'N/A'}</p></div>
@@ -128,7 +128,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
 
               {/* Route Anatomy */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <Navigation size={14} /> Route & Timeline
                 </h3>
                 <div className="relative pl-4 space-y-6">
@@ -176,7 +176,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
 
               {/* Rider Info */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <User size={14} /> Rider Information
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-6">
@@ -209,7 +209,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
               {/* Driver Assignment */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
                     <Truck size={14} /> Fleet & Driver
                   </h3>
                   {editMode && <Badge variant="warning">Editing</Badge>}
@@ -264,7 +264,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
 
               {/* Financial & Billing */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <CreditCard size={14} /> Billing & Payment
                 </h3>
                 <div className="space-y-4">
@@ -290,7 +290,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
 
               {/* Audit Trail */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-xs font-semibold text-primary mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <Shield size={14} /> Audit Trail
                 </h3>
                 <div className="space-y-3">
