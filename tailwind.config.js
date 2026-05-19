@@ -25,7 +25,7 @@ export default {
         accent:  { DEFAULT: '#0F6E56', dark: '#0A5642', light: '#E0F2EC' },
         warning: { DEFAULT: '#BA7517', light: '#FEF7E6' },
         urgent:  { DEFAULT: '#A32D2D', light: '#FCEEEE' },
-        ink:     { DEFAULT: '#0E1A2B', 2: '#3A4A60', 3: '#5E6F84', 4: '#8A98AB' },
+        ink:     { DEFAULT: '#09121F', 2: '#1F2C3D', 3: '#3A4A60', 4: '#5E6F84' },
         line:    { DEFAULT: '#D7DDE5', 2: '#EAEEF3' },
         bg:      '#F7F9FB',
       },
