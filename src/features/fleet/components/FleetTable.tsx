@@ -71,7 +71,7 @@ export const FleetTable = ({
         <table className="w-full text-left border-collapse">
           <thead className="bg-bg/40 border-b border-line-2">
             <tr>
-              {['Asset Details', 'Vehicle Type', 'Status', 'Operator', 'Telematics', 'Next Service', 'Compliance', ''].map(h => (
+              {['Vehicle', 'Vehicle Type', 'Status', 'Operator', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
                 <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -84,7 +84,7 @@ export const FleetTable = ({
               const serviceWarning = nextServiceDays !== null && nextServiceDays < 60;
 
               return (
-                <tr key={v.id} className="hover:bg-bg/40 transition-all duration-300 group">
+                <tr key={v.id} className="hover:bg-bg/40 transition-all duration-300 group cursor-pointer" onClick={() => onNavigate(`/fleet/${v.id}`)}>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 ring-1 ring-line overflow-hidden relative">
@@ -132,7 +132,7 @@ export const FleetTable = ({
                     <Badge variant={insuranceBadge[v.insurance?.status] || 'neutral'} className="text-xs font-medium px-2 py-0.5">
                       {v.insurance?.status}
                     </Badge>
-                    <p className="text-xs text-ink-4 mt-1 font-medium italic">Exp {v.insurance?.expires || 'N/A'}</p>
+                    <p className="text-xs text-ink-4 mt-1 font-medium">Exp {v.insurance?.expires || 'N/A'}</p>
                   </td>
 
                   <td className="px-6 py-4 text-right">

@@ -71,7 +71,7 @@ export const DriversTable = ({
         <table className="w-full text-left">
           <thead className="bg-bg/40 border-b border-line-2">
             <tr>
-              {['Info', 'Vehicle', 'Status', 'Activity', 'Compliance'].map(h => (
+              {['Driver', 'Vehicle', 'Status', 'Trips', 'Compliance'].map(h => (
                 <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">
                   {h}
                 </th>
@@ -103,20 +103,18 @@ export const DriversTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1.5">
-                    {getStatusBadge(driver.status)}
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-warning">
-                      <Star size={10} fill="currentColor" /> {driver?.rating || 0}
-                    </span>
-                  </div>
+                  {getStatusBadge(driver.status)}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-ink">{driver?.tripsToday || 0}</span>
                       <span className="text-[10px] text-ink-4">today</span>
                     </div>
-                    <p className="text-[10px] text-ink-4 mt-0.5">{(driver?.totalTrips || 0).toLocaleString()} total</p>
+                    <p className="text-[10px] text-ink-4">{(driver?.totalTrips || 0).toLocaleString()} total</p>
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-warning mt-0.5">
+                      <Star size={9} fill="currentColor" /> {driver?.rating || 0}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -135,7 +133,7 @@ export const DriversTable = ({
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 group-hover:text-primary group-hover:bg-primary-light transition-all">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4/40 group-hover:text-primary group-hover:bg-primary-light transition-all">
                       <ChevronRight size={18} />
                     </div>
                   </div>

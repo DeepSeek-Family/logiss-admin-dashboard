@@ -108,6 +108,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: '/reports', label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
       { id: '/transactions', label: 'Financials', icon: CreditCard, roles: ['admin'] },
       { id: '/staff', label: 'User Management', icon: UserPlus, roles: ['admin'] },
+      { id: '/cms', label: 'CMS & Content', icon: FileText, roles: ['admin'] },
     ]
   }
 ];

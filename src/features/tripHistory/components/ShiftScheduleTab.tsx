@@ -82,7 +82,6 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-ink-4 whitespace-nowrap font-semibold">Select Date Calendar:</span>
           <input
             type="date"
             className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-1.5 px-3 text-xs font-semibold text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer transition-all"
@@ -107,25 +106,6 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
             title="Select Specific Date"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: Users, label: 'Total Drivers', value: (drivers || []).length, color: 'bg-primary-light text-primary' },
-          { icon: Users, label: 'On Duty Today', value: onDutyCount, color: 'bg-accent-light text-accent' },
-          { icon: Users, label: 'Off Duty Today', value: offDutyCount, color: 'bg-bg border text-ink-3' },
-          { icon: Truck, label: 'Fleet Vehicles', value: (vehicles || []).length, color: 'bg-primary-light text-primary' },
-        ].map(s => (
-          <Card key={s.label} className="p-4 flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.color}`}>
-              <s.icon size={18} />
-            </div>
-            <div>
-              <p className="text-xs text-ink-4">{s.label}</p>
-              <p className="text-2xl font-semibold text-ink mt-0.5">{s.value}</p>
-            </div>
-          </Card>
-        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line-2/50 pb-3">
@@ -243,17 +223,11 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
 
                     {shift ? (
                       <div className={`rounded-lg border px-2 py-1.5 text-xs font-semibold leading-tight transition-all hover:scale-[1.02] shadow-sm relative overflow-hidden ${shiftStyle[shift.color]}`}>
-                        {/* Soft visual type decorations */}
-                        <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1 translate-y-1">
-                          {shift.type === 'heavy' ? <Truck size={28} /> : <Clock size={28} />}
-                        </div>
-
                         <div className="flex items-center gap-1 mb-1 opacity-80">
                           <Clock size={10} className="shrink-0 text-current" />
                           <span className="whitespace-pre-line text-[9px] font-bold">{shift.time}</span>
                         </div>
-                        <p className="font-bold text-[10px] tracking-wide uppercase flex items-center gap-1">
-                          {shift.type === 'heavy' ? '⚡ ' : shift.type === 'split' ? '🔁 ' : shift.type === 'leave' ? '✈️ ' : '✅ '}
+                        <p className="font-bold text-[10px] tracking-wide uppercase">
                           {shift.label}
                         </p>
                       </div>
@@ -285,7 +259,6 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
             </div>
           ))}
         </div>
-        <p className="text-xs text-ink-4">Last sync: Just now</p>
       </div>
     </div>
   );

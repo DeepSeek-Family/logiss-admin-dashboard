@@ -325,7 +325,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs font-medium text-ink whitespace-nowrap">{formatShortDate(trip.scheduledTime)}</span>
-                      <span className="text-xs font-semibold text-ink">Pickup: {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
+                      <span className="text-xs font-semibold text-ink whitespace-nowrap">Pickup: {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
                       <span className="text-xs text-ink-4">Appt: {trip.appointmentTime || 'N/A'}</span>
                     </div>
                   </td>

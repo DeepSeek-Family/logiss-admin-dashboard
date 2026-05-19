@@ -27,6 +27,8 @@ interface ContentState {
 interface OrgSettings {
   name: string;
   supportEmail: string;
+  helplinePhone: string;
+  dispatcherPhone: string;
   emergencyPhone: string;
   generalPhone: string;
   address: string;
@@ -49,8 +51,10 @@ const CMS = ({ role }: { role?: string | null }) => {
   const [orgSettings, setOrgSettings] = useState<OrgSettings>({
     name: 'Loggiskabir Dispatch Center',
     supportEmail: 'support@logiss.com',
+    helplinePhone: '(804) 555-HELP',
+    dispatcherPhone: '(804) 555-DISP',
     emergencyPhone: '(804) 555-LOGI',
-    generalPhone: '(804) 555-DISP',
+    generalPhone: '(804) 555-MAIN',
     address: '2200 Broad St, Suite 400, Richmond VA 23230',
     timezone: 'Eastern Time (ET)',
     status: 'Operational'

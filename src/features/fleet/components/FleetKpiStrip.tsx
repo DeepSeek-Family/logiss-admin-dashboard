@@ -12,24 +12,23 @@ interface FleetKpiStripProps {
 
 export const FleetKpiStrip = ({ stats }: FleetKpiStripProps) => {
   const items = [
-    { label: 'Fleet Assets', value: stats.total, sub: 'Managed Units', icon: Truck, color: 'from-primary to-primary/80', iconColor: 'text-white' },
-    { label: 'Mission Ready', value: stats.available, sub: 'Active Duty', icon: Zap, color: 'from-accent to-accent/80', iconColor: 'text-white' },
-    { label: 'Live Deployments', value: stats.inTrip, sub: 'En Route', icon: Activity, color: 'from-primary-tint to-primary/60', iconColor: 'text-white' },
-    { label: 'Risk & Service', value: stats.issues, sub: 'Attention Required', icon: ShieldAlert, color: 'from-urgent to-urgent/80', iconColor: 'text-white' },
+    { label: 'Fleet Assets',     value: stats.total,     sub: 'Managed Units',      icon: Truck,       color: 'bg-primary-light text-primary' },
+    { label: 'Mission Ready',    value: stats.available, sub: 'Active Duty',         icon: Zap,         color: 'bg-accent-light text-accent' },
+    { label: 'Live Deployments', value: stats.inTrip,    sub: 'En Route',            icon: Activity,    color: 'bg-primary-light/60 text-primary' },
+    { label: 'Risk & Service',   value: stats.issues,    sub: 'Attention Required',  icon: ShieldAlert, color: 'bg-urgent-light text-urgent' },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {items.map(s => (
-        <Card key={s.label} className={`p-6 flex items-center gap-5 border-none shadow-xl ring-1 ring-ink/5 bg-white relative overflow-hidden group hover:scale-[1.02] transition-all duration-300`}>
-          <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${s.color} opacity-5 -mr-12 -mt-12 rounded-full`} />
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${s.color} shadow-lg shadow-primary/10 group-hover:rotate-6 transition-transform duration-500`}>
-            <s.icon size={24} className="text-white" />
+        <Card key={s.label} className={`p-5 flex items-center gap-4 ${s.label === 'Risk & Service' && s.value > 0 ? 'border-urgent/20' : ''}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${s.color}`}>
+            <s.icon size={20} />
           </div>
-          <div className="min-w-0 relative z-10">
-            <p className="text-xs text-ink-4 leading-none mb-2">{s.label}</p>
-            <p className="text-2xl font-semibold text-ink leading-none">{s.value}</p>
-            <p className="text-xs font-medium text-ink-3 mt-2 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-line-2" /> {s.sub}</p>
+          <div className="min-w-0">
+            <p className="text-xs text-ink-4 leading-none">{s.label}</p>
+            <p className="text-2xl font-semibold text-ink mt-1 leading-none">{s.value}</p>
+            <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
           </div>
         </Card>
       ))}
