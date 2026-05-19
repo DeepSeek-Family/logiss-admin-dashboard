@@ -73,7 +73,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
           <p className="text-sm text-ink-4 mt-0.5">Asset tracking, compliance auditing, and operator logistics</p>
         </div>
         {role === 'admin' && (
-          <Button variant="primary" className="rounded-2xl px-8 py-6 shadow-xl shadow-primary/20" icon={Plus} onClick={() => setShowAddModal(true)}>Deploy New Unit</Button>
+          <Button variant="primary" icon={Plus} onClick={() => setShowAddModal(true)}>Deploy New Unit</Button>
         )}
       </div>
 

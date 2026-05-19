@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Truck, Users, Wrench, Coffee } from 'lucide-react';
 import { Card, Button } from '@/shared/components/ui';
 
@@ -41,7 +40,7 @@ export const StatusUpdateModal = ({ item, date, onClose }: { item: any; date: Da
               )}
             </div>
           </div>
-          <Button variant="primary" className="w-full mt-2 py-3" onClick={onClose}>Save & Update Schedule</Button>
+          <Button variant="primary" className="w-full mt-2" onClick={onClose}>Save & Update Schedule</Button>
         </div>
       </Card>
     </div>

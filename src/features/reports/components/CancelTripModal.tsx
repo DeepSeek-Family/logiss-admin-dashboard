@@ -33,7 +33,7 @@ export const CancelTripModal = ({ onClose, onConfirm }: CancelTripModalProps) =>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-lg text-ink-4 transition-colors"><X size={20} /></button>
         </div>
-        <div className="p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
           {reasons.map(r => (
             <label key={r.id} className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${reason === r.id ? 'border-urgent bg-urgent-light/20 shadow-sm' : 'border-line-2 hover:border-line'}`}>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 ${reason === r.id ? 'border-urgent' : 'border-line-2'}`}>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Wrench } from 'lucide-react';
 import { Card, Badge, Button } from '@/shared/components/ui';
+
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { money } from '../utils/helpers';
@@ -9,7 +10,6 @@ import {
   DashboardStats,
   TripDistributionChart,
   QuickActions,
-  ServerStatus,
   ActiveIncidents,
   RecentActivity
 } from '@/features/adminDashboard';
@@ -97,19 +97,17 @@ const AdminDashboard = ({ role }: { role?: string | null }) => {
         </div>
 
         {/* Action Tiles & Status */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <QuickActions onNavigate={navigate} />
 
-          <ServerStatus />
-
-          <Card className="p-6 border-urgent/20 bg-urgent-light/20 shadow-sm border border-dashed">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-medium text-urgent flex items-center gap-2">
-                <Wrench size={14} /> Fleet Maintenance
+          <Card className="p-5 border-line-2 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                <Wrench size={15} className="text-urgent" /> Fleet Maintenance
               </h3>
               <Badge variant="urgent">2 Pending</Badge>
             </div>
-            <p className="text-xs text-ink-3 mb-4 leading-relaxed">Vehicles <strong>VEH-001</strong> and <strong>VEH-005</strong> require immediate inspection based on mileage milestones.</p>
+            <p className="text-xs text-ink-4 mb-4 leading-relaxed">Vehicles <strong className="text-ink">VEH-001</strong> and <strong className="text-ink">VEH-005</strong> require immediate inspection based on mileage milestones.</p>
             <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/fleet')}>Review Maintenance</Button>
           </Card>
         </div>

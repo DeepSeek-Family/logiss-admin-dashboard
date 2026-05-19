@@ -18,7 +18,7 @@ export const TripDistributionChart = ({ monthlyData, maxRevenue }: TripDistribut
 
   return (
     <Card className="p-6 border-line-2 h-full shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-ink">Trip Distribution</h3>
           <p className="text-xs text-ink-4">Monthly breakdown by type</p>
@@ -32,8 +32,8 @@ export const TripDistributionChart = ({ monthlyData, maxRevenue }: TripDistribut
           onChange={(e) => setYearFilter(e.target.value)}
           className="bg-bg border border-line rounded-xl py-2 px-4 text-xs font-medium focus:ring-4 focus:ring-primary/10 outline-none cursor-pointer"
         >
-          <option value="2026">2026 Fiscal</option>
-          <option value="2025">2025 Fiscal</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
         </select>
       </div>
 
@@ -54,8 +54,14 @@ export const TripDistributionChart = ({ monthlyData, maxRevenue }: TripDistribut
             return (
               <div key={idx} className="relative flex flex-col items-center justify-end h-full w-full group">
                 <div className="flex items-end gap-1 w-full justify-center h-full">
-                  <div className="w-3 bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40" style={{ height: `${tripHeight}%` }}></div>
-                  <div className="w-3 bg-accent rounded-t-sm transition-all group-hover:opacity-80 shadow-sm" style={{ height: `${revenueHeight}%` }}></div>
+                  <div
+                    className={`w-3 rounded-t-sm transition-all ${tripHeight > 0 ? 'bg-primary group-hover:bg-primary/80' : 'bg-line-2'}`}
+                    style={{ height: tripHeight > 0 ? `${tripHeight}%` : '4px' }}
+                  />
+                  <div
+                    className={`w-3 rounded-t-sm transition-all ${revenueHeight > 0 ? 'bg-accent group-hover:opacity-80' : 'bg-line-2'}`}
+                    style={{ height: revenueHeight > 0 ? `${revenueHeight}%` : '4px' }}
+                  />
                 </div>
                 <span className="absolute -bottom-8 text-xs text-ink-4 transition-colors group-hover:text-ink">{data.month}</span>
               </div>

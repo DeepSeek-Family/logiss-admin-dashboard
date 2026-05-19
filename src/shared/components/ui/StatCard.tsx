@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card } from './Card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface StatCardProps {
   label: string;
@@ -32,12 +31,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
       <div className="text-2xl font-semibold text-ink mb-1">{value}</div>
       {(sub || trend) && (
         <div className="flex items-center gap-2">
-          {trend && (
-            <span className={`flex items-center type-action ${trend.startsWith('+') ? 'text-accent' : 'text-urgent'}`}>
-              {trend.startsWith('+') ? <TrendingUp size={10} className="mr-0.5" /> : <TrendingDown size={10} className="mr-0.5" />}
-              {trend}
-            </span>
-          )}
+          {trend && <span className="type-caption text-ink-4">{trend}</span>}
           {sub && <span className="type-caption text-ink-4">{sub}</span>}
         </div>
       )}

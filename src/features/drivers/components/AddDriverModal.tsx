@@ -49,19 +49,19 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-8 py-6 border-b border-line-2 bg-white sticky top-0 z-10">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-light rounded-2xl flex items-center justify-center text-primary shadow-sm">
-                <UserPlus size={24} />
+        <div className="px-6 py-4 border-b border-line-2 bg-white sticky top-0 z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-primary-light rounded-xl flex items-center justify-center text-primary shadow-sm">
+                <UserPlus size={18} />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-ink">Driver Onboarding</h2>
-                <p className="text-xs text-ink-4 mt-1">Step {step} of 4 — {steps[step - 1]}</p>
+                <h2 className="text-base font-semibold text-ink">Driver Onboarding</h2>
+                <p className="text-xs text-ink-4">Step {step} of 4 — {steps[step - 1]}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-bg text-ink-4 transition-all hover:rotate-90">
-              <X size={20} />
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-bg text-ink-4 transition-all hover:rotate-90">
+              <X size={18} />
             </button>
           </div>
           
@@ -74,7 +74,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar space-y-8">
+        <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar space-y-6">
           {step === 1 && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -201,7 +201,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
           </div>
         )}
 
-        <div className="px-8 py-6 border-t border-line-2 bg-bg/30 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-line-2 bg-bg/30 flex items-center justify-between">
           <button onClick={onClose} className="text-xs font-medium text-ink-4 hover:text-ink transition-colors">Cancel</button>
           <div className="flex gap-3">
             {step > 1 && (

@@ -11,29 +11,29 @@ export const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSa
   return (
     <div className="fixed inset-0 bg-ink/60 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col border border-line-2 ring-1 ring-ink/5 animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-8 py-7 border-b border-line-2 bg-bg/20">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-              <Plus size={24} />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/20">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white shadow-md shadow-primary/20">
+              <Plus size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-ink">Register New Unit</h2>
-              <p className="text-xs text-ink-3 font-semibold mt-1">Deployment Step {step} of 2</p>
+              <h2 className="text-base font-semibold text-ink">Register New Unit</h2>
+              <p className="text-xs text-ink-3 font-semibold">Deployment Step {step} of 2</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-urgent-light hover:text-urgent text-ink-4 transition-all flex items-center justify-center border border-transparent hover:border-urgent/10"><X size={20} /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-urgent-light hover:text-urgent text-ink-4 transition-all flex items-center justify-center border border-transparent hover:border-urgent/10"><X size={18} /></button>
         </div>
 
-        <div className="flex px-8 pt-6 gap-3">
+        <div className="flex px-6 pt-4 gap-3">
           {['Vehicle Specifications', 'Compliance & Safety'].map((s, i) => (
             <div key={s} className="flex-1">
-              <div className={`h-1.5 rounded-full transition-all duration-500 ${step > i ? 'bg-primary' : 'bg-line-2'}`} />
-              <p className={`text-xs font-medium mt-2 ${step === i + 1 ? 'text-primary' : 'text-ink-4'}`}>{s}</p>
+              <div className={`h-1 rounded-full transition-all duration-500 ${step > i ? 'bg-primary' : 'bg-line-2'}`} />
+              <p className={`text-xs font-medium mt-1.5 ${step === i + 1 ? 'text-primary' : 'text-ink-4'}`}>{s}</p>
             </div>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {step === 1 && (
             <div className="grid grid-cols-2 gap-5">
               {[
@@ -124,15 +124,14 @@ export const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSa
           )}
         </div>
 
-        <div className="px-8 py-7 border-t border-line-2 flex items-center justify-between bg-bg/10">
+        <div className="px-6 py-4 border-t border-line-2 flex items-center justify-between bg-bg/10">
           <button onClick={onClose} className="text-xs font-medium text-ink-4 hover:text-urgent transition-colors">Cancel</button>
           <div className="flex gap-4">
-            {step > 1 && <Button variant="outline" className="rounded-xl px-6" onClick={() => setStep(s => s - 1)}>Back</Button>}
+            {step > 1 && <Button variant="outline" onClick={() => setStep(s => s - 1)}>Back</Button>}
             {step < 2
-              ? <Button variant="primary" className="rounded-xl px-8" onClick={() => setStep(s => s + 1)}>Continue to Compliance</Button>
+              ? <Button variant="primary" onClick={() => setStep(s => s + 1)}>Continue to Compliance</Button>
               : <Button
                   variant="primary"
-                  className="rounded-xl px-8 shadow-xl shadow-primary/20"
                   icon={Check}
                   onClick={() => {
                     const formattedData = {

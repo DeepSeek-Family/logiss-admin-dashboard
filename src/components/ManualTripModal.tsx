@@ -114,8 +114,8 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-xl text-ink-4 transition-colors"><X size={20} /></button>
         </div>
 
-        <div className="overflow-y-auto p-8 custom-scrollbar">
-          <div className="flex items-center bg-bg p-1 rounded-2xl mb-8 border border-line-2 shadow-inner max-w-xs mx-auto">
+        <div className="overflow-y-auto p-6 custom-scrollbar">
+          <div className="flex items-center bg-bg p-1 rounded-2xl mb-5 border border-line-2 shadow-inner max-w-xs mx-auto">
             {['new', 'existing'].map(t => (
               <button
                 key={t}
@@ -270,10 +270,8 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
         </div>
 
         <div className="px-8 py-5 border-t border-line-2 bg-bg flex gap-4 shrink-0 rounded-b-3xl">
-          <button className="flex-1 py-3.5 bg-white border border-line-2 text-sm font-medium text-ink rounded-2xl" onClick={onClose}>Cancel</button>
-          <button type="submit" form="manual-booking-form" className="flex-1 py-3.5 bg-primary text-sm font-medium text-white rounded-2xl shadow-lg flex items-center justify-center gap-2">
-             Create Trip <ArrowRight size={18} />
-          </button>
+          <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+          <Button type="submit" form="manual-booking-form" variant="primary" className="flex-1" icon={ArrowRight}>Create Trip</Button>
         </div>
       </div>
     </div>

@@ -72,15 +72,13 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                 <thead className="bg-bg border-b border-line-2">
                   <tr className="border-b border-line-2 bg-bg/50">
                     {activeTab === 'pending' && (
-                      <th className="px-6 py-4 w-12">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-all cursor-pointer"
-                            checked={paginatedBookings.length > 0 && paginatedBookings.every((b: any) => selectedTrips.includes(b.id))}
-                            onChange={toggleSelectAll}
-                          />
-                        </div>
+                      <th className="pl-4 pr-2 py-4 w-8">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                          checked={paginatedBookings.length > 0 && paginatedBookings.every((b: any) => selectedTrips.includes(b.id))}
+                          onChange={toggleSelectAll}
+                        />
                       </th>
                     )}
                     <th className="px-3 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
@@ -88,6 +86,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Type</th>
+                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Appt Time</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Pickup Time</th>
                     <th className="px-6 py-4 text-right"></th>
                   </tr>
@@ -100,10 +99,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       className={`border-b border-line-2 hover:bg-line-2/20 transition-colors cursor-pointer ${selectedBookingId === booking.id ? 'bg-primary-tint/20' : 'hover:bg-bg'} ${selectedTrips.includes(booking.id) ? 'bg-accent-light/10' : ''} ${booking.isUrgent ? 'border-l-4 border-l-urgent border-urgent/30 bg-urgent-light/10' : ''}`}
                     >
                       {activeTab === 'pending' && (
-                        <td className="px-6 py-4">
-                          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                            <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
-                          </div>
+                        <td className="pl-4 pr-2 py-4" onClick={(e) => e.stopPropagation()}>
+                          <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
                         </td>
                       )}
                       <td className="px-3 py-4">
@@ -167,17 +164,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="type-label text-ink-4 mb-0.5">Appt</p>
-                            <p className="text-sm font-semibold text-primary">{booking?.appointmentTime || 'N/A'}</p>
-                          </div>
-                          <div className="w-px h-8 bg-line-2" />
-                          <div className="text-right">
-                            <p className="type-label text-ink-4 mb-0.5">Pickup</p>
-                            <p className="text-sm font-semibold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
-                          </div>
-                        </div>
+                        <p className="text-sm font-semibold text-primary">{booking?.appointmentTime || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-semibold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">

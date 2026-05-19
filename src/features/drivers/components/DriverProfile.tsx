@@ -178,11 +178,16 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                         <button
                           onClick={() => handleCopyPhone(selectedDriver?.emergencyContact?.phone || '(804) 555-0012')}
                           title="Copy number"
-                          className="w-9 h-9 bg-white rounded-xl border border-line-2 flex items-center justify-center text-ink-4 hover:text-primary hover:border-primary/30 transition-all shrink-0"
+                          className="w-10 h-10 bg-white rounded-xl border border-line-2 flex items-center justify-center text-ink-4 hover:text-primary hover:border-primary/30 transition-all shrink-0"
                         >
-                          {copiedPhone ? <ShieldCheck size={14} className="text-accent" /> : <Copy size={14} />}
+                          {copiedPhone ? <ShieldCheck size={16} className="text-accent" /> : <Copy size={16} />}
                         </button>
-                        <Button variant="outline" size="sm" className="bg-white shrink-0"><Phone size={14} /></Button>
+                        <button
+                          title="Call number"
+                          className="w-10 h-10 bg-white rounded-xl border border-line-2 flex items-center justify-center text-ink-4 hover:text-primary hover:border-primary/30 transition-all shrink-0"
+                        >
+                          <Phone size={16} />
+                        </button>
                       </div>
                     </div>
                   </Card>
