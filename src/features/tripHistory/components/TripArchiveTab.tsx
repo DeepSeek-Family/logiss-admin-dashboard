@@ -172,12 +172,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       <Card className="overflow-hidden border-line-2 shadow-sm">
         <div className="p-6 border-b border-line-2 bg-bg/30 space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex-1 max-w-2xl relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" size={20} />
+            <div className="flex-1 max-w-2xl relative shadow-sm rounded-2xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
               <input
                 type="text"
                 placeholder="Search trips, riders, or locations..."
-                className="w-full bg-white border border-line rounded-2xl py-3 pl-12 pr-4 text-sm font-medium focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none"
+                className="w-full bg-white border border-line-2 hover:border-primary/40 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-semibold text-ink placeholder:text-ink-4/80 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none h-12"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               />
