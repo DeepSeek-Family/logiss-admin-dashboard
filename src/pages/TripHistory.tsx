@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Truck, Calendar, Loader2 } from 'lucide-react';
-import { Card } from '@/shared/components/ui';
+import { Truck, Calendar, Loader2, Download } from 'lucide-react';
+import { Card, Button } from '@/shared/components/ui';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { useFleet } from '../hooks/useFleet';
@@ -70,30 +70,44 @@ const TripHistory = ({ role }: { role?: string | null }) => {
         )}
       </div>
 
-      {/* Tabs Selector Navigation */}
-      <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl w-fit shadow-sm border border-line-2/40">
-        <button
-          onClick={() => setSearchParams({ tab: 'trips' })}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg transition-all ${
-            activeTab === 'trips'
-              ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-              : 'text-ink-4 hover:text-ink'
-          }`}
-        >
-          <Truck size={14} />
-          Trip Archive
-        </button>
-        <button
-          onClick={() => setSearchParams({ tab: 'schedule' })}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg transition-all ${
-            activeTab === 'schedule'
-              ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-              : 'text-ink-4 hover:text-ink'
-          }`}
-        >
-          <Calendar size={14} />
-          Driver & Fleet Shifts
-        </button>
+      {/* Tabs Selector Navigation & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl w-fit shadow-sm border border-line-2/40 shrink-0">
+          <button
+            onClick={() => setSearchParams({ tab: 'trips' })}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg transition-all ${
+              activeTab === 'trips'
+                ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
+                : 'text-ink-4 hover:text-ink'
+            }`}
+          >
+            <Truck size={14} />
+            Trip Archive
+          </button>
+          <button
+            onClick={() => setSearchParams({ tab: 'schedule' })}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg transition-all ${
+              activeTab === 'schedule'
+                ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
+                : 'text-ink-4 hover:text-ink'
+            }`}
+          >
+            <Calendar size={14} />
+            Driver & Fleet Shifts
+          </button>
+        </div>
+
+        {activeTab === 'trips' && (
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={() => window.dispatchEvent(new CustomEvent('export-trips-csv'))}
+            className="shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9"
+          >
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* ────────────────── TRIP HISTORY TAB VIEW ────────────────── */}
