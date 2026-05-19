@@ -54,23 +54,68 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setWeekOffset(w => w - 1)}
-            className="w-8 h-8 rounded-xl border border-line-2 bg-white hover:bg-bg flex items-center justify-center text-ink-3 hover:text-ink transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <div className="px-4 py-2 bg-white border border-line-2 rounded-xl text-xs font-medium text-ink min-w-[130px] text-center shadow-sm">
-            {weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : `Week ${weekOffset > 0 ? '+' : ''}${weekOffset}`}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-line-2 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setWeekOffset(w => w - 1)}
+              className="w-8 h-8 rounded-xl border border-line bg-white hover:bg-bg flex items-center justify-center text-ink-3 hover:text-ink transition-colors shadow-sm"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="px-4 py-2 bg-white border border-line rounded-xl text-xs font-semibold text-ink min-w-[130px] text-center shadow-sm">
+              {weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : `Week ${weekOffset > 0 ? '+' : ''}${weekOffset}`}
+            </div>
+            <button
+              onClick={() => setWeekOffset(w => w + 1)}
+              className="w-8 h-8 rounded-xl border border-line bg-white hover:bg-bg flex items-center justify-center text-ink-3 hover:text-ink transition-colors shadow-sm"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
-          <button
-            onClick={() => setWeekOffset(w => w + 1)}
-            className="w-8 h-8 rounded-xl border border-line-2 bg-white hover:bg-bg flex items-center justify-center text-ink-3 hover:text-ink transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
+
+          <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-line pt-2 sm:pt-0 sm:pl-4">
+            <span className="text-xs text-ink-4 whitespace-nowrap font-medium">Select Date</span>
+            <input
+              type="date"
+              className="bg-white border border-line rounded-xl py-1.5 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-9 shadow-sm cursor-pointer"
+              onChange={(e) => {
+                if (e.target.value) {
+                  const selected = new Date(e.target.value);
+                  const today = new Date();
+                  
+                  // Reset hours to compare pure day offsets
+                  selected.setHours(0,0,0,0);
+                  today.setHours(0,0,0,0);
+                  
+                  // Calculate exact day difference
+                  const diffTime = selected.getTime() - today.getTime();
+                  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                  
+                  // Shift offset based on current day of week to jump exactly to that week
+                  const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
+                  const newOffset = Math.floor((diffDays + currentDay) / 7);
+                  setWeekOffset(newOffset);
+                }
+              }}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch (err) {}
+              }}
+              title="Select Specific Date"
+            />
+          </div>
+        </div>
+
+        <div className="relative w-full lg:max-w-xs shrink-0">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4" />
+          <input
+            className="w-full pl-10 pr-4 py-2 text-xs font-medium bg-bg/50 focus:bg-white border border-line rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all h-9"
+            placeholder={scheduleActiveTab === 'driver' ? 'Search driver by name…' : 'Search vehicle by plate…'}
+            value={scheduleSearchTerm}
+            onChange={e => setScheduleSearchTerm(e.target.value)}
+          />
         </div>
       </div>
 
@@ -93,7 +138,7 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line-2/50 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-start gap-3 border-b border-line-2/50 pb-3">
         <div className="flex bg-bg/60 p-0.5 rounded-xl border border-line-2/45 w-fit">
           {[
             { id: 'driver', label: 'Driver Schedule', icon: Users },
@@ -112,16 +157,6 @@ export const ShiftScheduleTab: React.FC<ShiftScheduleTabProps> = ({
               {tab.label}
             </button>
           ))}
-        </div>
-
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input
-            className="pl-9 pr-4 py-2.5 text-xs font-medium bg-bg/60 focus:bg-white rounded-xl w-56 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-            placeholder={scheduleActiveTab === 'driver' ? 'Search driver…' : 'Search plate…'}
-            value={scheduleSearchTerm}
-            onChange={e => setScheduleSearchTerm(e.target.value)}
-          />
         </div>
       </div>
 
