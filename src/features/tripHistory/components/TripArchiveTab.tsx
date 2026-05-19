@@ -165,8 +165,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
       <Card className="overflow-hidden border-line-2 shadow-sm">
         <div className="p-6 border-b border-line-2 bg-bg/30 space-y-5">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex-1 max-w-2xl relative">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-6">
+            <div className="flex-1 max-w-md relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" size={20} />
               <input
                 type="text"
