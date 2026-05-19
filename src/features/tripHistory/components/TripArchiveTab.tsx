@@ -27,16 +27,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  React.useEffect(() => {
-    const handleExportEvent = () => {
-      handleExport();
-    };
-    window.addEventListener('export-trips-csv', handleExportEvent);
-    return () => {
-      window.removeEventListener('export-trips-csv', handleExportEvent);
-    };
-  }, [sortedTrips, selectedIds, trips, drivers]);
-
   // Process filter logic for Trips Archive
   const historyTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review');
   const filteredTrips = historyTrips.filter((trip: any) => {
@@ -166,6 +156,16 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     document.body.removeChild(link);
     setSelectedIds([]);
   };
+
+  React.useEffect(() => {
+    const handleExportEvent = () => {
+      handleExport();
+    };
+    window.addEventListener('export-trips-csv', handleExportEvent);
+    return () => {
+      window.removeEventListener('export-trips-csv', handleExportEvent);
+    };
+  }, [sortedTrips, selectedIds, trips, drivers]);
 
   return (
     <>
