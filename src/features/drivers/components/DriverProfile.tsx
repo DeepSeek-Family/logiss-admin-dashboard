@@ -125,17 +125,19 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                   </div>
                 </Card>
 
-                <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
+                {selectedDriver?.counties && selectedDriver.counties.length > 0 && (
+                  <Card className="p-6 space-y-6">
+                    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
 
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedDriver?.counties || ['Richmond', 'Henrico']).map((c: string) => (
-                      <div key={c} className="px-4 py-2 bg-bg rounded-xl border border-line-2 text-xs font-medium text-ink-3 flex items-center gap-2">
-                        <MapPin size={12} /> {c}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDriver.counties.map((c: string) => (
+                        <div key={c} className="px-4 py-2 bg-bg rounded-xl border border-line-2 text-xs font-medium text-ink-3 flex items-center gap-2">
+                          <MapPin size={12} /> {c}
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
               </div>
 
               <div className="lg:col-span-2 space-y-6">
@@ -152,13 +154,9 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                         <span className="text-xs text-ink-4">Phone Number</span>
                         <span className="text-xs text-ink">{selectedDriver?.phone}</span>
                       </div>
-                      <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
+                      <div className="flex items-center justify-between py-1">
                         <span className="text-xs text-ink-4">Date of Birth</span>
                         <span className="text-xs text-ink">{selectedDriver?.dob || 'Jan 12, 1988'}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
-                        <span className="text-xs text-ink-4">SSN (Last 4)</span>
-                        <span className="text-xs text-ink">***-**-4421</span>
                       </div>
                     </div>
                   </Card>
@@ -199,15 +197,11 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
                       <p className="text-xs text-ink-4 mb-1">License Class</p>
-                      <Badge variant="primary">{selectedDriver?.licenseClass || 'Class C'}</Badge>
+                      <Badge variant="primary">{selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C'}</Badge>
                     </div>
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
-                      <p className="text-xs text-ink-4 mb-1">Endorsements</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {(selectedDriver?.endorsements || ['Van', 'Bus']).map((e: string) => (
-                          <span key={e} className="px-2 py-0.5 bg-accent-light text-accent text-xs font-medium rounded">{e}</span>
-                        ))}
-                      </div>
+                      <p className="text-xs text-ink-4 mb-1">Driving Experience</p>
+                      <span className="text-xs font-medium text-ink-3 mt-1.5 inline-block">{selectedDriver?.experience || '3+ years'}</span>
                     </div>
                   </div>
                 </Card>
@@ -280,8 +274,15 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
           {profileTab === 'docs' && (
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-300">
               {[
-                { label: 'Driver License', icon: ShieldCheck, status: 'valid', expiry: 'Jan 2026', id: 'DL-0123-456',
-                  mockContent: 'Virginia DMV · Class C Commercial\nExpiry: January 15, 2026\nEndorsements: Passenger (P), School Bus (S)\nRestrictions: None' }
+                { 
+                  label: 'Driver License', 
+                  icon: ShieldCheck, 
+                  status: selectedDriver?.license?.status || 'valid', 
+                  expiry: selectedDriver?.license?.expires || 'Jan 2026', 
+                  id: selectedDriver?.license?.number || 'DL-0123-456',
+                  photo: selectedDriver?.license?.photo || null,
+                  mockContent: `DMV · Class ${selectedDriver?.licenseClass || selectedDriver?.license?.class || 'C'}\nExpiry: ${selectedDriver?.license?.expires || 'January 15, 2026'}\nRestrictions: None` 
+                }
               ].map((doc) => (
                 <Card key={doc.label} className="p-5 group hover:border-primary/30 transition-all">
                   <div className="flex items-start justify-between mb-4">
@@ -328,13 +329,65 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 </button>
               </div>
               <div className="p-6">
-                {/* Document Image */}
-                <div className="rounded-2xl overflow-hidden border border-line-2 mb-4 bg-bg">
-                  <img
-                    src="/docs/license-mock.png"
-                    alt={viewingDoc.label}
-                    className="w-full h-auto object-cover"
-                  />
+                {/* Document Card / Image */}
+                <div className="rounded-2xl overflow-hidden border border-line-2 mb-4 bg-bg relative">
+                  {/* Premium dynamic driver's license card */}
+                  <div className="w-full aspect-[1.586/1] bg-gradient-to-br from-slate-900 to-indigo-950 p-5 text-white flex flex-col justify-between relative overflow-hidden select-none">
+                    {/* Background decorations */}
+                    <div className="absolute top-[-20%] right-[-20%] w-[60%] aspect-square rounded-full bg-primary/20 blur-3xl" />
+                    <div className="absolute bottom-[-20%] left-[-20%] w-[60%] aspect-square rounded-full bg-accent/20 blur-3xl" />
+                    
+                    {/* Header */}
+                    <div className="flex justify-between items-start border-b border-white/10 pb-2 z-10">
+                      <div>
+                        <h4 className="text-[10px] font-bold tracking-widest text-primary-light uppercase">DRIVER LICENSE</h4>
+                        <p className="text-[8px] text-white/50 font-medium">COMMONWEALTH OF VIRGINIA</p>
+                      </div>
+                      <ShieldCheck size={18} className="text-accent" />
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex gap-4 items-center my-3 z-10">
+                      {/* Avatar */}
+                      <div className="w-14 h-14 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
+                        {selectedDriver?.image ? (
+                          <img src={selectedDriver.image} alt={selectedDriver.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-lg font-bold text-white/80">{selectedDriver?.initials || selectedDriver?.name?.split(' ').map((n: string) => n[0]).join('') || '?'}</span>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div>
+                          <p className="text-[8px] text-white/40 uppercase tracking-wider">Name</p>
+                          <p className="text-xs font-semibold truncate leading-none">{selectedDriver?.name}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-[8px] text-white/40 uppercase tracking-wider">License No.</p>
+                            <p className="text-[10px] font-mono font-medium truncate leading-none">{viewingDoc.id}</p>
+                          </div>
+                          <div>
+                            <p className="text-[8px] text-white/40 uppercase tracking-wider">Class</p>
+                            <p className="text-[10px] font-medium leading-none">{selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-between items-end border-t border-white/10 pt-2 z-10">
+                      <div>
+                        <p className="text-[7px] text-white/40 uppercase tracking-wider">Date of Birth</p>
+                        <p className="text-[9px] font-medium leading-none">{selectedDriver?.dob || 'Jan 12, 1988'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[7px] text-white/40 uppercase tracking-wider">Expires</p>
+                        <p className="text-[9px] font-semibold text-warning leading-none">{viewingDoc.expiry}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 {/* Document Meta */}
                 <div className="bg-bg rounded-2xl border border-line-2 p-4 mb-4">
