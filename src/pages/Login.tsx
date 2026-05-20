@@ -13,7 +13,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role);
-    setEmail(role === 'admin' ? 'admin@kabir.com' : 'dispatcher@kabir.com');
+    setEmail(role === 'admin' ? 'admin@logiss.com' : 'dispatcher@logiss.com');
     setStep(2);
   };
 
@@ -34,13 +34,13 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         />
         <div className="relative z-20 text-left p-16 w-full max-w-2xl mt-auto">
           <div className="mb-8">
-            <img src="/logo.png" alt="Kabir Dashboard" className="h-24 w-auto drop-shadow-lg bg-white/80 p-2 rounded-xl backdrop-blur-sm" />
+            <img src="/logo.png" alt="Logiss Rides" className="h-24 w-auto drop-shadow-lg bg-white/80 p-2 rounded-xl backdrop-blur-sm" />
           </div>
           <h1 className="font-semibold text-4xl text-white mb-4 leading-tight">
-            Kabir Dashboard &<br />Fleet Operations
+            Reliable Transportation<br />for Every Appointment
           </h1>
           <p className="text-white/70 text-lg max-w-md">
-            The market-standard SaaS platform for modern NEMT and fleet dispatching. Manage routes, drivers, and bookings in one place.
+            Coordinate scheduled medical rides, manage transportation requests, and stay informed with a platform built for dependable and organized trip management.
           </p>
         </div>
       </div>
@@ -50,7 +50,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <img src="/logo.png" alt="Kabir Dashboard" className="h-20 w-auto" />
+            <img src="/logo.png" alt="Logiss Rides" className="h-20 w-auto" />
           </div>
 
           {step === 1 ? (
