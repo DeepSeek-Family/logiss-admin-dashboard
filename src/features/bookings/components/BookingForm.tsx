@@ -13,6 +13,7 @@ import { useDrivers } from '@/hooks/useDrivers';
 import { money } from '@/utils/helpers';
 import { FUNDING_SOURCES, riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
+import { tripService } from '@/services/tripService';
 
 export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
 export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
@@ -203,6 +204,63 @@ export const BookingForm = () => {
         ? `Scheduling ${recurringDates.length} recurring trips...` 
         : `Dispatching ${selectedDates.length > 1 ? selectedDates.length + ' trips' : 'trip record'}...`
     );
+
+    const datesToSchedule = isRecurring ? recurringDates : selectedDates;
+    
+    // Create and save each trip
+    datesToSchedule.forEach((date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const scheduledTime = `${dateStr}T${form.requestedPickup || '08:00'}:00`;
+      
+      const dropoffDate = new Date(date);
+      const [hours, minutes] = (form.requestedPickup || '08:00').split(':').map(Number);
+      dropoffDate.setHours(hours);
+      dropoffDate.setMinutes(minutes + 45);
+      const dY = dropoffDate.getFullYear();
+      const dM = String(dropoffDate.getMonth() + 1).padStart(2, '0');
+      const dD = String(dropoffDate.getDate()).padStart(2, '0');
+      const dH = String(dropoffDate.getHours()).padStart(2, '0');
+      const dMin = String(dropoffDate.getMinutes()).padStart(2, '0');
+      const dropoffTime = `${dY}-${dM}-${dD}T${dH}:${dMin}:00`;
+
+      const name = `${form.firstName} ${form.lastName}`.trim();
+      const initials = `${form.firstName.charAt(0) || ''}${form.lastName.charAt(0) || ''}`.toUpperCase();
+
+      const newTrip = {
+        id: `LOGISS-${Math.floor(1000 + Math.random() * 9000)}`,
+        rider: {
+          name,
+          initials: initials || '?',
+          phone: form.phone,
+          email: form.email,
+          passengerId: form.passengerId
+        },
+        status: selectedDriver ? 'assigned' : 'pending_review',
+        driverId: selectedDriver ? selectedDriver.id : undefined,
+        type: form.tripType === 'round-trip' ? 'round_trip' : 'one_way',
+        mobility: form.mobility,
+        pickup: form.pickup,
+        dropoff: form.dropoff,
+        stops: form.stops,
+        scheduledTime,
+        dropoffTime,
+        miles: 10.0,
+        cost: form.grossFare,
+        copay: totalCopay,
+        fundingSource: form.fundingSource || 'Self-Pay',
+        insideCounty: form.insideCounty,
+        reason: form.tripReason,
+        authNotes: form.authNotes,
+        source: form.source || 'Chesterfield County',
+        program: form.program || 'General Medical'
+      };
+
+      tripService.createTrip(newTrip);
+    });
+
     setTimeout(() => {
       toast.success(
         isRecurring
@@ -214,9 +272,10 @@ export const BookingForm = () => {
           style: { borderRadius: '12px', background: '#059669', color: '#fff' },
         }
       );
-      setTimeout(() => navigate('/live'), 1000);
+      setTimeout(() => navigate(selectedDriver ? '/live' : '/bookings'), 1000);
     }, 1200);
   };
+
 
   const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
     <div className="flex items-center gap-2 mb-4">

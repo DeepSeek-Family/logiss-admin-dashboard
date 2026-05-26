@@ -36,5 +36,11 @@ export const tripService = {
     if (index === -1) return Promise.reject(new Error('Trip not found'));
     tripsDB[index] = { ...tripsDB[index], driverId, status: 'assigned' };
     return Promise.resolve(tripsDB[index]);
+  },
+
+  createTrip: (trip: Trip): Promise<Trip> => {
+    tripsDB = [trip, ...tripsDB];
+    return Promise.resolve(trip);
   }
 };
+
