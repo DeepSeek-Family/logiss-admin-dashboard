@@ -6,7 +6,7 @@ import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { useFleet } from '../hooks/useFleet';
 
-import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ShiftScheduleTab } from '@/features/tripHistory';
+import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab } from '@/features/tripHistory';
 
 const TripHistory = ({ role }: { role?: string | null }) => {
   const { trips, loading: tripsLoading } = useTrips();
@@ -121,12 +121,11 @@ const TripHistory = ({ role }: { role?: string | null }) => {
         />
       )}
 
-      {/* ────────────────── SHIFT SCHEDULE TAB VIEW ────────────────── */}
+      {/* ────────────────── DAILY SCHEDULE TAB VIEW ────────────────── */}
       {activeTab === 'schedule' && (
-        <ShiftScheduleTab
+        <ScheduleTab
           drivers={drivers}
-          vehicles={vehicles}
-          setEditingCell={setEditingCell}
+          trips={trips}
         />
       )}
     </div>

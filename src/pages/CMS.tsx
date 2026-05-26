@@ -11,13 +11,16 @@ import {
   Edit3,
   CheckCircle,
   ChevronRight,
-  Building2
+  Building2,
+  DollarSign
 } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 
 import {
   OrgSettingsForm,
-  ContentEditor
+  ContentEditor,
+  FundingSourcesPanel,
+  FaqPanel
 } from '@/features/cms';
 
 interface ContentState {
@@ -71,9 +74,10 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const pages = [
     { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
+    { id: 'funding', label: 'Funding Sources', icon: DollarSign, lastUpdate: '2026-05-26', type: 'funding' },
     { id: 'terms', label: 'Terms & Conditions', icon: FileText, lastUpdate: '2026-04-10', type: 'text' },
     { id: 'privacy', label: 'Privacy Policy', icon: Shield, lastUpdate: '2026-04-12', type: 'text' },
-    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'text' },
+    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'faq' },
     { id: 'about', label: 'About Us', icon: Info, lastUpdate: '2026-03-20', type: 'text' },
   ];
 
@@ -153,6 +157,10 @@ const CMS = ({ role }: { role?: string | null }) => {
                   content={content}
                   setContent={setContent}
                 />
+              ) : activePageData?.type === 'funding' ? (
+                <FundingSourcesPanel />
+              ) : activePageData?.type === 'faq' ? (
+                <FaqPanel />
               ) : (
                 <OrgSettingsForm
                   orgSettings={orgSettings}

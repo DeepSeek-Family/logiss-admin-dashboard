@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate } from '@/utils/helpers';
+import { DollarSign } from 'lucide-react';
 
 interface BookingsListProps {
   activeTab: string;
@@ -86,6 +87,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Type</th>
+                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Funding</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Appt Time</th>
                     <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Pickup Time</th>
                     <th className="px-6 py-4 text-right"></th>
@@ -161,6 +163,36 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                               </>
                             )}
                           </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5 items-start">
+                          {(() => {
+                            const fs = booking.fundingSource || booking.paymentMethod;
+                            if (!fs) return <span className="text-xs text-ink-4">—</span>;
+                            const isMedicaid = fs.toLowerCase().includes('medicaid');
+                            const isMedicare = fs.toLowerCase().includes('medicare');
+                            const isDSS = fs.toLowerCase().includes('dss');
+                            const isSelfPay = fs.toLowerCase().includes('self');
+                            const isFacility = fs.toLowerCase().includes('facility');
+                            const colorClass = isMedicaid ? 'bg-green-50 text-green-700 border-green-200'
+                              : isMedicare ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-bg text-ink-3 border-line-2';
+                            return (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
+                                <DollarSign size={9} />{fs}
+                              </span>
+                            );
+                          })()}
+                          {booking.insideCounty !== undefined && (
+                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${booking.insideCounty ? 'text-accent bg-accent/5 border-accent/20' : 'text-urgent bg-urgent/5 border-urgent/20'}`}>
+                              {booking.insideCounty ? 'In-County' : 'Out-of-County'}
+                            </span>
+                          )}
+                          {booking.miles && <span className="text-[9px] font-medium text-ink-4">{booking.miles} mi</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

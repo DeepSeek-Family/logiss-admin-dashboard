@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
-  MapPin, Phone, MessageSquare, Car, XCircle, CheckCircle2
+  MapPin, Phone, MessageSquare, Car, XCircle, CheckCircle2, Lock
 } from 'lucide-react';
 import { Card, Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
@@ -196,8 +196,17 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
                 </div>
                 {trip.notes && (
                   <div className="mt-5 p-4 bg-bg rounded-xl border border-line-2">
-                    <p className="text-xs text-ink-4 mb-1">Special Instructions / Notes</p>
+                    <p className="text-xs text-ink-4 mb-1">Instructions for Driver</p>
                     <p className="text-sm font-medium text-ink">{trip.notes}</p>
+                  </div>
+                )}
+                
+                {trip.privateNotes && (
+                  <div className="mt-3 p-4 bg-urgent-light/40 rounded-xl border border-urgent/20">
+                    <p className="text-xs font-bold text-urgent mb-1 flex items-center gap-1.5">
+                      <Lock size={12} /> Internal Private Notes
+                    </p>
+                    <p className="text-sm font-medium text-ink">{trip.privateNotes}</p>
                   </div>
                 )}
               </section>

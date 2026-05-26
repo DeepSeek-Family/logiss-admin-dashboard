@@ -31,6 +31,7 @@ const Transactions = lazy(() => import('../pages/Transactions'));
 const UserAccess = lazy(() => import('../pages/UserAccess'));
 const Riders = lazy(() => import('../pages/Riders'));
 const CreateBooking = lazy(() => import('../pages/CreateBooking'));
+const PushNotifications = lazy(() => import('../pages/PushNotifications'));
 
 type LazyPage = React.LazyExoticComponent<React.ComponentType<any>>;
 
@@ -73,4 +74,5 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: 'staff', Component: UserAccess, allowedRoles: ['admin'] },
   { path: 'cms', Component: CMS, allowedRoles: ['admin'] },
   { path: 'support', Component: CMS, allowedRoles: ['admin'] },
+  { path: 'push', Component: PushNotifications, allowedRoles: ['admin'] },
 ];

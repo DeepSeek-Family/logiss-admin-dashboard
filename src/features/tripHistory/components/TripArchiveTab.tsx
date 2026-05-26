@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronRight, MapPin, ArrowRight, UserPlus, Repeat, MoveRight, Calendar } from 'lucide-react';
+import { Search, Download, ChevronRight, MapPin, ArrowRight, UserPlus, Repeat, MoveRight, Calendar, Filter, DollarSign } from 'lucide-react';
 import { Card, Badge, Avatar, TripStatusBadge, Pagination, Button } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
+import { FUNDING_SOURCES } from '@/data/mockData';
 
 interface TripArchiveTabProps {
   trips: any[];
@@ -25,6 +26,17 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [fundingFilter, setFundingFilter] = useState('all');
+  const [countyFilter, setCountyFilter] = useState('all'); // 'all' | 'inside' | 'outside'
+  
+  // Advanced filters state
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [daysFilter, setDaysFilter] = useState<string[]>([]);
+  const [hoursFilter, setHoursFilter] = useState<string[]>([]);
+  const [monthFilter, setMonthFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
+
   const itemsPerPage = 10;
 
   // Process filter logic for Trips Archive
@@ -90,13 +102,69 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       }
     }
 
-    return matchesSearch && matchesStatus && matchesTime;
+    let matchesDriver = driverFilter === 'all' || String(trip.driverId) === driverFilter;
+    let matchesFunding = fundingFilter === 'all' || (trip.fundingSource || trip.paymentMethod || '') === fundingFilter;
+    let matchesCounty = countyFilter === 'all' ||
+      (countyFilter === 'inside' && trip.insideCounty === true) ||
+      (countyFilter === 'outside' && trip.insideCounty === false);
+
+    // Advanced Filter Checks
+    let matchesDayOfWeek = true;
+    if (daysFilter.length > 0) {
+      const tripDay = new Date(trip.scheduledTime).getDay().toString();
+      matchesDayOfWeek = daysFilter.includes(tripDay);
+    }
+
+    let matchesHourOfDay = true;
+    if (hoursFilter.length > 0) {
+      const tripHour = new Date(trip.scheduledTime).getHours();
+      let category = '';
+      if (tripHour >= 6 && tripHour < 12) category = 'morning';
+      else if (tripHour >= 12 && tripHour < 17) category = 'afternoon';
+      else if (tripHour >= 17 && tripHour < 22) category = 'evening';
+      else category = 'night';
+      matchesHourOfDay = hoursFilter.includes(category);
+    }
+
+    let matchesMonth = true;
+    if (monthFilter !== 'all') {
+      const tripMonth = new Date(trip.scheduledTime).getMonth().toString();
+      matchesMonth = tripMonth === monthFilter;
+    }
+
+    let matchesYear = true;
+    if (yearFilter !== 'all') {
+      const tripYear = new Date(trip.scheduledTime).getFullYear().toString();
+      matchesYear = tripYear === yearFilter;
+    }
+
+    return matchesSearch && matchesStatus && matchesTime && matchesDriver && matchesFunding && matchesCounty && matchesDayOfWeek && matchesHourOfDay && matchesMonth && matchesYear;
   });
 
   const sortedTrips = [...filteredTrips].sort((a, b) => {
     if (sortBy === 'newest') return new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime();
     if (sortBy === 'oldest') return new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime();
     if (sortBy === 'rider') return (a?.rider?.name || '').localeCompare(b?.rider?.name || '');
+    
+    // Chronological date decompositions
+    const dateA = new Date(a.scheduledTime);
+    const dateB = new Date(b.scheduledTime);
+    
+    if (sortBy === 'day') {
+      return dateA.getDate() - dateB.getDate();
+    }
+    if (sortBy === 'hour') {
+      const timeA = dateA.getHours() * 60 + dateA.getMinutes();
+      const timeB = dateB.getHours() * 60 + dateB.getMinutes();
+      return timeA - timeB;
+    }
+    if (sortBy === 'month') {
+      return dateA.getMonth() - dateB.getMonth();
+    }
+    if (sortBy === 'year') {
+      return dateA.getFullYear() - dateB.getFullYear();
+    }
+    
     return 0;
   });
 
@@ -120,20 +188,32 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
     if (tripsToExport.length === 0) return;
 
-    const headers = ['Trip ID', 'Source', 'Passenger ID', 'Auth ID', 'Date', 'Time', 'Rider Name', 'Driver Name', 'Pickup', 'Dropoff', 'Status', 'Total Cost', 'Copay', 'Cost to County', 'Type'];
+    const headers = [
+      'Trip ID', 'Source', 'Passenger ID', 'Auth ID', 'Date', 'Time',
+      'Rider Name', 'Rider Email', 'Driver Name', 'Run #',
+      'Pickup', 'Dropoff', 'Status', 'Trip Reason',
+      'Funding Source', 'Inside County', 'Miles',
+      'Total Cost', 'Copay', 'Cost to County', 'Type'
+    ];
 
     const rows = tripsToExport.map((trip: any) => [
       trip.id,
       `"${trip.source || 'N/A'}"`,
-      `"${trip.passengerId || 'N/A'}"`,
+      `"${trip.passengerId || trip.rider?.passengerId || 'N/A'}"`,
       `"${trip.authorizationId || trip.authId || 'N/A'}"`,
       formatShortDate(trip.scheduledTime),
       formatTime(trip.scheduledTime),
-      trip?.rider?.name || 'Unknown',
-      drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || 'Unassigned',
+      `"${trip?.rider?.name || 'Unknown'}"`,
+      `"${trip?.rider?.email || 'N/A'}"`,
+      `"${drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || 'Unassigned'}"`,
+      `"${trip.driverRun || 'N/A'}"`,
       `"${trip.pickup}"`,
       `"${trip.dropoff}"`,
       trip.status,
+      `"${trip.reason || 'N/A'}"`,
+      `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
+      trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
+      trip.miles || trip.distance || 'N/A',
       trip.cost || 0,
       trip.copay || 0,
       trip.costToCounty || trip.cost || 0,
@@ -259,11 +339,15 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
                   <option value="rider">Rider Name (A-Z)</option>
+                  <option value="day">Scheduled Day</option>
+                  <option value="hour">Scheduled Hour</option>
+                  <option value="month">Scheduled Month</option>
+                  <option value="year">Scheduled Year</option>
                 </select>
               </div>
             </div>
           </div>
-          <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-6 pt-2">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-4 pt-2 flex-wrap">
             <div className="flex items-center gap-2 bg-bg p-1.5 rounded-xl border border-line shadow-inner">
               {['all', 'active', 'completed', 'cancelled'].map(f => (
                 <button
@@ -275,7 +359,173 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 </button>
               ))}
             </div>
+
+            {/* Driver Filter */}
+            <div className="flex items-center gap-2">
+              <Filter size={12} className="text-ink-4" />
+              <span className="text-xs text-ink-4">Driver</span>
+              <select
+                value={driverFilter}
+                onChange={(e) => { setDriverFilter(e.target.value); setCurrentPage(1); }}
+                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+              >
+                <option value="all">All Drivers</option>
+                {(drivers || []).map((d: any) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Funding Source Filter */}
+            <div className="flex items-center gap-2">
+              <DollarSign size={12} className="text-ink-4" />
+              <span className="text-xs text-ink-4">Funding</span>
+              <select
+                value={fundingFilter}
+                onChange={(e) => { setFundingFilter(e.target.value); setCurrentPage(1); }}
+                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+              >
+                <option value="all">All Sources</option>
+                {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
+              </select>
+            </div>
+
+            {/* Inside/Outside County Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-ink-4">County</span>
+              <div className="flex bg-bg p-0.5 rounded-lg border border-line">
+                {[['all', 'All'], ['inside', 'Inside'], ['outside', 'Outside']].map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => { setCountyFilter(val); setCurrentPage(1); }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${countyFilter === val ? 'bg-white shadow text-primary' : 'text-ink-4'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Advanced Filters Button */}
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`ml-auto px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                showAdvanced 
+                  ? 'bg-primary text-white border-primary shadow-md' 
+                  : 'bg-white text-ink border-line-2 hover:bg-bg'
+              }`}
+            >
+              <Filter size={13} />
+              {showAdvanced ? 'Hide Advanced' : 'Advanced Filters'}
+            </button>
           </div>
+
+          {/* Collapsible Advanced Filters Drawer */}
+          {showAdvanced && (
+            <div className="mt-4 p-5 bg-bg/40 border border-line rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-6 animate-in slide-in-from-top-3 duration-300">
+              {/* Days of Week */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Days of Week</label>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { key: '1', label: 'M' },
+                    { key: '2', label: 'T' },
+                    { key: '3', label: 'W' },
+                    { key: '4', label: 'T' },
+                    { key: '5', label: 'F' },
+                    { key: '6', label: 'S' },
+                    { key: '0', label: 'S' }
+                  ].map(d => {
+                    const isSel = daysFilter.includes(d.key);
+                    return (
+                      <button
+                        key={d.key}
+                        type="button"
+                        onClick={() => {
+                          setDaysFilter(prev => prev.includes(d.key) ? prev.filter(k => k !== d.key) : [...prev, d.key]);
+                          setCurrentPage(1);
+                        }}
+                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold rounded-lg transition-all border ${
+                          isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Hour of Day */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Hour of Day</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: 'morning', label: 'Morning (6am-12pm)' },
+                    { key: 'afternoon', label: 'Afternoon (12pm-5pm)' },
+                    { key: 'evening', label: 'Evening (5pm-10pm)' }
+                  ].map(h => {
+                    const isSel = hoursFilter.includes(h.key);
+                    return (
+                      <button
+                        key={h.key}
+                        type="button"
+                        onClick={() => {
+                          setHoursFilter(prev => prev.includes(h.key) ? prev.filter(k => k !== h.key) : [...prev, h.key]);
+                          setCurrentPage(1);
+                        }}
+                        className={`px-3 py-1.5 text-[10px] font-semibold rounded-lg transition-all border ${
+                          isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
+                        }`}
+                      >
+                        {h.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Month Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Month</label>
+                <select
+                  value={monthFilter}
+                  onChange={(e) => { setMonthFilter(e.target.value); setCurrentPage(1); }}
+                  className="w-full bg-white border border-line-2 rounded-xl py-2 px-3 text-xs font-semibold text-ink outline-none"
+                >
+                  <option value="all">All Months</option>
+                  <option value="0">January</option>
+                  <option value="1">February</option>
+                  <option value="2">March</option>
+                  <option value="3">April</option>
+                  <option value="4">May</option>
+                  <option value="5">June</option>
+                  <option value="6">July</option>
+                  <option value="7">August</option>
+                  <option value="8">September</option>
+                  <option value="9">October</option>
+                  <option value="10">November</option>
+                  <option value="11">December</option>
+                </select>
+              </div>
+
+              {/* Year Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Year</label>
+                <select
+                  value={yearFilter}
+                  onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
+                  className="w-full bg-white border border-line-2 rounded-xl py-2 px-3 text-xs font-semibold text-ink outline-none"
+                >
+                  <option value="all">All Years</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
@@ -293,9 +543,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date & Pickup</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
+                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver / Run</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
+                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Financials</th>
                 <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
                 <th className="px-6 py-4"></th>
@@ -337,9 +588,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
                   <td className="px-6 py-4">
                     {trip.driverId ? (
-                      <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-                        <Avatar initials={(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.initials} size="xs" />
-                        <span className="text-xs font-medium text-ink whitespace-nowrap">{(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.name}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                          <Avatar initials={(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.initials} size="xs" />
+                          <span className="text-xs font-medium text-ink whitespace-nowrap">{(drivers || []).find((d: any) => String(d?.id) === String(trip?.driverId))?.name}</span>
+                        </div>
+                        {trip.driverRun && <span className="text-[10px] font-medium text-ink-4 ml-7">{trip.driverRun}</span>}
                       </div>
                     ) : (
                       <button
@@ -386,6 +640,36 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           </>
                         )}
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1.5 items-start">
+                      {(() => {
+                        const fs = trip.fundingSource || trip.paymentMethod;
+                        if (!fs) return <span className="text-xs text-ink-4">—</span>;
+                        const isMedicaid = fs.toLowerCase().includes('medicaid');
+                        const isMedicare = fs.toLowerCase().includes('medicare');
+                        const isDSS = fs.toLowerCase().includes('dss');
+                        const isSelfPay = fs.toLowerCase().includes('self');
+                        const isFacility = fs.toLowerCase().includes('facility');
+                        const colorClass = isMedicaid ? 'bg-green-50 text-green-700 border-green-200'
+                          : isMedicare ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-bg text-ink-3 border-line-2';
+                        return (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
+                            <DollarSign size={9} />{fs}
+                          </span>
+                        );
+                      })()}
+                      {trip.insideCounty !== undefined && (
+                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${trip.insideCounty ? 'text-accent bg-accent/5 border-accent/20' : 'text-urgent bg-urgent/5 border-urgent/20'}`}>
+                          {trip.insideCounty ? 'In-County' : 'Out-of-County'}
+                        </span>
+                      )}
+                      {trip.miles && <span className="text-[9px] font-medium text-ink-4">{trip.miles} mi</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">

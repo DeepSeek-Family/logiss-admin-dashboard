@@ -22,7 +22,8 @@ import {
   FileText,
   CreditCard,
   UserPlus,
-  Activity
+  Activity,
+  Send
 } from 'lucide-react';
 import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -109,6 +110,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: '/transactions', label: 'Financials', icon: CreditCard, roles: ['admin'] },
       { id: '/staff', label: 'User Management', icon: UserPlus, roles: ['admin'] },
       { id: '/cms', label: 'CMS & Content', icon: FileText, roles: ['admin'] },
+      { id: '/push', label: 'Push Notifications', icon: Send, roles: ['admin'] },
     ]
   }
 ];

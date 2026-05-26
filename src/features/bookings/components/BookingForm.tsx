@@ -5,12 +5,13 @@ import {
   ShieldCheck, Car, Plus, Minus, Search, X,
   AlertCircle, Info, Phone, ArrowRight, Repeat,
   Accessibility, Bed, User, Disc, Zap, FileText,
-  DollarSign, Activity, MapPin, Users
+  DollarSign, Activity, MapPin, Users, Mail, Tag, Building2, Stethoscope, Lock
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { money } from '@/utils/helpers';
+import { FUNDING_SOURCES, riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
 
 export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
@@ -47,7 +48,14 @@ export const BookingForm = () => {
     middleName: '',
     lastName: '',
     phone: '',
+    email: '',
     authId: '',
+    passengerId: '',
+    fundingSource: '',
+    program: '',
+    source: '',
+    authNotes: '',
+    insideCounty: true,
     pickup: '',
     dropoff: '',
     stops: [] as string[],
@@ -57,14 +65,49 @@ export const BookingForm = () => {
     tripType: 'one-way',
     isWillCall: false,
     mobility: '',
-    tripReason: 'Medical',
+    tripReason: 'Medical Appointment',
     totalSeats: 1,
     additionalNotes: '',
+    privateNotes: '',
     grossFare: 0,
     countyContribution: 38.00,
     manualFareOverride: false,
     advancePaid: 0
   });
+
+  const filteredRiders = existingSearch.trim() === ''
+    ? []
+    : (riders || []).filter(r => 
+        (r.name || '').toLowerCase().includes(existingSearch.toLowerCase()) ||
+        (r.email || '').toLowerCase().includes(existingSearch.toLowerCase()) ||
+        (r.phone || '').includes(existingSearch)
+      );
+
+  const handleSelectRider = (rider: any) => {
+    const parts = (rider.name || '').split(' ');
+    const firstName = parts[0] || '';
+    const lastName = parts.slice(1).join(' ') || '';
+    
+    setForm(prev => ({
+      ...prev,
+      firstName,
+      middleName: '',
+      lastName,
+      phone: rider.phone || '',
+      email: rider.email || '',
+      passengerId: rider.passengerId || '',
+      authId: rider.authorizationId || '',
+      fundingSource: rider.fundingSource || '',
+      source: rider.source || '',
+      program: rider.program || '',
+      mobility: rider.mobility || '',
+      pickup: rider.defaultPickup || '',
+      dropoff: rider.defaultDropoff || '',
+    }));
+    setExistingSearch('');
+    setUserType('guest'); // Switch back to guest view to verify/edit
+    toast.success(`Populated profile details for ${rider.name}!`);
+  };
 
   const baseRates: any = { Ambulatory: 45, Wheelchair: 65, Walker: 55, Rollator: 55, Cane: 45 };
 
@@ -229,18 +272,68 @@ export const BookingForm = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-ink-3">Phone Number</label>
-                      <input className={inputClass} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone" />
+                      <input className={inputClass} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="(804) 555-0000" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Auth ID</label>
-                      <input className={inputClass} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="Authorization" />
+                      <label className="text-xs font-medium text-ink-3">Email Address</label>
+                      <div className="relative">
+                        <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                        <input className={`${inputClass} pl-8`} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="rider@example.com" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-ink-3">Passenger ID</label>
+                      <div className="relative">
+                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                        <input className={`${inputClass} pl-8`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="PX-2024-XXXX" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-ink-3">Authorization ID</label>
+                      <input className={inputClass} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="AUTH-XXXX-XXXX" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-ink-3">Authorization Notes</label>
+                    <div className="relative">
+                      <FileText size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                      <input className={`${inputClass} pl-8`} value={form.authNotes} onChange={e => setForm({ ...form, authNotes: e.target.value })} placeholder="e.g. Approved for 10 trips this month, door-to-door escort allowed" />
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="relative">
-                  <input className={inputClass} placeholder="Search records..." value={existingSearch} onChange={e => setExistingSearch(e.target.value)} />
-                  <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3" />
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input className={inputClass} placeholder="Search records by name, email, or phone..." value={existingSearch} onChange={e => setExistingSearch(e.target.value)} />
+                    <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3" />
+                  </div>
+                  {filteredRiders.length > 0 && (
+                    <div className="border border-line-2 rounded-xl bg-bg/50 divide-y divide-line-2 max-h-56 overflow-y-auto shadow-inner p-1">
+                      {filteredRiders.map(rider => (
+                        <button
+                          key={rider.id}
+                          type="button"
+                          onClick={() => handleSelectRider(rider)}
+                          className="w-full text-left p-3 hover:bg-white rounded-lg transition-all flex items-center justify-between group"
+                        >
+                          <div>
+                            <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors">{rider.name}</p>
+                            <p className="text-[10px] text-ink-4 mt-0.5">{rider.email} · {rider.phone}</p>
+                          </div>
+                          <Badge variant="bg" className="bg-white border border-line-2 text-[10px] font-medium text-ink-3">
+                            {rider.passengerId}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {existingSearch.trim() !== '' && filteredRiders.length === 0 && (
+                    <div className="text-center p-4 border border-dashed border-line-2 rounded-xl text-xs text-ink-4">
+                      No matching riders found.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -288,8 +381,24 @@ export const BookingForm = () => {
           </Card>
 
           <Card className="p-6 border-line-2 bg-white shadow-none">
-            <SectionHeader title="4. Additional Trip Notes" icon={FileText} />
-            <textarea className={`${inputClass} min-h-[150px] resize-none py-3 text-sm leading-relaxed`} value={form.additionalNotes} onChange={e => setForm({ ...form, additionalNotes: e.target.value })} placeholder="Enter special instructions for driver and dispatcher..." />
+            <SectionHeader title="4. Trip Notes & Instructions" icon={FileText} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-xs font-semibold text-ink-3 flex items-center gap-1.5 mb-2">
+                  <User size={14} /> Instructions for Driver
+                </label>
+                <textarea className={`${inputClass} min-h-[120px] resize-none py-3 text-sm leading-relaxed`} value={form.additionalNotes} onChange={e => setForm({ ...form, additionalNotes: e.target.value })} placeholder="Enter special instructions for the driver (e.g. Call when arrived)..." />
+                <p className="text-[10px] text-ink-4 mt-1.5">Visible in Driver App</p>
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-urgent flex items-center gap-1.5 mb-2">
+                  <Lock size={14} /> Internal Private Notes
+                </label>
+                <textarea className={`${inputClass} min-h-[120px] resize-none py-3 text-sm leading-relaxed bg-urgent/5 border-urgent/20 focus:ring-urgent/10 focus:border-urgent`} value={form.privateNotes} onChange={e => setForm({ ...form, privateNotes: e.target.value })} placeholder="Enter internal notes for dispatchers (e.g. Billing issues, specific client habits)..." />
+                <p className="text-[10px] text-urgent/70 mt-1.5 font-medium">Hidden from Drivers & Customers</p>
+              </div>
+            </div>
           </Card>
         </div>
 
@@ -311,9 +420,16 @@ export const BookingForm = () => {
               <div className="space-y-1">
                 <label className="text-xs font-medium text-ink-3">Trip Reason</label>
                 <select className={inputClass} value={form.tripReason} onChange={e => setForm({ ...form, tripReason: e.target.value })}>
-                  <option value="Medical">Medical</option>
+                  <option value="Medical Appointment">Medical Appointment</option>
+                  <option value="Dialysis">Dialysis</option>
+                  <option value="Chemotherapy">Chemotherapy</option>
+                  <option value="Physical Therapy">Physical Therapy</option>
+                  <option value="Hospital Discharge">Hospital Discharge</option>
+                  <option value="Specialist Visit">Specialist Visit</option>
+                  <option value="Routine Checkup">Routine Checkup</option>
+                  <option value="Eye Exam">Eye Exam</option>
+                  <option value="Dental">Dental</option>
                   <option value="Personal">Personal</option>
-                  <option value="Work">Work</option>
                 </select>
               </div>
             </div>
@@ -323,6 +439,69 @@ export const BookingForm = () => {
                 <button type="button" onClick={() => setForm({ ...form, totalSeats: Math.max(1, form.totalSeats - 1) })} className="p-2 bg-white border border-line-2 rounded-lg hover:bg-bg"><Minus size={16} /></button>
                 <span className="text-base font-semibold text-ink w-6 text-center">{form.totalSeats}</span>
                 <button type="button" onClick={() => setForm({ ...form, totalSeats: form.totalSeats + 1 })} className="p-2 bg-white border border-line-2 rounded-lg hover:bg-bg"><Plus size={16} /></button>
+              </div>
+            </div>
+
+            {/* Funding Source & Program Context */}
+            <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-ink-3">Funding Source</label>
+                <div className="relative">
+                  <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                  <select className={`${inputClass} pl-8`} value={form.fundingSource} onChange={e => setForm({ ...form, fundingSource: e.target.value })}>
+                    <option value="">Select source...</option>
+                    {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-ink-3">County Jurisdiction</label>
+                <div className="relative">
+                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                  <select className={`${inputClass} pl-8`} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}>
+                    <option value="">Select county...</option>
+                    <option value="Chesterfield County">Chesterfield County</option>
+                    <option value="Henrico County">Henrico County</option>
+                    <option value="Hanover County">Hanover County</option>
+                    <option value="Richmond City">Richmond City</option>
+                    <option value="Goochland County">Goochland County</option>
+                    <option value="Powhatan County">Powhatan County</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-ink-3">Program Context</label>
+                <div className="relative">
+                  <Activity size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                  <select className={`${inputClass} pl-8`} value={form.program} onChange={e => setForm({ ...form, program: e.target.value })}>
+                    <option value="">Select program...</option>
+                    <option value="Senior Transport">Senior Transport</option>
+                    <option value="DSS Medical">DSS Medical</option>
+                    <option value="Adult Day Care">Adult Day Care</option>
+                    <option value="Facility Discharge">Facility Discharge</option>
+                    <option value="General Medical">General Medical</option>
+                    <option value="Routine Dialysis">Routine Dialysis</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Inside / Outside County */}
+            <div className="pt-5 border-t border-line-2 mt-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-ink-2">Trip Jurisdiction</p>
+                <p className="text-[10px] text-ink-4 mt-0.5">Is this trip within the county boundaries?</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-medium ${!form.insideCounty ? 'text-urgent' : 'text-ink-4'}`}>Outside</span>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, insideCounty: !form.insideCounty })}
+                  className={`w-9 h-5 rounded-full relative transition-all ${form.insideCounty ? 'bg-accent' : 'bg-urgent/70'}`}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${form.insideCounty ? 'right-0.5' : 'left-0.5'}`} />
+                </button>
+                <span className={`text-xs font-medium ${form.insideCounty ? 'text-accent' : 'text-ink-4'}`}>Inside</span>
               </div>
             </div>
           </Card>

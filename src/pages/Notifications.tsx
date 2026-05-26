@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 
 import {
-  NotificationFilter,
   NotificationList
 } from '@/features/notifications';
 
@@ -110,11 +109,8 @@ const ALL_NOTIFICATIONS = [
   },
 ];
 
-const CATEGORIES = ['All', 'Trip', 'Compliance', 'No-Show', 'Incident Report', 'Application', 'Will Call', 'Financial', 'System', 'SOS Alert'];
-
 const Notifications = ({ role }: { role?: string | null }) => {
   const [items, setItems] = useState<any[]>(ALL_NOTIFICATIONS);
-  const [activeFilter, setActiveFilter] = useState('All');
 
   const unreadCount = items.filter(n => !n.read).length;
 
@@ -122,8 +118,6 @@ const Notifications = ({ role }: { role?: string | null }) => {
   const markRead = (id: number) => setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   const deleteItem = (id: number) => setItems(prev => prev.filter(n => n.id !== id));
   const clearAll = () => setItems([]);
-
-  const filtered = activeFilter === 'All' ? items : items.filter(n => n.category === activeFilter);
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-500 pb-12">
@@ -138,23 +132,15 @@ const Notifications = ({ role }: { role?: string | null }) => {
         </div>
         <div className="flex gap-2">
           {unreadCount > 0 && (
-            <button onClick={markAllRead} className="text-xs text-primary hover:underline font-medium font-semibold">Mark all read</button>
+            <button onClick={markAllRead} className="text-xs text-primary hover:underline font-semibold">Mark all read</button>
           )}
-          <button onClick={clearAll} className="text-xs text-ink-4 hover:text-ink font-medium font-semibold">Clear all</button>
+          <button onClick={clearAll} className="text-xs text-ink-4 hover:text-ink font-semibold">Clear all</button>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <NotificationFilter
-        categories={CATEGORIES}
-        activeFilter={activeFilter}
-        setActiveFilter={setActiveFilter}
-        items={items}
-      />
-
       {/* Notification List */}
       <NotificationList
-        filtered={filtered}
+        filtered={items}
         onMarkRead={markRead}
         onDelete={deleteItem}
       />
