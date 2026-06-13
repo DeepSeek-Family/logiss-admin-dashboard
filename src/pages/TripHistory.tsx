@@ -9,7 +9,7 @@ import { useFleet } from '../hooks/useFleet';
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab } from '@/features/tripHistory';
 
 const TripHistory = ({ role }: { role?: string | null }) => {
-  const { trips, loading: tripsLoading } = useTrips();
+  const { trips, loading: tripsLoading, updateTrip } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
 
@@ -118,6 +118,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           setSelectedTripId={setSelectedTripId}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
+          updateTrip={updateTrip}
         />
       )}
 

@@ -31,6 +31,13 @@ export const tripService = {
     return Promise.resolve(tripsDB[index]);
   },
 
+  updateTrip: (id: string, patch: Partial<Trip>): Promise<Trip> => {
+    const index = tripsDB.findIndex(t => t.id === id);
+    if (index === -1) return Promise.reject(new Error('Trip not found'));
+    tripsDB[index] = { ...tripsDB[index], ...patch };
+    return Promise.resolve(tripsDB[index]);
+  },
+
   assignDriver: (tripId: string, driverId: string): Promise<Trip> => {
     const index = tripsDB.findIndex(t => t.id === tripId);
     if (index === -1) return Promise.reject(new Error('Trip not found'));

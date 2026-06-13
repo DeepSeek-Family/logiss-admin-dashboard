@@ -28,3 +28,4 @@ dist-ssr
 .claude/
 .tempmediaStorage/
 .vercel
+config.bat

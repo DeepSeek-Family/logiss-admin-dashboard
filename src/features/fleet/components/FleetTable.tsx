@@ -67,9 +67,9 @@ export const FleetTable = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[calc(100vh-24rem)]">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-bg/40 border-b border-line-2">
+          <thead className="bg-bg/40 border-b border-line-2 sticky top-0 z-10">
             <tr>
               {['Vehicle', 'Vehicle Type', 'Status', 'Operator', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
                 <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
