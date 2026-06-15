@@ -26,6 +26,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [fundingFilter, setFundingFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -55,7 +56,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
       (t?.pickup || '').toLowerCase().includes(search) ||
       (t?.dropoff || '').toLowerCase().includes(search);
 
-    return matchesTab && matchesSearch;
+    const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
+
+    return matchesTab && matchesSearch && matchesFunding;
   });
 
   const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
@@ -266,6 +269,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
         setActiveTab={setActiveTab}
         bookingSearch={bookingSearch}
         setBookingSearch={setBookingSearch}
+        fundingFilter={fundingFilter}
+        setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
         filteredTrips={filteredTrips}
         paginatedBookings={paginatedBookings}
         selectedTrips={selectedTrips}

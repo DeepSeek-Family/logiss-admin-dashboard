@@ -6,12 +6,15 @@ import {
 import { Avatar, Badge, Button, Pagination, TripStatusBadge } from '@/shared/components/ui';
 import { formatTime, formatShortDate } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
+import { FUNDING_SOURCES } from '@/data/mockData';
 
 interface BookingsListProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   bookingSearch: string;
   setBookingSearch: (val: string) => void;
+  fundingFilter: string;
+  setFundingFilter: (val: string) => void;
   filteredTrips: any[];
   paginatedBookings: any[];
   selectedTrips: string[];
@@ -33,7 +36,7 @@ interface BookingsListProps {
 }
 
 export const BookingsList: React.FC<BookingsListProps> = ({
-  activeTab, setActiveTab, bookingSearch, setBookingSearch,
+  activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
@@ -56,15 +59,29 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         </button>
       </div>
 
-      <div className="relative w-full max-w-sm shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
-        <input
-          type="text"
-          placeholder="Search rider or ID..."
-          value={bookingSearch}
-          onChange={e => { setBookingSearch(e.target.value); setCurrentPage(1); }}
-          className="w-full pl-8 pr-3 py-2 bg-white border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/10 outline-none"
-        />
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
+          <input
+            type="text"
+            placeholder="Search rider or ID..."
+            value={bookingSearch}
+            onChange={e => { setBookingSearch(e.target.value); setCurrentPage(1); }}
+            className="w-full pl-8 pr-3 py-2 bg-white border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/10 outline-none h-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <DollarSign size={12} className="text-ink-4" />
+          <span className="text-xs text-ink-4">Funding</span>
+          <select
+            value={fundingFilter}
+            onChange={e => setFundingFilter(e.target.value)}
+            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+          >
+            <option value="all">All Sources</option>
+            {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
+          </select>
+        </div>
       </div>
 
       <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
