@@ -1,5 +1,6 @@
-import { Users, Shield, Mail } from 'lucide-react';
+import { Users, Shield, Mail, Building2 } from 'lucide-react';
 import { Card, Badge, Avatar } from '@/shared/components/ui';
+import { ALL_PERMISSIONS } from '../permissions';
 
 interface UsersTableProps {
   users: any[];
@@ -14,7 +15,8 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
           <thead className="bg-bg/50 border-b border-line-2">
             <tr>
               <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Profile</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Role Level</th>
+              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Role</th>
+              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Access Scope</th>
               <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Status</th>
               <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Last Active</th>
               <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Access</th>
@@ -38,13 +40,27 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   {user.role === 'admin' ? (
                     <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-light/20 text-primary rounded-md w-fit border border-primary/20">
                       <Shield size={12} />
-                      <span className="text-xs font-medium">Administrator</span>
+                      <span className="text-xs font-medium">Admin</span>
+                    </div>
+                  ) : user.role === 'facility' ? (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/10 text-accent rounded-md w-fit border border-accent/20">
+                      <Building2 size={12} />
+                      <span className="text-xs font-medium">Facility User</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 px-2 py-1 bg-bg text-ink-3 rounded-md w-fit border border-line-2">
                       <Users size={12} />
-                      <span className="text-xs font-medium">Dispatcher</span>
+                      <span className="text-xs font-medium">Dispatch</span>
                     </div>
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  {user.role === 'admin' ? (
+                    <span className="text-xs font-medium text-ink-3">Full access</span>
+                  ) : user.role === 'facility' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-3"><Building2 size={11} className="text-ink-4" />{user.facility || 'No facility set'}</span>
+                  ) : (
+                    <Badge variant="primary" className="text-[10px]">{(user.permissions?.length ?? 0)} / {ALL_PERMISSIONS.length} permissions</Badge>
                   )}
                 </td>
                 <td className="px-6 py-4">

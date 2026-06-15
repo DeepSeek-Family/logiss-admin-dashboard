@@ -20,6 +20,7 @@ import {
   OrgSettingsForm,
   ContentEditor,
   FundingSourcesPanel,
+  FacilitiesPanel,
   FaqPanel
 } from '@/features/cms';
 
@@ -75,6 +76,7 @@ const CMS = ({ role }: { role?: string | null }) => {
   const pages = [
     { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
     { id: 'funding', label: 'Funding Sources', icon: DollarSign, lastUpdate: '2026-05-26', type: 'funding' },
+    { id: 'facilities', label: 'Facilities & Programs', icon: Building2, lastUpdate: '2026-06-15', type: 'facilities' },
     { id: 'terms', label: 'Terms & Conditions', icon: FileText, lastUpdate: '2026-04-10', type: 'text' },
     { id: 'privacy', label: 'Privacy Policy', icon: Shield, lastUpdate: '2026-04-12', type: 'text' },
     { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'faq' },
@@ -159,6 +161,8 @@ const CMS = ({ role }: { role?: string | null }) => {
                 />
               ) : activePageData?.type === 'funding' ? (
                 <FundingSourcesPanel />
+              ) : activePageData?.type === 'facilities' ? (
+                <FacilitiesPanel />
               ) : activePageData?.type === 'faq' ? (
                 <FaqPanel />
               ) : (

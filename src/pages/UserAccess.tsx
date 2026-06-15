@@ -5,20 +5,21 @@ import { useUsers } from '../hooks/useUsers';
 
 import {
   InviteUserModal,
-  UsersTable
+  UsersTable,
+  DEFAULT_DISPATCH_PERMISSIONS
 } from '@/features/userAccess';
 
 const UserAccess = ({ role }: { role?: string | null }) => {
   const { users, loading, toggleStatus, inviteUser } = useUsers();
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteData, setInviteData] = useState({ name: '', email: '', role: 'dispatcher' });
+  const [inviteData, setInviteData] = useState<{ name: string; email: string; role: string; permissions: string[]; facility?: string }>({ name: '', email: '', role: 'dispatcher', permissions: [...DEFAULT_DISPATCH_PERMISSIONS] });
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await inviteUser(inviteData);
       setShowInviteModal(false);
-      setInviteData({ name: '', email: '', role: 'dispatcher' });
+      setInviteData({ name: '', email: '', role: 'dispatcher', permissions: [...DEFAULT_DISPATCH_PERMISSIONS] });
     } catch (err) {
       console.error(err);
     }
@@ -40,7 +41,7 @@ const UserAccess = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-ink">User Management</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage dispatcher and administrator access controls</p>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage Admin, Dispatch (permission-based) &amp; Facility User access</p>
         </div>
         <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>Invite User</Button>
       </div>
