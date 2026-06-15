@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  Search, List, ArrowRight, MapPin, Repeat, MoveRight, 
-  Check, Users, ChevronRight, Trash2, CheckCircle2 
+import {
+  Search, List, ArrowRight, MapPin, Repeat, MoveRight,
+  Check, Users, ChevronRight, Trash2, CheckCircle2, ClipboardList
 } from 'lucide-react';
-import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
+import { Avatar, Badge, Button, Pagination, TripStatusBadge } from '@/shared/components/ui';
 import { formatTime, formatShortDate } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 
@@ -24,8 +24,10 @@ interface BookingsListProps {
   currentPage: number;
   totalPages: number;
   itemsPerPage: number;
+  setItemsPerPage: (size: number) => void;
   setCurrentPage: (page: number) => void;
   trips: any[];
+  drivers: any[];
   setSelectedTrips: (trips: string[]) => void;
   handleBulkAction: (action: string) => void;
 }
@@ -34,27 +36,27 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch,
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
-  currentPage, totalPages, itemsPerPage, setCurrentPage, trips,
+  currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
   setSelectedTrips, handleBulkAction
 }) => {
   return (
-    <>
-      <div className="flex items-center gap-1 border-b border-line-2">
+    <div className="flex flex-col gap-4 flex-1 min-h-0">
+      <div className="flex items-center gap-1 border-b border-line-2 shrink-0">
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('pending'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'pending_review').length}</span>
+          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'pending_review' && !t?.driverId).length}</span>
         </button>
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'confirmed').length}</span>
+          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => (t.status === 'confirmed' || t.status === 'assigned') && !t?.driverId).length}</span>
         </button>
       </div>
 
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-sm shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
         <input
           type="text"
@@ -65,15 +67,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         />
       </div>
 
-      <div className="bg-white border border-line-2 rounded-xl overflow-hidden min-h-[500px] flex flex-col shadow-sm">
+      <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         {filteredTrips.length > 0 ? (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto flex-1 min-h-0">
               <table className="w-full text-left">
-                <thead className="bg-bg border-b border-line-2">
+                <thead className="bg-bg border-b border-line-2 sticky top-0 z-10">
                   <tr className="border-b border-line-2 bg-bg/50">
                     {activeTab === 'pending' && (
-                      <th className="pl-4 pr-2 py-4 w-8">
+                      <th className="pl-4 pr-2 py-2.5 w-8">
                         <input
                           type="checkbox"
                           className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-all cursor-pointer"
@@ -82,15 +84,18 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         />
                       </th>
                     )}
-                    <th className="px-3 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Created</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Type</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Funding</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Appt Time</th>
-                    <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Pickup Time</th>
-                    <th className="px-6 py-4 text-right"></th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Pickup Time</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Appt</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip Reason</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Distance</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
+                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
+                    <th className="px-3 py-2.5 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line-2">
@@ -101,36 +106,63 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       className={`border-b border-line-2 hover:bg-line-2/20 transition-colors cursor-pointer ${selectedBookingId === booking.id ? 'bg-primary-tint/20' : 'hover:bg-bg'} ${selectedTrips.includes(booking.id) ? 'bg-accent-light/10' : ''} ${booking.isUrgent ? 'border-l-4 border-l-urgent border-urgent/30 bg-urgent-light/10' : ''}`}
                     >
                       {activeTab === 'pending' && (
-                        <td className="pl-4 pr-2 py-4" onClick={(e) => e.stopPropagation()}>
+                        <td className="pl-4 pr-2 py-2.5" onClick={(e) => e.stopPropagation()}>
                           <input type="checkbox" checked={selectedTrips.includes(booking.id)} onChange={() => toggleSelectTrip(booking.id)} className="w-4 h-4 rounded border-line text-primary cursor-pointer" />
                         </td>
                       )}
-                      <td className="px-3 py-4">
+
+                      {/* Trip ID */}
+                      <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-1.5 items-start">
                           <span className="font-mono text-xs text-ink-3 whitespace-nowrap">#{booking?.id || '---'}</span>
                           {booking.isUrgent && <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase shadow-sm shadow-urgent/30">URGENT</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-xs font-medium text-ink">{booking?.submittedTime ? formatShortDate(booking.submittedTime) : '-'}</p>
-                        <p className="text-xs text-ink-4">{booking?.submittedTime ? formatTime(booking.submittedTime) : '-'}</p>
+
+                      {/* Date */}
+                      <td className="px-3 py-2.5">
+                        <span className="text-xs font-medium text-ink whitespace-nowrap">{booking?.scheduledTime ? formatShortDate(booking.scheduledTime) : (booking?.submittedTime ? formatShortDate(booking.submittedTime) : '-')}</span>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* Pickup Time */}
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <p className="text-xs font-semibold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
+                      </td>
+
+                      {/* Appt */}
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <p className="text-xs font-semibold text-primary">{booking?.appointmentTime || 'N/A'}</p>
+                      </td>
+
+                      {/* Rider */}
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-3">
                           <Avatar initials={booking?.rider?.initials || '?'} size="xs" />
-                          <div>
-                            <p className="text-sm font-medium text-ink leading-tight">{booking?.rider?.name || 'Unknown'}</p>
-                            <p className="text-xs font-medium text-ink-4 tracking-normal mt-0.5">
-                              {booking?.passengerId ? `PX: ${booking.passengerId}` : booking?.authorizationId ? `Auth: ${booking.authorizationId}` : ''}
-                            </p>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-ink leading-tight whitespace-nowrap">{booking?.rider?.name || 'Unknown'}</p>
+                            {(booking?.passengerId || booking?.authorizationId) && (
+                              <p
+                                className="text-[10px] font-medium text-ink-4 mt-0.5 whitespace-nowrap truncate max-w-[120px]"
+                                title={booking?.passengerId ? `PX: ${booking.passengerId}` : `Auth: ${booking.authorizationId}`}
+                              >
+                                {booking?.passengerId ? `PX: ${booking.passengerId}` : `Auth: ${booking.authorizationId}`}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* Status */}
+                      <td className="px-3 py-2.5 text-center">
+                        <TripStatusBadge status={booking.status} className="text-[10px] whitespace-nowrap" />
+                      </td>
+
+                      {/* Route */}
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                          <span className="text-xs font-semibold text-ink max-w-[120px] truncate">{booking?.pickup || '---'}</span>
-                          
+                          <span className="text-xs font-semibold text-ink max-w-[120px] truncate" title={booking?.pickup || ''}>{booking?.pickup || '---'}</span>
+
                           {/* Intermediate Stop Indicator */}
                           {(booking?.stop || (booking?.stops && booking.stops.length > 0)) ? (
                             <div className="flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20">
@@ -144,10 +176,25 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           )}
 
                           <MapPin size={13} className="text-urgent shrink-0" />
-                          <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate">{booking?.dropoff || '---'}</span>
+                          <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate" title={booking?.dropoff || ''}>{booking?.dropoff || '---'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* Trip Reason */}
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink max-w-[160px]">
+                          <ClipboardList size={12} className="text-ink-4 shrink-0" />
+                          <span className="truncate" title={booking?.reason || ''}>{booking?.reason || '—'}</span>
+                        </span>
+                      </td>
+
+                      {/* Distance */}
+                      <td className="px-3 py-2.5">
+                        <span className="text-xs font-medium text-ink whitespace-nowrap">{booking?.distance || (booking?.miles ? `${booking.miles} mi` : '—')}</span>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-1 items-start">
                           <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5 font-medium">{booking?.mobility || 'Standard'}</Badge>
                           <div className="flex items-center gap-1 text-[10px] text-ink-4">
@@ -165,7 +212,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* Funding */}
+                      <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-1.5 items-start">
                           {(() => {
                             const fs = booking.fundingSource || booking.paymentMethod;
@@ -192,16 +241,11 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                               {booking.insideCounty ? 'In-County' : 'Out-of-County'}
                             </span>
                           )}
-                          {booking.miles && <span className="text-[9px] font-medium text-ink-4">{booking.miles} mi</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-semibold text-primary">{booking?.appointmentTime || 'N/A'}</p>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-semibold text-ink">{booking?.requestedPickup || formatTime(booking?.scheduledTime)}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
+
+                      {/* Actions */}
+                      <td className="px-3 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-3">
                           {activeTab === 'pending' ? (
                             <button className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); handleApprove(booking.id); }}><Check size={18} /></button>
@@ -216,12 +260,12 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                 </tbody>
               </table>
             </div>
-            <div className="mt-auto">
-              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredTrips.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} />
+            <div className="shrink-0">
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredTrips.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }} />
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-ink-4">
+          <div className="flex flex-1 flex-col items-center justify-center py-20 text-ink-4">
             <CheckCircle2 size={48} className="mb-4 opacity-20" />
             <p className="font-medium text-ink">Queue Empty</p>
             <p className="text-sm">No bookings match your criteria.</p>
@@ -250,6 +294,6 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };

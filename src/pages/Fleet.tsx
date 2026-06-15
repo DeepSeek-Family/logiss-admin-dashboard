@@ -23,7 +23,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -90,6 +90,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
         totalPages={totalPages}
         filteredCount={filtered.length}
         itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
         filter={filter}
         setFilter={setFilter}
         search={search}

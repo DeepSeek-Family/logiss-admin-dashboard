@@ -63,7 +63,7 @@ const Transactions = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-ink-4">Compiling Financial Data...</p>
+          <p className="text-sm text-ink-4">Compiling Charge Data...</p>
         </div>
       </div>
     );
@@ -74,7 +74,7 @@ const Transactions = ({ role }: { role?: string | null }) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">Financial Transactions</h1>
+          <h1 className="text-2xl font-semibold text-ink">Charges</h1>
           <p className="text-sm text-ink-4 mt-0.5">Simple and clean overview of payments, county billing, and claims</p>
         </div>
         <Button variant="outline" size="sm" icon={Download}>Export CSV</Button>

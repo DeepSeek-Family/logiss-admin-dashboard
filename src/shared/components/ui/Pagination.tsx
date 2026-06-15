@@ -7,17 +7,23 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (size: number) => void;
+  itemsPerPageOptions?: number[];
 }
 
-export const Pagination = ({ 
-  currentPage = 1, 
-  totalPages = 1, 
-  totalItems = 0, 
-  itemsPerPage = 10, 
-  onPageChange 
+export const Pagination = ({
+  currentPage = 1,
+  totalPages = 1,
+  totalItems = 0,
+  itemsPerPage = 10,
+  onPageChange,
+  onItemsPerPageChange,
+  itemsPerPageOptions = [10, 25, 50, 100],
 }: PaginationProps) => {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  // Always include the current page size so the dropdown reflects the active value.
+  const sizeOptions = Array.from(new Set([...itemsPerPageOptions, itemsPerPage])).sort((a, b) => a - b);
 
   const getPageNumbers = () => {
     const pages = [];
@@ -80,8 +86,24 @@ export const Pagination = ({
         </button>
       </div>
 
-      <div className="text-xs font-semibold text-ink-4">
-        Showing <span className="text-ink font-medium">{startItem}–{endItem}</span> of <span className="text-ink font-medium">{totalItems.toLocaleString()}</span> results
+      <div className="flex items-center gap-4">
+        {onItemsPerPageChange && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-ink-4 whitespace-nowrap">Rows per page</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="bg-white border border-line-2 rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-medium text-ink outline-none cursor-pointer hover:border-primary/40 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+            >
+              {sizeOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="text-xs font-semibold text-ink-4">
+          Showing <span className="text-ink font-medium">{startItem}–{endItem}</span> of <span className="text-ink font-medium">{totalItems.toLocaleString()}</span> results
+        </div>
       </div>
     </div>
   );

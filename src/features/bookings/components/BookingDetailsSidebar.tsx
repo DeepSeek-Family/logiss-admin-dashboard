@@ -36,8 +36,8 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={closeBooking}></div>
-      <div className="relative w-full max-w-lg bg-white shadow-2xl h-full animate-in slide-in-from-right duration-300">
+      <div className="absolute inset-0 bg-ink/50 animate-in fade-in duration-200" onClick={closeBooking}></div>
+      <div className="relative w-full max-w-lg bg-white border-l border-line-2 shadow-2xl h-full animate-in slide-in-from-right duration-300">
         <div className="h-full flex flex-col overflow-hidden">
           <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
             <div>
@@ -52,8 +52,8 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
             </button>
           </div>
 
-          {/* Passenger + Route — scrollable top section */}
-          <div className="overflow-y-auto px-6 pt-4 pb-3 space-y-4 scrollbar-hide shrink-0">
+          {/* Scrollable body — passenger, route, and driver assignment all scroll together */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-6 pt-4 pb-4 space-y-4">
             {/* Passenger Info Card */}
             <section className="bg-bg rounded-2xl border border-line-2 overflow-hidden">
               <div className="flex items-center gap-3 p-4 border-b border-line-2">
@@ -128,14 +128,13 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                 </div>
               </div>
             </section>
-          </div>
 
-          {/* Driver Assignment — fills ALL remaining space */}
-          <div className="flex-1 flex flex-col min-h-0 px-6 pb-3 border-t border-line-2">
-            <p className="text-xs text-ink-4 flex items-center gap-1.5 py-3 shrink-0">
-              <Users size={11} className="text-primary" /> Driver Assignment
-            </p>
-            <div className="flex-1 flex flex-col min-h-0">
+            {/* Driver Assignment */}
+            <div className="pt-4 border-t border-line-2">
+              <p className="text-xs text-ink-4 flex items-center gap-1.5 pb-3">
+                <Users size={11} className="text-primary" /> Driver Assignment
+              </p>
+              <div>
               {assignedDriver && !isAssigning ? (
                 <div className="border border-accent/20 bg-accent-light/10 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -178,32 +177,36 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                   <Button variant="outline" size="sm">Select</Button>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col min-h-0 gap-2 animate-in fade-in duration-200">
+                <div className="flex flex-col gap-2 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between shrink-0">
-                    <p className="text-xs text-ink-4">Recommended Drivers</p>
+                    <p className="text-xs text-ink-4">{driverSearch.trim() ? `Search Results (${smartDrivers.length})` : 'Recommended Drivers'}</p>
                     <button onClick={() => { setIsAssigning(false); setDriverSearch(''); }} className="text-xs font-medium text-primary hover:underline">Cancel</button>
                   </div>
                   <div className="relative shrink-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={13} />
                     <input
                       type="text"
-                      placeholder="Search by name or ID..."
+                      autoFocus
+                      placeholder="Search any driver by name or ID..."
                       value={driverSearch}
                       onChange={(e) => setDriverSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+                      className="w-full pl-8 pr-3 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium text-ink placeholder:text-ink-4 focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
                     />
                   </div>
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  <div className="space-y-2 pr-1 max-h-72 overflow-y-auto custom-scrollbar">
                     {smartDrivers.length > 0 ? smartDrivers.map((driver: any) => (
                       <div
                         key={driver.id}
                         className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${driver.hasConflict ? 'border-line-2 opacity-60 bg-bg/50' : 'border-line-2 bg-white hover:border-primary/30 hover:bg-primary-tint/10'}`}
                       >
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <Avatar initials={driver.initials} size="sm" online={driver.onDuty} />
-                          <div>
-                            <p className="text-sm font-medium text-ink">{driver.name}</p>
-                            <p className="text-xs text-ink-4 mt-0.5">{driver.vehicle.type} · {driver.rating} ★</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-ink whitespace-nowrap">{driver.name}</p>
+                            <p className="text-xs text-ink-4 mt-0.5 whitespace-nowrap">
+                              {driver.vehicle.type} · {driver.rating} ★ ·{' '}
+                              <span className={driver.onDuty ? 'text-accent' : 'text-ink-4'}>{driver.onDuty ? 'On duty' : 'Off duty'}</span>
+                            </p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => { handleAssign(driver.id); setIsAssigning(false); }} disabled={driver.hasConflict}>
@@ -219,6 +222,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
 

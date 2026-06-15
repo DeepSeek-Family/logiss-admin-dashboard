@@ -13,6 +13,7 @@ interface FleetTableProps {
   totalPages: number;
   filteredCount: number;
   itemsPerPage: number;
+  setItemsPerPage: (val: number) => void;
   filter: string;
   setFilter: (val: string) => void;
   search: string;
@@ -33,6 +34,7 @@ export const FleetTable = ({
   totalPages,
   filteredCount,
   itemsPerPage,
+  setItemsPerPage,
   filter,
   setFilter,
   search,
@@ -168,6 +170,7 @@ export const FleetTable = ({
           totalItems={filteredCount}
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
+          onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
         />
       </div>
     </Card>

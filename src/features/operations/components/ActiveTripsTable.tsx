@@ -10,6 +10,7 @@ interface ActiveTripsTableProps {
   totalPages: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (size: number) => void;
   onRowClick: () => void;
 }
 
@@ -20,6 +21,7 @@ export const ActiveTripsTable = ({
   totalPages,
   itemsPerPage,
   onPageChange,
+  onItemsPerPageChange,
   onRowClick
 }: ActiveTripsTableProps) => {
   return (
@@ -89,6 +91,7 @@ export const ActiveTripsTable = ({
         totalItems={activeTripsCount}
         itemsPerPage={itemsPerPage}
         onPageChange={onPageChange}
+        onItemsPerPageChange={onItemsPerPageChange}
       />
     </Card>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
 import { FUNDING_SOURCES } from '@/data/mockData';
@@ -168,10 +168,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const [monthFilter, setMonthFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
 
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Process filter logic for Trips Archive
-  const historyTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review');
+  // Anything past the booking stage belongs here — i.e. not pending_review, OR already
+  // has a driver assigned (so a driver-assigned trip always shows in Trip History).
+  const historyTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
   const filteredTrips = historyTrips.filter((trip: any) => {
     const matchesSearch = !search ||
       (trip?.id || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -322,7 +324,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     const headers = [
       'Trip ID', 'Source', 'Passenger ID', 'Auth ID', 'Date',
       'Pickup Time', 'Appt', 'Dispatch Time', 'Perform', 'Arrival Time',
-      'Rider Name', 'Rider Email', 'Driver Name', 'Run #',
+      'Rider Name', 'Rider Email', 'Driver Name',
       'Pickup', 'Dropoff', 'Distance', 'Status', 'Trip Reason',
       'User Note', 'Dispatcher/Admin Note',
       'Funding Source', 'Inside County',
@@ -347,7 +349,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       `"${trip?.rider?.name || 'Unknown'}"`,
       `"${trip?.rider?.email || 'N/A'}"`,
       `"${drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || 'Unassigned'}"`,
-      `"${trip.driverRun || 'N/A'}"`,
       `"${trip.pickup}"`,
       `"${trip.dropoff}"`,
       `"${trip.distance || (trip.miles ? `${trip.miles} mi` : 'N/A')}"`,
@@ -394,114 +395,33 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   return (
     <>
       <Card className="overflow-hidden border-line-2 shadow-sm">
-        <div className="p-6 border-b border-line-2 bg-bg/30 space-y-5">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex-1 max-w-2xl relative shadow-sm rounded-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
+        <div className="px-5 py-3 border-b border-line-2 bg-bg/30 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Search */}
+            <div className="w-full sm:w-56 relative shadow-sm rounded-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={16} />
               <input
                 type="text"
-                placeholder="Search trips, riders, or locations..."
-                className="w-full bg-white border border-line-2 hover:border-primary/40 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-semibold text-ink placeholder:text-ink-4/80 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none h-12"
+                placeholder="Search trips, riders..."
+                className="w-full bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 pl-9 pr-3 text-xs font-medium text-ink placeholder:text-ink-4/80 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none h-9"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               />
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-ink-4 whitespace-nowrap">Time Period</span>
-                  <div className="relative flex items-center">
-                    <select
-                      value={timeFilter}
-                      onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
-                      className="bg-white border border-line rounded-xl py-2.5 pl-4 pr-10 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px] appearance-none"
-                    >
-                      <option value="all">All Time</option>
-                      <option value="today">Today</option>
-                      <option value="tomorrow">Tomorrow</option>
-                      <option value="week">This Week</option>
-                      <option value="month">This Month</option>
-                      <option value="custom">Custom Range</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTimeFilter('custom');
-                        setCurrentPage(1);
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary transition-colors focus:outline-none"
-                      title="Select Custom Range"
-                    >
-                      <Calendar size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {timeFilter === 'custom' && (
-                  <div className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-                      onClick={(e) => {
-                        try {
-                          e.currentTarget.showPicker();
-                        } catch (err) {
-                          console.log(err);
-                        }
-                      }}
-                      className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
-                      title="Start Date"
-                    />
-                    <span className="text-xs text-ink-4">to</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-                      onClick={(e) => {
-                        try {
-                          e.currentTarget.showPicker();
-                        } catch (err) {
-                          console.log(err);
-                        }
-                      }}
-                      className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none h-10 shadow-sm cursor-pointer"
-                      title="End Date"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-ink-4 whitespace-nowrap">Sort By</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white border border-line rounded-xl py-2.5 px-4 text-xs font-medium text-ink focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-10 min-w-[140px]"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="rider">Rider Name (A-Z)</option>
-                  <option value="day">Scheduled Day</option>
-                  <option value="hour">Scheduled Hour</option>
-                  <option value="month">Scheduled Month</option>
-                  <option value="year">Scheduled Year</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-4 pt-2 flex-wrap">
-            <div className="flex items-center gap-2 bg-bg p-1.5 rounded-xl border border-line shadow-inner">
-              {['all', 'active', 'completed', 'cancelled'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => { setFilter(f); setCurrentPage(1); }}
-                  className={`px-5 py-2 rounded-lg text-xs font-medium capitalize transition-all ${filter === f ? 'bg-white shadow-md text-primary' : 'text-ink-4 hover:text-ink hover:bg-white/50'}`}
-                >
-                  {f}
-                </button>
-              ))}
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-ink-4">Status</span>
+              <select
+                value={filter}
+                onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
+                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink capitalize focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
             </div>
 
             {/* Driver Filter */}
@@ -537,32 +457,101 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
             {/* Inside/Outside County Filter */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-ink-4">County</span>
-              <div className="flex bg-bg p-0.5 rounded-lg border border-line">
-                {[['all', 'All'], ['inside', 'Inside'], ['outside', 'Outside']].map(([val, label]) => (
-                  <button
-                    key={val}
-                    onClick={() => { setCountyFilter(val); setCurrentPage(1); }}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${countyFilter === val ? 'bg-white shadow text-primary' : 'text-ink-4'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={countyFilter}
+                onChange={(e) => { setCountyFilter(e.target.value); setCurrentPage(1); }}
+                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+              >
+                <option value="all">All</option>
+                <option value="inside">Inside</option>
+                <option value="outside">Outside</option>
+              </select>
             </div>
 
-            {/* Advanced Filters Button */}
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`ml-auto px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
-                showAdvanced 
-                  ? 'bg-primary text-white border-primary shadow-md' 
-                  : 'bg-white text-ink border-line-2 hover:bg-bg'
-              }`}
-            >
-              <Filter size={13} />
-              {showAdvanced ? 'Hide Advanced' : 'Advanced Filters'}
-            </button>
+            {/* Right group: Time / Sort / Advanced */}
+            <div className="ml-auto flex items-center gap-3 flex-wrap">
+              {/* Time Period */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
+                <div className="relative flex items-center">
+                  <select
+                    value={timeFilter}
+                    onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
+                    className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-9 appearance-none"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="tomorrow">Tomorrow</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => { setTimeFilter('custom'); setCurrentPage(1); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary transition-colors focus:outline-none"
+                    title="Select Custom Range"
+                  >
+                    <Calendar size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {timeFilter === 'custom' && (
+                <div className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                    onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { console.log(err); } }}
+                    className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 shadow-sm cursor-pointer"
+                    title="Start Date"
+                  />
+                  <span className="text-xs text-ink-4">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                    onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { console.log(err); } }}
+                    className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 shadow-sm cursor-pointer"
+                    title="End Date"
+                  />
+                </div>
+              )}
+
+              {/* Sort By */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-9 appearance-none"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="rider">Rider Name (A-Z)</option>
+                  <option value="day">Scheduled Day</option>
+                  <option value="hour">Scheduled Hour</option>
+                  <option value="month">Scheduled Month</option>
+                  <option value="year">Scheduled Year</option>
+                </select>
+              </div>
+
+              {/* Advanced Filters — icon toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                title={showAdvanced ? 'Hide advanced filters' : 'Advanced filters'}
+                aria-label="Advanced filters"
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${
+                  showAdvanced
+                    ? 'bg-primary text-white border-primary shadow-md'
+                    : 'bg-white text-ink border-line-2 hover:bg-bg'
+                }`}
+              >
+                <SlidersHorizontal size={15} />
+              </button>
+            </div>
           </div>
 
           {/* Collapsible Advanced Filters Drawer */}
@@ -672,10 +661,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[calc(100vh-17rem)]">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-bg/50 border-b border-line-2">
+            <thead className="sticky top-0 z-20 bg-bg">
+              <tr className="bg-bg border-b border-line-2">
                 <th className="pl-6 pr-3 py-2.5 w-10">
                   <input
                     type="checkbox"
@@ -690,7 +679,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Appt</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver / Run</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip Reason</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Distance</th>
@@ -699,7 +688,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Perform</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Arrival Time</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Financials</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Charge</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Note</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatcher/Admin Note</th>
               </tr>
@@ -767,19 +756,16 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
                   {/* Driver (inline assignment) */}
                   <td className="px-3 py-2.5">
-                    <div className="flex flex-col gap-1">
-                      <select
-                        value={trip.driverId || ''}
-                        onChange={(e) => updateTrip(trip.id, { driverId: e.target.value })}
-                        className={`${INLINE_INPUT} max-w-[140px] ${trip.driverId ? '' : 'text-ink-4'}`}
-                      >
-                        <option value="">Unassigned</option>
-                        {(drivers || []).map((d: any) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
-                      {trip.driverRun && <span className="text-[10px] font-medium text-ink-4 ml-1">{trip.driverRun}</span>}
-                    </div>
+                    <select
+                      value={trip.driverId || ''}
+                      onChange={(e) => updateTrip(trip.id, { driverId: e.target.value })}
+                      className={`${INLINE_INPUT} max-w-[140px] ${trip.driverId ? '' : 'text-ink-4'}`}
+                    >
+                      <option value="">Unassigned</option>
+                      {(drivers || []).map((d: any) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
                   </td>
 
                   {/* Route */}
@@ -929,21 +915,22 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               ))}
             </tbody>
           </table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredTrips.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-          />
-          {filteredTrips.length === 0 && (
-            <div className="p-12 text-center text-ink-4">
-              <Search size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="font-medium text-ink">No trips found</p>
-              <p className="text-sm">Try adjusting your search or filters.</p>
-            </div>
-          )}
         </div>
+        {filteredTrips.length === 0 && (
+          <div className="p-12 text-center text-ink-4">
+            <Search size={48} className="mx-auto mb-4 opacity-20" />
+            <p className="font-medium text-ink">No trips found</p>
+            <p className="text-sm">Try adjusting your search or filters.</p>
+          </div>
+        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredTrips.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
+        />
       </Card>
     </>
   );

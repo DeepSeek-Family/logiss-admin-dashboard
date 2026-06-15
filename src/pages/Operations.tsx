@@ -18,7 +18,7 @@ import {
 const Operations = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading } = useTrips();
   const { reports, loading: reportsLoading } = useReports();
@@ -93,6 +93,7 @@ const Operations = ({ role }: { role?: string | null }) => {
             totalPages={totalPages}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
+            onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
             onRowClick={() => navigate('/live')}
           />
         </div>

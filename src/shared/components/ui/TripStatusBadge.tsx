@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from './Badge';
 
-export const TripStatusBadge = ({ status }: { status: string }) => {
+export const TripStatusBadge = ({ status, className = '' }: { status: string; className?: string }) => {
   const config: { [key: string]: any } = {
     pending_review: { variant: 'warning', label: 'Pending Review' },
     assigned: { variant: 'primary', label: 'Assigned' },
@@ -16,5 +16,5 @@ export const TripStatusBadge = ({ status }: { status: string }) => {
   };
 
   const { variant, label, dot } = config[status] || { variant: 'neutral', label: status };
-  return <Badge variant={variant} dot={dot}>{label}</Badge>;
+  return <Badge variant={variant} dot={dot} className={className}>{label}</Badge>;
 };

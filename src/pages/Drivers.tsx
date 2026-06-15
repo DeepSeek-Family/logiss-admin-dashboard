@@ -19,7 +19,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   if (loading) {
     return (
@@ -128,6 +128,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
         paginatedDrivers={paginatedDrivers}
         filteredCount={filteredDrivers.length}
         itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
         onDriverClick={setSelectedDriverId}
         getStatusBadge={getStatusBadge}
       />

@@ -12,7 +12,7 @@ const Applications = ({ role }: { role?: string | null }) => {
   const { applications, loading } = useApplications();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const totalPages = Math.ceil((applications || []).length / itemsPerPage);
   const paginatedApplications = (applications || []).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -65,6 +65,7 @@ const Applications = ({ role }: { role?: string | null }) => {
               totalItems={applications.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
             />
           </div>
         </div>

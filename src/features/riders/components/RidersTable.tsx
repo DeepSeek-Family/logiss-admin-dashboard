@@ -13,6 +13,7 @@ interface RidersTableProps {
   paginatedRiders: any[];
   filteredCount: number;
   itemsPerPage: number;
+  setItemsPerPage: (size: number) => void;
   onRiderClick: (id: string) => void;
   updateRiderStatus: (id: string, status: string) => void;
   openStatusId: string | null;
@@ -30,6 +31,7 @@ export const RidersTable = ({
   paginatedRiders,
   filteredCount,
   itemsPerPage,
+  setItemsPerPage,
   onRiderClick,
   updateRiderStatus,
   openStatusId,
@@ -204,6 +206,7 @@ export const RidersTable = ({
         totalItems={filteredCount}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
       />
     </Card>
   );

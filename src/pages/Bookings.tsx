@@ -28,7 +28,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [bookingSearch, setBookingSearch] = useState('');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading, refresh } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
@@ -37,10 +37,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const filteredTrips = (trips || []).filter((t: any) => {
     const status = (t?.status || '').toLowerCase();
+    // A booking in this list has no driver yet. The moment a driver is assigned the
+    // trip leaves the booking list entirely and lives in Trip History.
     const matchesTab = activeTab === 'pending'
-      ? status === 'pending_review'
+      ? (status === 'pending_review' && !t?.driverId)
       : activeTab === 'confirmed'
-        ? (status === 'confirmed' || status === 'assigned')
+        ? ((status === 'confirmed' || status === 'assigned') && !t?.driverId)
         : status === activeTab;
 
     const search = bookingSearch.toLowerCase().trim();
@@ -171,11 +173,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const selectedBooking = selectedBookingId ? (trips || []).find((t: any) => t?.id === selectedBookingId) : null;
   const assignedDriver = selectedBooking?.driverId ? drivers.find((d: any) => d.id === selectedBooking.driverId) : null;
 
+  const driverQuery = driverSearch.toLowerCase().trim();
   const smartDrivers = (drivers || [])
-    .filter((d: any) => d?.onDuty && isVehicleMatch(d, selectedBooking))
     .filter((d: any) => {
-      const search = driverSearch.toLowerCase().trim();
-      return !search || d?.name?.toLowerCase().includes(search) || d?.id?.toLowerCase().includes(search);
+      // When searching, match ANY driver by name or ID (lets admins override and assign
+      // off-duty drivers when needed). With no query, show recommended on-duty + vehicle-fit drivers.
+      if (driverQuery) {
+        return (d?.name || '').toLowerCase().includes(driverQuery) || (d?.id || '').toLowerCase().includes(driverQuery);
+      }
+      return d?.onDuty && isVehicleMatch(d, selectedBooking);
     })
     .map((driver: any) => {
       const activeTrips = (trips || []).filter((t: any) =>
@@ -199,7 +205,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="flex flex-col gap-6 h-[calc(100vh-8rem)] animate-in fade-in duration-500">
       {showManualModal && (
         <ManualTripModal
           trips={trips}
@@ -272,8 +278,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
         currentPage={currentPage}
         totalPages={totalPages}
         itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
         setCurrentPage={setCurrentPage}
         trips={trips}
+        drivers={drivers}
         setSelectedTrips={setSelectedTrips}
         handleBulkAction={handleBulkAction}
       />

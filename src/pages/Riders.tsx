@@ -19,7 +19,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [profileTab, setProfileTab] = useState<'overview' | 'trips'>('overview');
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const handleCopyPhone = (phone: string) => {
     navigator.clipboard.writeText(phone);
@@ -108,6 +108,7 @@ const Riders = ({ role }: { role?: string | null }) => {
         paginatedRiders={paginatedRiders}
         filteredCount={filteredRiders.length}
         itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
         onRiderClick={setSelectedRiderId}
         updateRiderStatus={updateRiderStatus}
         openStatusId={openStatusId}

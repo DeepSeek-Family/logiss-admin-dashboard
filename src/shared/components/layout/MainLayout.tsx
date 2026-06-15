@@ -107,7 +107,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
     items: [
       { id: '/trips', label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: '/reports', label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
-      { id: '/transactions', label: 'Financials', icon: CreditCard, roles: ['admin'] },
+      { id: '/transactions', label: 'Charge', icon: CreditCard, roles: ['admin'] },
       { id: '/staff', label: 'User Management', icon: UserPlus, roles: ['admin'] },
       { id: '/cms', label: 'CMS & Content', icon: FileText, roles: ['admin'] },
       { id: '/push', label: 'Push Notifications', icon: Send, roles: ['admin'] },

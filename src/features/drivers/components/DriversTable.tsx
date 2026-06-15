@@ -13,6 +13,7 @@ interface DriversTableProps {
   paginatedDrivers: any[];
   filteredCount: number;
   itemsPerPage: number;
+  setItemsPerPage: (size: number) => void;
   onDriverClick: (id: string) => void;
   getStatusBadge: (status: string) => React.ReactNode;
 }
@@ -29,6 +30,7 @@ export const DriversTable = ({
   paginatedDrivers,
   filteredCount,
   itemsPerPage,
+  setItemsPerPage,
   onDriverClick,
   getStatusBadge
 }: DriversTableProps) => {
@@ -158,6 +160,7 @@ export const DriversTable = ({
         totalItems={filteredCount}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
       />
     </Card>
   );
