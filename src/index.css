@@ -61,9 +61,11 @@
     animation: fadeIn 300ms ease-out forwards;
   }
 
+  /* Opacity-only: a lingering transform here would become the containing block
+     for position:fixed overlays (modals/drawers) and mis-position them. */
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @keyframes pulseDot {

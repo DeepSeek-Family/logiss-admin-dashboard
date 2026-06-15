@@ -11,6 +11,21 @@ interface TripArchiveTabProps {
   selectedIds: string[];
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   updateTrip: (id: string, patch: Record<string, any>) => void;
+  /** Locate this trip's vehicle on the side map. */
+  onRowSelect?: (id: string | null) => void;
+  selectedMapId?: string | null;
+  /** Time & Sort are controlled by the page header so they can sit beside the actions. */
+  timeFilter: string;
+  setTimeFilter: (v: string) => void;
+  sortBy: string;
+  setSortBy: (v: string) => void;
+  startDate: string;
+  setStartDate: (v: string) => void;
+  endDate: string;
+  setEndDate: (v: string) => void;
+  /** Render Time/Sort inside the filter bar (true when the map is hidden); the page
+   *  header renders them instead when the map is shown. */
+  inlineTimeSort?: boolean;
 }
 
 // Editable status options (mirrors TripStatusBadge config).
@@ -149,14 +164,24 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   selectedIds,
   setSelectedIds,
   updateTrip,
+  onRowSelect,
+  selectedMapId,
+  timeFilter,
+  setTimeFilter,
+  sortBy,
+  setSortBy,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  inlineTimeSort = true,
 }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
-  const [timeFilter, setTimeFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to page 1 when the header-controlled Time/Sort change.
+  React.useEffect(() => { setCurrentPage(1); }, [timeFilter, sortBy, startDate, endDate]);
   const [driverFilter, setDriverFilter] = useState('all');
   const [fundingFilter, setFundingFilter] = useState('all');
   const [countyFilter, setCountyFilter] = useState('all'); // 'all' | 'inside' | 'outside'
@@ -468,74 +493,57 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               </select>
             </div>
 
-            {/* Right group: Time / Sort / Advanced */}
+            {/* Right group: Time / Sort (when map hidden) + Advanced */}
             <div className="ml-auto flex items-center gap-3 flex-wrap">
-              {/* Time Period */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
-                <div className="relative flex items-center">
-                  <select
-                    value={timeFilter}
-                    onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
-                    className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-9 appearance-none"
-                  >
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="tomorrow">Tomorrow</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="custom">Custom Range</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => { setTimeFilter('custom'); setCurrentPage(1); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary transition-colors focus:outline-none"
-                    title="Select Custom Range"
-                  >
-                    <Calendar size={14} />
-                  </button>
-                </div>
-              </div>
+              {inlineTimeSort && (
+                <>
+                  {/* Time Period */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
+                    <div className="relative flex items-center">
+                      <select
+                        value={timeFilter}
+                        onChange={(e) => setTimeFilter(e.target.value)}
+                        className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
+                      >
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="tomorrow">Tomorrow</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="custom">Custom Range</option>
+                      </select>
+                      <button type="button" onClick={() => setTimeFilter('custom')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary" title="Custom range"><Calendar size={14} /></button>
+                    </div>
+                  </div>
 
-              {timeFilter === 'custom' && (
-                <div className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200">
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-                    onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { console.log(err); } }}
-                    className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 shadow-sm cursor-pointer"
-                    title="Start Date"
-                  />
-                  <span className="text-xs text-ink-4">to</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-                    onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { console.log(err); } }}
-                    className="bg-white border border-line rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 shadow-sm cursor-pointer"
-                    title="End Date"
-                  />
-                </div>
+                  {timeFilter === 'custom' && (
+                    <div className="flex items-center gap-2">
+                      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="Start date" />
+                      <span className="text-xs text-ink-4">to</span>
+                      <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="End date" />
+                    </div>
+                  )}
+
+                  {/* Sort */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
+                    >
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="rider">Rider Name (A-Z)</option>
+                      <option value="day">Scheduled Day</option>
+                      <option value="hour">Scheduled Hour</option>
+                      <option value="month">Scheduled Month</option>
+                      <option value="year">Scheduled Year</option>
+                    </select>
+                  </div>
+                </>
               )}
-
-              {/* Sort By */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none cursor-pointer h-9 appearance-none"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="rider">Rider Name (A-Z)</option>
-                  <option value="day">Scheduled Day</option>
-                  <option value="hour">Scheduled Hour</option>
-                  <option value="month">Scheduled Month</option>
-                  <option value="year">Scheduled Year</option>
-                </select>
-              </div>
 
               {/* Advanced Filters — icon toggle */}
               <button
@@ -678,6 +686,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Pickup Time</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Appt</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Customer ID</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Auth ID</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
@@ -697,9 +707,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               {paginatedTrips.map(trip => (
                 <tr
                   key={trip.id}
-                  className={`hover:bg-primary-tint/20 transition-colors group ${selectedIds.includes(trip.id) ? 'bg-primary-tint/10' : ''}`}
+                  onClick={() => onRowSelect?.(trip.id)}
+                  className={`transition-colors group cursor-pointer ${selectedMapId === trip.id ? 'bg-primary-tint/40 ring-1 ring-inset ring-primary/30' : selectedIds.includes(trip.id) ? 'bg-primary-tint/10' : 'hover:bg-primary-tint/20'}`}
                 >
-                  <td className="pl-6 pr-3 py-2.5 w-10">
+                  <td className="pl-6 pr-3 py-2.5 w-10" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(trip.id)}
@@ -739,6 +750,16 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       <Avatar initials={trip.rider.initials} size="xs" />
                       <span className="text-xs font-medium text-ink whitespace-nowrap">{trip.rider.name}</span>
                     </div>
+                  </td>
+
+                  {/* Customer ID */}
+                  <td className="px-3 py-2.5">
+                    <span className="font-mono text-xs text-ink-3 whitespace-nowrap" title={trip.passengerId || trip.rider?.passengerId || ''}>{trip.passengerId || trip.rider?.passengerId || '—'}</span>
+                  </td>
+
+                  {/* Authorization ID */}
+                  <td className="px-3 py-2.5">
+                    <span className="font-mono text-xs text-ink-3 whitespace-nowrap" title={trip.authorizationId || trip.authId || ''}>{trip.authorizationId || trip.authId || '—'}</span>
                   </td>
 
                   {/* Status */}

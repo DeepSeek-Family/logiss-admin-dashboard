@@ -1,28 +1,160 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
-  MapPin, Phone, MessageSquare, Car, XCircle, CheckCircle2, Lock
+  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil
 } from 'lucide-react';
-import { Card, Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
+import { Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
 
-export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; drivers: any[]; onClose: () => void }) => {
+interface TripDetailsModalProps {
+  trip: any;
+  drivers: any[];
+  onClose: () => void;
+  /** Persist edits (id, patch). Wired to useTrips().updateTrip. */
+  onUpdate?: (id: string, patch: Record<string, any>) => void;
+}
+
+const INPUT = 'w-full bg-white border border-line-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
+
+// "10:15 AM" / "13:05" → "HH:MM" (24h) for <input type="time">.
+const to24h = (val?: string): string => {
+  if (!val) return '';
+  const s = String(val).trim();
+  if (/^\d{2}:\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!m) return '';
+  let h = parseInt(m[1], 10);
+  const ap = m[3]?.toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${m[2]}`;
+};
+// "HH:MM" → "h:MM AM/PM" for storage/display consistency with the rest of the app.
+const to12h = (hhmm?: string): string => {
+  if (!hhmm) return '';
+  const m = String(hhmm).match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return String(hhmm);
+  let h = parseInt(m[1], 10);
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${m[2]} ${ap}`;
+};
+const numFrom = (v?: string): string => {
+  const m = String(v ?? '').match(/[\d.]+/);
+  return m ? m[0] : '';
+};
+
+export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetailsModalProps) => {
   const [editMode, setEditMode] = useState(false);
-  const [editedTime, setEditedTime] = useState(trip?.scheduledTime ? trip.scheduledTime.slice(11, 16) : '');
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [editedDriverId, setEditedDriverId] = useState(trip?.driverId || '');
 
-  const driver = (drivers || []).find(d => String(d?.id) === String(editedDriverId));
-  const canEdit = !['completed', 'cancelled', 'in_trip', 'en_route', 'arrived'].includes(trip.status);
+  // Editable working copy — everything except the rider's name.
+  const [form, setForm] = useState({
+    scheduledDate: trip?.scheduledTime ? String(trip.scheduledTime).slice(0, 10) : '',
+    scheduledTimeOfDay: trip?.scheduledTime ? String(trip.scheduledTime).slice(11, 16) : '',
+    requestedPickup: to24h(trip?.requestedPickup),
+    appointmentTime: to24h(trip?.appointmentTime),
+    type: trip?.type || 'one_way',
+    reason: trip?.reason || '',
+    distance: trip?.miles != null ? String(trip.miles) : numFrom(trip?.distance),
+    duration: numFrom(trip?.duration),
+    returnType: trip?.returnType || '',
+    source: trip?.source || '',
+    pickup: trip?.pickup || '',
+    stop: trip?.stop || '',
+    dropoff: trip?.dropoff || '',
+    phone: trip?.rider?.phone || '',
+    age: trip?.rider?.age ?? '',
+    mobility: trip?.mobility || '',
+    passengers: trip?.passengers ?? 1,
+    escort: trip?.escort || '',
+    notes: trip?.notes || '',
+    privateNotes: trip?.privateNotes || '',
+    cost: trip?.cost ?? '',
+    copay: trip?.copay ?? '',
+    costToCounty: trip?.costToCounty ?? '',
+    paymentMethod: trip?.paymentMethod || '',
+    paymentStatus: trip?.paymentStatus || '',
+    authorizationId: trip?.authorizationId || trip?.authId || '',
+    driverId: trip?.driverId || '',
+  });
 
-  return (
-    <div className="fixed inset-0 bg-ink/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  const driver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
+
+  const handleSave = () => {
+    const scheduledTime = form.scheduledDate && form.scheduledTimeOfDay
+      ? `${form.scheduledDate}T${form.scheduledTimeOfDay}:00`
+      : trip.scheduledTime;
+
+    const patch: Record<string, any> = {
+      scheduledTime,
+      requestedPickup: to12h(form.requestedPickup),
+      appointmentTime: to12h(form.appointmentTime),
+      type: form.type,
+      reason: form.reason,
+      distance: form.distance ? `${form.distance} mi` : '',
+      miles: form.distance === '' ? undefined : Number(form.distance),
+      duration: form.duration ? `${form.duration} min` : '',
+      returnType: form.returnType,
+      source: form.source,
+      pickup: form.pickup,
+      stop: form.stop,
+      dropoff: form.dropoff,
+      mobility: form.mobility,
+      passengers: Number(form.passengers) || 1,
+      escort: form.escort,
+      notes: form.notes,
+      privateNotes: form.privateNotes,
+      cost: form.cost === '' ? 0 : Number(form.cost),
+      copay: form.copay === '' ? 0 : Number(form.copay),
+      costToCounty: form.costToCounty === '' ? 0 : Number(form.costToCounty),
+      paymentMethod: form.paymentMethod,
+      paymentStatus: form.paymentStatus,
+      authorizationId: form.authorizationId,
+      driverId: form.driverId,
+      // Name is intentionally not editable; phone/age are.
+      rider: { ...(trip.rider || {}), phone: form.phone, age: form.age === '' ? undefined : Number(form.age) },
+    };
+    if (form.driverId && (trip.status === 'pending_review' || !trip.status)) patch.status = 'assigned';
+
+    onUpdate?.(trip.id, patch);
+    setEditMode(false);
+    toast.success('Trip updated');
+  };
+
+  // Called as a function (not <Field/>) so inputs keep focus across re-renders.
+  const Field = ({ label, k, type = 'text', accent = false, options, fmt, step }: { label: string; k: keyof typeof form; type?: string; accent?: boolean; options?: { value: string; label: string }[]; fmt?: (v: string) => string; step?: string }) => {
+    const raw = String(form[k] ?? '');
+    return (
+      <div key={k as string}>
+        <p className="text-xs text-ink-4 mb-1">{label}</p>
+        {editMode ? (
+          options ? (
+            <select value={raw} onChange={(e) => set(k as string, e.target.value)} className={`${INPUT} cursor-pointer`}>
+              {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          ) : (
+            <input type={type} step={step} min={type === 'number' ? '0' : undefined} value={raw} onChange={(e) => set(k as string, e.target.value)} className={`${INPUT}${type === 'time' ? ' w-fit' : ''}`} />
+          )
+        ) : (
+          <p className={`text-sm font-medium ${accent ? 'text-primary' : 'text-ink'} truncate`}>{raw ? (fmt ? fmt(raw) : raw) : <span className="text-ink-4">N/A</span>}</p>
+        )}
+      </div>
+    );
+  };
+
+  return createPortal((
+    <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 border-b border-line-2 bg-bg relative">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 border-b border-line-2 bg-bg relative shrink-0">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
             <TripStatusBadge status={trip.status} />
             <div>
@@ -34,38 +166,28 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {canEdit && !editMode && !cancelMode && (
+            {!editMode && !cancelMode && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>Modify Trip</Button>
-                <button
-                  onClick={() => setCancelMode(true)}
-                  className="px-4 py-2 bg-urgent/10 text-urgent border border-urgent/20 rounded-xl text-xs font-medium hover:bg-urgent hover:text-white transition-all shadow-sm"
-                >
-                  Cancel Trip
-                </button>
+                <Button variant="outline" size="sm" icon={Pencil} onClick={() => setEditMode(true)}>Edit Details</Button>
+                {trip.status !== 'cancelled' && (
+                  <button onClick={() => setCancelMode(true)} className="px-4 py-2 bg-urgent/10 text-urgent border border-urgent/20 rounded-xl text-xs font-medium hover:bg-urgent hover:text-white transition-all shadow-sm">
+                    Cancel Trip
+                  </button>
+                )}
               </>
             )}
             {editMode && (
-              <Button variant="primary" size="sm" onClick={() => {
-                trip.driverId = editedDriverId;
-                trip.scheduledTime = trip.scheduledTime.slice(0, 11) + editedTime + trip.scheduledTime.slice(16);
-                if (trip.status === 'pending_review' || !trip.status) trip.status = 'assigned';
-                setEditMode(false);
-                toast.success('Trip modified successfully');
-              }}>Save Changes</Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setEditMode(false)}>Discard</Button>
+                <Button variant="primary" size="sm" onClick={handleSave}>Save Changes</Button>
+              </>
             )}
             {cancelMode && (
               <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
-                <input
-                  placeholder="Reason for cancellation..."
-                  className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]"
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                />
+                <input placeholder="Reason for cancellation..." className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
                 <Button variant="primary" className="bg-urgent hover:bg-urgent/90" size="sm" onClick={() => {
                   if (!cancelReason) return toast.error('Please provide a reason');
-                  trip.status = 'cancelled';
-                  trip.cancelReason = cancelReason;
+                  onUpdate?.(trip.id, { status: 'cancelled', cancelReason });
                   setCancelMode(false);
                   toast.success('Trip cancelled successfully');
                 }}>Confirm</Button>
@@ -78,10 +200,15 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
           </div>
         </div>
 
-        {/* Content Body */}
+        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-bg/40">
+          {editMode && (
+            <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 border border-primary/15 rounded-xl px-4 py-2.5">
+              <Pencil size={13} /> Editing mode — update any field except the rider's name, then Save Changes.
+            </div>
+          )}
 
-          {trip.cancelReason && (
+          {trip.cancelReason && !editMode && (
             <div className="mb-6 bg-urgent-light/40 border border-urgent/20 p-4 rounded-xl flex items-start gap-3">
               <XCircle className="text-urgent shrink-0 mt-0.5" size={18} />
               <div>
@@ -92,168 +219,153 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Left Col: Trip Details & Rider Info */}
+            {/* Left */}
             <div className="lg:col-span-2 space-y-6">
-
               {/* Trip Overview */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
-                  <Calendar size={14} /> Trip Overview
-                </h3>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Calendar size={14} /> Trip Overview</h3>
 
                 {editMode && (
-                  <div className="mb-5 p-4 bg-primary-tint/10 rounded-xl border border-primary/20">
-                    <label className="block text-xs text-ink-4 mb-1">Reschedule Time</label>
-                    <input
-                      type="time"
-                      value={editedTime}
-                      onChange={(e) => setEditedTime(e.target.value)}
-                      className="w-full max-w-xs bg-white border border-line rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    />
+                  <div className="mb-5 grid grid-cols-2 gap-4 p-4 bg-primary-tint/10 rounded-xl border border-primary/20">
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Scheduled Date</p>
+                      <input type="date" value={form.scheduledDate} onChange={(e) => set('scheduledDate', e.target.value)} className={INPUT} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Scheduled Time</p>
+                      <input type="time" value={form.scheduledTimeOfDay} onChange={(e) => set('scheduledTimeOfDay', e.target.value)} className={INPUT} />
+                    </div>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div><p className="text-xs text-ink-4 mb-1">Source / County</p><p className="text-sm font-medium text-ink truncate">{trip.source || 'VA County'}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Pickup Time</p><p className="text-sm font-medium text-ink">{trip.requestedPickup || (trip.scheduledTime ? formatTime(trip.scheduledTime) : 'N/A')}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Appointment</p><p className="text-sm font-medium text-primary">{trip.appointmentTime || <span className="text-ink-4">N/A</span>}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Trip Type</p><p className="text-sm font-medium text-ink">{tripTypeLabel(trip.type)}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Reason</p><p className="text-sm font-medium text-ink">{trip.reason || 'Medical Visit'}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Est. Distance</p><p className="text-sm font-medium text-ink">{trip.distance || 'N/A'}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Est. Duration</p><p className="text-sm font-medium text-ink">{trip.duration || 'N/A'}</p></div>
-                  <div><p className="text-xs text-ink-4 mb-1">Return Type</p><p className="text-sm font-medium text-ink capitalize">{trip.returnType ? trip.returnType.replace('_', ' ') : 'N/A'}</p></div>
+                  {Field({ label: 'Source / County', k: 'source' })}
+                  {Field({ label: 'Pickup Time', k: 'requestedPickup', type: 'time', fmt: to12h })}
+                  {Field({ label: 'Appointment', k: 'appointmentTime', type: 'time', accent: true, fmt: to12h })}
+                  {Field({ label: 'Trip Type', k: 'type', options: [{ value: 'one_way', label: 'One Way' }, { value: 'round_trip', label: 'Round Trip' }] })}
+                  {Field({ label: 'Reason', k: 'reason' })}
+                  {Field({ label: 'Est. Distance (mi)', k: 'distance', type: 'number', step: '0.1', fmt: (v) => `${v} mi` })}
+                  {Field({ label: 'Est. Duration (min)', k: 'duration', type: 'number', fmt: (v) => `${v} min` })}
+                  {Field({ label: 'Return Type', k: 'returnType', options: [{ value: '', label: 'N/A' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'will_call', label: 'Will Call' }] })}
                 </div>
+                {!editMode && <p className="sr-only">{tripTypeLabel(trip.type)}</p>}
               </section>
 
-              {/* Route Anatomy */}
+              {/* Route */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
-                  <Navigation size={14} /> Route & Timeline
-                </h3>
-                <div className="relative pl-4 space-y-6">
-                  <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-line-2"></div>
-                  <div className="relative z-10 flex gap-4">
-                    <div className="w-5 h-5 rounded-full bg-white border-2 border-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Navigation size={14} /> Route & Timeline</h3>
+                {editMode ? (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Pickup Location</p>
+                      <input value={form.pickup} onChange={(e) => set('pickup', e.target.value)} className={INPUT} />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-ink-4 mb-0.5">Pickup Location</p>
-                        {trip.actualPickup && <Badge variant="neutral" className="text-xs">Actual: {trip.actualPickup}</Badge>}
-                      </div>
-                      <p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.pickup}</p>
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Intermediate Stop (optional)</p>
+                      <input value={form.stop} onChange={(e) => set('stop', e.target.value)} className={INPUT} placeholder="None" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Drop-off Location</p>
+                      <input value={form.dropoff} onChange={(e) => set('dropoff', e.target.value)} className={INPUT} />
                     </div>
                   </div>
-                  {trip.stop && (
+                ) : (
+                  <div className="relative pl-4 space-y-6">
+                    <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-line-2" />
                     <div className="relative z-10 flex gap-4">
-                      <div className="w-5 h-5 rounded-full bg-white border-2 border-accent flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                        <div className="w-1.5 h-1.5 bg-accent"></div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-ink-4 mb-0.5">Intermediate Stop</p>
-                          {trip.actualStop && <Badge variant="neutral" className="text-xs">Actual: {trip.actualStop}</Badge>}
-                        </div>
-                        <p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.stop}</p>
-                      </div>
+                      <div className="w-5 h-5 rounded-full bg-white border-2 border-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-2 h-2 rounded-full bg-primary" /></div>
+                      <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Pickup Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.pickup}</p></div>
                     </div>
-                  )}
-                  <div className="relative z-10 flex gap-4">
-                    <div className="w-5 h-5 rounded-full bg-white border-2 border-urgent flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                      <MapPin size={10} className="text-urgent" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-ink-4 mb-0.5">Drop-off Location</p>
-                        {trip.actualDropoff ? <Badge variant="neutral" className="text-xs">Actual: {trip.actualDropoff}</Badge> : trip.actualArrived ? <Badge variant="neutral" className="text-xs">Arrived: {trip.actualArrived}</Badge> : null}
+                    {trip.stop && (
+                      <div className="relative z-10 flex gap-4">
+                        <div className="w-5 h-5 rounded-full bg-white border-2 border-accent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-1.5 h-1.5 bg-accent" /></div>
+                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Intermediate Stop</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.stop}</p></div>
                       </div>
-                      <p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.dropoff}</p>
+                    )}
+                    <div className="relative z-10 flex gap-4">
+                      <div className="w-5 h-5 rounded-full bg-white border-2 border-urgent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><MapPin size={10} className="text-urgent" /></div>
+                      <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Drop-off Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.dropoff}</p></div>
                     </div>
                   </div>
-                </div>
+                )}
               </section>
 
-              {/* Rider Info */}
+              {/* Rider */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
-                  <User size={14} /> Rider Information
-                </h3>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><User size={14} /> Rider Information</h3>
                 <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="flex items-center gap-4 border-r border-line-2 pr-6">
+                  <div className="flex items-center gap-4 sm:border-r border-line-2 sm:pr-6">
                     <Avatar initials={trip?.rider?.initials || '?'} size="lg" />
                     <div>
                       <h4 className="text-base font-semibold text-ink">{trip?.rider?.name || 'Unknown Rider'}</h4>
-                      <p className="text-xs text-ink-4 mt-0.5 font-medium">{trip?.rider?.phone || 'No phone provided'}</p>
+                      {editMode ? (
+                        <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={`${INPUT} mt-1`} placeholder="Phone" />
+                      ) : (
+                        <p className="text-xs text-ink-4 mt-0.5 font-medium">{trip?.rider?.phone || 'No phone provided'}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 grid grid-cols-2 gap-4">
-                    <div><p className="text-xs text-ink-4 mb-1">Age</p><p className="text-sm text-ink">{trip?.rider?.age || 'N/A'}</p></div>
-                    <div><p className="text-xs text-ink-4 mb-1">Mobility Need</p><p className="text-sm font-medium text-ink flex items-center gap-1.5"><Badge variant="primary">{trip?.mobility || 'Ambulatory'}</Badge></p></div>
-                    <div><p className="text-xs text-ink-4 mb-1">Passengers</p><p className="text-sm text-ink">{trip?.passengers || 1}</p></div>
-                    <div><p className="text-xs text-ink-4 mb-1">Escort/Attendant</p><p className="text-sm text-ink">{trip?.escort || 'None'}</p></div>
+                    {Field({ label: 'Age', k: 'age', type: 'number' })}
+                    <div>
+                      <p className="text-xs text-ink-4 mb-1">Mobility Need</p>
+                      {editMode ? (
+                        <select value={form.mobility} onChange={(e) => set('mobility', e.target.value)} className={`${INPUT} cursor-pointer`}>
+                          {['Ambulatory', 'Cane', 'Walker', 'Wheelchair', 'Stretcher'].map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      ) : (
+                        <Badge variant="primary">{trip?.mobility || 'Ambulatory'}</Badge>
+                      )}
+                    </div>
+                    {Field({ label: 'Passengers', k: 'passengers', type: 'number' })}
+                    {Field({ label: 'Escort/Attendant', k: 'escort' })}
                   </div>
                 </div>
-                {trip.notes && (
-                  <div className="mt-5 p-4 bg-bg rounded-xl border border-line-2">
+
+                {/* Notes */}
+                <div className="mt-5 space-y-3">
+                  <div className={`p-4 rounded-xl border ${editMode ? 'border-line-2 bg-white' : 'bg-bg border-line-2'}`}>
                     <p className="text-xs text-ink-4 mb-1">Instructions for Driver</p>
-                    <p className="text-sm font-medium text-ink">{trip.notes}</p>
+                    {editMode ? (
+                      <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className={`${INPUT} resize-none`} placeholder="Driver instructions…" />
+                    ) : (
+                      <p className="text-sm font-medium text-ink">{trip.notes || <span className="text-ink-4">None</span>}</p>
+                    )}
                   </div>
-                )}
-                
-                {trip.privateNotes && (
-                  <div className="mt-3 p-4 bg-urgent-light/40 rounded-xl border border-urgent/20">
-                    <p className="text-xs font-bold text-urgent mb-1 flex items-center gap-1.5">
-                      <Lock size={12} /> Internal Private Notes
-                    </p>
-                    <p className="text-sm font-medium text-ink">{trip.privateNotes}</p>
+                  <div className={`p-4 rounded-xl border ${editMode ? 'border-urgent/20 bg-white' : 'bg-urgent-light/40 border-urgent/20'}`}>
+                    <p className="text-xs font-bold text-urgent mb-1 flex items-center gap-1.5"><Lock size={12} /> Internal Private Notes</p>
+                    {editMode ? (
+                      <textarea value={form.privateNotes} onChange={(e) => set('privateNotes', e.target.value)} rows={2} className={`${INPUT} resize-none`} placeholder="Dispatcher / admin only…" />
+                    ) : (
+                      <p className="text-sm font-medium text-ink">{trip.privateNotes || <span className="text-ink-4">None</span>}</p>
+                    )}
                   </div>
-                )}
+                </div>
               </section>
             </div>
 
-            {/* Right Col: Driver & Financials */}
+            {/* Right */}
             <div className="space-y-6">
-
-              {/* Driver Assignment */}
+              {/* Driver */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
-                    <Truck size={14} /> Fleet & Driver
-                  </h3>
+                  <h3 className="text-sm font-semibold text-ink flex items-center gap-2"><Truck size={14} /> Fleet & Driver</h3>
                   {editMode && <Badge variant="warning">Editing</Badge>}
                 </div>
                 {editMode ? (
-                  <div className="space-y-2">
-                    {drivers.slice(0, 5).map(d => (
-                      <button
-                        key={d.id}
-                        onClick={() => setEditedDriverId(d.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all border ${editedDriverId === d.id ? 'bg-primary/5 border-primary text-primary shadow-sm' : 'hover:bg-bg border-line-2'}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar initials={d.initials} size="xs" />
-                          <div className="text-left">
-                            <p className="text-xs font-medium leading-tight">{d.name}</p>
-                            <p className="text-xs font-medium opacity-80">{d.vehicle.type}</p>
-                          </div>
-                        </div>
-                        {editedDriverId === d.id && <CheckCircle2 size={16} />}
-                      </button>
-                    ))}
-                  </div>
+                  <select value={form.driverId} onChange={(e) => set('driverId', e.target.value)} className={`${INPUT} cursor-pointer`}>
+                    <option value="">Unassigned</option>
+                    {(drivers || []).map(d => <option key={d.id} value={d.id}>{d.name} · {d.vehicle?.type}</option>)}
+                  </select>
                 ) : driver ? (
                   <div className="space-y-5">
                     <div className="flex items-center gap-3">
                       <Avatar initials={driver.initials} size="md" online={driver.onDuty} />
-                      <div>
-                        <p className="text-base font-semibold text-ink">{driver.name}</p>
-                        <p className="text-xs text-ink-4 font-medium">{driver.phone}</p>
-                      </div>
+                      <div><p className="text-base font-semibold text-ink">{driver.name}</p><p className="text-xs text-ink-4 font-medium">{driver.phone}</p></div>
                     </div>
                     <div className="bg-bg rounded-xl p-3 border border-line-2 space-y-2">
-                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Vehicle Type</span><span className="text-xs text-ink">{driver.vehicle.type}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Plate Number</span><span className="text-xs font-mono text-ink bg-white px-2 py-0.5 rounded border border-line">{driver.vehicle.plate}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Vehicle Type</span><span className="text-xs text-ink">{driver.vehicle?.type}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Plate Number</span><span className="text-xs font-mono text-ink bg-white px-2 py-0.5 rounded border border-line">{driver.vehicle?.plate}</span></div>
                       <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Driver Rating</span><span className="text-xs text-ink">★ {driver.rating}</span></div>
                     </div>
                     <div className="flex gap-2">
@@ -266,66 +378,69 @@ export const TripDetailsModal = ({ trip, drivers, onClose }: { trip: any; driver
                     <Car size={32} className="text-ink-4 mb-3 opacity-50" />
                     <p className="text-sm font-medium text-ink mb-1">Unassigned Request</p>
                     <p className="text-xs text-ink-4 mb-4">No driver has been assigned yet.</p>
-                    {canEdit && <Button variant="primary" size="sm" onClick={() => setEditMode(true)}>Assign Driver</Button>}
+                    <Button variant="primary" size="sm" onClick={() => setEditMode(true)}>Assign Driver</Button>
                   </div>
                 )}
               </section>
 
-              {/* Financial & Billing */}
+              {/* Billing */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
-                  <CreditCard size={14} /> Billing & Payment
-                </h3>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><CreditCard size={14} /> Billing & Payment</h3>
                 <div className="space-y-4">
                   <div className="flex items-end justify-between bg-bg p-4 rounded-xl border border-line-2">
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Total Trip Cost</p>
-                      <p className="text-2xl font-semibold text-primary leading-none">{money(trip.cost)}</p>
+                      {editMode ? (
+                        <input type="number" step="0.01" value={String(form.cost)} onChange={(e) => set('cost', e.target.value)} className={`${INPUT} w-28`} />
+                      ) : (
+                        <p className="text-2xl font-semibold text-primary leading-none">{money(trip.cost)}</p>
+                      )}
                     </div>
-                    <Badge variant={trip.paymentStatus === 'Paid' || trip.paymentStatus === 'Approved' || trip.paymentStatus === 'charged' ? 'accent' : 'warning'}>
-                      {trip.paymentStatus || 'Pending'}
-                    </Badge>
+                    {editMode ? (
+                      <select value={form.paymentStatus} onChange={(e) => set('paymentStatus', e.target.value)} className={`${INPUT} w-32 cursor-pointer`}>
+                        {['Pending', 'Approved', 'Paid', 'charged', 'Denied'].map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    ) : (
+                      <Badge variant={['Paid', 'Approved', 'charged'].includes(trip.paymentStatus) ? 'accent' : 'warning'}>{trip.paymentStatus || 'Pending'}</Badge>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10">
-                    <div><p className="text-xs font-medium text-primary mb-1">Patient Copay</p><p className="text-lg font-semibold text-ink">{money(trip.copay || 0)}</p></div>
-                    <div className="border-l border-primary/20 pl-4"><p className="text-xs font-medium text-primary mb-1">Cost to County</p><p className="text-lg font-semibold text-ink">{money(trip.costToCounty || trip.cost || 0)}</p></div>
+                    <div>
+                      <p className="text-xs font-medium text-primary mb-1">Patient Copay</p>
+                      {editMode ? <input type="number" step="0.01" value={String(form.copay)} onChange={(e) => set('copay', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(trip.copay || 0)}</p>}
+                    </div>
+                    <div className="sm:border-l border-primary/20 sm:pl-4">
+                      <p className="text-xs font-medium text-primary mb-1">Cost to County</p>
+                      {editMode ? <input type="number" step="0.01" value={String(form.costToCounty)} onChange={(e) => set('costToCounty', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(trip.costToCounty || trip.cost || 0)}</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><p className="text-xs text-ink-4 mb-1">Payment Method</p><p className="text-sm text-ink truncate" title={trip.paymentMethod || 'N/A'}>{trip.paymentMethod || 'N/A'}</p></div>
-                    <div><p className="text-xs text-ink-4 mb-1">Authorization ID</p><p className="text-sm font-mono text-ink truncate" title={trip.authorizationId || trip.authId || 'N/A'}>{trip.authorizationId || trip.authId || 'N/A'}</p></div>
+                    {Field({ label: 'Payment Method', k: 'paymentMethod' })}
+                    {Field({ label: 'Authorization ID', k: 'authorizationId' })}
                   </div>
                 </div>
               </section>
 
-              {/* Audit Trail */}
+              {/* Audit */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
-                  <Shield size={14} /> Audit Trail
-                </h3>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Shield size={14} /> Audit Trail</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-line-2 mt-1.5 shrink-0"></div>
-                    <div>
-                      <p className="text-xs font-medium text-ink-3">Trip submitted by <span className="font-medium text-ink">Dispatcher Portal</span></p>
-                      <p className="text-xs text-ink-4">{trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p>
-                    </div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-line-2 mt-1.5 shrink-0" />
+                    <div><p className="text-xs font-medium text-ink-3">Trip submitted by <span className="font-medium text-ink">Dispatcher Portal</span></p><p className="text-xs text-ink-4">{trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p></div>
                   </div>
-                  {trip.driverId && (
+                  {driver && (
                     <div className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0"></div>
-                      <div>
-                        <p className="text-xs font-medium text-ink-3">Assigned to <span className="font-medium text-ink">{driver?.name || trip.driverId}</span></p>
-                        <p className="text-xs text-ink-4">System Auto-log</p>
-                      </div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                      <div><p className="text-xs font-medium text-ink-3">Assigned to <span className="font-medium text-ink">{driver.name}</span></p><p className="text-xs text-ink-4">System Auto-log</p></div>
                     </div>
                   )}
                 </div>
               </section>
-
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 };

@@ -82,31 +82,25 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
       { id: '/operations', label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
       { id: '/bookings', label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
-      {
-        id: '/live',
-        label: 'Live Trips',
-        icon: Map,
-        isLive: true,
-        roles: ['admin', 'dispatcher']
-      },
+      { id: '/trips', label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
+      { id: '/schedule', label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
+      { id: '/reports', label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
     ]
   },
   {
     group: 'Resources',
     roles: ['admin', 'dispatcher'],
     items: [
-      { id: '/drivers', label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
-      { id: '/riders', label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
-      { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
       { id: '/fleet', label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
+      { id: '/riders', label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
+      { id: '/drivers', label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
+      { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
     ]
   },
   {
     group: 'Administration',
     roles: ['admin'],
     items: [
-      { id: '/trips', label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
-      { id: '/reports', label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
       { id: '/transactions', label: 'Charge', icon: CreditCard, roles: ['admin'] },
       { id: '/staff', label: 'User Management', icon: UserPlus, roles: ['admin'] },
       { id: '/cms', label: 'CMS & Content', icon: FileText, roles: ['admin'] },

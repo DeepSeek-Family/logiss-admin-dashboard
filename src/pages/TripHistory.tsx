@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Truck, Calendar, Loader2, Download } from 'lucide-react';
+import { Loader2, Download, Map as MapIcon, Calendar } from 'lucide-react';
 import { Card, Button } from '@/shared/components/ui';
 import { useTrips } from '../hooks/useTrips';
 import { useDrivers } from '../hooks/useDrivers';
 import { useFleet } from '../hooks/useFleet';
 
-import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab } from '@/features/tripHistory';
+import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
 
 const TripHistory = ({ role }: { role?: string | null }) => {
   const { trips, loading: tripsLoading, updateTrip } = useTrips();
@@ -14,10 +14,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const { vehicles, loading: fleetLoading } = useFleet();
 
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const activeTab = location.pathname.includes('/schedule') ? 'schedule' : (searchParams.get('tab') || 'trips');
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [mapTripId, setMapTripId] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  // Time & Sort live here so they can render in the page header (beside the actions).
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
 
@@ -52,73 +59,133 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
+          onUpdate={updateTrip}
         />
       )}
 
-      {/* Header: title + tab switcher + actions on a single compact row */}
+      {/* Header: title + actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {activeTab === 'trips' ? (
-            <div>
-              <h1 className="text-2xl font-semibold text-ink">Trip History</h1>
-              <p className="text-sm text-ink-4 mt-0.5">Archived and active records for LOGISS fleet</p>
-            </div>
-          ) : (
-            <div>
-              <h1 className="text-2xl font-semibold text-ink">Fleet Schedule</h1>
-              <p className="text-sm text-ink-4 mt-0.5">Coordinate shifts, vehicle availability, and operator assignments</p>
-            </div>
-          )}
-
-          <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl w-fit shadow-sm border border-line-2/40 shrink-0">
-            <button
-              onClick={() => setSearchParams({ tab: 'trips' })}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all ${
-                activeTab === 'trips'
-                  ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-                  : 'text-ink-4 hover:text-ink'
-              }`}
-            >
-              <Truck size={14} />
-              Trip Archive
-            </button>
-            <button
-              onClick={() => setSearchParams({ tab: 'schedule' })}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all ${
-                activeTab === 'schedule'
-                  ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-                  : 'text-ink-4 hover:text-ink'
-              }`}
-            >
-              <Calendar size={14} />
-              Driver & Fleet Shifts
-            </button>
+        {activeTab === 'trips' ? (
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">Trip History</h1>
+            <p className="text-sm text-ink-4 mt-0.5">Archived and active records for LOGISS fleet</p>
           </div>
-        </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">Scheduled</h1>
+            <p className="text-sm text-ink-4 mt-0.5">Plan the day — driver assignments, timelines, and conflicts</p>
+          </div>
+        )}
 
         {activeTab === 'trips' && (
-          <Button
-            variant="outline"
-            size="sm"
-            icon={Download}
-            onClick={() => window.dispatchEvent(new CustomEvent('export-trips-csv'))}
-            className="shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9 shrink-0"
-          >
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {/* Time + Sort move up here only when the map is shown (filter bar gets narrow) */}
+            {showMap && (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
+                  <div className="relative flex items-center">
+                    <select
+                      value={timeFilter}
+                      onChange={(e) => setTimeFilter(e.target.value)}
+                      className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="tomorrow">Tomorrow</option>
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                    <button type="button" onClick={() => setTimeFilter('custom')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary" title="Custom range"><Calendar size={14} /></button>
+                  </div>
+                </div>
+
+                {timeFilter === 'custom' && (
+                  <div className="flex items-center gap-1.5">
+                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="Start date" />
+                    <span className="text-xs text-ink-4">to</span>
+                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="End date" />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="rider">Rider Name (A-Z)</option>
+                    <option value="day">Scheduled Day</option>
+                    <option value="hour">Scheduled Hour</option>
+                    <option value="month">Scheduled Month</option>
+                    <option value="year">Scheduled Year</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            <button
+              onClick={() => setShowMap(v => !v)}
+              title={showMap ? 'Hide trip map' : 'Show trip map'}
+              className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${
+                showMap ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-ink-3 border-line hover:text-ink hover:bg-bg'
+              }`}
+            >
+              <MapIcon size={15} />
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Download}
+              onClick={() => window.dispatchEvent(new CustomEvent('export-trips-csv'))}
+              className="shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9"
+            >
+              Export CSV
+            </Button>
+          </div>
         )}
       </div>
 
       {/* ────────────────── TRIP HISTORY TAB VIEW ────────────────── */}
       {activeTab === 'trips' && (
-        <TripArchiveTab
-          trips={trips}
-          drivers={drivers}
-          setSelectedTripId={setSelectedTripId}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          updateTrip={updateTrip}
-        />
+        <div className="flex flex-col xl:flex-row gap-5 items-start">
+          <div className="flex-1 min-w-0 w-full">
+            <TripArchiveTab
+              trips={trips}
+              drivers={drivers}
+              setSelectedTripId={setSelectedTripId}
+              selectedIds={selectedIds}
+              setSelectedIds={setSelectedIds}
+              updateTrip={updateTrip}
+              onRowSelect={setMapTripId}
+              selectedMapId={mapTripId}
+              timeFilter={timeFilter}
+              setTimeFilter={setTimeFilter}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              inlineTimeSort={!showMap}
+            />
+          </div>
+          {showMap && (
+            <TripHistoryMap
+              trips={trips}
+              drivers={drivers}
+              selectedId={mapTripId}
+              onSelect={setMapTripId}
+              onOpenDetails={setSelectedTripId}
+              onClose={() => setShowMap(false)}
+            />
+          )}
+        </div>
       )}
 
       {/* ────────────────── DAILY SCHEDULE TAB VIEW ────────────────── */}
@@ -126,6 +193,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
         <ScheduleTab
           drivers={drivers}
           trips={trips}
+          onTripClick={setSelectedTripId}
         />
       )}
     </div>
