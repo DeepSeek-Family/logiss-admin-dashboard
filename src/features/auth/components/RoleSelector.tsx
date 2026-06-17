@@ -22,7 +22,7 @@ export const RoleSelector = ({ handleRoleSelect }: RoleSelectorProps) => {
               <Navigation size={24} />
             </div>
             <div className="text-left">
-              <h3 className="text-base font-medium text-ink mb-0.5">Dispatcher</h3>
+              <h3 className="text-base font-medium text-ink mb-0.5">Dispatch</h3>
               <p className="text-xs font-medium text-ink-4">Manage bookings & live tracking</p>
             </div>
           </div>

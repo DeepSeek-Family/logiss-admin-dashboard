@@ -2,7 +2,8 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Users, Shield, Building2, Check } from 'lucide-react';
 import { Button, Badge } from '@/shared/components/ui';
-import { PERMISSION_GROUPS, ALL_PERMISSIONS, DEFAULT_DISPATCH_PERMISSIONS, FACILITIES } from '../permissions';
+import { PERMISSION_GROUPS, ALL_PERMISSIONS, DEFAULT_DISPATCH_PERMISSIONS } from '../permissions';
+import { useFacilities } from '@/hooks/useFacilities';
 
 interface InviteData {
   name: string;
@@ -27,6 +28,7 @@ const ROLES = [
 
 export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }: InviteUserModalProps) => {
   const perms = inviteData.permissions || [];
+  const { activeFacilityNames: FACILITIES } = useFacilities();
 
   const selectRole = (role: string) => {
     setInviteData({

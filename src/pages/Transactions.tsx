@@ -9,6 +9,7 @@ import {
   RefundModal,
   TransactionsTable
 } from '@/features/transactions';
+import { Can } from '@/features/userAccess';
 
 const Transactions = ({ role }: { role?: string | null }) => {
   const { trips, loading } = useTrips();
@@ -149,7 +150,9 @@ const Transactions = ({ role }: { role?: string | null }) => {
           <h1 className="text-2xl font-semibold text-ink">Charges</h1>
           <p className="text-sm text-ink-4 mt-0.5">Simple and clean overview of payments, county billing, and claims</p>
         </div>
-        <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>Export CSV</Button>
+        <Can role={role} perm="finance.export">
+          <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>Export CSV</Button>
+        </Can>
       </div>
 
       {/* Grid of Key Statistics using Standardized StatCards */}

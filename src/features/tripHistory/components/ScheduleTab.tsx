@@ -6,12 +6,15 @@ import {
 import { Card, Avatar, Badge } from '@/shared/components/ui';
 import { formatTime } from '@/utils/helpers';
 import { DriverDayPanel } from './DriverDayPanel';
+import { RunDispatchView } from './RunDispatchView';
 
 interface ScheduleTabProps {
   drivers: any[];
   trips: any[];
   /** Open the shared trip detail / assignment drawer (reuses the existing flow). */
   onTripClick?: (id: string) => void;
+  /** Persist reassign/unassign from the run sheet (id, patch). */
+  updateTrip?: (id: string, patch: Record<string, any>) => void;
 }
 
 // Timeline window: 6 AM → 10 PM (covers virtually all NEMT operating hours).
@@ -51,13 +54,14 @@ const statusAccent = (status: string) => {
   return 'bg-primary';
 };
 
-export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick }) => {
+export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [focus, setFocus] = useState<'all' | 'conflicts'>('all');
   const [hideOffDuty, setHideOffDuty] = useState(true);
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
+  const [view, setView] = useState<'timeline' | 'runs'>('timeline');
   const initialized = useRef(false);
 
   // Mock trips are dated in the past relative to "today"; on first load land the
@@ -204,6 +208,19 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* View toggle: Timeline (Gantt) ↔ Runs (dispatch manifest) */}
+          <div className="flex items-center gap-0.5 bg-bg p-1 rounded-xl border border-line-2">
+            {([{ id: 'timeline', label: 'Timeline' }, { id: 'runs', label: 'Runs' }] as const).map(v => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${view === v.id ? 'bg-white shadow-sm text-primary' : 'text-ink-4 hover:text-ink'}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
           <div className="relative w-full sm:w-60">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={15} />
             <input
@@ -282,7 +299,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
       )}
 
       {/* ───────── Driver timeline (Gantt) ───────── */}
-      {(
+      {view === 'runs' && (
+        <RunDispatchView drivers={drivers} trips={trips} date={selectedDate} onTripClick={onTripClick} updateTrip={updateTrip} />
+      )}
+
+      {view === 'timeline' && (
         <Card className="overflow-x-auto relative p-0">
           <div className="min-w-[1100px]">
             {/* Header / hour ruler */}
@@ -508,6 +529,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           date={selectedDate}
           onClose={() => setDayDriverId(null)}
           onTripClick={onTripClick}
+          drivers={drivers}
+          updateTrip={updateTrip}
         />
       )}
     </div>

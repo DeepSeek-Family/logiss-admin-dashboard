@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, LogOut, LogIn, MapPin, Clock, AlertTriangle, Coffee, Truck, ExternalLink, ArrowRight } from 'lucide-react';
+import { X, LogOut, LogIn, MapPin, Clock, AlertTriangle, Coffee, Truck, ExternalLink, ArrowRight, UserMinus } from 'lucide-react';
 import { Avatar, Badge, TripStatusBadge } from '@/shared/components/ui';
 import { formatTime } from '@/utils/helpers';
 
@@ -10,6 +10,10 @@ interface DriverDayPanelProps {
   date: Date;
   onClose: () => void;
   onTripClick?: (id: string) => void;
+  /** Full driver roster for reassignment. */
+  drivers?: any[];
+  /** Persist reassign/unassign (id, patch). */
+  updateTrip?: (id: string, patch: Record<string, any>) => void;
 }
 
 const DEPOT_BUFFER_MIN = 15; // pull-out / pull-in depot travel allowance
@@ -35,7 +39,7 @@ const addMin = (d: Date, mins: number) => new Date(d.getTime() + mins * 60000);
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
-export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, date, onClose, onTripClick }) => {
+export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, date, onClose, onTripClick, drivers, updateTrip }) => {
   const dayTrips = useMemo(() => {
     return (trips || [])
       .filter((t: any) => String(t?.driverId) === String(driver?.id) && t?.scheduledTime && t.status !== 'cancelled' && sameDay(new Date(t.scheduledTime), date))
@@ -188,6 +192,36 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                         {t.miles && <span className="text-[10px] text-ink-4">{t.miles} mi</span>}
                       </div>
                     </button>
+
+                    {/* Quick dispatch actions — reassign to another driver or pull off this run */}
+                    {updateTrip && !['completed', 'in_trip', 'arrived'].includes(t.status) && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <select
+                          value={String(t.driverId || '')}
+                          onChange={(e) => updateTrip(t.id, {
+                            driverId: e.target.value,
+                            status: e.target.value
+                              ? (['pending_review', 'confirmed'].includes(t.status) ? 'assigned' : t.status)
+                              : 'confirmed',
+                          })}
+                          className="flex-1 bg-white border border-line-2 rounded-lg py-1 pl-2 pr-6 text-[10px] font-medium text-ink outline-none cursor-pointer focus:ring-2 focus:ring-primary/15 appearance-none"
+                          title="Reassign to another driver"
+                        >
+                          <option value="">Unassigned</option>
+                          {(drivers || []).map((d: any) => (
+                            <option key={d.id} value={d.id}>{d.name}{d.onDuty ? '' : ' (off-duty)'}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => updateTrip(t.id, { driverId: '', status: 'confirmed' })}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-urgent bg-urgent/5 hover:bg-urgent/10 border border-urgent/15 transition-colors shrink-0"
+                          title="Remove from this driver"
+                        >
+                          <UserMinus size={11} /> Unassign
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

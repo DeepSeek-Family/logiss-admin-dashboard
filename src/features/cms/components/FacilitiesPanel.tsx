@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Building2 } from 'lucide-react';
 import { Badge } from '@/shared/components/ui';
-import { FACILITY_PROGRAMS } from '@/data/mockData';
+import { useFacilities, type Facility } from '@/hooks/useFacilities';
 
 const TYPE_OPTIONS = ['Hospital', 'Nursing Home', 'Program', 'Clinic', 'Other'];
 
@@ -13,15 +13,8 @@ const typeBadgeVariant: Record<string, string> = {
   Other: 'bg',
 };
 
-interface Facility {
-  id: number;
-  name: string;
-  type: string;
-  active: boolean;
-}
-
 export const FacilitiesPanel = () => {
-  const [items, setItems] = useState<Facility[]>(FACILITY_PROGRAMS.map(f => ({ ...f })));
+  const { facilities: items, setFacilities: setItems } = useFacilities();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState('');

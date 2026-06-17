@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
 import { FUNDING_SOURCES } from '@/data/mockData';
+import { DriverAssignSelect } from '@/features/bookings';
 
 interface TripArchiveTabProps {
   trips: any[];
@@ -347,9 +348,9 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     if (tripsToExport.length === 0) return;
 
     const headers = [
-      'Trip ID', 'Source', 'Passenger ID', 'Auth ID', 'Date',
+      'Trip ID', 'Source', 'Customer ID', 'Auth ID', 'Date',
       'Pickup Time', 'Appt', 'Dispatch Time', 'Perform', 'Arrival Time',
-      'Rider Name', 'Rider Email', 'Driver Name',
+      'Rider Name', 'Rider Email', 'Driver Name', 'Run #',
       'Pickup', 'Dropoff', 'Distance', 'Status', 'Trip Reason',
       'User Note', 'Dispatcher/Admin Note',
       'Funding Source', 'Inside County',
@@ -374,6 +375,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       `"${trip?.rider?.name || 'Unknown'}"`,
       `"${trip?.rider?.email || 'N/A'}"`,
       `"${drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || 'Unassigned'}"`,
+      `"${trip.driverRun || 'N/A'}"`,
       `"${trip.pickup}"`,
       `"${trip.dropoff}"`,
       `"${trip.distance || (trip.miles ? `${trip.miles} mi` : 'N/A')}"`,
@@ -669,6 +671,56 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
           )}
         </div>
 
+        {/* Bulk-action bar — appears when one or more rows are selected */}
+        {selectedIds.length > 0 && (
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-primary-tint/40 border-b border-primary/20 animate-in fade-in slide-in-from-top-2 duration-200">
+            <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">{selectedIds.length} selected</span>
+            <div className="h-4 w-px bg-primary/20" />
+
+            {/* Bulk assign driver */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-ink-4 whitespace-nowrap">Assign</span>
+              <select
+                value=""
+                onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { driverId: e.target.value })); }}
+                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
+              >
+                <option value="">Driver…</option>
+                {(drivers || []).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+
+            {/* Bulk change status */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-ink-4 whitespace-nowrap">Status</span>
+              <select
+                value=""
+                onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { status: e.target.value })); }}
+                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
+              >
+                <option value="">Set status…</option>
+                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition-all shadow-sm"
+            >
+              <Download size={13} /> Export selected
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-ink-3 hover:bg-white hover:text-ink transition-all"
+            >
+              <X size={13} /> Clear
+            </button>
+          </div>
+        )}
+
         <div className="overflow-auto max-h-[calc(100vh-17rem)]">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-20 bg-bg">
@@ -690,6 +742,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Auth ID</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Run</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip Reason</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Distance</th>
@@ -698,6 +751,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Perform</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Arrival Time</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
+                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">County</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Charge</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Note</th>
                 <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatcher/Admin Note</th>
@@ -775,18 +829,20 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     </select>
                   </td>
 
-                  {/* Driver (inline assignment) */}
+                  {/* Driver (inline assignment — smart suggestions + force-assign) */}
                   <td className="px-3 py-2.5">
-                    <select
-                      value={trip.driverId || ''}
-                      onChange={(e) => updateTrip(trip.id, { driverId: e.target.value })}
-                      className={`${INLINE_INPUT} max-w-[140px] ${trip.driverId ? '' : 'text-ink-4'}`}
-                    >
-                      <option value="">Unassigned</option>
-                      {(drivers || []).map((d: any) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
+                    <DriverAssignSelect
+                      trip={trip}
+                      drivers={drivers}
+                      allTrips={trips}
+                      onAssign={(driverId) => updateTrip(trip.id, { driverId })}
+                      className={`${INLINE_INPUT} max-w-[150px] ${trip.driverId ? '' : 'text-ink-4'}`}
+                    />
+                  </td>
+
+                  {/* Run */}
+                  <td className="px-3 py-2.5">
+                    <InlineText value={trip.driverRun} onCommit={(v) => updateTrip(trip.id, { driverRun: v })} placeholder="—" className="w-[84px] font-mono" />
                   </td>
 
                   {/* Route */}
@@ -896,19 +952,28 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           </span>
                         );
                       })()}
-                      {trip.insideCounty !== undefined && (
-                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${trip.insideCounty ? 'text-accent bg-accent/5 border-accent/20' : 'text-urgent bg-urgent/5 border-urgent/20'}`}>
-                          {trip.insideCounty ? 'In-County' : 'Out-of-County'}
-                        </span>
-                      )}
                     </div>
                   </td>
+
+                  {/* County (editable) */}
+                  <td className="px-3 py-2.5">
+                    <select
+                      value={trip.insideCounty === true ? 'inside' : trip.insideCounty === false ? 'outside' : ''}
+                      onChange={(e) => updateTrip(trip.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${trip.insideCounty === false ? 'text-urgent bg-urgent/5' : trip.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
+                    >
+                      <option value="">—</option>
+                      <option value="inside">In-County</option>
+                      <option value="outside">Out-of-County</option>
+                    </select>
+                  </td>
+
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="font-mono text-xs font-medium text-ink">{money(trip.cost)}</span>
                       <div className="flex items-center gap-1.5 opacity-80">
                         <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
-                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty || trip.cost || 0)}</span>
+                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : Math.max(0, (trip.cost || 0) - (trip.copay || 0)))}</span>
                       </div>
                     </div>
                   </td>

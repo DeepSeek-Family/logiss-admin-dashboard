@@ -17,6 +17,8 @@ interface BookingDetailsSidebarProps {
   handleDispatch: () => void;
   driverSearch: string;
   setDriverSearch: (val: string) => void;
+  /** Open the full edit modal to change ride details before completion. */
+  onEditDetails?: (id: string) => void;
 }
 
 export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
@@ -31,6 +33,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
   handleDispatch,
   driverSearch,
   setDriverSearch,
+  onEditDetails,
 }) => {
   const [isAssigning, setIsAssigning] = useState(false);
 
@@ -47,9 +50,20 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
               </div>
               <h2 className="text-base font-semibold text-ink">Booking Details</h2>
             </div>
-            <button onClick={closeBooking} className="p-1.5 hover:bg-bg rounded-lg text-ink-4 transition-colors">
-              <XCircle size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {onEditDetails && (
+                <button
+                  onClick={() => onEditDetails(selectedBooking.id)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line-2 bg-white text-xs font-semibold text-ink-3 hover:text-primary hover:border-primary/40 transition-all"
+                  title="Edit ride details (date, time, pickup, drop-off…)"
+                >
+                  <Edit2 size={13} /> Edit Details
+                </button>
+              )}
+              <button onClick={closeBooking} className="p-1.5 hover:bg-bg rounded-lg text-ink-4 transition-colors">
+                <XCircle size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Scrollable body — passenger, route, and driver assignment all scroll together */}

@@ -28,6 +28,7 @@ import {
 import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { trips, drivers } from '@/data/mockData';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -122,6 +123,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const { unreadCount } = useNotifications();
 
   const liveTripsCount = (trips || []).filter((t: any) => ['in_trip', 'en_route', 'arrived'].includes(t?.status)).length;
   const activeDriversCount = (drivers || []).filter((d: any) => d?.onDuty).length;
@@ -263,7 +265,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               className={`relative p-2 rounded-lg transition-colors ${page === '/notifications' ? 'bg-primary-light text-primary' : 'text-ink-3 hover:bg-bg'}`}
             >
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-urgent border-2 border-white rounded-full"></span>
+              {unreadCount > 0 ? (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+              ) : (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-urgent border-2 border-white rounded-full"></span>
+              )}
             </button>
 
             <Button variant="primary-light" size="sm" icon={Phone} className="font-mono">

@@ -264,7 +264,7 @@ export const FundingSourcesPanel = () => {
       </div>
 
       <p className="text-[10px] text-ink-4 text-center">
-        Changes sync to Booking Form, Trip Archive, and Reports immediately.
+        Changes sync to Booking Form, Trip History, and Reports immediately.
       </p>
     </div>
   );

@@ -4,7 +4,7 @@ import {
   Search, Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
   AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
-  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List
+  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List, Map as MapIcon
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '@/shared/components/ui';
 import { ManualTripModal } from '../components/ManualTripModal';
@@ -15,6 +15,7 @@ import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } fro
 import { CancelTripModal } from '@/features/reports';
 import { toast } from 'react-hot-toast';
 import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } from '@/features/bookings';
+import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -31,7 +32,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { trips, loading: tripsLoading, refresh } = useTrips();
+  const { trips, loading: tripsLoading, refresh, updateTrip } = useTrips();
+  const [showMap, setShowMap] = useState(false);
+  const [mapTripId, setMapTripId] = useState<string | null>(null);
+  const [editTripId, setEditTripId] = useState<string | null>(null);
+  const editTrip = editTripId ? (trips || []).find((t: any) => t?.id === editTripId) : null;
   const { drivers, loading: driversLoading } = useDrivers();
 
   const loading = tripsLoading || driversLoading;
@@ -256,54 +261,80 @@ const Bookings = ({ role }: { role?: string | null }) => {
         />
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Booking Requests</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Review and dispatch medical transportation requests</p>
+          <p className="text-sm text-ink-4 mt-0.5">Review, dispatch &amp; manage rides — with live map</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={() => navigate('/create-booking')}>Manual Entry</Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowMap(v => !v)}
+            title={showMap ? 'Hide map' : 'Show map'}
+            className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${showMap ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-ink-3 border-line hover:text-ink hover:bg-bg'}`}
+          >
+            <MapIcon size={15} />
+            {showMap ? 'Hide Map' : 'Show Map'}
+          </button>
+          <Button variant="primary" icon={Plus} onClick={() => navigate('/create-booking')}>Manual Entry</Button>
+        </div>
       </div>
 
-      <BookingsList
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        bookingSearch={bookingSearch}
-        setBookingSearch={setBookingSearch}
-        fundingFilter={fundingFilter}
-        setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
-        filteredTrips={filteredTrips}
-        paginatedBookings={paginatedBookings}
-        selectedTrips={selectedTrips}
-        toggleSelectAll={toggleSelectAll}
-        toggleSelectTrip={toggleSelectTrip}
-        openBooking={openBooking}
-        selectedBookingId={selectedBookingId}
-        handleApprove={handleApprove}
-        setIsAssigning={setIsAssigning}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        itemsPerPage={itemsPerPage}
-        setItemsPerPage={setItemsPerPage}
-        setCurrentPage={setCurrentPage}
-        trips={trips}
-        drivers={drivers}
-        setSelectedTrips={setSelectedTrips}
-        handleBulkAction={handleBulkAction}
-      />
+      <div className="flex flex-col xl:flex-row gap-5 items-start">
+        <div className="flex-1 min-w-0 w-full">
+          <BookingsList
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            bookingSearch={bookingSearch}
+            setBookingSearch={setBookingSearch}
+            fundingFilter={fundingFilter}
+            setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
+            filteredTrips={filteredTrips}
+            paginatedBookings={paginatedBookings}
+            selectedTrips={selectedTrips}
+            toggleSelectAll={toggleSelectAll}
+            toggleSelectTrip={toggleSelectTrip}
+            openBooking={openBooking}
+            selectedBookingId={selectedBookingId}
+            handleApprove={handleApprove}
+            setIsAssigning={setIsAssigning}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            setCurrentPage={setCurrentPage}
+            trips={trips}
+            drivers={drivers}
+            setSelectedTrips={setSelectedTrips}
+            handleBulkAction={handleBulkAction}
+            updateTrip={updateTrip}
+            onEditTrip={(id) => setEditTripId(id)}
+            onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
+            selectedMapId={mapTripId}
+          />
+        </div>
+        {showMap && (
+          <TripHistoryMap
+            trips={filteredTrips}
+            drivers={drivers}
+            selectedId={mapTripId}
+            onSelect={setMapTripId}
+            onOpenDetails={(id) => setEditTripId(id)}
+            onClose={() => setShowMap(false)}
+            plotAll
+            title="Dispatch Map"
+          />
+        )}
+      </div>
 
-      {selectedBookingId && selectedBooking && (
-        <BookingDetailsSidebar
-          selectedBooking={selectedBooking}
-          assignedDriver={assignedDriver}
-          smartDrivers={smartDrivers}
-          activeTab={activeTab}
-          closeBooking={closeBooking}
-          handleAssign={handleAssign}
-          handleReject={handleReject}
-          handleApprove={handleApprove}
-          handleDispatch={handleDispatch}
-          driverSearch={driverSearch}
-          setDriverSearch={setDriverSearch}
+      {/* Manage ride changes before completion — full edit/cancel right on the dispatch screen */}
+      {editTrip && (
+        <TripDetailsModal
+          key={editTrip.id}
+          trip={editTrip}
+          drivers={drivers}
+          onClose={() => setEditTripId(null)}
+          onUpdate={updateTrip}
+          startInEdit
         />
       )}
     </div>

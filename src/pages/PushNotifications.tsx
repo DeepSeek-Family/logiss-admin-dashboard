@@ -3,6 +3,7 @@ import { Send, Users, User, Clock, CheckCircle2, Trash2, Building2, ShieldCheck,
 import { Card, Button, Badge } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
 import { drivers, riders, mockUsers } from '@/data/mockData';
+import { pushNotification } from '@/hooks/useNotifications';
 
 // Audiences a super-admin can broadcast to — rider/driver mobile apps + internal staff.
 const activeStaff = (mockUsers || []).filter((u: any) => u.status === 'active');
@@ -77,15 +78,29 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
       return;
     }
     setIsSending(true);
+    const sentAt = new Date().toISOString();
     setTimeout(() => {
       setLogs(prev => [{
         id: Date.now(),
         audienceLabel: selected.label,
         title: title.trim(),
         message: message.trim(),
-        sentAt: new Date().toISOString(),
+        sentAt,
         recipients: selected.count,
       }, ...prev]);
+      // Deliver into the in-app feed for dashboard audiences (drivers/riders get it on
+      // their mobile apps). It shows up under the bell and persists across reloads.
+      if (['dispatchers', 'facility_users', 'all_staff'].includes(selected.id)) {
+        pushNotification({
+          type: 'info',
+          category: 'Broadcast',
+          title: title.trim(),
+          message: message.trim(),
+          time: sentAt,
+          action: null,
+          audience: selected.label,
+        });
+      }
       setTitle('');
       setMessage('');
       setIsSending(false);

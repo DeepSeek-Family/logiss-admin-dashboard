@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
-  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil
+  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2
 } from 'lucide-react';
 import { Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
@@ -14,6 +14,8 @@ interface TripDetailsModalProps {
   onClose: () => void;
   /** Persist edits (id, patch). Wired to useTrips().updateTrip. */
   onUpdate?: (id: string, patch: Record<string, any>) => void;
+  /** Open directly in edit mode (used by the Bookings Edit / Assign action). */
+  startInEdit?: boolean;
 }
 
 const INPUT = 'w-full bg-white border border-line-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
@@ -46,8 +48,8 @@ const numFrom = (v?: string): string => {
   return m ? m[0] : '';
 };
 
-export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetailsModalProps) => {
-  const [editMode, setEditMode] = useState(false);
+export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit = false }: TripDetailsModalProps) => {
+  const [editMode, setEditMode] = useState(startInEdit);
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
@@ -64,7 +66,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
     returnType: trip?.returnType || '',
     source: trip?.source || '',
     pickup: trip?.pickup || '',
-    stop: trip?.stop || '',
+    stops: (Array.isArray(trip?.stops) ? trip.stops.map((s: any) => String(s)) : (trip?.stop ? [String(trip.stop)] : [])) as string[],
     dropoff: trip?.dropoff || '',
     phone: trip?.rider?.phone || '',
     age: trip?.rider?.age ?? '',
@@ -83,8 +85,23 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
   });
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const setStop = (i: number, v: string) => setForm(f => ({ ...f, stops: f.stops.map((s, idx) => (idx === i ? v : s)) }));
+  const addStop = () => setForm(f => ({ ...f, stops: [...f.stops, ''] }));
+  const removeStop = (i: number) => setForm(f => ({ ...f, stops: f.stops.filter((_, idx) => idx !== i) }));
 
   const driver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
+
+  // ── Derived (auto-calculated) values — not hand-editable ──────────────────
+  // Cost to County is always Total Trip Cost − Patient Copay; Est. Duration is a
+  // route estimate derived from distance. Keeping them computed avoids the
+  // mismatch you get when someone overrides them by hand.
+  const numF = (v: any) => { const n = parseFloat(String(v ?? '').replace(/[^\d.]/g, '')); return isNaN(n) ? 0 : n; };
+  const AVG_MIN_PER_MILE = 2.5; // city NEMT average incl. stops/traffic
+  const milesNow = editMode ? numF(form.distance) : (trip?.miles != null ? Number(trip.miles) : numF(trip?.distance));
+  const estDurationMin = milesNow > 0 ? Math.max(5, Math.round(milesNow * AVG_MIN_PER_MILE)) : 0;
+  const costNow = editMode ? numF(form.cost) : numF(trip?.cost);
+  const copayNow = editMode ? numF(form.copay) : numF(trip?.copay);
+  const costToCountyNow = Math.max(0, costNow - copayNow);
 
   const handleSave = () => {
     const scheduledTime = form.scheduledDate && form.scheduledTimeOfDay
@@ -99,11 +116,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
       reason: form.reason,
       distance: form.distance ? `${form.distance} mi` : '',
       miles: form.distance === '' ? undefined : Number(form.distance),
-      duration: form.duration ? `${form.duration} min` : '',
+      // Derived — always recomputed, never hand-entered.
+      duration: estDurationMin ? `${estDurationMin} min` : '',
       returnType: form.returnType,
       source: form.source,
       pickup: form.pickup,
-      stop: form.stop,
+      stops: form.stops.map(s => s.trim()).filter(Boolean),
+      stop: form.stops.map(s => s.trim()).filter(Boolean)[0] || '',
       dropoff: form.dropoff,
       mobility: form.mobility,
       passengers: Number(form.passengers) || 1,
@@ -112,7 +131,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
       privateNotes: form.privateNotes,
       cost: form.cost === '' ? 0 : Number(form.cost),
       copay: form.copay === '' ? 0 : Number(form.copay),
-      costToCounty: form.costToCounty === '' ? 0 : Number(form.costToCounty),
+      costToCounty: costToCountyNow,
       paymentMethod: form.paymentMethod,
       paymentStatus: form.paymentStatus,
       authorizationId: form.authorizationId,
@@ -245,7 +264,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
                   {Field({ label: 'Trip Type', k: 'type', options: [{ value: 'one_way', label: 'One Way' }, { value: 'round_trip', label: 'Round Trip' }] })}
                   {Field({ label: 'Reason', k: 'reason' })}
                   {Field({ label: 'Est. Distance (mi)', k: 'distance', type: 'number', step: '0.1', fmt: (v) => `${v} mi` })}
-                  {Field({ label: 'Est. Duration (min)', k: 'duration', type: 'number', fmt: (v) => `${v} min` })}
+                  <div>
+                    <p className="text-xs text-ink-4 mb-1">Est. Duration (min)</p>
+                    <p className="text-sm font-medium text-ink">
+                      {estDurationMin ? `${estDurationMin} min` : <span className="text-ink-4">N/A</span>}
+                      {editMode && estDurationMin > 0 && <span className="text-[10px] text-ink-4 font-normal ml-1">· auto from distance</span>}
+                    </p>
+                  </div>
                   {Field({ label: 'Return Type', k: 'returnType', options: [{ value: '', label: 'N/A' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'will_call', label: 'Will Call' }] })}
                 </div>
                 {!editMode && <p className="sr-only">{tripTypeLabel(trip.type)}</p>}
@@ -261,8 +286,20 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
                       <input value={form.pickup} onChange={(e) => set('pickup', e.target.value)} className={INPUT} />
                     </div>
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Intermediate Stop (optional)</p>
-                      <input value={form.stop} onChange={(e) => set('stop', e.target.value)} className={INPUT} placeholder="None" />
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-ink-4">Intermediate Stops</p>
+                        <button type="button" onClick={addStop} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"><Plus size={12} /> Add stop</button>
+                      </div>
+                      {form.stops.length === 0 && <p className="text-xs text-ink-4/70 italic">No stops — direct trip.</p>}
+                      <div className="space-y-2">
+                        {form.stops.map((s, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-ink-4 w-10 shrink-0">Stop {i + 1}</span>
+                            <input value={s} onChange={(e) => setStop(i, e.target.value)} className={INPUT} placeholder="Stop address…" />
+                            <button type="button" onClick={() => removeStop(i)} className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Drop-off Location</p>
@@ -276,12 +313,12 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
                       <div className="w-5 h-5 rounded-full bg-white border-2 border-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-2 h-2 rounded-full bg-primary" /></div>
                       <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Pickup Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.pickup}</p></div>
                     </div>
-                    {trip.stop && (
-                      <div className="relative z-10 flex gap-4">
+                    {((Array.isArray(trip.stops) && trip.stops.length ? trip.stops : (trip.stop ? [trip.stop] : [])) as string[]).map((s, i) => (
+                      <div key={i} className="relative z-10 flex gap-4">
                         <div className="w-5 h-5 rounded-full bg-white border-2 border-accent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-1.5 h-1.5 bg-accent" /></div>
-                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Intermediate Stop</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.stop}</p></div>
+                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Stop {i + 1}</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{s}</p></div>
                       </div>
-                    )}
+                    ))}
                     <div className="relative z-10 flex gap-4">
                       <div className="w-5 h-5 rounded-full bg-white border-2 border-urgent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><MapPin size={10} className="text-urgent" /></div>
                       <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Drop-off Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.dropoff}</p></div>
@@ -411,12 +448,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate }: TripDetai
                     </div>
                     <div className="sm:border-l border-primary/20 sm:pl-4">
                       <p className="text-xs font-medium text-primary mb-1">Cost to County</p>
-                      {editMode ? <input type="number" step="0.01" value={String(form.costToCounty)} onChange={(e) => set('costToCounty', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(trip.costToCounty || trip.cost || 0)}</p>}
+                      <p className="text-lg font-semibold text-ink">{money(costToCountyNow)}</p>
+                      {editMode && <p className="text-[10px] text-ink-4 mt-0.5">Auto: Total − Copay</p>}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {Field({ label: 'Payment Method', k: 'paymentMethod' })}
-                    {Field({ label: 'Authorization ID', k: 'authorizationId' })}
+                    {Field({ label: 'Auth ID', k: 'authorizationId' })}
                   </div>
                 </div>
               </section>

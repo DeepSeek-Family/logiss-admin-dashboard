@@ -183,7 +183,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                     </div>
                     <div className="relative">
                       <UserIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
-                      <input className={`${inputClass} pl-10`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="Passenger ID" />
+                      <input className={`${inputClass} pl-10`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="Customer ID" />
                     </div>
                   </div>
                 </div>

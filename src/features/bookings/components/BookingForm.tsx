@@ -343,14 +343,14 @@ export const BookingForm = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Passenger ID</label>
+                      <label className="text-xs font-medium text-ink-3">Customer ID</label>
                       <div className="relative">
                         <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
                         <input className={`${inputClass} pl-8`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="PX-2024-XXXX" />
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Authorization ID</label>
+                      <label className="text-xs font-medium text-ink-3">Auth ID</label>
                       <input className={inputClass} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="AUTH-XXXX-XXXX" />
                     </div>
                   </div>

@@ -194,6 +194,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           drivers={drivers}
           trips={trips}
           onTripClick={setSelectedTripId}
+          updateTrip={updateTrip}
         />
       )}
     </div>

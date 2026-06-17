@@ -10,11 +10,13 @@ import {
   Truck,
   CreditCard,
   Info,
+  Megaphone,
 } from 'lucide-react';
 
 import {
   NotificationList
 } from '@/features/notifications';
+import { useNotifications, type AppNotification } from '@/hooks/useNotifications';
 
 const ALL_NOTIFICATIONS = [
   {
@@ -109,15 +111,28 @@ const ALL_NOTIFICATIONS = [
   },
 ];
 
+// Live (delivered) broadcasts carry plain data — give them a display icon/colors here.
+const liveToDisplay = (n: AppNotification) => ({
+  ...n,
+  icon: Megaphone,
+  color: 'text-primary',
+  bg: 'bg-primary-light',
+});
+
 const Notifications = ({ role }: { role?: string | null }) => {
+  const { notifications: live, markRead: markLiveRead, markAllRead: markAllLiveRead, remove: removeLive, clear: clearLive } = useNotifications();
   const [items, setItems] = useState<any[]>(ALL_NOTIFICATIONS);
 
-  const unreadCount = items.filter(n => !n.read).length;
+  const isLive = (id: number) => live.some(n => n.id === id);
 
-  const markAllRead = () => setItems(prev => prev.map(n => ({ ...n, read: true })));
-  const markRead = (id: number) => setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const deleteItem = (id: number) => setItems(prev => prev.filter(n => n.id !== id));
-  const clearAll = () => setItems([]);
+  // Live broadcasts first (newest), then the static demo feed.
+  const combined = [...live.map(liveToDisplay), ...items];
+  const unreadCount = combined.filter(n => !n.read).length;
+
+  const markAllRead = () => { markAllLiveRead(); setItems(prev => prev.map(n => ({ ...n, read: true }))); };
+  const markRead = (id: number) => { if (isLive(id)) markLiveRead(id); else setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n)); };
+  const deleteItem = (id: number) => { if (isLive(id)) removeLive(id); else setItems(prev => prev.filter(n => n.id !== id)); };
+  const clearAll = () => { clearLive(); setItems([]); };
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-500 pb-12">
@@ -140,7 +155,7 @@ const Notifications = ({ role }: { role?: string | null }) => {
 
       {/* Notification List */}
       <NotificationList
-        filtered={items}
+        filtered={combined}
         onMarkRead={markRead}
         onDelete={deleteItem}
       />

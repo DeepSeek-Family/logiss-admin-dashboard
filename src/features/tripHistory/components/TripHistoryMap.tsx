@@ -10,6 +10,9 @@ interface TripHistoryMapProps {
   onSelect: (id: string | null) => void;
   onOpenDetails?: (id: string) => void;
   onClose?: () => void;
+  /** Plot every passed trip (used on the dispatch/bookings screen). Default plots history only. */
+  plotAll?: boolean;
+  title?: string;
 }
 
 const hashCode = (s: string) => {
@@ -34,7 +37,7 @@ const dotColor = (status: string) =>
       : status === 'cancelled' || status === 'no_show' ? 'bg-ink-4'
         : 'bg-primary';
 
-export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, selectedId, onSelect, onOpenDetails, onClose }) => {
+export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, selectedId, onSelect, onOpenDetails, onClose, plotAll = false, title = 'Trip Map' }) => {
   const driverById = useMemo(() => {
     const m: Record<string, any> = {};
     (drivers || []).forEach(d => { m[String(d.id)] = d; });
@@ -42,8 +45,8 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, 
   }, [drivers]);
 
   const historyTrips = useMemo(
-    () => (trips || []).filter((t: any) => t?.scheduledTime && (t.status !== 'pending_review' || t.driverId)),
-    [trips]
+    () => (trips || []).filter((t: any) => t?.scheduledTime && (plotAll || t.status !== 'pending_review' || t.driverId)),
+    [trips, plotAll]
   );
 
   const geo = useMemo(() => {
@@ -75,7 +78,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, 
         <div className="flex items-center justify-between px-4 py-3 border-b border-line-2">
           <div className="flex items-center gap-2">
             <Navigation size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold text-ink">Trip Map</h3>
+            <h3 className="text-sm font-semibold text-ink">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-ink-4 bg-bg px-2 py-0.5 rounded-full border border-line-2">{historyTrips.length} trips</span>

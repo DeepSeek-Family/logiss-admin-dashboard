@@ -82,3 +82,29 @@ export const ROLE_LABEL: Record<string, string> = {
   dispatcher: 'Dispatch',
   facility: 'Facility User',
 };
+
+// ── Runtime capability sets per role ──────────────────────────────────────────
+// These reflect how the product is actually used (not the aspirational matrix):
+// admin can do everything; a dispatcher runs day-to-day operations but not
+// destructive/admin tasks (hard-delete, user mgmt, financial export); a facility
+// user only books and views their own trips.
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ALL_PERMISSIONS,
+  dispatcher: [
+    'trips.view', 'trips.create', 'trips.edit', 'trips.cancel',
+    'dispatch.assign', 'dispatch.reassign', 'dispatch.status', 'dispatch.schedules',
+    'clients.view', 'clients.create', 'clients.edit',
+    'facilities.view',
+    'finance.billing', 'finance.invoices',
+    'reports.view',
+  ],
+  facility: [
+    'trips.view', 'trips.create',
+    'clients.view',
+    'facilities.view',
+  ],
+};
+
+/** True when the given role is allowed the capability key. */
+export const can = (role: string | null | undefined, key: string): boolean =>
+  !!role && (ROLE_PERMISSIONS[role]?.includes(key) ?? false);
