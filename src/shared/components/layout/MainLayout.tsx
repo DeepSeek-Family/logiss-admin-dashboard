@@ -29,6 +29,7 @@ import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { trips, drivers } from '@/data/mockData';
 import { useNotifications } from '@/hooks/useNotifications';
+import { ROUTES } from '@/constants/routes';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -47,7 +48,7 @@ const NavItem = ({ icon: Icon, label, badge, active, onClick, badgeVariant = 'ne
   >
     <div className="flex items-center gap-3">
       <Icon size={20} className={active ? 'text-white' : 'text-ink-3 group-hover:text-primary transition-colors'} />
-      <span className={`text-base ${active ? 'font-semibold' : 'font-normal'}`}>
+      <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>
         {label}
       </span>
     </div>
@@ -80,32 +81,32 @@ const NAV_CONFIG: NavConfigGroup[] = [
     group: 'Operations',
     roles: ['admin', 'dispatcher'],
     items: [
-      { id: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
-      { id: '/operations', label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
-      { id: '/bookings', label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
-      { id: '/trips', label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
-      { id: '/schedule', label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
-      { id: '/reports', label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+      { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
     ]
   },
   {
     group: 'Resources',
     roles: ['admin', 'dispatcher'],
     items: [
-      { id: '/fleet', label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
-      { id: '/riders', label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
-      { id: '/drivers', label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
-      { id: '/applications', label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
+      { id: ROUTES.fleet, label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.riders, label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.drivers, label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.applications, label: 'Applications', icon: FileCheck, badge: '3', roles: ['admin'] },
     ]
   },
   {
     group: 'Administration',
     roles: ['admin'],
     items: [
-      { id: '/transactions', label: 'Charge', icon: CreditCard, roles: ['admin'] },
-      { id: '/staff', label: 'User Management', icon: UserPlus, roles: ['admin'] },
-      { id: '/cms', label: 'CMS & Content', icon: FileText, roles: ['admin'] },
-      { id: '/push', label: 'Push Notifications', icon: Send, roles: ['admin'] },
+      { id: ROUTES.transactions, label: 'Charge', icon: CreditCard, roles: ['admin'] },
+      { id: ROUTES.staff, label: 'User Management', icon: UserPlus, roles: ['admin'] },
+      { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin'] },
+      { id: ROUTES.push, label: 'Push Notifications', icon: Send, roles: ['admin'] },
     ]
   }
 ];
@@ -138,8 +139,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       type: 'trip',
       label: t?.rider?.name || 'Unknown Rider',
       sub: `#${t?.id || '---'} · ${(t?.status || '').replace(/_/g, ' ')} · ${t?.pickup?.split(',')[0]}`,
-      dest: ['pending_review', 'confirmed'].includes(t?.status) ? '/bookings' :
-        ['in_trip', 'en_route', 'arrived', 'assigned'].includes(t?.status) ? '/live' : '/trips',
+      dest: ['pending_review', 'confirmed'].includes(t?.status) ? ROUTES.bookings :
+        ['in_trip', 'en_route', 'arrived', 'assigned'].includes(t?.status) ? ROUTES.live : ROUTES.trips,
     })),
     ...(drivers || []).filter((d: any) =>
       (d?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,7 +150,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       type: 'driver',
       label: d?.name || 'Unknown Driver',
       sub: `${d?.vehicle?.plate || '---'} · ${(d?.status || '').replace(/_/g, ' ')}`,
-      dest: '/drivers',
+      dest: ROUTES.drivers,
     })),
   ] : [];
 
@@ -181,8 +182,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
                 const isActive = item.id.includes('tab=schedule')
                   ? (page === '/trips' && location.search.includes('tab=schedule'))
-                  : (item.id === '/trips'
-                    ? (page === '/trips' && !location.search.includes('tab=schedule'))
+                  : (item.id === ROUTES.trips
+                    ? (page === ROUTES.trips && !location.search.includes('tab=schedule'))
                     : (page === item.id || (item.id !== '/' && page.startsWith(item.id))));
 
                 return (
@@ -199,7 +200,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
           </div>
 
           <div className="pt-4 border-t border-line-2">
-            <NavItem icon={Settings} label="System Settings" active={page === '/settings'} onClick={() => navigate('/settings')} />
+            <NavItem icon={Settings} label="System Settings" active={page === ROUTES.settings} onClick={() => navigate(ROUTES.settings)} />
           </div>
         </nav>
 
@@ -261,12 +262,12 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
             </div>
 
             <button
-              onClick={() => navigate('/notifications')}
-              className={`relative p-2 rounded-lg transition-colors ${page === '/notifications' ? 'bg-primary-light text-primary' : 'text-ink-3 hover:bg-bg'}`}
+              onClick={() => navigate(ROUTES.notifications)}
+              className={`relative p-2 rounded-lg transition-colors ${page === ROUTES.notifications ? 'bg-primary-light text-primary' : 'text-ink-3 hover:bg-bg'}`}
             >
               <Bell size={20} />
               {unreadCount > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
               ) : (
                 <span className="absolute top-2 right-2 w-2 h-2 bg-urgent border-2 border-white rounded-full"></span>
               )}
@@ -281,7 +282,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
             <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); }}
-                className={`w-9 h-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 hover:shadow-sm ${profileOpen || page === '/profile' ? 'border-primary' : 'border-line hover:border-primary'}`}
+                className={`w-9 h-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 hover:shadow-sm ${profileOpen || page === ROUTES.profile ? 'border-primary' : 'border-line hover:border-primary'}`}
                 title="Account"
               >
                 <Avatar initials={role === 'admin' ? 'MH' : 'SR'} size="sm" className="w-full h-full" />
@@ -304,7 +305,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
                   <div className="p-2">
                     <button
-                      onClick={() => { navigate('/profile'); setProfileOpen(false); }}
+                      onClick={() => { navigate(ROUTES.profile); setProfileOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-ink hover:bg-bg transition-all group"
                     >
                       <User size={15} className="text-ink-3 group-hover:text-primary" />

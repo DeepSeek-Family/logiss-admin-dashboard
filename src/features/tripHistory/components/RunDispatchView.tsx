@@ -214,7 +214,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
           <thead className="bg-bg/50 border-b border-line-2">
             <tr>
               {['#', 'Stop', 'Time', 'Appt', 'ETA', 'Travel', 'Dist', 'On/Sp', 'Address', 'City', 'Funding', 'Status', ''].map((h, i) => (
-                <th key={h || i} className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
+                <th key={h || i} className="px-3 py-2.5 type-th whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -232,7 +232,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                     <td className="px-3 py-2 text-xs font-bold uppercase tracking-wide text-ink-3 whitespace-nowrap">{isOut ? 'Pull-Out' : 'Pull-In'}</td>
                     <td className="px-3 py-2 text-xs font-semibold text-ink-3 whitespace-nowrap">{formatTime(r.time.toISOString())}</td>
                     <td colSpan={5} />
-                    <td className="px-3 py-2 text-[11px] text-ink-4">{isOut ? `Depot → ${cityFrom(r.to) || 'first pickup'}` : `${cityFrom(r.from) || 'last drop-off'} → Depot`}</td>
+                    <td className="px-3 py-2 text-xs text-ink-4">{isOut ? `Depot → ${cityFrom(r.to) || 'first pickup'}` : `${cityFrom(r.from) || 'last drop-off'} → Depot`}</td>
                     <td colSpan={3} />
                   </tr>
                 );
@@ -243,7 +243,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                   <tr key={`gap-${idx}`}>
                     <td />
                     <td colSpan={12} className="px-3 py-1.5">
-                      <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2.5 py-1 border ${conflict ? 'text-urgent bg-urgent-light/40 border-urgent/20' : 'text-ink-4 bg-bg border-line-2'}`}>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-2.5 py-1 border ${conflict ? 'text-urgent bg-urgent-light/40 border-urgent/20' : 'text-ink-4 bg-bg border-line-2'}`}>
                         {conflict ? <><AlertTriangle size={10} /> Overlap · {minsToLabel(r.mins)}</> : <><Coffee size={10} /> Standby · {minsToLabel(r.mins)}</>}
                       </span>
                     </td>
@@ -265,10 +265,10 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                         <p className="text-xs font-semibold text-ink whitespace-nowrap flex items-center gap-1.5">
                           {t.rider?.name || 'Unknown'}
                           {r.leg === 'dropoff' && t.returnType === 'will_call' && (
-                            <span className="text-[8px] font-bold uppercase tracking-wide text-warning-dark bg-warning/15 border border-warning/30 rounded-full px-1.5 py-0.5">Will-Call</span>
+                            <span className="text-xs font-bold uppercase tracking-wide text-warning-dark bg-warning/15 border border-warning/30 rounded-full px-1.5 py-0.5">Will-Call</span>
                           )}
                         </p>
-                        <p className="text-[10px] text-ink-4">{isPickup ? 'Pickup' : isStop ? 'Stop' : 'Drop-off'} · #{t.id}</p>
+                        <p className="text-xs text-ink-4">{isPickup ? 'Pickup' : isStop ? 'Stop' : 'Drop-off'} · #{t.id}</p>
                       </div>
                     </div>
                   </td>
@@ -293,13 +293,13 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                   <td className="px-3 py-2.5">
                     {isPickup ? (
                       <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <TripStatusBadge status={t.status} className="text-[9px]" />
+                        <TripStatusBadge status={t.status} className="text-xs" />
                         {updateTrip && NEXT_STATUS[t.status] && (
                           <button
                             type="button"
                             onClick={() => { const next = NEXT_STATUS[t.status]; updateTrip(t.id, { status: next, ...stampFor(next) }); }}
                             title={`Mark ${STEP_LABEL[t.status]}`}
-                            className="text-[9px] font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-full px-2 py-0.5 transition-all whitespace-nowrap"
+                            className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-full px-2 py-0.5 transition-all whitespace-nowrap"
                           >
                             {STEP_LABEL[t.status]} →
                           </button>
@@ -308,7 +308,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                     ) : (IN_PROGRESS.includes(t.status) ? <ArrowRight size={12} className="text-urgent" /> : null)}
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <span className="text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">Open <ExternalLink size={9} /></span>
+                    <span className="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">Open <ExternalLink size={9} /></span>
                   </td>
                 </tr>
               );
@@ -323,10 +323,10 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
           { c: 'border-warning', l: 'Stop' },
           { c: 'border-urgent', l: 'Drop-off' },
         ].map(x => (
-          <span key={x.l} className="inline-flex items-center gap-1.5"><span className={`w-2.5 h-2.5 rounded-full border-2 bg-white ${x.c}`} /><span className="text-[11px] text-ink-4">{x.l}</span></span>
+          <span key={x.l} className="inline-flex items-center gap-1.5"><span className={`w-2.5 h-2.5 rounded-full border-2 bg-white ${x.c}`} /><span className="text-xs text-ink-4">{x.l}</span></span>
         ))}
-        <span className="inline-flex items-center gap-1.5"><Clock size={11} className="text-ink-4" /><span className="text-[11px] text-ink-4">ETA · red = running late</span></span>
-        <span className="text-[11px] text-ink-4 ml-auto">Click any leg to open & edit the trip</span>
+        <span className="inline-flex items-center gap-1.5"><Clock size={11} className="text-ink-4" /><span className="text-xs text-ink-4">ETA · red = running late</span></span>
+        <span className="text-xs text-ink-4 ml-auto">Click any leg to open & edit the trip</span>
       </div>
     </Card>
   );

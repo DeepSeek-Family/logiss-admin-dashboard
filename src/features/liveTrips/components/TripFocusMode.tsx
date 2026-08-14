@@ -68,7 +68,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-accent-light rounded-xl flex items-center justify-center text-accent"><Clock size={20} /></div>
                 <div>
-                  <p className="text-[10px] font-medium text-ink-4 uppercase">Est. Completion</p>
+                  <p className="text-xs font-medium text-ink-4 uppercase">Est. Completion</p>
                   <p className="text-lg font-semibold text-ink">10:15 AM</p>
                 </div>
               </div>
@@ -135,21 +135,21 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                 <div className="relative flex items-center gap-6">
                   <div className="w-5 h-5 rounded-full bg-primary border-4 border-white shadow-sm z-10" />
                   <div>
-                    <p className="text-[10px] font-medium text-ink-4 uppercase">Origin</p>
+                    <p className="text-xs font-medium text-ink-4 uppercase">Origin</p>
                     <p className="text-sm font-medium text-ink">{selectedTrip.pickup}</p>
                   </div>
                 </div>
                 <div className="relative flex items-center gap-6">
                   <div className="w-5 h-5 rounded-full bg-warning border-4 border-white shadow-sm z-10" />
                   <div>
-                    <p className="text-[10px] font-medium text-ink-4 uppercase">Current Stop</p>
+                    <p className="text-xs font-medium text-ink-4 uppercase">Current Stop</p>
                     <p className="text-sm font-medium text-ink">{selectedTrip.stop || 'None Scheduled'}</p>
                   </div>
                 </div>
                 <div className="relative flex items-center gap-6">
                   <div className="w-5 h-5 rounded-full bg-urgent border-4 border-white shadow-sm z-10" />
                   <div>
-                    <p className="text-[10px] font-medium text-ink-4 uppercase">Final Destination</p>
+                    <p className="text-xs font-medium text-ink-4 uppercase">Final Destination</p>
                     <p className="text-sm font-medium text-ink">{selectedTrip.dropoff}</p>
                   </div>
                 </div>

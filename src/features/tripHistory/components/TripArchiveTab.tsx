@@ -348,46 +348,39 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     if (tripsToExport.length === 0) return;
 
     const headers = [
-      'Trip ID', 'Source', 'Customer ID', 'Auth ID', 'Date',
-      'Pickup Time', 'Appt', 'Dispatch Time', 'Perform', 'Arrival Time',
-      'Rider Name', 'Rider Email', 'Driver Name', 'Run #',
-      'Pickup', 'Dropoff', 'Distance', 'Status', 'Trip Reason',
-      'User Note', 'Dispatcher/Admin Note',
+      'Trip ID', 'Passenger Name', 'Passenger ID', 'Date',
+      'Pickup Address', 'Drop-off Address',
+      'Scheduled Pickup', 'Pickup Arrival', 'Drop-off Completed',
+      'Trip Miles', 'Trip Reason', 'Vehicle/Service', 'Mobility',
+      'No-Show', 'Cancelled',
       'Funding Source', 'Inside County',
-      'Total Cost', 'Copay', 'Cost to County', 'Type'
+      'Customer Fare', 'Government/County Cost', 'Type'
     ];
 
     const rows = tripsToExport.map((trip: any) => {
       const times = resolveTripTimes(trip);
       const pickup = trip.pickupTime || to24h(trip.requestedPickup) || times.departure;
-      const appt = to24h(trip.appointmentTime);
+      const driver = drivers.find((d: any) => String(d.id) === String(trip.driverId));
       return [
       trip.id,
-      `"${trip.source || 'N/A'}"`,
-      `"${trip.passengerId || trip.rider?.passengerId || 'N/A'}"`,
-      `"${trip.authorizationId || trip.authId || 'N/A'}"`,
-      formatShortDate(trip.scheduledTime),
-      `"${to12h(pickup) || 'N/A'}"`,
-      `"${to12h(appt) || 'N/A'}"`,
-      `"${to12h(times.dispatch) || 'N/A'}"`,
-      `"${to12h(times.departure) || 'N/A'}"`,
-      `"${to12h(times.arrival) || 'N/A'}"`,
       `"${trip?.rider?.name || 'Unknown'}"`,
-      `"${trip?.rider?.email || 'N/A'}"`,
-      `"${drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || 'Unassigned'}"`,
-      `"${trip.driverRun || 'N/A'}"`,
+      `"${trip.passengerId || trip.rider?.passengerId || 'N/A'}"`,
+      formatShortDate(trip.scheduledTime),
       `"${trip.pickup}"`,
       `"${trip.dropoff}"`,
+      `"${to12h(pickup) || 'N/A'}"`,
+      `"${to12h(times.arrival) || 'N/A'}"`,
+      `"${to12h(String(trip.dropoffTime || '').slice(11, 16) || times.arrival) || 'N/A'}"`,
       `"${trip.distance || (trip.miles ? `${trip.miles} mi` : 'N/A')}"`,
-      trip.status,
       `"${trip.reason || 'N/A'}"`,
-      `"${(trip.notes || '').replace(/"/g, '""') || 'N/A'}"`,
-      `"${(trip.privateNotes || '').replace(/"/g, '""') || 'N/A'}"`,
+      `"${driver?.vehicle?.type || trip.vehicle?.type || trip.mobility || 'N/A'}"`,
+      `"${trip.mobility || 'N/A'}"`,
+      trip.status === 'no_show' ? 'Yes' : 'No',
+      trip.status === 'cancelled' ? 'Yes' : 'No',
       `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
       trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
-      trip.cost || 0,
       trip.copay || 0,
-      trip.costToCounty || trip.cost || 0,
+      trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0),
       trip.type
       ];
     });
@@ -589,7 +582,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           setDaysFilter(prev => prev.includes(d.key) ? prev.filter(k => k !== d.key) : [...prev, d.key]);
                           setCurrentPage(1);
                         }}
-                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold rounded-lg transition-all border ${
+                        className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg transition-all border ${
                           isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
                         }`}
                       >
@@ -618,7 +611,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           setHoursFilter(prev => prev.includes(h.key) ? prev.filter(k => k !== h.key) : [...prev, h.key]);
                           setCurrentPage(1);
                         }}
-                        className={`px-3 py-1.5 text-[10px] font-semibold rounded-lg transition-all border ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                           isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
                         }`}
                       >
@@ -679,7 +672,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
             {/* Bulk assign driver */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-ink-4 whitespace-nowrap">Assign</span>
+              <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
               <select
                 value=""
                 onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { driverId: e.target.value })); }}
@@ -692,7 +685,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
             {/* Bulk change status */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-ink-4 whitespace-nowrap">Status</span>
+              <span className="text-xs text-ink-4 whitespace-nowrap">Status</span>
               <select
                 value=""
                 onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { status: e.target.value })); }}
@@ -733,28 +726,28 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Pickup Time</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Appt</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Customer ID</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Auth ID</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Run</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip Reason</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Distance</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatch Time</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Perform</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Arrival Time</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">County</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Charge</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Note</th>
-                <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatcher/Admin Note</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip ID</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Date</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Pickup Time</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Appt</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Rider</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Customer ID</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Auth ID</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap text-center">Status</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Driver</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Run</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Route</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip Reason</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Distance</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Type</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatch Time</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Perform</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Arrival Time</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Funding</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">County</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap text-right">Charge</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">User Note</th>
+                <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatcher/Admin Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
@@ -888,8 +881,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   {/* Type */}
                   <td className="px-3 py-2.5">
                     <div className="flex flex-col gap-1 items-start">
-                      <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5">{trip.mobility || 'Standard'}</Badge>
-                      <div className="flex items-center gap-1 text-[10px] text-ink-4">
+                      <Badge variant="neutral" className="text-xs px-1.5 py-0.5">{trip.mobility || 'Standard'}</Badge>
+                      <div className="flex items-center gap-1 text-xs text-ink-4">
                         {trip.type === 'round_trip' ? (
                           <>
                             <Repeat size={10} className="text-indigo-500" strokeWidth={2.5} />
@@ -947,7 +940,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
                           : 'bg-bg text-ink-3 border-line-2';
                         return (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
                             <DollarSign size={9} />{fs}
                           </span>
                         );
@@ -960,7 +953,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     <select
                       value={trip.insideCounty === true ? 'inside' : trip.insideCounty === false ? 'outside' : ''}
                       onChange={(e) => updateTrip(trip.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${trip.insideCounty === false ? 'text-urgent bg-urgent/5' : trip.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${trip.insideCounty === false ? 'text-urgent bg-urgent/5' : trip.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
                     >
                       <option value="">—</option>
                       <option value="inside">In-County</option>
@@ -972,8 +965,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="font-mono text-xs font-medium text-ink">{money(trip.cost)}</span>
                       <div className="flex items-center gap-1.5 opacity-80">
-                        <span className="font-mono text-xs font-medium text-ink-4">Co: {money(trip.copay || 0)}</span>
-                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : Math.max(0, (trip.cost || 0) - (trip.copay || 0)))}</span>
+                        <span className="font-mono text-xs font-medium text-ink-4">Cust: {money(trip.copay || 0)}</span>
+                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0))}</span>
                       </div>
                     </div>
                   </td>

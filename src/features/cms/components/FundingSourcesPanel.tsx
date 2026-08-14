@@ -108,7 +108,7 @@ export const FundingSourcesPanel = () => {
           <p className="text-xs font-bold text-primary uppercase tracking-wider">New Funding Source</p>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="text-[10px] font-semibold text-ink-4 uppercase mb-1 block">Source Name</label>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Source Name</label>
               <input
                 type="text"
                 value={newName}
@@ -120,7 +120,7 @@ export const FundingSourcesPanel = () => {
               />
             </div>
             <div className="w-40">
-              <label className="text-[10px] font-semibold text-ink-4 uppercase mb-1 block">Type</label>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Type</label>
               <select
                 value={newType}
                 onChange={e => setNewType(e.target.value)}
@@ -151,7 +151,7 @@ export const FundingSourcesPanel = () => {
       {/* Sources List */}
       <div className="rounded-2xl border border-line-2 overflow-hidden divide-y divide-line-2/50">
         {/* Column Header */}
-        <div className="grid grid-cols-12 px-4 py-2.5 bg-bg text-[10px] font-bold text-ink-4 uppercase tracking-wider">
+        <div className="grid grid-cols-12 px-4 py-2.5 bg-bg text-xs font-bold text-ink-4 uppercase tracking-wider">
           <div className="col-span-1" />
           <div className="col-span-5">Source Name</div>
           <div className="col-span-2">Type</div>
@@ -206,7 +206,7 @@ export const FundingSourcesPanel = () => {
                   {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
                 </select>
               ) : (
-                <Badge variant={typeBadgeVariant[source.type] as any} className="text-[9px]">
+                <Badge variant={typeBadgeVariant[source.type] as any} className="text-xs">
                   {source.type}
                 </Badge>
               )}
@@ -245,8 +245,8 @@ export const FundingSourcesPanel = () => {
                   </button>
                   {deleteConfirmId === source.id ? (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => deleteSource(source.id)} className="px-2 py-1 text-[10px] font-bold text-white bg-urgent rounded-lg">Delete</button>
-                      <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-[10px] font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
+                      <button onClick={() => deleteSource(source.id)} className="px-2 py-1 text-xs font-bold text-white bg-urgent rounded-lg">Delete</button>
+                      <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-xs font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
                     </div>
                   ) : (
                     <button
@@ -263,7 +263,7 @@ export const FundingSourcesPanel = () => {
         ))}
       </div>
 
-      <p className="text-[10px] text-ink-4 text-center">
+      <p className="text-xs text-ink-4 text-center">
         Changes sync to Booking Form, Trip History, and Reports immediately.
       </p>
     </div>

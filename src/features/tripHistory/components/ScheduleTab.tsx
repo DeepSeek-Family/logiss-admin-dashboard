@@ -185,7 +185,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
             <div className="px-3 text-xs font-semibold text-ink min-w-[150px] text-center flex items-center justify-center gap-2">
               <Calendar size={14} className="text-primary" />
               {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-              {isToday && <span className="text-[9px] font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">TODAY</span>}
+              {isToday && <span className="text-xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">TODAY</span>}
             </div>
             <button onClick={() => shiftDay(1)} className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm" title="Next day">
               <ChevronRight size={16} />
@@ -280,7 +280,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
               <k.icon size={16} className={k.ic} />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-ink-4 uppercase tracking-wide truncate">{k.label}</p>
+              <p className="text-xs font-semibold text-ink-4 uppercase tracking-wide truncate">{k.label}</p>
               <p className={`text-xl font-bold leading-none ${k.tone}`}>{k.value}</p>
             </div>
           </div>
@@ -310,7 +310,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
             <div className="sticky top-0 z-30 flex bg-bg border-b border-line-2">
               <div className="w-[260px] min-w-[260px] shrink-0 p-4 border-r border-line-2 flex items-center justify-between">
                 <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">Driver & Fleet</span>
-                <span className="text-[10px] text-ink-4">{visibleDrivers.length}</span>
+                <span className="text-xs text-ink-4">{visibleDrivers.length}</span>
               </div>
               <div className="flex-1 relative h-14">
                 {timelineHours.map((hour, idx) => {
@@ -319,8 +319,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                   const ampm = hour >= 12 ? 'PM' : 'AM';
                   return (
                     <div key={hour} className="absolute top-0 bottom-0 border-l border-line-2/40" style={{ left: `${left}%` }}>
-                      <span className="absolute -left-5 top-4 w-10 text-center text-[10px] font-bold text-ink-3">
-                        {display}<span className="text-[8px] text-ink-4 ml-0.5">{ampm}</span>
+                      <span className="absolute -left-5 top-4 w-10 text-center text-xs font-bold text-ink-3">
+                        {display}<span className="text-xs text-ink-4 ml-0.5">{ampm}</span>
                       </span>
                     </div>
                   );
@@ -361,18 +361,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                           </div>
                           <div className="flex items-center gap-1 mt-0.5">
                             <Truck size={10} className="text-ink-4 shrink-0" />
-                            <span className="text-[10px] text-ink-4 truncate">{driver.vehicle?.plate || '—'} · {driver.vehicle?.type}</span>
+                            <span className="text-xs text-ink-4 truncate">{driver.vehicle?.plate || '—'} · {driver.vehicle?.type}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 pl-10">
                         {driverTrips.length > 0 ? (
                           <>
-                            <Badge variant="primary" className="text-[9px] py-0">{driverTrips.length} {driverTrips.length === 1 ? 'trip' : 'trips'}</Badge>
-                            {totalMiles > 0 && <span className="text-[9px] font-medium text-ink-4">{totalMiles.toFixed(1)} mi</span>}
+                            <Badge variant="primary" className="text-xs py-0">{driverTrips.length} {driverTrips.length === 1 ? 'trip' : 'trips'}</Badge>
+                            {totalMiles > 0 && <span className="text-xs font-medium text-ink-4">{totalMiles.toFixed(1)} mi</span>}
                           </>
                         ) : (
-                          <span className="text-[9px] font-medium text-ink-4">{driver.onDuty ? 'On duty · idle' : 'Off duty'}</span>
+                          <span className="text-xs font-medium text-ink-4">{driver.onDuty ? 'On duty · idle' : 'Off duty'}</span>
                         )}
                       </div>
                     </button>
@@ -396,7 +396,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                         // Pull-out marker on the first trip of the day.
                         const pullOut = idx === 0 && startPct > 1 ? (
                           <div className="absolute top-1/2 -translate-y-1/2 -translate-x-[calc(100%+6px)] flex items-center gap-1 z-10" style={{ left: `${startPct}%` }}>
-                            <span className="text-[8px] font-black text-primary/60 uppercase tracking-wide bg-primary/5 px-1.5 py-0.5 rounded-full border border-primary/20 whitespace-nowrap">Pull-Out</span>
+                            <span className="text-xs font-black text-primary/60 uppercase tracking-wide bg-primary/5 px-1.5 py-0.5 rounded-full border border-primary/20 whitespace-nowrap">Pull-Out</span>
                           </div>
                         ) : null;
 
@@ -413,7 +413,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                                 style={{ left: `${prevEndPct}%`, width: `${gapW}%` }}
                                 title="Standby"
                               >
-                                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-ink-4 opacity-0 group-hover/gap:opacity-100 transition-opacity whitespace-nowrap">Standby</span>
+                                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-semibold text-ink-4 opacity-0 group-hover/gap:opacity-100 transition-opacity whitespace-nowrap">Standby</span>
                               </div>
                             );
                           }
@@ -422,7 +422,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                         // Pull-in marker after the last trip of the day.
                         const pullIn = isLast && endPct < 99 ? (
                           <div className="absolute top-1/2 -translate-y-1/2 translate-x-2 flex items-center gap-1 z-10" style={{ left: `${endPct}%` }}>
-                            <span className="text-[8px] font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-1.5 py-0.5 rounded-full border border-line-2 whitespace-nowrap">Pull-In</span>
+                            <span className="text-xs font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-1.5 py-0.5 rounded-full border border-line-2 whitespace-nowrap">Pull-In</span>
                           </div>
                         ) : null;
 
@@ -440,7 +440,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                               <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${statusAccent(trip.status)}`} />
                               <div className="flex-1 p-1.5 pl-2.5 flex flex-col overflow-hidden">
                                 <div className="flex items-center justify-between mb-0.5">
-                                  <span className="text-[10px] font-bold text-primary truncate">#{String(trip.id).split('-')[1] || trip.id}</span>
+                                  <span className="text-xs font-bold text-primary truncate">#{String(trip.id).split('-')[1] || trip.id}</span>
                                   {conflict ? (
                                     <AlertTriangle size={11} className="text-urgent shrink-0" />
                                   ) : inProgress ? (
@@ -453,7 +453,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                                 <p className="text-xs font-semibold text-ink truncate mb-1">{trip.rider?.name}</p>
                                 <div className="flex items-center gap-1 mt-auto bg-bg/60 px-1 py-0.5 rounded w-fit">
                                   <Clock size={9} className="text-ink-4 shrink-0" />
-                                  <span className="text-[9px] font-medium text-ink-3">{formatTime(trip.scheduledTime)}</span>
+                                  <span className="text-xs font-medium text-ink-3">{formatTime(trip.scheduledTime)}</span>
                                 </div>
                               </div>
                             </button>
@@ -463,7 +463,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
                       {driverTrips.length === 0 && (
                         <div className="absolute inset-0 flex items-center pl-3">
-                          <span className="text-[10px] text-ink-4/70 italic">No trips scheduled</span>
+                          <span className="text-xs text-ink-4/70 italic">No trips scheduled</span>
                         </div>
                       )}
                     </div>
@@ -511,14 +511,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         ].map(x => (
           <div key={x.l} className="flex items-center gap-1.5">
             <span className={`w-2.5 h-2.5 rounded-sm ${x.c}`} />
-            <span className="text-[11px] text-ink-4">{x.l}</span>
+            <span className="text-xs text-ink-4">{x.l}</span>
           </div>
         ))}
         <div className="flex items-center gap-1.5">
           <AlertTriangle size={11} className="text-urgent" />
-          <span className="text-[11px] text-ink-4">Time conflict</span>
+          <span className="text-xs text-ink-4">Time conflict</span>
         </div>
-        <span className="text-[11px] text-ink-4 ml-auto hidden sm:inline">Tip: click a driver to open their full day run sheet</span>
+        <span className="text-xs text-ink-4 ml-auto hidden sm:inline">Tip: click a driver to open their full day run sheet</span>
       </div>
 
       {/* Dedicated single-driver day run sheet */}

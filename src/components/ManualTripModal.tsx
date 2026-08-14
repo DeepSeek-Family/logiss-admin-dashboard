@@ -25,7 +25,7 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-1 h-3.5 bg-primary rounded-full" />
     {Icon && <Icon size={14} className="text-primary" />}
-    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">{title}</h4>
+    <h4 className="type-th">{title}</h4>
   </div>
 );
 
@@ -109,7 +109,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
         <div className="flex items-center justify-between px-8 py-5 border-b border-line-2 bg-white sticky top-0 z-10">
           <div>
             <h3 className="text-xl font-semibold text-ink">Manual Booking Console</h3>
-            <p className="text-[10px] text-ink-4 uppercase tracking-[0.1em] mt-0.5">Administrator Entry</p>
+            <p className="text-xs text-ink-4 uppercase tracking-[0.1em] mt-0.5">Administrator Entry</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-xl text-ink-4 transition-colors"><X size={20} /></button>
         </div>

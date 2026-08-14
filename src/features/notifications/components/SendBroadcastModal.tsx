@@ -156,7 +156,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
                 rows={4}
                 className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none"
               />
-              <p className="text-[10px] text-ink-4 text-right">{message.length}/200 characters</p>
+              <p className="text-xs text-ink-4 text-right">{message.length}/200 characters</p>
             </div>
           </div>
 

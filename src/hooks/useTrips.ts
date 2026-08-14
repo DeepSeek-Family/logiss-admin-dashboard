@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Trip, tripService } from '../services/tripService';
+import { quoteFares } from './usePricing';
 
 export const useTrips = (initialFilters: { status?: string } = {}) => {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -25,15 +26,25 @@ export const useTrips = (initialFilters: { status?: string } = {}) => {
   }, [fetchTrips]);
 
   const updateTrip = useCallback(async (id: string, patch: Partial<Trip>) => {
-    // Optimistic update so inline edits feel instant.
-    setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...patch } : t)));
+    // Inside/outside dropdown is the only fare trigger here — booking/details
+    // already send cost/copay themselves. Keeps list edits in sync with rates.
+    let nextPatch = patch;
+    if ('insideCounty' in patch && !('cost' in patch) && !('copay' in patch)) {
+      const current = trips.find(t => t.id === id);
+      if (current) {
+        const merged = { ...current, ...patch };
+        const miles = merged.miles ?? (parseFloat(String(merged.distance || '').replace(/[^\d.]/g, '')) || 0);
+        nextPatch = { ...patch, ...quoteFares({ insideCounty: merged.insideCounty, tripType: merged.type, miles, mobility: merged.mobility, stops: merged.stops }) };
+      }
+    }
+    setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...nextPatch } : t)));
     try {
-      await tripService.updateTrip(id, patch);
+      await tripService.updateTrip(id, nextPatch);
     } catch (err: any) {
       setError(err.message);
-      fetchTrips(); // Roll back to source of truth on failure.
+      fetchTrips();
     }
-  }, [fetchTrips]);
+  }, [fetchTrips, trips]);
 
   return { trips, loading, error, setFilters, refresh: fetchTrips, updateTrip };
 };

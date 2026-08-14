@@ -32,7 +32,7 @@ export const FleetAssignmentPanel: React.FC<FleetAssignmentPanelProps> = ({
   return (
     <>
       <Card className="p-6 border-line-2 shadow-sm">
-        <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6">Operational Control</h4>
+        <h4 className="type-th mb-6">Operational Control</h4>
 
         <div className="flex items-center gap-4 mb-6">
           <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all shadow-sm ${vehicle.status === 'available' ? 'bg-accent-light text-accent' :
@@ -71,7 +71,7 @@ export const FleetAssignmentPanel: React.FC<FleetAssignmentPanelProps> = ({
       </Card>
 
       <Card className="p-6 border-line-2 shadow-sm">
-        <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6">Operator Fulfillment</h4>
+        <h4 className="type-th mb-6">Operator Fulfillment</h4>
         {driver ? (
           <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -155,7 +155,7 @@ export const FleetAssignmentPanel: React.FC<FleetAssignmentPanelProps> = ({
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-semibold text-ink">{d.name}</p>
-                          {isCurrent && <Badge variant="accent" className="text-[10px] py-0 h-4">CURRENT</Badge>}
+                          {isCurrent && <Badge variant="accent" className="text-xs py-0 h-4">CURRENT</Badge>}
                         </div>
                         <div className="flex items-center gap-3 type-caption text-ink-4">
                           <span className="flex items-center gap-1.5"><Star size={12} className="text-warning fill-warning" /> {d.rating}</span>
@@ -166,12 +166,12 @@ export const FleetAssignmentPanel: React.FC<FleetAssignmentPanelProps> = ({
                     <div className="flex items-center gap-4">
                       {assignedVehicle && !isCurrent ? (
                         <div className="text-right">
-                          <p className="text-[10px] font-medium text-ink-4 uppercase tracking-wider mb-1">Assigned Unit</p>
+                          <p className="text-xs font-medium text-ink-4 uppercase tracking-wider mb-1">Assigned Unit</p>
                           <Badge variant="neutral">{assignedVehicle.plate}</Badge>
                         </div>
                       ) : (
                         <div className="text-right">
-                          <p className="text-[10px] font-medium text-ink-4 uppercase tracking-wider mb-1">Status</p>
+                          <p className="text-xs font-medium text-ink-4 uppercase tracking-wider mb-1">Status</p>
                           {unavailable ? (
                             <span className="text-xs font-semibold text-urgent">En Route</span>
                           ) : (

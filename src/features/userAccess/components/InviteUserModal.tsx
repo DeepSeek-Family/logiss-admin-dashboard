@@ -101,7 +101,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                   >
                     <r.icon size={18} className={inviteData.role === r.id ? 'text-primary' : 'text-ink-4'} />
                     <p className={`text-xs font-semibold mt-2 ${inviteData.role === r.id ? 'text-primary' : 'text-ink'}`}>{r.label}</p>
-                    <p className="text-[10px] text-ink-4 mt-0.5 leading-snug">{r.desc}</p>
+                    <p className="text-xs text-ink-4 mt-0.5 leading-snug">{r.desc}</p>
                   </button>
                 ))}
               </div>
@@ -125,7 +125,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                 >
                   {FACILITIES.map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
-                <p className="text-[11px] text-ink-4 mt-1.5">This user will only see rides &amp; data for the selected facility.</p>
+                <p className="text-xs text-ink-4 mt-1.5">This user will only see rides &amp; data for the selected facility.</p>
               </div>
             )}
 
@@ -135,7 +135,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                 <div className="flex items-center justify-between px-4 py-3 border-b border-line-2 bg-bg/40">
                   <div>
                     <p className="text-sm font-semibold text-ink">Permissions</p>
-                    <p className="text-[11px] text-ink-4">{perms.length} of {ALL_PERMISSIONS.length} enabled</p>
+                    <p className="text-xs text-ink-4">{perms.length} of {ALL_PERMISSIONS.length} enabled</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button type="button" onClick={() => setAll(true)} className="text-xs font-semibold text-primary hover:underline">Select all</button>
@@ -153,7 +153,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                           <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">{g.group}</span>
                           <button
                             type="button" onClick={() => toggleGroup(groupKeys)}
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all ${allOn ? 'bg-primary text-white border-primary' : someOn ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-ink-4 border-line-2 hover:bg-bg'}`}
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-all ${allOn ? 'bg-primary text-white border-primary' : someOn ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-ink-4 border-line-2 hover:bg-bg'}`}
                           >
                             {allOn ? 'All on' : 'Select group'}
                           </button>
@@ -183,7 +183,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
           </div>
 
           <div className="flex items-center gap-3 px-6 py-4 border-t border-line-2 shrink-0">
-            {inviteData.role === 'dispatcher' && <Badge variant="primary" className="text-[10px]">{perms.length} permissions</Badge>}
+            {inviteData.role === 'dispatcher' && <Badge variant="primary" className="text-xs">{perms.length} permissions</Badge>}
             <div className="flex gap-3 ml-auto">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button type="submit" variant="primary">Send Invite</Button>

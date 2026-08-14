@@ -147,7 +147,7 @@ export const FaqPanel = () => {
             }`}
           >
             {cat}
-            <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${activeCategory === cat ? 'bg-white/20' : 'bg-bg'}`}>
+            <span className={`text-xs font-bold px-1 py-0.5 rounded ${activeCategory === cat ? 'bg-white/20' : 'bg-bg'}`}>
               {categoryCount(cat)}
             </span>
           </button>
@@ -169,7 +169,7 @@ export const FaqPanel = () => {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-ink-4 uppercase mb-1.5 block">Question</label>
+            <label className="text-xs font-bold text-ink-4 uppercase mb-1.5 block">Question</label>
             <input
               type="text"
               value={newQuestion}
@@ -181,7 +181,7 @@ export const FaqPanel = () => {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-ink-4 uppercase mb-1.5 block">Answer</label>
+            <label className="text-xs font-bold text-ink-4 uppercase mb-1.5 block">Answer</label>
             <textarea
               value={newAnswer}
               onChange={e => setNewAnswer(e.target.value)}
@@ -237,7 +237,7 @@ export const FaqPanel = () => {
               <GripVertical size={14} className="text-line-2 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
 
               {/* Index */}
-              <span className="text-[11px] font-black text-ink-4 w-5 shrink-0">
+              <span className="text-xs font-black text-ink-4 w-5 shrink-0">
                 {String(idx + 1).padStart(2, '0')}
               </span>
 
@@ -257,7 +257,7 @@ export const FaqPanel = () => {
               </div>
 
               {/* Category Badge */}
-              <Badge variant="bg" className="text-[9px] shrink-0 hidden sm:flex">{faq.category}</Badge>
+              <Badge variant="bg" className="text-xs shrink-0 hidden sm:flex">{faq.category}</Badge>
 
               {/* Actions */}
               <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
@@ -281,8 +281,8 @@ export const FaqPanel = () => {
                     </button>
                     {deleteConfirmId === faq.id ? (
                       <div className="flex items-center gap-1 animate-in fade-in duration-150">
-                        <button onClick={() => deleteFaq(faq.id)} className="px-2 py-1 text-[10px] font-bold text-white bg-urgent rounded-lg">Delete</button>
-                        <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-[10px] font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
+                        <button onClick={() => deleteFaq(faq.id)} className="px-2 py-1 text-xs font-bold text-white bg-urgent rounded-lg">Delete</button>
+                        <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-xs font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
                       </div>
                     ) : (
                       <button
@@ -307,7 +307,7 @@ export const FaqPanel = () => {
                 {editingId === faq.id ? (
                   <div className="space-y-3 pt-3">
                     <div>
-                      <label className="text-[10px] font-bold text-ink-4 uppercase mb-1.5 block">Answer</label>
+                      <label className="text-xs font-bold text-ink-4 uppercase mb-1.5 block">Answer</label>
                       <textarea
                         value={editAnswer}
                         onChange={e => setEditAnswer(e.target.value)}
@@ -316,7 +316,7 @@ export const FaqPanel = () => {
                       />
                     </div>
                     <div className="flex items-center gap-3">
-                      <label className="text-[10px] font-bold text-ink-4 uppercase">Category</label>
+                      <label className="text-xs font-bold text-ink-4 uppercase">Category</label>
                       <select
                         value={editCategory}
                         onChange={e => setEditCategory(e.target.value)}
@@ -340,7 +340,7 @@ export const FaqPanel = () => {
         ))}
       </div>
 
-      <p className="text-[10px] text-ink-4 text-center">
+      <p className="text-xs text-ink-4 text-center">
         FAQ content is shown to dispatchers and drivers in the Help & Support section.
       </p>
     </div>

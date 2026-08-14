@@ -12,7 +12,7 @@ export const FleetOverviewTab: React.FC<FleetOverviewTabProps> = ({ vehicle, VEH
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
       <div className="space-y-6">
         <Card className="p-6">
-          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-4">Vehicle Specifications</h4>
+          <h4 className="type-th mb-4">Vehicle Specifications</h4>
           <div className="space-y-4">
             {[
               ['Category', vehicle.type],
@@ -31,7 +31,7 @@ export const FleetOverviewTab: React.FC<FleetOverviewTabProps> = ({ vehicle, VEH
         </Card>
 
         <Card className="p-6">
-          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-4">Special Equipment</h4>
+          <h4 className="type-th mb-4">Special Equipment</h4>
           <div className="p-4 bg-primary-tint/10 rounded-2xl border border-primary/10 flex gap-3">
             <Info size={16} className="text-primary shrink-0 mt-0.5" />
             <p className="text-xs font-medium text-ink-3 leading-relaxed">
@@ -43,7 +43,7 @@ export const FleetOverviewTab: React.FC<FleetOverviewTabProps> = ({ vehicle, VEH
 
       <div className="space-y-6">
         <Card className="p-6">
-          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-4">Operational Context</h4>
+          <h4 className="type-th mb-4">Operational Context</h4>
           <div className="aspect-[4/3] bg-bg rounded-xl border border-line-2 relative overflow-hidden group shadow-sm">
             <img
               src={VEHICLE_IMAGE}

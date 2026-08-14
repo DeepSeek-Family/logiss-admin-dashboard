@@ -19,20 +19,20 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Ico
   };
 
   return (
-    <Card className="p-6 relative">
-      <div className="flex justify-between items-start mb-1">
-        <span className="type-label text-ink-4">{label}</span>
+    <Card className="p-4 relative border-line">
+      <div className="flex justify-between items-start mb-2">
+        <span className="type-label text-ink-3">{label}</span>
         {Icon && (
           <div className={`p-1.5 rounded-lg ${accents[accent] || accents.primary}`}>
             <Icon size={16} />
           </div>
         )}
       </div>
-      <div className="text-2xl font-semibold text-ink mb-1">{value}</div>
+      <div className="text-xl font-semibold text-ink tabular-nums">{value}</div>
       {(sub || trend) && (
-        <div className="flex items-center gap-2">
-          {trend && <span className="type-caption text-ink-4">{trend}</span>}
-          {sub && <span className="type-caption text-ink-4">{sub}</span>}
+        <div className="flex items-center gap-2 mt-1">
+          {trend && <span className="text-xs font-medium text-ink-3">{trend}</span>}
+          {sub && <span className="text-xs font-medium text-ink-3">{sub}</span>}
         </div>
       )}
     </Card>

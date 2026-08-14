@@ -81,7 +81,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, 
             <h3 className="text-sm font-semibold text-ink">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold text-ink-4 bg-bg px-2 py-0.5 rounded-full border border-line-2">{historyTrips.length} trips</span>
+            <span className="text-xs font-semibold text-ink-4 bg-bg px-2 py-0.5 rounded-full border border-line-2">{historyTrips.length} trips</span>
             {onClose && (
               <button onClick={onClose} title="Hide map" className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-4 hover:text-ink hover:bg-bg border border-line-2 transition-colors">
                 <X size={14} />
@@ -163,7 +163,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, 
                 <Avatar initials={selected?.rider?.initials || '?'} size="sm" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink truncate">{selected?.rider?.name || 'Unknown'}</p>
-                  <p className="text-[11px] text-ink-4">#{selected.id} · {formatShortDate(selected.scheduledTime)} · {formatTime(selected.scheduledTime)}</p>
+                  <p className="text-xs text-ink-4">#{selected.id} · {formatShortDate(selected.scheduledTime)} · {formatTime(selected.scheduledTime)}</p>
                 </div>
               </div>
               <button onClick={() => onSelect(null)} className="p-1.5 text-ink-4 hover:text-ink rounded-lg hover:bg-bg shrink-0"><X size={15} /></button>
@@ -174,51 +174,51 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({ trips, drivers, 
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Truck size={15} className="text-primary" /></div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-ink truncate">{selDriver ? selDriver.name : 'Unassigned'}</p>
-                <p className="text-[10px] text-ink-4">{selDriver ? `${selDriver.vehicle?.type || ''} · ${selDriver.vehicle?.plate || ''}` : 'No vehicle assigned'}</p>
+                <p className="text-xs text-ink-4">{selDriver ? `${selDriver.vehicle?.type || ''} · ${selDriver.vehicle?.plate || ''}` : 'No vehicle assigned'}</p>
               </div>
-              <span className="ml-auto text-[9px] font-semibold text-primary bg-white px-2 py-1 rounded-full border border-primary/20 whitespace-nowrap">{vehicleStatusLabel}</span>
+              <span className="ml-auto text-xs font-semibold text-primary bg-white px-2 py-1 rounded-full border border-primary/20 whitespace-nowrap">{vehicleStatusLabel}</span>
             </div>
 
             {/* Route */}
             <div className="relative pl-1 space-y-3 mb-3">
               <div className="flex items-start gap-2.5">
                 <div className="w-3 h-3 rounded-full border-2 border-primary bg-white shrink-0 mt-0.5" />
-                <div className="min-w-0"><p className="text-[10px] text-ink-4">Pickup</p><p className="text-xs font-medium text-ink leading-snug">{selected.pickup || '—'}</p></div>
+                <div className="min-w-0"><p className="text-xs text-ink-4">Pickup</p><p className="text-xs font-medium text-ink leading-snug">{selected.pickup || '—'}</p></div>
               </div>
               {selected.stop && (
                 <div className="flex items-start gap-2.5">
                   <div className="w-3 h-3 rounded-full border-2 border-warning bg-white shrink-0 mt-0.5" />
-                  <div className="min-w-0"><p className="text-[10px] text-ink-4">Stop</p><p className="text-xs font-medium text-ink leading-snug">{selected.stop}</p></div>
+                  <div className="min-w-0"><p className="text-xs text-ink-4">Stop</p><p className="text-xs font-medium text-ink leading-snug">{selected.stop}</p></div>
                 </div>
               )}
               <div className="flex items-start gap-2.5">
                 <MapPin size={13} className="text-urgent shrink-0 mt-0.5" />
-                <div className="min-w-0"><p className="text-[10px] text-ink-4">Drop-off</p><p className="text-xs font-medium text-ink leading-snug">{selected.dropoff || '—'}</p></div>
+                <div className="min-w-0"><p className="text-xs text-ink-4">Drop-off</p><p className="text-xs font-medium text-ink leading-snug">{selected.dropoff || '—'}</p></div>
               </div>
             </div>
 
             {/* Meta */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-[10px] text-ink-4">Pickup time</p>
+                <p className="text-xs text-ink-4">Pickup time</p>
                 <p className="text-xs font-semibold text-ink flex items-center gap-1"><Clock size={10} className="text-ink-4" />{selected.requestedPickup || formatTime(selected.scheduledTime)}</p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-[10px] text-ink-4">Distance</p>
+                <p className="text-xs text-ink-4">Distance</p>
                 <p className="text-xs font-semibold text-ink">{selected.distance || (selected.miles ? `${selected.miles} mi` : '—')}</p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-[10px] text-ink-4">Trip cost</p>
+                <p className="text-xs text-ink-4">Trip cost</p>
                 <p className="text-xs font-semibold text-ink">{money(selected.cost || 0)}</p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-[10px] text-ink-4">Reason</p>
+                <p className="text-xs text-ink-4">Reason</p>
                 <p className="text-xs font-semibold text-ink truncate">{selected.reason || '—'}</p>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-line-2">
-              <TripStatusBadge status={selected.status} className="text-[10px]" />
+              <TripStatusBadge status={selected.status} className="text-xs" />
               {onOpenDetails && (
                 <button onClick={() => onOpenDetails(selected.id)} className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1">
                   Open full details <ExternalLink size={12} />

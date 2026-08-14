@@ -54,11 +54,11 @@ export const NotificationList = ({ filtered, onMarkRead, onDelete }: Notificatio
                 urgentTypes.includes(notif.type) ? 'bg-urgent' : 'bg-primary'
               }`} />
             )}
-            <span className={`text-[11px] font-bold uppercase tracking-wide ${notif.color}`}>
+            <span className={`text-xs font-bold uppercase tracking-wide ${notif.color}`}>
               {notif.category}
             </span>
           </div>
-          <span className="text-[11px] text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
+          <span className="text-xs text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
         </div>
 
         <p className={`text-sm leading-snug ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`}>
@@ -78,7 +78,7 @@ export const NotificationList = ({ filtered, onMarkRead, onDelete }: Notificatio
             )}
             {!notif.read && (
               <button
-                className="text-[11px] text-ink-4 hover:text-ink flex items-center gap-1 transition-colors"
+                className="text-xs text-ink-4 hover:text-ink flex items-center gap-1 transition-colors"
                 onClick={e => { e.stopPropagation(); onMarkRead(notif.id); }}
               >
                 <CheckCheck size={12} /> Mark read
@@ -102,13 +102,13 @@ export const NotificationList = ({ filtered, onMarkRead, onDelete }: Notificatio
     <div className="space-y-6">
       {today.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest px-1">Today</p>
+          <p className="text-xs font-bold text-ink-4 uppercase tracking-widest px-1">Today</p>
           <div className="space-y-2">{today.map(renderItem)}</div>
         </div>
       )}
       {earlier.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-bold text-ink-4 uppercase tracking-widest px-1">Earlier</p>
+          <p className="text-xs font-bold text-ink-4 uppercase tracking-widest px-1">Earlier</p>
           <div className="space-y-2">{earlier.map(renderItem)}</div>
         </div>
       )}

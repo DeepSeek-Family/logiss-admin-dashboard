@@ -24,13 +24,13 @@ export const FleetTripsTab: React.FC<FleetTripsTabProps> = ({ vehicleTrips, driv
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-bg/50 border-b border-line-2">
-                <th className="px-4 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date & Pickup</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Cost</th>
-                <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
+                <th className="px-4 py-4 type-th whitespace-nowrap">Trip ID</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap">Date & Pickup</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap">Rider</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap">Driver</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap">Route</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap text-right">Cost</th>
+                <th className="px-5 py-2.5 type-th whitespace-nowrap text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">

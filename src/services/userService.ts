@@ -1,4 +1,7 @@
 import { mockUsers } from '../data/mockData';
+import { env } from '@/config/env';
+import { api } from '@/services/api';
+import { API } from '@/constants/api';
 
 export interface User {
   id: string;
@@ -11,17 +14,26 @@ export interface User {
 }
 
 export const userService = {
-  getUsers: (): Promise<User[]> => Promise.resolve([...mockUsers]),
+  getUsers: (): Promise<User[]> => {
+    if (!env.useMock) return api.get<User[]>(API.users);
+    return Promise.resolve([...mockUsers]);
+  },
 
-  updateUserStatus: (_id: string, _status: string): Promise<{ success: boolean }> => Promise.resolve({ success: true }),
+  updateUserStatus: (id: string, status: string): Promise<{ success: boolean }> => {
+    if (!env.useMock) return api.patch<{ success: boolean }>(`${API.users}/${id}`, { status });
+    return Promise.resolve({ success: true });
+  },
 
-  inviteUser: (userData: Partial<User>): Promise<User> => Promise.resolve({
-    id: `LOG-${Math.floor(Math.random() * 900) + 100}`,
-    name: userData.name || 'Unknown',
-    email: userData.email || '',
-    role: userData.role || 'staff',
-    status: 'active',
-    lastLogin: 'Never',
-    ...userData
-  })
+  inviteUser: (userData: Partial<User>): Promise<User> => {
+    if (!env.useMock) return api.post<User>(API.usersInvite, userData);
+    return Promise.resolve({
+      id: `LOG-${Math.floor(Math.random() * 900) + 100}`,
+      name: userData.name || 'Unknown',
+      email: userData.email || '',
+      role: userData.role || 'staff',
+      status: 'active',
+      lastLogin: 'Never',
+      ...userData
+    });
+  }
 };

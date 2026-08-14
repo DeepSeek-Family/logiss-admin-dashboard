@@ -97,7 +97,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
         <>
           <div className="lg:col-span-1 space-y-6">
             <Card className="p-6 space-y-6">
-              <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Mobility & Payment</h4>
+              <h4 className="type-th mb-5 px-1 border-l-2 border-primary ml-[-1px]">Mobility & Payment</h4>
               <div className="space-y-4">
                  <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
                     <span className="text-xs text-ink-4">Mobility Need</span>
@@ -111,7 +111,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             </Card>
 
             <Card className="p-6 space-y-6">
-              <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Default Locations</h4>
+              <h4 className="type-th mb-5 px-1 border-l-2 border-accent ml-[-1px]">Default Locations</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                   <div className="p-2 bg-white rounded-lg text-ink-3 shadow-sm shrink-0"><MapPin size={14} /></div>
@@ -134,7 +134,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="p-6">
-                <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Contact Details</h4>
+                <h4 className="type-th mb-5 px-1 border-l-2 border-primary ml-[-1px]">Contact Details</h4>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
                     <span className="text-xs text-ink-4">Phone Number</span>
@@ -148,7 +148,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               </Card>
 
               <Card className="p-6 border-urgent/10 bg-urgent-light/5">
-                <h4 className="text-[10px] font-medium text-urgent uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                <h4 className="text-xs font-medium text-urgent uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
                   <AlertTriangle size={14} /> Emergency Contact
                 </h4>
                 <div className="p-4 bg-white rounded-2xl border border-urgent/10">
@@ -185,12 +185,12 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-bg border-b border-line-2">
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Type</th>
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Route</th>
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Actions</th>
+                  <th className="px-5 py-2.5 type-th">Trip ID</th>
+                  <th className="px-5 py-2.5 type-th">Date & Time</th>
+                  <th className="px-5 py-2.5 type-th">Type</th>
+                  <th className="px-5 py-2.5 type-th">Route</th>
+                  <th className="px-5 py-2.5 type-th">Status</th>
+                  <th className="px-5 py-2.5 type-th">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-2">

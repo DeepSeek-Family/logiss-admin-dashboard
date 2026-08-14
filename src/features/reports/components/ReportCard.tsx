@@ -29,14 +29,14 @@ export const ReportCard = ({ report, selected, onClick }: ReportCardProps) => {
     >
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-ink line-clamp-1 flex-1 mr-2">{report.type}</p>
-        <Badge variant={sev.badge} className="text-[10px] px-1.5 py-0 shrink-0">{sev.label}</Badge>
+        <Badge variant={sev.badge} className="text-xs px-1.5 py-0 shrink-0">{sev.label}</Badge>
       </div>
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-1">
           <SevIcon size={11} className={sev.iconClass} />
-          <span className="font-mono text-[10px] text-ink-4">{report.id}</span>
+          <span className="font-mono text-xs text-ink-4">{report.id}</span>
         </div>
-        <span className="text-[10px] text-ink-4">{timeAgo(report?.submitted)}</span>
+        <span className="text-xs text-ink-4">{timeAgo(report?.submitted)}</span>
       </div>
     </button>
   );

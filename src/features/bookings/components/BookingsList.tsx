@@ -165,7 +165,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
             {/* Bulk assign driver — moves the booking into Trip History once assigned */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-ink-4 whitespace-nowrap">Assign</span>
+              <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
               <select
                 value=""
                 onChange={(e) => { if (e.target.value) { selectedTrips.forEach(id => updateTrip(id, { driverId: e.target.value, status: 'assigned' })); setSelectedTrips([]); } }}
@@ -220,29 +220,29 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         />
                       </th>
                     )}
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Actions</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip ID</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Date</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Pickup Time</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Appt</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Rider</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Customer ID</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Auth ID</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-center">Status</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Driver</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Run</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Route</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Trip Reason</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Distance</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Type</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatch Time</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Perform</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Arrival Time</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Funding</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">County</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Charge (est.)</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Note</th>
-                    <th className="px-3 py-2.5 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Dispatcher/Admin Note</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Actions</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip ID</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Date</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Pickup Time</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Appt</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Rider</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Customer ID</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Auth ID</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap text-center">Status</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Driver</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Run</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Route</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip Reason</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Distance</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Type</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatch Time</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Perform</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Arrival Time</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Funding</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">County</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap text-right">Charge (est.)</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">User Note</th>
+                    <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatcher/Admin Note</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line-2">
@@ -319,7 +319,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           value={booking.status}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateTrip(booking.id, { status: e.target.value })}
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || 'text-ink-3 bg-bg'}`}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || 'text-ink-3 bg-bg'}`}
                         >
                           {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} className="text-ink bg-white">{o.label}</option>)}
                         </select>
@@ -385,8 +385,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Type */}
                       <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-1 items-start">
-                          <Badge variant="neutral" className="text-[10px] px-1.5 py-0.5 font-medium">{booking?.mobility || 'Standard'}</Badge>
-                          <div className="flex items-center gap-1 text-[10px] text-ink-4">
+                          <Badge variant="neutral" className="text-xs px-1.5 py-0.5 font-medium">{booking?.mobility || 'Standard'}</Badge>
+                          <div className="flex items-center gap-1 text-xs text-ink-4">
                             {booking?.type === 'round_trip' ? (
                               <>
                                 <Repeat size={10} className="text-indigo-500" strokeWidth={2.5} />
@@ -435,7 +435,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                               : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : 'bg-bg text-ink-3 border-line-2';
                             return (
-                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
+                              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
                                 <DollarSign size={9} />{fs}
                               </span>
                             );
@@ -449,7 +449,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           value={booking.insideCounty === true ? 'inside' : booking.insideCounty === false ? 'outside' : ''}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateTrip(booking.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${booking.insideCounty === false ? 'text-urgent bg-urgent/5' : booking.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${booking.insideCounty === false ? 'text-urgent bg-urgent/5' : booking.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
                         >
                           <option value="">—</option>
                           <option value="inside">In-County</option>
@@ -462,8 +462,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="font-mono text-xs font-medium text-ink">{money(booking.cost || 0)}</span>
                           <div className="flex items-center gap-1.5 opacity-80">
-                            <span className="font-mono text-[10px] text-ink-4">Co: {money(booking.copay || 0)}</span>
-                            <span className="font-mono text-[10px] text-ink-4">Cty: {money(booking.costToCounty || booking.cost || 0)}</span>
+                            <span className="font-mono text-xs text-ink-4">Cust: {money(booking.copay || 0)}</span>
+                            <span className="font-mono text-xs text-ink-4">Cty: {money(booking.costToCounty != null ? booking.costToCounty : booking.cost || 0)}</span>
                           </div>
                         </div>
                       </td>

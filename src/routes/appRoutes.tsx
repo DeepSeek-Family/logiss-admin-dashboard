@@ -1,14 +1,12 @@
 import { lazy } from 'react';
+import { ROUTES } from '@/constants/routes';
+import type { AppRole, SessionRole } from '@/types/common.types';
 
-export type AppRole = 'admin' | 'dispatcher';
-export type SessionRole = AppRole | null;
-
-export const isAppRole = (role: unknown): role is AppRole => (
-  role === 'admin' || role === 'dispatcher'
-);
+export type { AppRole, SessionRole };
+export { isAppRole } from '@/types/common.types';
 
 export const getDefaultRoute = (role: SessionRole) => (
-  role === 'admin' ? '/dashboard' : '/operations'
+  role === 'admin' ? ROUTES.dashboard : ROUTES.operations
 );
 
 const Login = lazy(() => import('../pages/Login'));
@@ -22,7 +20,6 @@ const TripHistory = lazy(() => import('../pages/TripHistory'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Fleet = lazy(() => import('../pages/Fleet'));
 const FleetDetails = lazy(() => import('../pages/FleetDetails'));
-const Schedule = TripHistory;
 const Notifications = lazy(() => import('../pages/Notifications'));
 const Profile = lazy(() => import('../pages/Profile'));
 const CMS = lazy(() => import('../pages/CMS'));
@@ -44,7 +41,7 @@ export interface AppRouteConfig {
 }
 
 export const loginRoute = {
-  path: '/login',
+  path: ROUTES.login,
   Component: Login,
 };
 

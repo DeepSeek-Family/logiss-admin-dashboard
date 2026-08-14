@@ -35,8 +35,8 @@ export const DriversTable = ({
   getStatusBadge
 }: DriversTableProps) => {
   return (
-    <Card className="overflow-hidden border-line-2">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2 bg-bg/30">
+    <Card className="overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3 border-b border-line bg-white">
         <div className="flex items-center gap-1">
           {[
             { id: 'all', label: 'All Drivers' },
@@ -47,10 +47,10 @@ export const DriversTable = ({
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === tab.id
-                  ? 'bg-white shadow-sm text-primary border border-line'
-                  : 'text-ink-4 hover:text-ink'
+                  ? 'bg-primary-light text-primary'
+                  : 'text-ink-3 hover:text-ink hover:bg-bg'
               }`}
             >
               {tab.label}
@@ -58,11 +58,11 @@ export const DriversTable = ({
           ))}
         </div>
         <div className="relative w-full sm:w-56">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" size={16} />
           <input
             type="text"
             placeholder="Search name, ID..."
-            className="w-full pl-8 pr-3 py-2 bg-white border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/10 outline-none"
+            className="w-full pl-9 pr-3 py-2 bg-bg border border-line rounded-lg text-sm font-medium text-ink placeholder:text-ink-3 focus:ring-2 focus:ring-primary/15 outline-none"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
           />
@@ -71,82 +71,73 @@ export const DriversTable = ({
 
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-bg/40 border-b border-line-2">
+          <thead className="bg-bg border-b border-line">
             <tr>
               {['Driver', 'Vehicle', 'Status', 'Trips', 'Compliance'].map(h => (
-                <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">
+                <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>
               ))}
+              <th className="px-5 py-2.5" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-line-2">
+          <tbody className="divide-y divide-line">
             {paginatedDrivers.map((driver: any) => (
-              <tr key={driver.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={() => onDriverClick(driver.id)}>
-                <td className="px-6 py-4">
+              <tr key={driver.id} className="hover:bg-primary-tint/40 transition-colors group cursor-pointer" onClick={() => onDriverClick(driver.id)}>
+                <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <Avatar initials={driver.initials} size="sm" />
-                      {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white text-[1px]" />}
+                      {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">{driver.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-[10px] text-ink-3 bg-bg px-1.5 py-0.5 rounded border border-line-2">{driver.id}</span>
-                        <span className="text-[10px] font-medium text-ink-4 truncate">{driver.email}</span>
-                      </div>
+                      <p className="text-sm font-semibold text-ink leading-tight truncate">{driver.name}</p>
+                      <p className="text-xs font-medium text-ink-3 mt-0.5 truncate">
+                        <span className="font-mono text-ink-2">{driver.id}</span>
+                        {driver.email ? <span> · {driver.email}</span> : null}
+                      </p>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col">
-                    <p className="text-sm font-medium text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
-                    <p className="font-mono text-[10px] text-ink-4 mt-0.5">{driver?.vehicle?.plate || '---'}</p>
-                  </div>
+                <td className="px-5 py-3">
+                  <p className="text-sm font-semibold text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
+                  <p className="font-mono text-xs font-medium text-ink-2 mt-0.5">{driver?.vehicle?.plate || '—'}</p>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-5 py-3">
                   {getStatusBadge(driver.status)}
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-ink">{driver?.tripsToday || 0}</span>
-                      <span className="text-[10px] text-ink-4">today</span>
-                    </div>
-                    <p className="text-[10px] text-ink-4">{(driver?.totalTrips || 0).toLocaleString()} total</p>
-                    <span className="flex items-center gap-1 text-[10px] font-medium text-warning mt-0.5">
-                      <Star size={9} fill="currentColor" /> {driver?.rating || 0}
+                <td className="px-5 py-3">
+                  <p className="text-sm font-semibold text-ink tabular-nums">
+                    {driver?.tripsToday || 0} <span className="text-xs font-medium text-ink-3">today</span>
+                  </p>
+                  <p className="text-xs font-medium text-ink-3 mt-0.5 flex items-center gap-1.5">
+                    {(driver?.totalTrips || 0).toLocaleString()} total
+                    <span className="inline-flex items-center gap-0.5 text-warning font-semibold">
+                      <Star size={12} fill="currentColor" /> {driver?.rating || 0}
                     </span>
-                  </div>
+                  </p>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-5 py-3">
                   {(driver?.pendingDocUpdates || 0) > 0 ? (
-                    <div className="flex flex-col gap-1">
-                      <span className="flex items-center gap-1.5 text-[10px] font-medium text-urgent bg-urgent-light px-2 py-1 rounded-full w-fit">
-                        <AlertTriangle size={10} /> Needs Review
-                      </span>
-                      <p className="text-[10px] text-ink-4 ml-2">{driver.pendingDocUpdates} doc(s)</p>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-urgent">
+                      <AlertTriangle size={14} /> Needs review · {driver.pendingDocUpdates}
+                    </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 text-[10px] font-medium text-accent bg-accent-light px-2 py-1 rounded-full w-fit">
-                      <ShieldCheck size={10} /> Verified
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
+                      <ShieldCheck size={14} /> Verified
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4/40 group-hover:text-primary group-hover:bg-primary-light transition-all">
-                      <ChevronRight size={18} />
-                    </div>
-                  </div>
+                <td className="px-5 py-3 text-right">
+                  <ChevronRight size={18} className="inline text-ink-3 group-hover:text-primary" />
                 </td>
               </tr>
             ))}
             {paginatedDrivers.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-6 py-16 text-center text-ink-4">
-                  <Search size={32} className="mx-auto mb-3 opacity-30" />
-                  <p className="text-sm text-ink-4">No drivers match your filter</p>
+                <td colSpan={6} className="px-5 py-12 text-center">
+                  <Search size={28} className="mx-auto mb-2 text-ink-3" />
+                  <p className="text-sm font-medium text-ink-3">No drivers match your filter</p>
                 </td>
               </tr>
             )}

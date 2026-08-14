@@ -41,7 +41,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-semibold text-ink">Quick Dispatch</h3>
-              <p className="text-[10px] text-ink-4">#{dispatchModalTrip.tripId}</p>
+              <p className="text-xs text-ink-4">#{dispatchModalTrip.tripId}</p>
             </div>
           </div>
           <button
@@ -61,7 +61,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
                 <div className="w-0.5 h-8 border-l border-line-2 border-dashed" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-1">Pickup</p>
+                <p className="type-th mb-1">Pickup</p>
                 <p className="text-sm font-medium text-ink truncate">{dispatchModalTrip.pickupLocation}</p>
               </div>
             </div>
@@ -70,7 +70,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
                 <MapPin size={14} className="text-urgent" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-1">Destination</p>
+                <p className="type-th mb-1">Destination</p>
                 <p className="text-sm font-medium text-ink truncate">{dispatchModalTrip.returnAddress}</p>
               </div>
             </div>
@@ -89,14 +89,14 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
             <Avatar initials={dispatchModalTrip.rider.split(' ').map((n: string) => n[0]).join('')} size="sm" />
             <div>
               <h4 className="text-sm font-medium text-ink">{dispatchModalTrip.rider}</h4>
-              <p className="text-[10px] text-ink-4">Patient Will Call Service</p>
+              <p className="text-xs text-ink-4">Patient Will Call Service</p>
             </div>
           </div>
 
           {/* Driver Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Assign Driver</h5>
+              <h5 className="type-th">Assign Driver</h5>
               <span className="text-xs font-medium text-primary px-2 py-0.5 bg-primary/10 rounded-full">{sortedDrivers.length} Online</span>
             </div>
 
@@ -131,7 +131,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="text-[10px] text-ink-4 uppercase tracking-normal">{driver.vehicle.type} · {driver.vehicle.plate}</p>
+                        <p className="text-xs text-ink-4 uppercase tracking-normal">{driver.vehicle.type} · {driver.vehicle.plate}</p>
                         {driver.status !== 'available' && (
                           <span className="text-xs font-medium text-warning-dark bg-warning/10 px-1 rounded">{driver.status.replace('_', ' ')}</span>
                         )}

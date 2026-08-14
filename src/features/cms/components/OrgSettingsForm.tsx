@@ -30,7 +30,7 @@ const Field = ({
   children: React.ReactNode;
 }) => (
   <div>
-    <label className="block text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-1.5 ml-1">
+    <label className="block type-th mb-1.5 ml-1">
       {label}
     </label>
     <div className="relative group">
@@ -51,7 +51,7 @@ export const OrgSettingsForm = ({ orgSettings, setOrgSettings }: OrgSettingsForm
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Left — Contact Channels */}
       <div className="space-y-6">
-        <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Contact Channels</h4>
+        <h4 className="type-th">Contact Channels</h4>
         <div className="space-y-4">
           <Field label="Support Email" icon={Mail}>
             <input type="email" className={inputClass} value={orgSettings.supportEmail} onChange={set('supportEmail')} />
@@ -100,14 +100,14 @@ export const OrgSettingsForm = ({ orgSettings, setOrgSettings }: OrgSettingsForm
 
       {/* Right — Admin Details */}
       <div className="space-y-6">
-        <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Administrative Details</h4>
+        <h4 className="type-th">Administrative Details</h4>
         <div className="space-y-4">
           <Field label="Organization Name" icon={Building2}>
             <input type="text" className={inputClass} value={orgSettings.name} onChange={set('name')} />
           </Field>
 
           <div>
-            <label className="block text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-1.5 ml-1">
+            <label className="block type-th mb-1.5 ml-1">
               Headquarters Address
             </label>
             <div className="relative group">

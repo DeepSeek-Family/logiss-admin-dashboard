@@ -14,12 +14,12 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
         <table className="w-full text-left">
           <thead className="bg-bg/50 border-b border-line-2">
             <tr>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">User Profile</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Role</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Access Scope</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Status</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">Last Active</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap text-right">Access</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap">User Profile</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap">Role</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap">Access Scope</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap">Status</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap">Last Active</th>
+              <th className="px-5 py-2.5 type-th whitespace-nowrap text-right">Access</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line-2">
@@ -60,7 +60,7 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   ) : user.role === 'facility' ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-3"><Building2 size={11} className="text-ink-4" />{user.facility || 'No facility set'}</span>
                   ) : (
-                    <Badge variant="primary" className="text-[10px]">{(user.permissions?.length ?? 0)} / {ALL_PERMISSIONS.length} permissions</Badge>
+                    <Badge variant="primary" className="text-xs">{(user.permissions?.length ?? 0)} / {ALL_PERMISSIONS.length} permissions</Badge>
                   )}
                 </td>
                 <td className="px-6 py-4">

@@ -61,7 +61,7 @@ export function MultiCalendar({ selected = [], onSelect, className }: MultiCalen
 
       <div className="grid grid-cols-7 gap-1 mb-2 text-center">
         {dayNames.map(day => (
-          <div key={day} className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">
+          <div key={day} className="type-th">
             {day}
           </div>
         ))}

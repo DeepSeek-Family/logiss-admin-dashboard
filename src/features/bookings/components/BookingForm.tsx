@@ -14,6 +14,7 @@ import { money } from '@/utils/helpers';
 import { FUNDING_SOURCES, riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
 import { tripService } from '@/services/tripService';
+import { quoteFares, inferInsideCounty, usePricing } from '@/hooks/usePricing';
 
 export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
 export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
@@ -71,9 +72,10 @@ export const BookingForm = () => {
     additionalNotes: '',
     privateNotes: '',
     grossFare: 0,
-    countyContribution: 38.00,
+    countyContribution: 0,
     manualFareOverride: false,
-    advancePaid: 0
+    advancePaid: 0,
+    estMiles: 10
   });
 
   const filteredRiders = existingSearch.trim() === ''
@@ -110,7 +112,15 @@ export const BookingForm = () => {
     toast.success(`Populated profile details for ${rider.name}!`);
   };
 
-  const baseRates: any = { Ambulatory: 45, Wheelchair: 65, Walker: 55, Rollator: 55, Cane: 45 };
+  const { pricing } = usePricing();
+
+  const quote = quoteFares({
+    insideCounty: form.insideCounty,
+    tripType: form.tripType,
+    miles: form.estMiles,
+    mobility: form.mobility,
+    stops: form.stops,
+  }, pricing);
 
   // Calculate the dates for repeating booking
   const getRecurringDates = () => {
@@ -140,13 +150,15 @@ export const BookingForm = () => {
   const recurringDates = isRecurring ? getRecurringDates() : [];
 
   useEffect(() => {
-    if (!form.manualFareOverride && form.mobility) {
-      const base = baseRates[form.mobility] || 50;
-      let total = base + (form.stops.length * 15);
-      if (form.tripType === 'round-trip') total *= 1.8;
-      setForm(prev => ({ ...prev, grossFare: Math.round(total) }));
-    }
-  }, [form.mobility, form.stops.length, form.tripType, form.manualFareOverride]);
+    if (!form.pickup || !form.dropoff) return;
+    const next = inferInsideCounty(form.pickup, form.dropoff, form.source);
+    setForm(prev => prev.insideCounty === next ? prev : { ...prev, insideCounty: next });
+  }, [form.pickup, form.dropoff, form.source]);
+
+  useEffect(() => {
+    if (form.manualFareOverride) return;
+    setForm(prev => prev.grossFare === quote.cost ? prev : { ...prev, grossFare: quote.cost });
+  }, [quote.cost, form.manualFareOverride]);
 
   // Auto-select the day of the week of the first Service Date
   useEffect(() => {
@@ -168,8 +180,9 @@ export const BookingForm = () => {
     }
   }, [isRecurring, selectedDates]);
 
-  const totalCopay = Math.max(0, form.grossFare - form.countyContribution);
-  const dueToDriver = Math.max(0, totalCopay - form.advancePaid);
+  const customerFare = quote.copay;
+  const governmentFare = form.manualFareOverride ? form.grossFare : quote.cost;
+  const dueToDriver = Math.max(0, customerFare - form.advancePaid);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,9 +260,10 @@ export const BookingForm = () => {
         stops: form.stops,
         scheduledTime,
         dropoffTime,
-        miles: 10.0,
-        cost: form.grossFare,
-        copay: totalCopay,
+        miles: form.estMiles,
+        cost: governmentFare,
+        copay: customerFare,
+        costToCounty: governmentFare,
         fundingSource: form.fundingSource || 'Self-Pay',
         insideCounty: form.insideCounty,
         reason: form.tripReason,
@@ -379,9 +393,9 @@ export const BookingForm = () => {
                         >
                           <div>
                             <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors">{rider.name}</p>
-                            <p className="text-[10px] text-ink-4 mt-0.5">{rider.email} · {rider.phone}</p>
+                            <p className="text-xs text-ink-4 mt-0.5">{rider.email} · {rider.phone}</p>
                           </div>
-                          <Badge variant="bg" className="bg-white border border-line-2 text-[10px] font-medium text-ink-3">
+                          <Badge variant="bg" className="bg-white border border-line-2 text-xs font-medium text-ink-3">
                             {rider.passengerId}
                           </Badge>
                         </button>
@@ -447,7 +461,7 @@ export const BookingForm = () => {
                   <User size={14} /> Instructions for Driver
                 </label>
                 <textarea className={`${inputClass} min-h-[120px] resize-none py-3 text-sm leading-relaxed`} value={form.additionalNotes} onChange={e => setForm({ ...form, additionalNotes: e.target.value })} placeholder="Enter special instructions for the driver (e.g. Call when arrived)..." />
-                <p className="text-[10px] text-ink-4 mt-1.5">Visible in Driver App</p>
+                <p className="text-xs text-ink-4 mt-1.5">Visible in Driver App</p>
               </div>
               
               <div>
@@ -455,7 +469,7 @@ export const BookingForm = () => {
                   <Lock size={14} /> Internal Private Notes
                 </label>
                 <textarea className={`${inputClass} min-h-[120px] resize-none py-3 text-sm leading-relaxed bg-urgent/5 border-urgent/20 focus:ring-urgent/10 focus:border-urgent`} value={form.privateNotes} onChange={e => setForm({ ...form, privateNotes: e.target.value })} placeholder="Enter internal notes for dispatchers (e.g. Billing issues, specific client habits)..." />
-                <p className="text-[10px] text-urgent/70 mt-1.5 font-medium">Hidden from Drivers & Customers</p>
+                <p className="text-xs text-urgent/70 mt-1.5 font-medium">Hidden from Drivers & Customers</p>
               </div>
             </div>
           </Card>
@@ -549,7 +563,7 @@ export const BookingForm = () => {
             <div className="pt-5 border-t border-line-2 mt-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-ink-2">Trip Jurisdiction</p>
-                <p className="text-[10px] text-ink-4 mt-0.5">Is this trip within the county boundaries?</p>
+                <p className="text-xs text-ink-4 mt-0.5">Auto from pickup/dropoff; override if needed. Customer fare follows this flag.</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-xs font-medium ${!form.insideCounty ? 'text-urgent' : 'text-ink-4'}`}>Outside</span>
@@ -606,7 +620,7 @@ export const BookingForm = () => {
                   <Repeat size={14} className={selectedDates.length > 1 ? 'text-ink-4' : 'text-primary'} />
                   <div>
                     <p className="text-xs font-medium text-ink-2">Recurring Booking</p>
-                    <p className="text-[10px] font-medium text-ink-4">
+                    <p className="text-xs font-medium text-ink-4">
                       {selectedDates.length > 1 
                         ? "Disabled because multiple custom dates are selected" 
                         : "Schedule repeating trips for dialysis, therapy, etc."}
@@ -677,21 +691,21 @@ export const BookingForm = () => {
                     <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-primary">🗓️ Schedule Preview</span>
-                        <Badge variant="primary" className="text-[10px] font-medium px-2 py-0.5">{recurringDates.length} Trips Total</Badge>
+                        <Badge variant="primary" className="text-xs font-medium px-2 py-0.5">{recurringDates.length} Trips Total</Badge>
                       </div>
                       
                       <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
                         {recurringDates.map((date, idx) => (
                           <span 
                             key={idx} 
-                            className="bg-white border border-line-2 text-ink text-[10px] font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                            className="bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
                           >
                             {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                           </span>
                         ))}
                       </div>
                       
-                      <p className="text-[10px] text-ink-4 font-semibold italic">
+                      <p className="text-xs text-ink-4 font-semibold italic">
                         * Recurring trips will be generated at the scheduled time of {form.requestedPickup || form.appointmentTime || 'N/A'} for each date above.
                       </p>
                     </div>
@@ -706,14 +720,14 @@ export const BookingForm = () => {
                 <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-primary">🗓️ Selected Dates Preview</span>
-                    <Badge variant="primary" className="text-[10px] font-medium px-2 py-0.5">{selectedDates.length} {selectedDates.length === 1 ? 'Trip' : 'Trips'} Total</Badge>
+                    <Badge variant="primary" className="text-xs font-medium px-2 py-0.5">{selectedDates.length} {selectedDates.length === 1 ? 'Trip' : 'Trips'} Total</Badge>
                   </div>
                   
                   <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
                     {selectedDates.map((date, idx) => (
                       <span 
                         key={idx} 
-                        className="flex items-center gap-1 bg-white border border-line-2 text-ink text-[10px] font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                        className="flex items-center gap-1 bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
                       >
                         {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                         <button 
@@ -779,34 +793,35 @@ export const BookingForm = () => {
             ) : (
               <div className="space-y-4">
                 <div className="flex justify-between text-xs font-medium text-ink-4">
-                  <span>Gross Fare</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-ink-3">$</span>
-                    <input type="number" readOnly={!form.manualFareOverride} className={`w-20 text-right bg-transparent border-b outline-none text-sm ${form.manualFareOverride ? 'border-primary text-primary' : 'border-transparent text-ink'}`} value={form.grossFare} onChange={e => setForm({ ...form, grossFare: Number(e.target.value) || 0 })} />
-                  </div>
+                  <span>Est. miles (county bracket)</span>
+                  <input type="number" step="0.1" min="0" className="w-20 text-right bg-transparent border-b border-line-2 outline-none text-sm text-ink" value={form.estMiles} onChange={e => setForm({ ...form, estMiles: Number(e.target.value) || 0 })} />
                 </div>
-                <div className="flex justify-between text-xs font-medium text-urgent/80 border-b border-line-2 pb-4">
-                  <span>County Contribution</span>
-                  <span>-${form.countyContribution}</span>
-                </div>
-
-                <div className="flex justify-between items-end pt-2">
+                <div className="flex justify-between items-end bg-white p-4 rounded-2xl border border-line-2">
                   <div>
-                    <p className="text-xs font-medium text-ink-3">Total Copay</p>
-                    <p className="text-xl font-semibold text-primary">{money(totalCopay)}</p>
+                    <p className="text-xs font-medium text-ink-3">Customer fare</p>
+                    <p className="text-xs text-ink-4 mt-0.5">{form.insideCounty ? 'Inside' : 'Outside'} · {quote.legs} leg{quote.legs > 1 ? 's' : ''}{quote.legs > 1 ? ' (return billed separately)' : ''}</p>
+                    <p className="text-xl font-semibold text-primary mt-1">{money(customerFare)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-medium text-ink-3 mb-2">Advance</p>
-                    <div className="relative w-32 ml-auto">
+                    <p className="text-xs font-medium text-ink-3">Advance</p>
+                    <div className="relative w-28 mt-1">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-3">$</span>
                       <input type="number" className="w-full pl-8 pr-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink text-right outline-none shadow-sm" value={form.advancePaid} onChange={e => setForm({ ...form, advancePaid: Number(e.target.value) || 0 })} />
                     </div>
                   </div>
                 </div>
+                <div className="flex justify-between text-xs font-medium text-ink-4 pt-1">
+                  <span>County / government (admin only)</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-ink-3">$</span>
+                    <input type="number" readOnly={!form.manualFareOverride} className={`w-20 text-right bg-transparent border-b outline-none text-sm ${form.manualFareOverride ? 'border-primary text-primary' : 'border-transparent text-ink'}`} value={governmentFare} onChange={e => setForm({ ...form, grossFare: Number(e.target.value) || 0, manualFareOverride: true })} />
+                  </div>
+                </div>
+                <p className="text-xs text-ink-4">Bracket + pickup fee + mobility item from Settings → Coverage. Not shown as customer charge.</p>
 
                 <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm mt-2">
                   <div>
-                    <p className="text-xs font-medium text-ink-3">Due to Driver (Per Trip)</p>
+                    <p className="text-xs font-medium text-ink-3">Due to Driver (customer cash)</p>
                     <p className="text-lg font-semibold text-ink">{money(dueToDriver)}</p>
                   </div>
                   <Badge variant={dueToDriver > 0 ? "warning" : "accent"} className="text-xs py-1.5 px-5 font-medium">
@@ -817,10 +832,10 @@ export const BookingForm = () => {
                 {isRecurring && recurringDates.length > 0 && (
                   <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl flex justify-between items-center mt-2.5 animate-in zoom-in-95 duration-200">
                     <div>
-                      <p className="text-xs font-medium text-primary">Recurring Total</p>
-                      <p className="text-[10px] font-semibold text-ink-3">{money(form.grossFare)} × {recurringDates.length} trips</p>
+                      <p className="text-xs font-medium text-primary">Recurring customer total</p>
+                      <p className="text-xs font-semibold text-ink-3">{money(customerFare)} × {recurringDates.length} trips</p>
                     </div>
-                    <p className="text-lg font-semibold text-primary">{money(form.grossFare * recurringDates.length)}</p>
+                    <p className="text-lg font-semibold text-primary">{money(customerFare * recurringDates.length)}</p>
                   </div>
                 )}
               </div>

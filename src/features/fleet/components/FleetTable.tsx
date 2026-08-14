@@ -74,7 +74,7 @@ export const FleetTable = ({
           <thead className="bg-bg/40 border-b border-line-2 sticky top-0 z-10">
             <tr>
               {['Vehicle', 'Vehicle Type', 'Status', 'Operator', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
-                <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">{h}</th>
+                <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>

@@ -35,11 +35,11 @@ export const ActiveTripsTable = ({
         <table className="w-full text-left">
           <thead>
             <tr className="bg-bg/60 border-b border-line-2">
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">ID</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Rider</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Time</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Driver</th>
+              <th className="px-5 py-2.5 type-th">ID</th>
+              <th className="px-5 py-2.5 type-th">Rider</th>
+              <th className="px-5 py-2.5 type-th">Time</th>
+              <th className="px-5 py-2.5 type-th">Status</th>
+              <th className="px-5 py-2.5 type-th">Driver</th>
               <th className="px-6 py-4"></th>
             </tr>
           </thead>

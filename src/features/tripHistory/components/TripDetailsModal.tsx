@@ -91,17 +91,16 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
 
   const driver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
 
-  // ── Derived (auto-calculated) values — not hand-editable ──────────────────
-  // Cost to County is always Total Trip Cost − Patient Copay; Est. Duration is a
-  // route estimate derived from distance. Keeping them computed avoids the
-  // mismatch you get when someone overrides them by hand.
+  // Customer fare (copay) and county billable are independent — not Total − Copay.
   const numF = (v: any) => { const n = parseFloat(String(v ?? '').replace(/[^\d.]/g, '')); return isNaN(n) ? 0 : n; };
   const AVG_MIN_PER_MILE = 2.5; // city NEMT average incl. stops/traffic
   const milesNow = editMode ? numF(form.distance) : (trip?.miles != null ? Number(trip.miles) : numF(trip?.distance));
   const estDurationMin = milesNow > 0 ? Math.max(5, Math.round(milesNow * AVG_MIN_PER_MILE)) : 0;
   const costNow = editMode ? numF(form.cost) : numF(trip?.cost);
   const copayNow = editMode ? numF(form.copay) : numF(trip?.copay);
-  const costToCountyNow = Math.max(0, costNow - copayNow);
+  const costToCountyNow = editMode
+    ? (form.costToCounty === '' ? costNow : numF(form.costToCounty))
+    : (trip?.costToCounty != null && trip.costToCounty !== '' ? numF(trip.costToCounty) : costNow);
 
   const handleSave = () => {
     const scheduledTime = form.scheduledDate && form.scheduledTimeOfDay
@@ -268,7 +267,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                     <p className="text-xs text-ink-4 mb-1">Est. Duration (min)</p>
                     <p className="text-sm font-medium text-ink">
                       {estDurationMin ? `${estDurationMin} min` : <span className="text-ink-4">N/A</span>}
-                      {editMode && estDurationMin > 0 && <span className="text-[10px] text-ink-4 font-normal ml-1">· auto from distance</span>}
+                      {editMode && estDurationMin > 0 && <span className="text-xs text-ink-4 font-normal ml-1">· auto from distance</span>}
                     </p>
                   </div>
                   {Field({ label: 'Return Type', k: 'returnType', options: [{ value: '', label: 'N/A' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'will_call', label: 'Will Call' }] })}
@@ -294,7 +293,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                       <div className="space-y-2">
                         {form.stops.map((s, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <span className="text-[10px] font-semibold text-ink-4 w-10 shrink-0">Stop {i + 1}</span>
+                            <span className="text-xs font-semibold text-ink-4 w-10 shrink-0">Stop {i + 1}</span>
                             <input value={s} onChange={(e) => setStop(i, e.target.value)} className={INPUT} placeholder="Stop address…" />
                             <button type="button" onClick={() => removeStop(i)} className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
                           </div>
@@ -426,7 +425,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 <div className="space-y-4">
                   <div className="flex items-end justify-between bg-bg p-4 rounded-xl border border-line-2">
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Total Trip Cost</p>
+                      <p className="text-xs text-ink-4 mb-1">County / government</p>
                       {editMode ? (
                         <input type="number" step="0.01" value={String(form.cost)} onChange={(e) => set('cost', e.target.value)} className={`${INPUT} w-28`} />
                       ) : (
@@ -443,13 +442,12 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                   </div>
                   <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10">
                     <div>
-                      <p className="text-xs font-medium text-primary mb-1">Patient Copay</p>
+                      <p className="text-xs font-medium text-primary mb-1">Customer fare</p>
                       {editMode ? <input type="number" step="0.01" value={String(form.copay)} onChange={(e) => set('copay', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(trip.copay || 0)}</p>}
                     </div>
                     <div className="sm:border-l border-primary/20 sm:pl-4">
                       <p className="text-xs font-medium text-primary mb-1">Cost to County</p>
-                      <p className="text-lg font-semibold text-ink">{money(costToCountyNow)}</p>
-                      {editMode && <p className="text-[10px] text-ink-4 mt-0.5">Auto: Total − Copay</p>}
+                      {editMode ? <input type="number" step="0.01" value={String(form.costToCounty)} onChange={(e) => set('costToCounty', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(costToCountyNow)}</p>}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

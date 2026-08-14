@@ -51,13 +51,13 @@ export const TransactionsTable = ({
         <table className="w-full text-left border-collapse">
           <thead className="bg-bg/50 border-b border-line-2">
             <tr>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Transaction ID</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Date</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Rider</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Breakdown</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Amount</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
-              <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] text-right"></th>
+              <th className="px-5 py-2.5 type-th">Transaction ID</th>
+              <th className="px-5 py-2.5 type-th">Date</th>
+              <th className="px-5 py-2.5 type-th">Rider</th>
+              <th className="px-5 py-2.5 type-th">Breakdown</th>
+              <th className="px-5 py-2.5 type-th">Amount</th>
+              <th className="px-5 py-2.5 type-th">Status</th>
+              <th className="px-5 py-2.5 type-th text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line-2">
@@ -65,7 +65,7 @@ export const TransactionsTable = ({
               <tr key={txn.id} className="hover:bg-primary-tint/20 transition-colors group cursor-pointer">
                 <td className="px-6 py-4">
                   <p className="text-xs font-mono text-ink-3">{txn.id}</p>
-                  <p className="text-[10px] text-ink-4 font-mono mt-0.5">Ref: {txn.tripId}</p>
+                  <p className="text-xs text-ink-4 font-mono mt-0.5">Ref: {txn.tripId}</p>
                 </td>
                 <td className="px-6 py-4">
                   <p className="text-xs font-medium text-ink">{formatShortDate(txn.date)}</p>
@@ -75,13 +75,13 @@ export const TransactionsTable = ({
                     <Avatar initials={txn.rider.initials} size="xs" />
                     <div>
                       <p className="text-xs font-medium text-ink">{txn.rider.name}</p>
-                      <p className="text-[10px] text-ink-4 mt-0.5">{txn.method}</p>
+                      <p className="text-xs text-ink-4 mt-0.5">{txn.method}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-0.5 text-[11px] font-medium text-ink-3">
-                    <span>Copay: <span className="font-medium text-ink font-mono">{money(txn.copay)}</span></span>
+                  <div className="flex flex-col gap-0.5 text-xs font-medium text-ink-3">
+                    <span>Customer: <span className="font-medium text-ink font-mono">{money(txn.copay)}</span></span>
                     <span>County: <span className="font-medium text-ink font-mono">{money(txn.countyShare)}</span></span>
                   </div>
                 </td>
@@ -89,7 +89,7 @@ export const TransactionsTable = ({
                   <p className="text-sm font-mono text-ink">{money(txn.amount)}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant={txn.status === 'paid' ? 'accent' : txn.status === 'refunded' ? 'urgent' : 'warning'} className="uppercase text-[10px] w-fit">
+                  <Badge variant={txn.status === 'paid' ? 'accent' : txn.status === 'refunded' ? 'urgent' : 'warning'} className="uppercase text-xs w-fit">
                     {txn.status}
                   </Badge>
                 </td>

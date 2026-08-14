@@ -67,7 +67,7 @@ export const FacilitiesPanel = () => {
           <p className="text-xs font-bold text-primary uppercase tracking-wider">New Facility / Program</p>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="text-[10px] font-semibold text-ink-4 uppercase mb-1 block">Name</label>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Name</label>
               <input
                 type="text" value={newName} onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addItem()}
@@ -76,7 +76,7 @@ export const FacilitiesPanel = () => {
               />
             </div>
             <div className="w-44">
-              <label className="text-[10px] font-semibold text-ink-4 uppercase mb-1 block">Type</label>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Type</label>
               <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all">
                 {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
               </select>
@@ -90,7 +90,7 @@ export const FacilitiesPanel = () => {
       )}
 
       <div className="rounded-2xl border border-line-2 overflow-hidden divide-y divide-line-2/50">
-        <div className="grid grid-cols-12 px-4 py-2.5 bg-bg text-[10px] font-bold text-ink-4 uppercase tracking-wider">
+        <div className="grid grid-cols-12 px-4 py-2.5 bg-bg text-xs font-bold text-ink-4 uppercase tracking-wider">
           <div className="col-span-6">Facility / Program</div>
           <div className="col-span-2">Type</div>
           <div className="col-span-2 text-center">Status</div>
@@ -122,7 +122,7 @@ export const FacilitiesPanel = () => {
                   {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
                 </select>
               ) : (
-                <Badge variant={typeBadgeVariant[f.type] as any} className="text-[9px]">{f.type}</Badge>
+                <Badge variant={typeBadgeVariant[f.type] as any} className="text-xs">{f.type}</Badge>
               )}
             </div>
             <div className="col-span-2 flex justify-center">
@@ -143,8 +143,8 @@ export const FacilitiesPanel = () => {
                   <button onClick={() => startEdit(f)} className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><Pencil size={13} /></button>
                   {deleteConfirmId === f.id ? (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => deleteItem(f.id)} className="px-2 py-1 text-[10px] font-bold text-white bg-urgent rounded-lg">Delete</button>
-                      <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-[10px] font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
+                      <button onClick={() => deleteItem(f.id)} className="px-2 py-1 text-xs font-bold text-white bg-urgent rounded-lg">Delete</button>
+                      <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 text-xs font-semibold text-ink-4 border border-line-2 rounded-lg bg-white">No</button>
                     </div>
                   ) : (
                     <button onClick={() => setDeleteConfirmId(f.id)} className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={13} /></button>
@@ -156,7 +156,7 @@ export const FacilitiesPanel = () => {
         ))}
       </div>
 
-      <p className="text-[10px] text-ink-4 text-center">Active facilities appear in Facility User assignment and booking program selection.</p>
+      <p className="text-xs text-ink-4 text-center">Active facilities appear in Facility User assignment and booking program selection.</p>
     </div>
   );
 };

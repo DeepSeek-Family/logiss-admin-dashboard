@@ -30,17 +30,17 @@ export const LiveTripRiderProfile: React.FC<LiveTripRiderProfileProps> = ({ prof
 
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 bg-bg rounded-xl border border-line-2">
-              <p className="text-[10px] text-ink-4 uppercase mb-1">Mobility</p>
+              <p className="text-xs text-ink-4 uppercase mb-1">Mobility</p>
               <p className="text-sm font-medium text-primary">{profile.mobility || 'Ambulatory'}</p>
             </div>
             <div className="p-4 bg-bg rounded-xl border border-line-2">
-              <p className="text-[10px] text-ink-4 uppercase mb-1">Rating</p>
+              <p className="text-xs text-ink-4 uppercase mb-1">Rating</p>
               <p className="text-sm font-medium text-warning flex items-center gap-1"><Star size={12} fill="currentColor" /> {profile.rating || 4.9}</p>
             </div>
           </div>
 
           <section className="space-y-3">
-            <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] px-1">Contact Details</h5>
+            <h5 className="type-th px-1">Contact Details</h5>
             <div className="space-y-2">
               <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                 <Phone size={14} className="text-ink-4" />
@@ -54,7 +54,7 @@ export const LiveTripRiderProfile: React.FC<LiveTripRiderProfileProps> = ({ prof
           </section>
 
           <section className="space-y-3">
-            <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] px-1">Emergency Contact</h5>
+            <h5 className="type-th px-1">Emergency Contact</h5>
             <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
               <div className="w-8 h-8 bg-urgent-light text-urgent rounded-lg flex items-center justify-center shrink-0">
                 <AlertTriangle size={14} />
@@ -62,7 +62,7 @@ export const LiveTripRiderProfile: React.FC<LiveTripRiderProfileProps> = ({ prof
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-ink truncate">{profile.emergencyContact?.name || 'Sarah Phillips'}</p>
-                  <span className="text-[10px] text-ink-4 uppercase">{profile.emergencyContact?.relation || 'Daughter'}</span>
+                  <span className="text-xs text-ink-4 uppercase">{profile.emergencyContact?.relation || 'Daughter'}</span>
                 </div>
                 <p className="text-xs font-medium text-primary">{profile.emergencyContact?.phone || '(804) 555-9921'}</p>
               </div>

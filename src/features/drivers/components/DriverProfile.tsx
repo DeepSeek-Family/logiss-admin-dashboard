@@ -106,7 +106,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
             <>
               <div className="lg:col-span-1 space-y-6">
                 <Card className="p-6 space-y-6">
-                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-primary ml-[-1px]">Current Unit</h4>
+                  <h4 className="type-th mb-5 px-1 border-l-2 border-primary ml-[-1px]">Current Unit</h4>
                   <div className="p-5 bg-primary-tint/10 rounded-2xl border border-primary/10">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm"><Car size={24} /></div>
@@ -127,7 +127,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
 
                 {selectedDriver?.counties && selectedDriver.counties.length > 0 && (
                   <Card className="p-6 space-y-6">
-                    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
+                    <h4 className="type-th mb-5 px-1 border-l-2 border-accent ml-[-1px]">Service Counties</h4>
 
                     <div className="flex flex-wrap gap-2">
                       {selectedDriver.counties.map((c: string) => (
@@ -143,7 +143,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6 px-1 border-l-2 border-primary ml-[-1px]">Personal Details</h4>
+                    <h4 className="type-th mb-6 px-1 border-l-2 border-primary ml-[-1px]">Personal Details</h4>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between py-1 border-b border-line-2 border-dashed">
@@ -162,7 +162,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                   </Card>
 
                   <Card className="p-6 border-urgent/10 bg-urgent-light/5">
-                    <h4 className="text-[10px] font-medium text-urgent uppercase tracking-[0.1em] mb-6 flex items-center gap-2">
+                    <h4 className="text-xs font-medium text-urgent uppercase tracking-[0.1em] mb-6 flex items-center gap-2">
                       <AlertTriangle size={14} className="text-urgent" /> Emergency Contact
                     </h4>
 
@@ -192,7 +192,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 </div>
 
                 <Card className="p-6">
-                  <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-6 px-1 border-l-2 border-accent ml-[-1px]">Experience & Certification</h4>
+                  <h4 className="type-th mb-6 px-1 border-l-2 border-accent ml-[-1px]">Experience & Certification</h4>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-bg rounded-2xl border border-line-2">
@@ -229,12 +229,12 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-bg border-b border-line-2">
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Trip ID</th>
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Date & Time</th>
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Rider</th>
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Route</th>
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Status</th>
-                      <th className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Actions</th>
+                      <th className="px-5 py-2.5 type-th">Trip ID</th>
+                      <th className="px-5 py-2.5 type-th">Date & Time</th>
+                      <th className="px-5 py-2.5 type-th">Rider</th>
+                      <th className="px-5 py-2.5 type-th">Route</th>
+                      <th className="px-5 py-2.5 type-th">Status</th>
+                      <th className="px-5 py-2.5 type-th">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-2">
@@ -340,8 +340,8 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     {/* Header */}
                     <div className="flex justify-between items-start border-b border-white/10 pb-2 z-10">
                       <div>
-                        <h4 className="text-[10px] font-bold tracking-widest text-primary-light uppercase">DRIVER LICENSE</h4>
-                        <p className="text-[8px] text-white/50 font-medium">COMMONWEALTH OF VIRGINIA</p>
+                        <h4 className="text-xs font-bold tracking-widest text-primary-light uppercase">DRIVER LICENSE</h4>
+                        <p className="text-xs text-white/50 font-medium">COMMONWEALTH OF VIRGINIA</p>
                       </div>
                       <ShieldCheck size={18} className="text-accent" />
                     </div>
@@ -360,17 +360,17 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                       {/* Details */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div>
-                          <p className="text-[8px] text-white/40 uppercase tracking-wider">Name</p>
+                          <p className="text-xs text-white/40 uppercase tracking-wider">Name</p>
                           <p className="text-xs font-semibold truncate leading-none">{selectedDriver?.name}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <p className="text-[8px] text-white/40 uppercase tracking-wider">License No.</p>
-                            <p className="text-[10px] font-mono font-medium truncate leading-none">{viewingDoc.id}</p>
+                            <p className="text-xs text-white/40 uppercase tracking-wider">License No.</p>
+                            <p className="text-xs font-mono font-medium truncate leading-none">{viewingDoc.id}</p>
                           </div>
                           <div>
-                            <p className="text-[8px] text-white/40 uppercase tracking-wider">Class</p>
-                            <p className="text-[10px] font-medium leading-none">{selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C'}</p>
+                            <p className="text-xs text-white/40 uppercase tracking-wider">Class</p>
+                            <p className="text-xs font-medium leading-none">{selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C'}</p>
                           </div>
                         </div>
                       </div>
@@ -379,12 +379,12 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     {/* Footer */}
                     <div className="flex justify-between items-end border-t border-white/10 pt-2 z-10">
                       <div>
-                        <p className="text-[7px] text-white/40 uppercase tracking-wider">Date of Birth</p>
-                        <p className="text-[9px] font-medium leading-none">{selectedDriver?.dob || 'Jan 12, 1988'}</p>
+                        <p className="text-xs text-white/40 uppercase tracking-wider">Date of Birth</p>
+                        <p className="text-xs font-medium leading-none">{selectedDriver?.dob || 'Jan 12, 1988'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[7px] text-white/40 uppercase tracking-wider">Expires</p>
-                        <p className="text-[9px] font-semibold text-warning leading-none">{viewingDoc.expiry}</p>
+                        <p className="text-xs text-white/40 uppercase tracking-wider">Expires</p>
+                        <p className="text-xs font-semibold text-warning leading-none">{viewingDoc.expiry}</p>
                       </div>
                     </div>
                   </div>
@@ -392,11 +392,11 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 {/* Document Meta */}
                 <div className="bg-bg rounded-2xl border border-line-2 p-4 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Document ID</span>
+                    <span className="type-th">Document ID</span>
                     <span className="text-xs font-mono text-ink">{viewingDoc.id}</span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">Expiry Date</span>
+                    <span className="type-th">Expiry Date</span>
                     <span className="text-xs text-ink">{viewingDoc.expiry}</span>
                   </div>
                 </div>

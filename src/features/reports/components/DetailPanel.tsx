@@ -41,7 +41,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
               {report.severity === 'high' && (
                 <>
                   <span className="w-1 h-1 bg-line rounded-full" />
-                  <Badge variant="urgent" className="text-[10px] uppercase font-medium animate-pulse flex items-center gap-1">
+                  <Badge variant="urgent" className="text-xs uppercase font-medium animate-pulse flex items-center gap-1">
                     <AlertTriangle size={10} /> Safety Alert
                   </Badge>
                 </>
@@ -58,7 +58,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* High severity alert */}
         {report.severity === 'high' && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-urgent-light/40 rounded-xl border border-urgent/10 text-urgent text-[11px] font-medium">
+          <div className="flex items-center gap-2 px-3 py-2 bg-urgent-light/40 rounded-xl border border-urgent/10 text-urgent text-xs font-medium">
             <AlertTriangle size={13} className="shrink-0 animate-pulse" />
             <span>Urgent: Safety violation flagged — immediate dispatch follow-up required.</span>
           </div>
@@ -67,8 +67,8 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
         {/* Filer vs Subject */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { data: report.filedBy, label: 'Filed by', badge: <Badge variant="neutral" className="text-[10px]">Filer</Badge> },
-            { data: report.subject, label: 'Subject', badge: <Badge variant="urgent" className="text-[10px]">Subject</Badge> },
+            { data: report.filedBy, label: 'Filed by', badge: <Badge variant="neutral" className="text-xs">Filer</Badge> },
+            { data: report.subject, label: 'Subject', badge: <Badge variant="urgent" className="text-xs">Subject</Badge> },
           ].map(({ data, label, badge }) => (
             <div key={label} className="bg-bg/60 rounded-xl p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -78,7 +78,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
                     <p className="text-sm font-medium text-ink truncate">{data?.name || 'Unknown'}</p>
                     {badge}
                   </div>
-                  <p className="text-[10px] text-primary">{data?.role || 'N/A'}</p>
+                  <p className="text-xs text-primary">{data?.role || 'N/A'}</p>
                 </div>
               </div>
               <button
@@ -95,7 +95,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
 
         {/* Statement */}
         <div>
-          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-3 flex items-center gap-2">
+          <h4 className="type-th mb-3 flex items-center gap-2">
             <MessageSquare size={12} /> Statement of Incident
           </h4>
           <div className="bg-bg/40 rounded-2xl p-5 relative">
@@ -106,7 +106,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
 
         {/* Associated Trip */}
         <div>
-          <h4 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] mb-3 flex items-center gap-2">
+          <h4 className="type-th mb-3 flex items-center gap-2">
             <Flag size={12} /> Associated Record
           </h4>
           <div className="bg-bg/60 rounded-xl p-4 flex items-center justify-between group hover:bg-primary-tint/30 transition-colors cursor-pointer">

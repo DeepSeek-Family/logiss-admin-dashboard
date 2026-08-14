@@ -29,7 +29,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
           </div>
 
           <section className="space-y-3">
-            <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] px-1">Current Vehicle</h5>
+            <h5 className="type-th px-1">Current Vehicle</h5>
             <div className="p-4 bg-primary-tint/10 rounded-2xl border border-primary/10 flex items-center gap-4">
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
                 <Truck size={18} />
@@ -42,7 +42,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
           </section>
 
           <section className="space-y-3">
-            <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] px-1">Contact Details</h5>
+            <h5 className="type-th px-1">Contact Details</h5>
             <div className="space-y-2">
               <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
                 <Phone size={14} className="text-ink-4" />
@@ -56,7 +56,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
           </section>
 
           <section className="space-y-3">
-            <h5 className="text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] px-1">Emergency Contact</h5>
+            <h5 className="type-th px-1">Emergency Contact</h5>
             <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border border-line-2">
               <div className="w-8 h-8 bg-urgent-light text-urgent rounded-lg flex items-center justify-center shrink-0">
                 <AlertTriangle size={14} />
@@ -64,7 +64,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-ink truncate">{profile.emergencyContact?.name || 'Robert Wilson'}</p>
-                  <span className="text-[10px] text-ink-4 uppercase">{profile.emergencyContact?.relation || 'Brother'}</span>
+                  <span className="text-xs text-ink-4 uppercase">{profile.emergencyContact?.relation || 'Brother'}</span>
                 </div>
                 <p className="text-xs font-medium text-primary">{profile.emergencyContact?.phone || '(804) 555-0012'}</p>
               </div>

@@ -233,7 +233,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   >
                     <Mail size={16} className={`mb-1.5 ${passwordMode === 'invite' ? 'text-primary' : 'text-ink-4'}`} />
                     <p className={`text-xs font-semibold leading-none mb-1 ${passwordMode === 'invite' ? 'text-primary' : 'text-ink'}`}>Send invite email</p>
-                    <p className="text-[10px] text-ink-4 leading-tight">Driver sets own password</p>
+                    <p className="text-xs text-ink-4 leading-tight">Driver sets own password</p>
                   </button>
                   <button
                     type="button"
@@ -246,7 +246,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   >
                     <KeyRound size={16} className={`mb-1.5 ${passwordMode === 'temp' ? 'text-primary' : 'text-ink-4'}`} />
                     <p className={`text-xs font-semibold leading-none mb-1 ${passwordMode === 'temp' ? 'text-primary' : 'text-ink'}`}>Set temp password</p>
-                    <p className="text-[10px] text-ink-4 leading-tight">Driver changes on first login</p>
+                    <p className="text-xs text-ink-4 leading-tight">Driver changes on first login</p>
                   </button>
                 </div>
 
@@ -288,7 +288,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-warning-light/40 rounded-xl border border-warning/20">
                       <AlertTriangle size={12} className="text-warning shrink-0" />
-                      <p className="text-[10px] text-ink-3 leading-relaxed">The driver will be required to change this password when they first log in.</p>
+                      <p className="text-xs text-ink-3 leading-relaxed">The driver will be required to change this password when they first log in.</p>
                     </div>
                   </div>
                 )}
@@ -359,7 +359,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-ink truncate">{form.licensePhoto.name}</p>
-                        <p className="text-[10px] text-ink-4">{form.licensePhoto.size}</p>
+                        <p className="text-xs text-ink-4">{form.licensePhoto.size}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -381,7 +381,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   >
                     <UploadCloud size={28} className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-all" />
                     <p className="text-xs font-semibold text-ink">Tap to upload license document</p>
-                    <p className="text-[10px] text-ink-4 mt-0.5">Portraits, JPEG, PNG, PDF (Max 10MB)</p>
+                    <p className="text-xs text-ink-4 mt-0.5">Portraits, JPEG, PNG, PDF (Max 10MB)</p>
                     <input 
                       type="file" 
                       accept="image/*,application/pdf" 
@@ -496,7 +496,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     <p className="leading-normal"><strong className="text-ink">Document & background check</strong><br />Our team reviews the submitted license and driving record.</p>
                   </div>
                 </div>
-                <p className="text-[10px] text-ink-4 pl-7">Typically 3-5 business days. You'll receive an email either way.</p>
+                <p className="text-xs text-ink-4 pl-7">Typically 3-5 business days. You'll receive an email either way.</p>
               </div>
 
               {/* Confirmation Checkbox */}
@@ -507,7 +507,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   onChange={e => setConfirmedCheckbox(e.target.checked)}
                   className="mt-1 rounded border-line-2 text-primary focus:ring-primary focus:ring-offset-2 shrink-0 cursor-pointer w-4 h-4"
                 />
-                <span className="text-[11px] font-medium text-ink-3 leading-relaxed select-none">
+                <span className="text-xs font-medium text-ink-3 leading-relaxed select-none">
                   I confirm that the information provided is accurate and authorize LOGGIS to{passwordMode === 'invite' ? ' send this driver an invitation and' : ''} verify their documents, driving record, and background.
                 </span>
               </label>

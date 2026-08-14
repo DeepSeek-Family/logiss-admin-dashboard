@@ -12,7 +12,7 @@ export const ContentEditor = ({ activePage, content, setContent }: ContentEditor
   return (
     <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="relative group">
-        <div className="absolute -top-3 left-6 px-2 bg-white text-[10px] font-medium text-primary uppercase tracking-[0.1em] z-10">
+        <div className="absolute -top-3 left-6 px-2 bg-white text-xs font-medium text-primary uppercase tracking-[0.1em] z-10">
           Page Content
         </div>
         <textarea
@@ -23,8 +23,8 @@ export const ContentEditor = ({ activePage, content, setContent }: ContentEditor
         />
       </div>
       <div className="flex items-center justify-end gap-4 px-1">
-        <span className="text-[10px] text-ink-4">{wordCount} words</span>
-        <span className="text-[10px] text-ink-4">{charCount} characters</span>
+        <span className="text-xs text-ink-4">{wordCount} words</span>
+        <span className="text-xs text-ink-4">{charCount} characters</span>
       </div>
     </div>
   );

@@ -96,9 +96,9 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
             <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-line-2 hover:bg-line-2 text-ink-4 shadow-sm shrink-0"><X size={18} /></button>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-[10px] text-ink-4 uppercase font-semibold">Trips</p><p className="text-sm font-bold text-ink">{dayTrips.length}</p></div>
-            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-[10px] text-ink-4 uppercase font-semibold">Miles</p><p className="text-sm font-bold text-ink">{totalMiles.toFixed(1)}</p></div>
-            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-[10px] text-ink-4 uppercase font-semibold">On Duty</p><p className="text-[11px] font-bold text-ink leading-tight">{dutyWindow}</p></div>
+            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-xs text-ink-4 uppercase font-semibold">Trips</p><p className="text-sm font-bold text-ink">{dayTrips.length}</p></div>
+            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-xs text-ink-4 uppercase font-semibold">Miles</p><p className="text-sm font-bold text-ink">{totalMiles.toFixed(1)}</p></div>
+            <div className="bg-white rounded-xl border border-line-2 px-3 py-2"><p className="text-xs text-ink-4 uppercase font-semibold">On Duty</p><p className="text-xs font-bold text-ink leading-tight">{dutyWindow}</p></div>
           </div>
           <p className="text-xs text-ink-4 mt-3">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
@@ -123,9 +123,9 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                       <div className="absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center"><LogOut size={9} className="text-primary" /></div>
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-primary uppercase tracking-wide">Pull-Out</p>
-                        <span className="text-[11px] font-semibold text-ink-3">{formatTime(seg.time.toISOString())}</span>
+                        <span className="text-xs font-semibold text-ink-3">{formatTime(seg.time.toISOString())}</span>
                       </div>
-                      <p className="text-[11px] text-ink-4 mt-0.5">Depot → {seg.to || 'first pickup'}</p>
+                      <p className="text-xs text-ink-4 mt-0.5">Depot → {seg.to || 'first pickup'}</p>
                     </div>
                   );
                 }
@@ -135,16 +135,16 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                       <div className="absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full bg-ink/5 border-2 border-ink-4 flex items-center justify-center"><LogIn size={9} className="text-ink-3" /></div>
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-ink-3 uppercase tracking-wide">Pull-In</p>
-                        <span className="text-[11px] font-semibold text-ink-3">{formatTime(seg.time.toISOString())}</span>
+                        <span className="text-xs font-semibold text-ink-3">{formatTime(seg.time.toISOString())}</span>
                       </div>
-                      <p className="text-[11px] text-ink-4 mt-0.5">{seg.from || 'last drop-off'} → Depot</p>
+                      <p className="text-xs text-ink-4 mt-0.5">{seg.from || 'last drop-off'} → Depot</p>
                     </div>
                   );
                 }
                 if (seg.kind === 'gap') {
                   return (
                     <div key={`gap-${i}`} className="relative my-2 ml-1">
-                      <div className="inline-flex items-center gap-1.5 text-[10px] font-medium text-ink-4 bg-bg border border-line-2 rounded-full px-2.5 py-1">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-4 bg-bg border border-line-2 rounded-full px-2.5 py-1">
                         <Coffee size={10} /> Standby · {fmtDur(seg.mins)}
                       </div>
                     </div>
@@ -153,7 +153,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                 if (seg.kind === 'conflict') {
                   return (
                     <div key={`cf-${i}`} className="relative my-2 ml-1">
-                      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-urgent bg-urgent-light/40 border border-urgent/20 rounded-full px-2.5 py-1">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-urgent bg-urgent-light/40 border border-urgent/20 rounded-full px-2.5 py-1">
                         <AlertTriangle size={10} /> Overlap · {fmtDur(seg.mins)}
                       </div>
                     </div>
@@ -171,25 +171,25 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                       className="w-full text-left rounded-xl border border-line-2 bg-white hover:border-primary/40 hover:shadow-sm transition-all p-3 group"
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-bold text-ink flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-ink flex items-center gap-1.5">
                           <Clock size={11} className="text-ink-4" />{formatTime(seg.start.toISOString())} <span className="text-ink-4 font-normal">– {formatTime(seg.end.toISOString())}</span>
                         </span>
-                        <TripStatusBadge status={t.status} className="text-[9px]" />
+                        <TripStatusBadge status={t.status} className="text-xs" />
                       </div>
                       <div className="flex items-center gap-2 mb-2">
                         <Avatar initials={t?.rider?.initials || '?'} size="xs" />
                         <p className="text-xs font-semibold text-ink truncate">{t?.rider?.name || 'Unknown'}</p>
-                        <span className="ml-auto text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">Open <ExternalLink size={9} /></span>
+                        <span className="ml-auto text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">Open <ExternalLink size={9} /></span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                      <div className="flex items-center gap-1.5 text-xs text-ink-3">
                         <span className="truncate max-w-[120px]">{t.pickup || '—'}</span>
                         <ArrowRight size={11} className="text-ink-4 shrink-0" />
                         <MapPin size={10} className="text-urgent shrink-0" />
                         <span className="truncate max-w-[120px]">{t.dropoff || '—'}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="neutral" className="text-[9px]">{t.mobility || 'Ambulatory'}</Badge>
-                        {t.miles && <span className="text-[10px] text-ink-4">{t.miles} mi</span>}
+                        <Badge variant="neutral" className="text-xs">{t.mobility || 'Ambulatory'}</Badge>
+                        {t.miles && <span className="text-xs text-ink-4">{t.miles} mi</span>}
                       </div>
                     </button>
 
@@ -204,7 +204,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                               ? (['pending_review', 'confirmed'].includes(t.status) ? 'assigned' : t.status)
                               : 'confirmed',
                           })}
-                          className="flex-1 bg-white border border-line-2 rounded-lg py-1 pl-2 pr-6 text-[10px] font-medium text-ink outline-none cursor-pointer focus:ring-2 focus:ring-primary/15 appearance-none"
+                          className="flex-1 bg-white border border-line-2 rounded-lg py-1 pl-2 pr-6 text-xs font-medium text-ink outline-none cursor-pointer focus:ring-2 focus:ring-primary/15 appearance-none"
                           title="Reassign to another driver"
                         >
                           <option value="">Unassigned</option>
@@ -215,7 +215,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                         <button
                           type="button"
                           onClick={() => updateTrip(t.id, { driverId: '', status: 'confirmed' })}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-urgent bg-urgent/5 hover:bg-urgent/10 border border-urgent/15 transition-colors shrink-0"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-urgent bg-urgent/5 hover:bg-urgent/10 border border-urgent/15 transition-colors shrink-0"
                           title="Remove from this driver"
                         >
                           <UserMinus size={11} /> Unassign

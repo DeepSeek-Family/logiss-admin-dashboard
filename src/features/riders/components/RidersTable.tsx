@@ -76,7 +76,7 @@ export const RidersTable = ({
           <thead className="bg-bg/10 border-b border-line-2/50">
             <tr>
               {['Rider', 'IDs', 'County / Source', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
-                <th key={h} className="px-6 py-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] whitespace-nowrap">
+                <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>
               ))}
@@ -114,7 +114,7 @@ export const RidersTable = ({
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-1.5">
                     {rider.county && (
-                      <span className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-medium rounded-full w-fit">
+                      <span className="px-2.5 py-1 bg-primary/5 text-primary text-xs font-medium rounded-full w-fit">
                         {rider.county}
                       </span>
                     )}
@@ -142,7 +142,7 @@ export const RidersTable = ({
                     </button>
                     {openStatusId === rider.id && (
                       <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-xl w-44 py-1 animate-in fade-in duration-150">
-                        <p className="px-3 py-2 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em] border-b border-line-2 mb-1">Change Status</p>
+                        <p className="px-3 py-2 type-th border-b border-line-2 mb-1">Change Status</p>
                         {[
                           { value: 'active', label: 'Set Active', icon: UserCheck, color: 'text-accent hover:bg-accent-light/30' },
                           { value: 'suspended', label: 'Suspend Rider', icon: UserX, color: 'text-warning hover:bg-warning-light/40' },

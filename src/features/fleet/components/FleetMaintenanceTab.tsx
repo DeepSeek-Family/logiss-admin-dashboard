@@ -31,7 +31,7 @@ export const FleetMaintenanceTab: React.FC<FleetMaintenanceTabProps> = ({ vehicl
                   <p className="text-sm font-semibold text-ink">${log.cost}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-[10px] font-medium text-ink-4 uppercase tracking-[0.1em]">
+              <div className="flex items-center gap-4 type-th">
                 <span className="flex items-center gap-1.5"><Calendar size={12} /> {log.date}</span>
                 <span className="w-1 h-1 rounded-full bg-line-2" />
                 <span className="flex items-center gap-1.5"><Gauge size={12} /> {log.mileage.toLocaleString()} mi</span>

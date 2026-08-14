@@ -21,18 +21,17 @@ export default {
         },
         // Text scale
         ink: {
-          DEFAULT: '#1B2433',
-          2: '#39424F',
-          3: '#5B6573',
-          4: '#9AA4B2',
+          DEFAULT: '#121826',
+          2: '#2A3340',
+          3: '#4B5563',
+          4: '#5F6B7A',
         },
-        // Surfaces & borders — bg/line recovered from scrollbar styles
         bg: {
-          DEFAULT: '#F7F9FB',
+          DEFAULT: '#EEF1F5',
         },
         line: {
-          DEFAULT: '#D7DDE5',
-          2: '#E8ECF1',
+          DEFAULT: '#C5CDD8',
+          2: '#D9DFE7',
         },
         // Status colors
         urgent: {
