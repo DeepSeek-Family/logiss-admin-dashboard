@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Download, Clock, RotateCcw, Loader2, DollarSign, Receipt, Landmark } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Download, Clock, RotateCcw, Loader2, DollarSign, Receipt, FileText, Landmark, Calendar } from 'lucide-react';
 import { Button, StatCard, Card } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { money } from '@/utils/helpers';
@@ -11,8 +11,9 @@ import {
 } from '@/features/transactions';
 import { Can } from '@/features/userAccess';
 
-const Transactions = ({ role }: { role?: string | null }) => {
+export const Transactions = ({ role }: { role?: string | null }) => {
   const { trips, loading } = useTrips();
+  const [view, setView] = useState<'transactions' | 'invoices'>('transactions');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [showRefundModal, setShowRefundModal] = useState<any>(null);
@@ -43,7 +44,7 @@ const Transactions = ({ role }: { role?: string | null }) => {
   const filteredData = transactions.filter((t: any) => {
     const matchesSearch = t.id.toLowerCase().includes(search.toLowerCase()) ||
       t.tripId.toLowerCase().includes(search.toLowerCase()) ||
-      t.rider.name.toLowerCase().includes(search.toLowerCase());
+      t.rider?.name?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filter === 'all' ? true : t.status === filter;
     const day = t.date ? new Date(t.date) : null;
     const matchesStart = !startDate || (day && day >= new Date(startDate + 'T00:00:00'));
@@ -51,7 +52,7 @@ const Transactions = ({ role }: { role?: string | null }) => {
     return matchesSearch && matchesStatus && matchesStart && matchesEnd;
   });
 
-  // Calculate totals (respect date range / search / status)
+  // Calculate totals
   const totalRevenue = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const totalRefunds = filteredData.filter((t: any) => t.status === 'refunded').reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const totalPending = filteredData.filter((t: any) => t.status === 'pending').reduce((acc: number, curr: any) => acc + curr.amount, 0);
@@ -59,7 +60,7 @@ const Transactions = ({ role }: { role?: string | null }) => {
   const copayTotal = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.copay, 0);
   const countyTotal = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.countyShare, 0);
 
-  // Per funding-source roll-up for invoicing / reconciliation.
+  // Per funding-source roll-up for invoicing
   const bySource = useMemo(() => {
     const m: Record<string, any> = {};
     filteredData.forEach((t: any) => {
@@ -103,7 +104,6 @@ const Transactions = ({ role }: { role?: string | null }) => {
     return [headers.join(','), ...body];
   };
 
-  // Per-source invoice: trips for one funding source + a totals footer.
   const generateInvoice = (source: string) => {
     const rows = filteredData.filter((t: any) => (t.fundingSource || 'Self-Pay') === source);
     if (rows.length === 0) return;
@@ -123,7 +123,6 @@ const Transactions = ({ role }: { role?: string | null }) => {
     downloadCSV(`Invoice_${source.replace(/[^a-z0-9]+/gi, '-')}_${today}.csv`, lines);
   };
 
-  // Full ledger export (respects the current search/status filter).
   const exportLedger = () => {
     if (filteredData.length === 0) return;
     downloadCSV(`LOGISS_Finance_Ledger_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv(filteredData));
@@ -148,102 +147,104 @@ const Transactions = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="type-page-title">Finance & Billing</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Comprehensive overview of revenue collections, county claims, and funding sources</p>
+          <h1 className="type-page-title">Finance &amp; Billing</h1>
+          <p className="text-xs text-ink-3 font-semibold mt-1">
+            Revenue reconciliation, claims processing, and payer invoicing
+          </p>
         </div>
 
         <Can role={role} perm="finance.export">
           <div className="flex items-center gap-2 flex-wrap">
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="Start date" />
-            <span className="text-xs text-ink-4">to</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="End date" />
-            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>Export CSV</Button>
+            <div className="flex items-center gap-1.5 bg-white border border-line-2 rounded-xl px-2.5 py-1.5 shadow-2xs">
+              <Calendar size={14} className="text-ink-4" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="text-xs font-medium text-ink outline-none bg-transparent cursor-pointer"
+                title="Start date"
+              />
+              <span className="text-xs text-ink-4">to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="text-xs font-medium text-ink outline-none bg-transparent cursor-pointer"
+                title="End date"
+              />
+            </div>
+            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>
+              Export CSV
+            </Button>
           </div>
         </Can>
       </div>
 
-      <div className="space-y-6 animate-in fade-in duration-300">
-        {/* Grid of Key Statistics using Standardized StatCards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard 
-              label="Total Settled Revenue" 
-              value={money(totalRevenue)} 
-              icon={DollarSign} 
-              accent="primary" 
-              trend="+12.4%" 
-              sub="net collections" 
+      {/* Sub-View Switcher */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit">
+        <button
+          type="button"
+          onClick={() => setView('transactions')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            view === 'transactions'
+              ? 'bg-primary text-white shadow-xs'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Receipt size={14} />
+          <span>Transactions &amp; Ledger</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('invoices')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            view === 'invoices'
+              ? 'bg-primary text-white shadow-xs'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <FileText size={14} />
+          <span>Payer Invoices ({bySource.length})</span>
+        </button>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          VIEW 1: TRANSACTIONS & GENERAL LEDGER
+      ───────────────────────────────────────────────────────────── */}
+      {view === 'transactions' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Top 3 KPI StatCards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard
+              label="Settled Revenue"
+              value={money(totalRevenue)}
+              icon={DollarSign}
+              accent="primary"
+              trend="+12.4%"
+              sub="net collections"
             />
-            <StatCard 
-              label="Pending County Claims" 
-              value={money(totalPending)} 
-              icon={Clock} 
-              accent="warning" 
-              sub="awaiting review" 
+            <StatCard
+              label="Pending Claims"
+              value={money(totalPending)}
+              icon={Clock}
+              accent="warning"
+              sub="awaiting review"
             />
-            <StatCard 
-              label="Total Refunded" 
-              value={money(totalRefunds)} 
-              icon={RotateCcw} 
-              accent="urgent" 
-              sub="returned to source" 
+            <StatCard
+              label="Processed Refunds"
+              value={money(totalRefunds)}
+              icon={RotateCcw}
+              accent="urgent"
+              sub="returned to payer"
             />
           </div>
 
-          {/* Visual Breakdown of Funding Streams */}
-          <FundingAllocation
-            countyTotal={countyTotal}
-            copayTotal={copayTotal}
-            totalRevenue={totalRevenue}
-          />
-
-          {/* Invoices by Funding Source — per-source reconciliation & invoice export */}
-          <div className="bg-white border border-line-2 rounded-2xl shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
-              <div className="flex items-center gap-2">
-                <DollarSign size={15} className="text-primary" />
-                <h3 className="text-sm font-semibold text-ink">Invoices by Funding Source</h3>
-              </div>
-              <span className="text-xs text-ink-4">{bySource.length} sources</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-bg/50 border-b border-line-2">
-                  <tr>
-                    {['Funding Source', 'Trips', 'Total Billed', 'Copay', 'Cost to County', 'Paid', 'Pending', ''].map((h, i) => (
-                      <th key={h || i} className={`px-5 py-3 type-th whitespace-nowrap ${i >= 2 && i <= 6 ? 'text-right' : ''}`}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line-2">
-                  {bySource.map((s: any) => (
-                    <tr key={s.source} className="hover:bg-bg/40 transition-colors">
-                      <td className="px-5 py-3.5 text-xs font-semibold text-ink whitespace-nowrap">{s.source}</td>
-                      <td className="px-5 py-3.5 text-xs text-ink-3 whitespace-nowrap">{s.count}</td>
-                      <td className="px-5 py-3.5 text-xs font-bold text-ink text-right whitespace-nowrap">{money(s.billed)}</td>
-                      <td className="px-5 py-3.5 text-xs text-ink-3 text-right whitespace-nowrap">{money(s.copay)}</td>
-                      <td className="px-5 py-3.5 text-xs font-semibold text-primary text-right whitespace-nowrap">{money(s.county)}</td>
-                      <td className="px-5 py-3.5 text-xs text-accent font-semibold text-right whitespace-nowrap">{money(s.paid)}</td>
-                      <td className="px-5 py-3.5 text-xs text-warning font-semibold text-right whitespace-nowrap">{money(s.pending)}</td>
-                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => generateInvoice(s.source)}
-                          className="text-xs font-semibold text-primary hover:underline"
-                        >
-                          Download Invoice
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Detailed Transactions Ledger */}
+          {/* Primary Transaction Table */}
           <TransactionsTable
             search={search}
             setSearch={setSearch}
@@ -253,6 +254,90 @@ const Transactions = ({ role }: { role?: string | null }) => {
             onRefundClick={(item: any) => setShowRefundModal(item)}
           />
         </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          VIEW 2: PAYER INVOICES & SETTLEMENTS
+      ───────────────────────────────────────────────────────────── */}
+      {view === 'invoices' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Funding Stream Breakdown */}
+          <FundingAllocation
+            countyTotal={countyTotal}
+            copayTotal={copayTotal}
+            totalRevenue={totalRevenue}
+          />
+
+          {/* Payer Invoicing Matrix */}
+          <div className="bg-white border border-line-2 rounded-2xl shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
+              <div>
+                <h3 className="text-sm font-bold text-ink">Invoices by Funding Source</h3>
+                <p className="text-xs text-ink-4 mt-0.5">Generate and download itemized billing statement per payer</p>
+              </div>
+              <span className="text-xs font-semibold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
+                {bySource.length} active payers
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-bg/40 border-b border-line-2">
+                  <tr>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3">Funding Source</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Trips</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Total Billed</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Rider Copay</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">County Share</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Paid</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Pending</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line-2">
+                  {bySource.map((s: any) => (
+                    <tr key={s.source} className="hover:bg-bg/30 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <span className="text-xs font-bold text-ink">{s.source}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-center text-ink-3">
+                        <span className="px-2 py-0.5 rounded-md bg-bg border border-line-2 font-medium">
+                          {s.count} rides
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-bold text-ink text-right whitespace-nowrap">
+                        {money(s.billed)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-ink-3 text-right whitespace-nowrap">
+                        {money(s.copay)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-semibold text-primary text-right whitespace-nowrap">
+                        {money(s.county)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-accent font-semibold text-right whitespace-nowrap">
+                        {money(s.paid)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-warning font-semibold text-right whitespace-nowrap">
+                        {money(s.pending)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => generateInvoice(s.source)}
+                          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-primary bg-primary/5 hover:bg-primary hover:text-white transition-all shadow-2xs"
+                        >
+                          <Download size={13} />
+                          <span>Invoice CSV</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Refund Modal */}
       {showRefundModal && (
