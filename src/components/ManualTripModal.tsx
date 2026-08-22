@@ -5,7 +5,8 @@ import {
   Clock, Navigation, ShieldCheck, Phone, ArrowRight, Zap, HeartPulse, Activity
 } from 'lucide-react';
 import { Avatar, Button } from '@/shared/components/ui';
-import { usePricing, DEFAULT_MOBILITY_TYPES } from '@/hooks/usePricing';
+import { usePricing, DEFAULT_MOBILITY_TYPES, DEFAULT_COUNTIES } from '@/hooks/usePricing';
+import { evaluateTripBoundary } from '@/utils/geofenceEngine';
 
 interface ManualTripModalProps {
   trips: any[];
@@ -36,6 +37,10 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
 
 export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], onClose, onSave }) => {
   const { pricing } = usePricing();
+  const availableCounties = (pricing.counties && pricing.counties.length > 0)
+    ? pricing.counties.filter(c => c.status === 'active')
+    : DEFAULT_COUNTIES;
+
   const availableMobility = (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
     ? pricing.mobilityTypes.filter(m => m.status === 'active')
     : DEFAULT_MOBILITY_TYPES;
@@ -62,6 +67,14 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
     mobility: 'Ambulatory',
     type: 'one_way',
   });
+
+  const boundaryEval = evaluateTripBoundary(form.pickup, form.dropoff, form.source || 'Chesterfield County', availableCounties);
+
+  React.useEffect(() => {
+    if (!form.pickup || !form.dropoff) return;
+    const evaluation = evaluateTripBoundary(form.pickup, form.dropoff, form.source || 'Chesterfield County', availableCounties);
+    setForm(prev => prev.insideCounty === evaluation.isInsideCounty ? prev : { ...prev, insideCounty: evaluation.isInsideCounty });
+  }, [form.pickup, form.dropoff, form.source, availableCounties]);
 
   const addStop = () => setForm((f: any) => ({ ...f, stops: [...f.stops, ''] }));
   const removeStop = (idx: number) => setForm((f: any) => ({ ...f, stops: f.stops.filter((_: any, i: number) => i !== idx) }));
@@ -206,7 +219,11 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                 <button 
                   type="button" 
                   onClick={() => setForm({ ...form, insideCounty: !form.insideCounty })}
-                  className={`px-3 py-1 text-xs font-medium rounded-full border transition-all ${form.insideCounty ? 'bg-primary/10 text-primary border-primary/20' : 'bg-bg text-ink-4 border-line-2'}`}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all ${
+                    form.insideCounty 
+                      ? 'bg-accent-light text-accent border-accent/20' 
+                      : 'bg-primary/10 text-primary border-primary/20'
+                  }`}
                 >
                   {form.insideCounty ? 'Inside County' : 'Outside County'}
                 </button>
@@ -232,6 +249,23 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                   <input required className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="Destination Address" />
                 </div>
                 <button type="button" onClick={addStop} className="ml-10 text-xs font-medium text-primary flex items-center gap-1"><Plus size={14} /> ADD STOP</button>
+
+                {/* Smart Geofence Auto-Detection Pill */}
+                {form.pickup && form.dropoff && (
+                  <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                    form.insideCounty
+                      ? 'bg-accent-light/40 border-accent/30 text-ink'
+                      : 'bg-primary/5 border-primary/20 text-ink'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${form.insideCounty ? 'bg-accent' : 'bg-primary'}`} />
+                      <span className="font-semibold">{boundaryEval.boundaryLabel}</span>
+                    </div>
+                    <span className={`font-bold ${form.insideCounty ? 'text-accent' : 'text-primary'}`}>
+                      {form.insideCounty ? 'Inside Copay ($10.00)' : 'Cross-County (+$6.00 Surcharge)'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -271,7 +305,11 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                         className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-line-2 bg-white hover:border-primary/20'}`}
                       >
                         <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-bg text-ink-4'}`}>
-                          <IconComp size={16} />
+                          {opt.iconUrl ? (
+                            <img src={opt.iconUrl} alt={opt.name} className="w-4 h-4 object-contain" />
+                          ) : (
+                            <IconComp size={16} />
+                          )}
                         </div>
                         <span className="text-xs font-medium">{opt.name}</span>
                         {opt.fee > 0 && (

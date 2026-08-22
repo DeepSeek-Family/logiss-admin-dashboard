@@ -235,19 +235,17 @@ export function usePricing() {
   };
 }
 
-/** Address-text stand-in until client geofence/GPS codes arrive. */
+import { evaluateTripBoundary, detectCountyFromAddress } from '@/utils/geofenceEngine';
+
+/** Smart Geofence & Boundary check using postal ZIP codes & municipal zones */
 export function inferInsideCounty(pickup = '', dropoff = '', homeCounty = ''): boolean {
   if (!pickup.trim() || !dropoff.trim()) return true;
-  const home = homeCounty.toLowerCase().replace(/\s+(county|city)$/i, '').trim();
-  const p = pickup.toLowerCase();
-  const d = dropoff.toLowerCase();
-  if (home) return p.includes(home) && d.includes(home);
-  const zones = ['chesterfield', 'henrico', 'hanover', 'richmond', 'powhatan', 'goochland'];
-  const pickupZone = zones.find(z => p.includes(z));
-  const dropoffZone = zones.find(z => d.includes(z));
-  if (pickupZone && dropoffZone) return pickupZone === dropoffZone;
-  return true;
+  const cfg = pricingStore.get();
+  const evaluation = evaluateTripBoundary(pickup, dropoff, homeCounty, cfg.counties);
+  return evaluation.isInsideCounty;
 }
+
+export { evaluateTripBoundary, detectCountyFromAddress };
 
 export function quoteFares(input: {
   county?: string;

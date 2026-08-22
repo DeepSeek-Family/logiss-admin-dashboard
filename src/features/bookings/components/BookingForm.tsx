@@ -14,7 +14,7 @@ import { money } from '@/utils/helpers';
 import { FUNDING_SOURCES, riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
 import { tripService } from '@/services/tripService';
-import { quoteFares, inferInsideCounty, usePricing, DEFAULT_COUNTIES, DEFAULT_MOBILITY_TYPES } from '@/hooks/usePricing';
+import { quoteFares, inferInsideCounty, usePricing, DEFAULT_COUNTIES, DEFAULT_MOBILITY_TYPES, evaluateTripBoundary, detectCountyFromAddress } from '@/hooks/usePricing';
 
 export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
 export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
@@ -135,6 +135,8 @@ export const BookingForm = () => {
     stops: form.stops,
   }, pricing);
 
+  const boundaryEval = evaluateTripBoundary(form.pickup, form.dropoff, form.county, availableCounties);
+
   // Calculate the dates for repeating booking
   const getRecurringDates = () => {
     if (selectedDates.length === 0 || selectedDates.length > 1 || !recurringEndDate || recurringDays.length === 0) return [];
@@ -164,9 +166,20 @@ export const BookingForm = () => {
 
   useEffect(() => {
     if (!form.pickup || !form.dropoff) return;
-    const next = inferInsideCounty(form.pickup, form.dropoff, form.source);
-    setForm(prev => prev.insideCounty === next ? prev : { ...prev, insideCounty: next });
-  }, [form.pickup, form.dropoff, form.source]);
+    const detected = detectCountyFromAddress(form.pickup, availableCounties);
+    const evaluation = evaluateTripBoundary(form.pickup, form.dropoff, form.county || detected.countyName, availableCounties);
+    
+    setForm(prev => {
+      let updated = { ...prev };
+      if (prev.insideCounty !== evaluation.isInsideCounty) {
+        updated.insideCounty = evaluation.isInsideCounty;
+      }
+      if (!prev.county && detected.countyName) {
+        updated.county = detected.countyName;
+      }
+      return updated;
+    });
+  }, [form.pickup, form.dropoff, form.county, availableCounties]);
 
   useEffect(() => {
     if (form.manualFareOverride) return;
@@ -466,6 +479,23 @@ export const BookingForm = () => {
                 <input required className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="Destination address" />
               </div>
               <button type="button" onClick={() => setForm({ ...form, stops: [...form.stops, ''] })} className="ml-9 text-xs font-medium text-primary hover:underline">+ Add Stop</button>
+
+              {/* Smart Geofence Auto-Detection Pill */}
+              {form.pickup && form.dropoff && (
+                <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  boundaryEval.isInsideCounty
+                    ? 'bg-accent-light/40 border-accent/30 text-ink'
+                    : 'bg-primary/5 border-primary/20 text-ink'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${boundaryEval.isInsideCounty ? 'bg-accent' : 'bg-primary'}`} />
+                    <span className="font-semibold">{boundaryEval.boundaryLabel}</span>
+                  </div>
+                  <span className={`font-bold ${boundaryEval.isInsideCounty ? 'text-accent' : 'text-primary'}`}>
+                    {boundaryEval.isInsideCounty ? 'Inside Copay ($10.00)' : 'Cross-County (+$6.00 Surcharge)'}
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -486,7 +516,11 @@ export const BookingForm = () => {
                         : 'border-line-2 bg-bg hover:border-primary/20 text-ink'
                     }`}
                   >
-                    <IconComp size={16} className={isSelected ? 'text-primary' : 'text-ink-2'} />
+                    {opt.iconUrl ? (
+                      <img src={opt.iconUrl} alt={opt.name} className="w-4 h-4 object-contain" />
+                    ) : (
+                      <IconComp size={16} className={isSelected ? 'text-primary' : 'text-ink-2'} />
+                    )}
                     <span className="text-xs font-medium">{opt.name}</span>
                     {opt.fee > 0 && (
                       <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
