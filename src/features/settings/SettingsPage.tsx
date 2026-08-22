@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { Lock, Bell, MapPin, Phone, CheckCircle2 } from 'lucide-react';
+import { Lock, Bell, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 
 import {
   SecurityTab,
-  NotificationsTab,
-  CoverageTab,
-  EmergencyContactsTab
+  NotificationsTab
 } from '@/features/settings';
 
-const Settings = ({ role }: { role?: string | null }) => {
+const Settings = () => {
   const [tab, setTab] = useState('security');
   const [saved, setSaved] = useState(false);
 
@@ -20,9 +18,7 @@ const Settings = ({ role }: { role?: string | null }) => {
 
   const TABS = [
     { id: 'security', label: 'Security & Privacy', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'coverage', label: 'Service & Tariffs', icon: MapPin },
-    { id: 'contacts', label: 'Emergency Contacts', icon: Phone },
+    { id: 'notifications', label: 'Notifications & Alerts', icon: Bell },
   ];
 
   return (
@@ -62,12 +58,6 @@ const Settings = ({ role }: { role?: string | null }) => {
 
           {/* ── NOTIFICATIONS ────────────────────────── */}
           {tab === 'notifications' && <NotificationsTab onSave={handleSave} />}
-
-          {/* ── SERVICE COVERAGE ─────────────────────── */}
-          {tab === 'coverage' && <CoverageTab role={role} />}
-
-          {/* ── EMERGENCY CONTACTS ───────────────────── */}
-          {tab === 'contacts' && <EmergencyContactsTab />}
         </div>
       </div>
     </div>

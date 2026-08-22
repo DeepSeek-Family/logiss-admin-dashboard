@@ -9,12 +9,10 @@ import {
   RefundModal,
   TransactionsTable
 } from '@/features/transactions';
-import { FundingSourcesPanel } from '@/features/cms/components/FundingSourcesPanel';
 import { Can } from '@/features/userAccess';
 
 const Transactions = ({ role }: { role?: string | null }) => {
   const { trips, loading } = useTrips();
-  const [activeTab, setActiveTab] = useState<'invoices' | 'funding_sources'>('invoices');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [showRefundModal, setShowRefundModal] = useState<any>(null);
@@ -158,51 +156,18 @@ const Transactions = ({ role }: { role?: string | null }) => {
           <p className="text-sm text-ink-4 mt-0.5">Comprehensive overview of revenue collections, county claims, and funding sources</p>
         </div>
 
-        {activeTab === 'invoices' && (
-          <Can role={role} perm="finance.export">
-            <div className="flex items-center gap-2 flex-wrap">
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="Start date" />
-              <span className="text-xs text-ink-4">to</span>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="End date" />
-              <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>Export CSV</Button>
-            </div>
-          </Can>
-        )}
+        <Can role={role} perm="finance.export">
+          <div className="flex items-center gap-2 flex-wrap">
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="Start date" />
+            <span className="text-xs text-ink-4">to</span>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-white border border-line-2 rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer shadow-sm" title="End date" />
+            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>Export CSV</Button>
+          </div>
+        </Can>
       </div>
 
-      {/* Sub-Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-line-2 pb-3">
-        <button
-          type="button"
-          onClick={() => setActiveTab('invoices')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'invoices'
-              ? 'bg-primary text-white shadow-sm'
-              : 'bg-white text-ink-3 hover:text-ink hover:bg-bg border border-line-2'
-          }`}
-        >
-          <Receipt size={14} />
-          <span>Invoices & Ledger</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('funding_sources')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'funding_sources'
-              ? 'bg-primary text-white shadow-sm'
-              : 'bg-white text-ink-3 hover:text-ink hover:bg-bg border border-line-2'
-          }`}
-        >
-          <Landmark size={14} />
-          <span>Funding Sources</span>
-        </button>
-      </div>
-
-      {/* Tab 1: INVOICES & LEDGER */}
-      {activeTab === 'invoices' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Grid of Key Statistics using Standardized StatCards */}
+      <div className="space-y-6 animate-in fade-in duration-300">
+        {/* Grid of Key Statistics using Standardized StatCards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard 
               label="Total Settled Revenue" 
@@ -288,16 +253,6 @@ const Transactions = ({ role }: { role?: string | null }) => {
             onRefundClick={(item: any) => setShowRefundModal(item)}
           />
         </div>
-      )}
-
-      {/* Tab 2: FUNDING SOURCES MANAGEMENT */}
-      {activeTab === 'funding_sources' && (
-        <div className="animate-in fade-in duration-300">
-          <Card className="p-6">
-            <FundingSourcesPanel />
-          </Card>
-        </div>
-      )}
 
       {/* Refund Modal */}
       {showRefundModal && (
