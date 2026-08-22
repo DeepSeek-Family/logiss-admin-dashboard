@@ -90,7 +90,7 @@ export const FacilitiesPanel = () => {
       )}
 
       <div className="rounded-2xl border border-line-2 overflow-hidden divide-y divide-line-2/50">
-        <div className="grid grid-cols-12 px-4 py-2.5 bg-bg text-xs font-bold text-ink-4 uppercase tracking-wider">
+        <div className="grid grid-cols-12 px-4 py-3 bg-bg/60 text-xs font-semibold text-ink-3 border-b border-line-2">
           <div className="col-span-6">Facility / Program</div>
           <div className="col-span-2">Type</div>
           <div className="col-span-2 text-center">Status</div>

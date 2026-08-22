@@ -21,7 +21,8 @@ import {
   HelpCircle,
   ShieldCheck,
   CheckCircle2,
-  Landmark
+  Landmark,
+  Building2
 } from 'lucide-react';
 import { Card, Badge, Button } from '@/shared/components/ui';
 import {
@@ -38,6 +39,7 @@ import { CountyModal } from './CountyModal';
 import { MobilityModal } from './MobilityModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { FundingSourcesPanel } from '@/features/cms/components/FundingSourcesPanel';
+import { FacilitiesPanel } from '@/features/cms/components/FacilitiesPanel';
 import toast from 'react-hot-toast';
 
 interface CoverageTabProps {
@@ -76,7 +78,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   const canEdit = role !== 'driver';
 
-  const [activeSection, setActiveSection] = useState<'counties' | 'funding' | 'rules' | 'mobility' | 'mileage'>('counties');
+  const [activeSection, setActiveSection] = useState<'counties' | 'facilities' | 'funding' | 'rules' | 'mobility' | 'mileage'>('counties');
 
   // Modals state
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
@@ -148,6 +150,19 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         >
           <MapPin size={16} />
           <span>Service Counties</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('facilities')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            activeSection === 'facilities'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Building2 size={16} />
+          <span>Facilities & Hubs</span>
         </button>
 
         <button
@@ -323,7 +338,16 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          2. FUNDING SOURCES & PAYERS MANAGEMENT
+          2. FACILITIES & MEDICAL HUBS MANAGEMENT
+      ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'facilities' && (
+      <Card className="p-6">
+        <FacilitiesPanel />
+      </Card>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. FUNDING SOURCES & PAYERS MANAGEMENT
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'funding' && (
       <Card className="p-6">
