@@ -437,7 +437,7 @@ export const BookingForm = () => {
                 >
                   {availableCounties.map(c => (
                     <option key={c.id} value={c.name}>
-                      {c.name} ({c.state || 'VA'}) — ${Number(c.insideRate).toFixed(2)} inside / ${Number(c.outsideRate).toFixed(2)} outside
+                      {c.name} ({c.state || 'VA'}) — ${Number(c.localFare || 10).toFixed(2)} Base Fare
                     </option>
                   ))}
                 </select>

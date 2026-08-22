@@ -15,14 +15,21 @@ import {
   Activity,
   Layers,
   Sparkles,
-  DollarSign
+  DollarSign,
+  Sliders,
+  Clock,
+  HelpCircle,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { Card, Badge, Button } from '@/shared/components/ui';
 import {
   usePricing,
   DEFAULT_PRICING,
+  DEFAULT_TRANSIT_RULES,
   CountyConfig,
-  MobilityConfig
+  MobilityConfig,
+  TransitRulesConfig
 } from '@/hooks/usePricing';
 import { CountyModal } from './CountyModal';
 import { MobilityModal } from './MobilityModal';
@@ -54,25 +61,26 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   const {
     pricing,
     setPricing,
+    updateRules,
     addCounty,
     updateCounty,
     deleteCounty,
     addMobility,
     updateMobility,
-    deleteMobility
+    deleteMobility,
   } = usePricing();
 
-  const canEdit = role === 'admin' || role === 'dispatcher';
+  const canEdit = role !== 'driver';
 
-  // County modal states
+  const [activeSection, setActiveSection] = useState<'counties' | 'rules' | 'mobility' | 'mileage'>('counties');
+
+  // Modals state
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
   const [selectedCounty, setSelectedCounty] = useState<CountyConfig | null>(null);
 
-  // Mobility modal states
   const [isMobilityModalOpen, setIsMobilityModalOpen] = useState(false);
   const [selectedMobility, setSelectedMobility] = useState<MobilityConfig | null>(null);
 
-  // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<{
     type: 'county' | 'mobility';
     id: string;
@@ -81,6 +89,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   const counties = pricing.counties || [];
   const mobilityTypes = pricing.mobilityTypes || [];
+  const rules = pricing.rules || DEFAULT_TRANSIT_RULES;
 
   const handleSaveCounty = (data: Omit<CountyConfig, 'id'>) => {
     if (selectedCounty) {
@@ -97,8 +106,6 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       addMobility(data);
     }
   };
-
-  const [activeSection, setActiveSection] = useState<'counties' | 'mobility' | 'mileage'>('counties');
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
@@ -128,11 +135,29 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           }`}
         >
           <MapPin size={16} />
-          <span>Service Counties & Rates</span>
+          <span>Service Counties</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             activeSection === 'counties' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
           }`}>
-            {counties.filter(c => c.status === 'active').length} Active
+            {counties.filter(c => c.status === 'active').length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('rules')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'rules'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Sliders size={16} />
+          <span>Transit & Base Rules</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            activeSection === 'rules' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
+          }`}>
+            Global Policy
           </span>
         </button>
 
@@ -146,11 +171,11 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           }`}
         >
           <Accessibility size={16} />
-          <span>Mobility Requirements</span>
+          <span>Mobility Types</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             activeSection === 'mobility' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
           }`}>
-            {mobilityTypes.filter(m => m.status === 'active').length} Active
+            {mobilityTypes.filter(m => m.status === 'active').length}
           </span>
         </button>
 
@@ -164,30 +189,30 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           }`}
         >
           <Layers size={16} />
-          <span>Mileage Billing Brackets</span>
+          <span>Mileage Tiers</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             activeSection === 'mileage' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
           }`}>
-            {pricing.brackets.length} Tiers
+            {pricing.brackets.length}
           </span>
         </button>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          1. COUNTIES & REGIONAL PRICING MANAGEMENT
+          1. COUNTIES & REGIONAL PRICING MANAGEMENT (SIMPLIFIED)
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'counties' && (
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="type-section-title">Service Counties & Pricing</h2>
+              <h2 className="type-section-title">Service Counties & Local Rates</h2>
               <Badge variant="accent" dot>
                 {counties.filter(c => c.status === 'active').length} Active
               </Badge>
             </div>
             <p className="text-xs text-ink-3 mt-1">
-              Add, edit, or configure customized inside/outside fare rates for each regional service county
+              Configure authorized service territories and standard local inside-county passenger fares
             </p>
           </div>
 
@@ -205,32 +230,30 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           )}
         </div>
 
-        {/* Counties Table */}
+        {/* Counties Table - Crisp & Clean */}
         <div className="overflow-x-auto rounded-xl border border-line-2 bg-white shadow-sm">
           <table className="w-full text-left">
             <thead className="bg-bg border-b border-line-2">
               <tr>
-                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">County Name</th>
-                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[70px]">State</th>
-                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[120px]">Inside Fare</th>
-                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[120px]">Outside Fare</th>
-                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Pickup Fee</th>
-                <th className="px-4 py-3 type-th whitespace-nowrap text-center min-w-[95px]">Status</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[220px]">County / Territory</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[80px]">State</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[140px]">Local Base Fare</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-center min-w-[100px]">Status</th>
                 {canEdit && <th className="px-4 py-3 type-th whitespace-nowrap text-center min-w-[95px]">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
               {counties.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-ink-4">
+                  <td colSpan={5} className="px-4 py-8 text-center text-xs text-ink-4">
                     No service counties configured. Click "+ Add County" to create one.
                   </td>
                 </tr>
               ) : (
                 counties.map((c) => (
                   <tr key={c.id} className="hover:bg-bg/40 transition-colors">
-                    <td className="px-4 py-3.5 min-w-[200px]">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-4 py-3.5 min-w-[220px]">
+                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                           <MapPin size={15} />
                         </div>
@@ -240,25 +263,15 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-xs font-semibold text-ink-3 whitespace-nowrap min-w-[70px]">
+                    <td className="px-4 py-3.5 text-xs font-semibold text-ink-3 whitespace-nowrap min-w-[80px]">
                       {c.state || 'VA'}
                     </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">
-                      <span className="text-xs font-semibold text-ink">
-                        ${Number(c.insideRate || 0).toFixed(2)}
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[140px]">
+                      <span className="text-xs font-bold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
+                        ${Number(c.localFare || 10).toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">
-                      <span className="text-xs font-semibold text-ink">
-                        ${Number(c.outsideRate || 0).toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[110px]">
-                      <span className="text-xs font-medium text-ink-3">
-                        ${Number(c.pickupFee || 0).toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-center whitespace-nowrap min-w-[95px]">
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap min-w-[100px]">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           c.status === 'active'
@@ -305,6 +318,160 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           </table>
         </div>
       </Card>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          2. TRANSIT RULES & GLOBAL SURCHARGES (NEW DEDICATED TAB)
+      ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'rules' && (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-5">
+            <div className="flex items-center gap-2">
+              <h2 className="type-section-title">Global Transit Policies & Surcharges</h2>
+              <Badge variant="primary">System-Wide</Badge>
+            </div>
+            <p className="text-xs text-ink-3 mt-1">
+              Set standard pickup fees, cross-county border penalties, and dispatch surcharges applied across all regions
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Base Pickup Fee */}
+            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink">Base Dispatch / Pickup Fee ($)</label>
+                <DollarSign size={16} className="text-ink-4" />
+              </div>
+              <p className="text-xs text-ink-4">
+                Universal baseline fee added to every booking before distance calculations.
+              </p>
+              <div className="relative pt-1">
+                <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  disabled={!canEdit}
+                  value={rules.basePickupFee}
+                  onChange={e => updateRules({ basePickupFee: num(e.target.value, 0) })}
+                  className="input-base w-full pl-7 font-bold text-ink"
+                />
+              </div>
+            </div>
+
+            {/* Cross-County Surcharge */}
+            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink">Cross-County Border Surcharge ($)</label>
+                <MapPin size={16} className="text-primary" />
+              </div>
+              <p className="text-xs text-ink-4">
+                Standard surcharge added to passenger fare when a trip crosses county borders.
+              </p>
+              <div className="relative pt-1">
+                <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  disabled={!canEdit}
+                  value={rules.crossCountySurcharge}
+                  onChange={e => updateRules({ crossCountySurcharge: num(e.target.value, 6) })}
+                  className="input-base w-full pl-8 font-bold text-primary"
+                />
+              </div>
+            </div>
+
+            {/* Intermediate Stop Fee */}
+            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink">Intermediate Waypoint / Stop Fee ($)</label>
+                <Plus size={16} className="text-ink-4" />
+              </div>
+              <p className="text-xs text-ink-4">
+                Fee charged per intermediate stop requested along the route.
+              </p>
+              <div className="relative pt-1">
+                <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  disabled={!canEdit}
+                  value={rules.stopFee}
+                  onChange={e => updateRules({ stopFee: num(e.target.value, 5) })}
+                  className="input-base w-full pl-8 font-bold text-ink"
+                />
+              </div>
+            </div>
+
+            {/* Night Surcharge */}
+            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink">After-Hours / Night Surcharge ($)</label>
+                <Clock size={16} className="text-ink-4" />
+              </div>
+              <p className="text-xs text-ink-4">
+                Dispatch premium for rides scheduled between 8:00 PM and 6:00 AM.
+              </p>
+              <div className="relative pt-1">
+                <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  disabled={!canEdit}
+                  value={rules.nightSurcharge}
+                  onChange={e => updateRules({ nightSurcharge: num(e.target.value, 15) })}
+                  className="input-base w-full pl-8 font-bold text-ink"
+                />
+              </div>
+            </div>
+
+            {/* Weekend Surcharge */}
+            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink">Weekend Dispatch Surcharge ($)</label>
+                <Sparkles size={16} className="text-ink-4" />
+              </div>
+              <p className="text-xs text-ink-4">
+                Surcharge applied for Saturday and Sunday trip dispatches.
+              </p>
+              <div className="relative pt-1">
+                <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  disabled={!canEdit}
+                  value={rules.weekendSurcharge}
+                  onChange={e => updateRules({ weekendSurcharge: num(e.target.value, 10) })}
+                  className="input-base w-full pl-8 font-bold text-ink"
+                />
+              </div>
+            </div>
+
+            {/* Live Pricing Formula Card */}
+            <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2.5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-primary font-semibold text-xs">
+                  <CheckCircle2 size={16} />
+                  <span>How Dynamic Pricing Works</span>
+                </div>
+                <div className="text-xs text-ink-3 space-y-1.5 mt-2">
+                  <p>• <strong>Inside County Fare:</strong> Local Base Fare (${Number(counties[0]?.localFare || 10).toFixed(2)})</p>
+                  <p>• <strong>Outside County Fare:</strong> Local Base + Cross-County (${Number((counties[0]?.localFare || 10) + rules.crossCountySurcharge).toFixed(2)})</p>
+                  <p>• <strong>Total Ride Cost:</strong> Mileage Tier + Base Fee + Mobility Surcharge</p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-primary/10">
+                <span className="text-xs font-semibold text-primary">Formula automatically linked to Booking engine</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
       )}
 
       {/* ─────────────────────────────────────────────────────────────

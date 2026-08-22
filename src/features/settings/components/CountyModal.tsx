@@ -15,9 +15,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
   const [form, setForm] = useState({
     name: '',
     state: 'VA',
-    insideRate: 10,
-    outsideRate: 15,
-    pickupFee: 0,
+    localFare: 10,
     status: 'active' as 'active' | 'inactive',
     notes: '',
   });
@@ -29,9 +27,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
       setForm({
         name: county.name || '',
         state: county.state || 'VA',
-        insideRate: county.insideRate != null ? county.insideRate : 10,
-        outsideRate: county.outsideRate != null ? county.outsideRate : 15,
-        pickupFee: county.pickupFee != null ? county.pickupFee : 0,
+        localFare: county.localFare != null ? county.localFare : 10,
         status: county.status || 'active',
         notes: county.notes || '',
       });
@@ -39,9 +35,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
       setForm({
         name: '',
         state: 'VA',
-        insideRate: 10,
-        outsideRate: 15,
-        pickupFee: 0,
+        localFare: 10,
         status: 'active',
         notes: '',
       });
@@ -58,14 +52,8 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
     if (!form.name.trim()) {
       newErrors.name = 'County name is required';
     }
-    if (form.insideRate < 0) {
-      newErrors.insideRate = 'Inside fare cannot be negative';
-    }
-    if (form.outsideRate < 0) {
-      newErrors.outsideRate = 'Outside fare cannot be negative';
-    }
-    if (form.pickupFee < 0) {
-      newErrors.pickupFee = 'Pickup fee cannot be negative';
+    if (form.localFare < 0) {
+      newErrors.localFare = 'Local base fare cannot be negative';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -76,9 +64,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
     onSave({
       name: form.name.trim(),
       state: form.state.trim().toUpperCase(),
-      insideRate: Number(form.insideRate),
-      outsideRate: Number(form.outsideRate),
-      pickupFee: Number(form.pickupFee),
+      localFare: Number(form.localFare),
       status: form.status,
       notes: form.notes.trim(),
     });
@@ -98,7 +84,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             </div>
             <div>
               <h2 className="type-section-title">{county ? 'Edit Service County' : 'Add New Service County'}</h2>
-              <p className="text-xs text-ink-3">Configure regional coverage and customized fare rates</p>
+              <p className="text-xs text-ink-3">Configure regional territory and base local fare rate</p>
             </div>
           </div>
           <button
@@ -148,65 +134,25 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             </div>
           </div>
 
-          {/* Rates Grid */}
-          <div className="p-4 rounded-xl bg-bg/60 border border-line-2 space-y-3">
-            <p className="type-label text-ink">Customized Fare Rates</p>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-ink-3 block mb-1">
-                  Inside County Fare ($)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-ink-4 text-xs font-semibold">$</span>
-                  <input
-                    type="number"
-                    step="0.50"
-                    min="0"
-                    value={form.insideRate}
-                    onChange={(e) => setForm({ ...form, insideRate: parseFloat(e.target.value) || 0 })}
-                    className="input-base w-full pl-7"
-                  />
-                </div>
-                <p className="text-xs text-ink-4 mt-0.5">Flat fare for rides inside county</p>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-ink-3 block mb-1">
-                  Outside County Fare ($)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-ink-4 text-xs font-semibold">$</span>
-                  <input
-                    type="number"
-                    step="0.50"
-                    min="0"
-                    value={form.outsideRate}
-                    onChange={(e) => setForm({ ...form, outsideRate: parseFloat(e.target.value) || 0 })}
-                    className="input-base w-full pl-7"
-                  />
-                </div>
-                <p className="text-xs text-ink-4 mt-0.5">Fare when crossing county border</p>
-              </div>
+          {/* Local Base Rate */}
+          <div className="p-4 rounded-xl bg-bg/60 border border-line-2 space-y-2">
+            <label className="text-xs font-medium text-ink block">
+              Local County Base Fare ($) *
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-2 text-ink-4 text-xs font-semibold">$</span>
+              <input
+                type="number"
+                step="0.50"
+                min="0"
+                value={form.localFare}
+                onChange={(e) => setForm({ ...form, localFare: parseFloat(e.target.value) || 0 })}
+                className="input-base w-full pl-7 font-semibold text-ink"
+              />
             </div>
-
-            <div>
-              <label className="text-xs font-medium text-ink-3 block mb-1">
-                Base Pickup Fee ($)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-ink-4 text-xs font-semibold">$</span>
-                <input
-                  type="number"
-                  step="0.50"
-                  min="0"
-                  value={form.pickupFee}
-                  onChange={(e) => setForm({ ...form, pickupFee: parseFloat(e.target.value) || 0 })}
-                  className="input-base w-full pl-7"
-                />
-              </div>
-              <p className="text-xs text-ink-4 mt-0.5">Additional county base fee added to ride cost</p>
-            </div>
+            <p className="text-xs text-ink-4">
+              Standard local transit copay for trips originating within this county.
+            </p>
           </div>
 
           {/* Status & Notes */}
