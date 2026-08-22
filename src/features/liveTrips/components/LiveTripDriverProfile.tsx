@@ -23,7 +23,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
             <Avatar initials={profile.initials} size="lg" className="ring-4 ring-bg shadow-xl mb-4" />
             <h4 className="text-xl font-semibold text-ink leading-tight">{profile.name}</h4>
             <div className="flex items-center gap-2 mt-2">
-              <span className="font-mono text-xs text-ink-4">{profile.id}</span>
+              <span className="text-xs text-ink-4">{profile.id}</span>
               <Badge variant="accent" dot>On Duty</Badge>
             </div>
           </div>
@@ -36,7 +36,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({ pr
               </div>
               <div>
                 <p className="text-sm font-medium text-ink">{profile.vehicle?.make || 'Ford Transit'}</p>
-                <p className="text-xs font-mono text-primary">{profile.vehicle?.plate || 'VA-0123'}</p>
+                <p className="text-xs text-primary">{profile.vehicle?.plate || 'VA-0123'}</p>
               </div>
             </div>
           </section>

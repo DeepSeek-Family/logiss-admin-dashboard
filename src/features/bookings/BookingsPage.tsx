@@ -56,6 +56,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     const matchesSearch = !search ||
       (t?.rider?.name || '').toLowerCase().includes(search) ||
       (t?.id || '').toLowerCase().includes(search) ||
+      (t?.mobility || '').toLowerCase().includes(search) ||
       (t?.passengerId || '').toLowerCase().includes(search) ||
       (t?.authorizationId || t?.authId || '').toLowerCase().includes(search) ||
       (t?.source || '').toLowerCase().includes(search) ||

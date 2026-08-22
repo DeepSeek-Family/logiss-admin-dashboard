@@ -22,11 +22,11 @@ export const RefundModal = ({ showRefundModal, onClose, onConfirm }: RefundModal
         <div className="p-4 bg-bg rounded-xl border border-line-2 mb-6 space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-ink-4">Transaction ID</span>
-            <span className="font-mono text-ink">{showRefundModal.id}</span>
+            <span className="text-ink">{showRefundModal.id}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-ink-4">Linked Trip</span>
-            <span className="font-mono text-ink">{showRefundModal.tripId}</span>
+            <span className="text-ink">{showRefundModal.tripId}</span>
           </div>
         </div>
         <div className="flex gap-3">

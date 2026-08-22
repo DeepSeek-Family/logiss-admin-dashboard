@@ -318,7 +318,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <div>
                   <label className="block text-xs font-semibold text-ink-3 mb-1.5">License number *</label>
                   <input 
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white font-mono uppercase" 
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white uppercase" 
                     value={form.licenseNumber} 
                     onChange={e => set('licenseNumber', e.target.value)} 
                     placeholder="DL-VA-XXXXX" 
@@ -458,7 +458,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   </div>
                   <div>
                     <p className="text-ink-4">License number</p>
-                    <p className="font-semibold text-ink uppercase font-mono">{form.licenseNumber}</p>
+                    <p className="font-semibold text-ink uppercase ">{form.licenseNumber}</p>
                   </div>
                   <div>
                     <p className="text-ink-4">Expiry</p>

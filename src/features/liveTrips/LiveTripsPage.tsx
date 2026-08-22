@@ -110,7 +110,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-ink-4">#{trip.id}</span>
+                    <span className="text-xs text-ink-4">#{trip.id}</span>
                     {trip.isUrgent && <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded">Urgent</span>}
                   </div>
                   <TripStatusBadge status={trip.status} />
@@ -145,7 +145,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               <Card key={item.tripId} className="p-4 border-l-2 border-l-warning">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-ink">{item.rider}</span>
-                  <span className="font-mono text-xs text-ink-4">#{item.tripId}</span>
+                  <span className="text-xs text-ink-4">#{item.tripId}</span>
                 </div>
                 <p className="text-xs text-ink-4 mb-3 flex items-center gap-1"><MapPin size={10} className="text-primary shrink-0" />{item.pickupLocation}</p>
                 <Button
@@ -173,7 +173,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-ink-4">#{selectedTrip.id}</span>
+                  <span className="text-xs text-ink-4">#{selectedTrip.id}</span>
                   <TripStatusBadge status={selectedTrip.status} />
                   <span className="text-xs text-ink-4">Started {selectedTrip.actualPickup || '8:30 AM'}</span>
                 </div>
@@ -211,7 +211,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   <div className="min-w-0">
                     <p className="text-xs text-ink-4 mb-0.5">Driver</p>
                     <p className="text-sm font-medium text-ink truncate">{selectedDriver?.name || 'Unassigned'}</p>
-                    <span className="text-xs font-mono text-ink-4">{selectedDriver?.vehicle?.plate || '---'}</span>
+                    <span className="text-xs text-ink-4">{selectedDriver?.vehicle?.plate || '---'}</span>
                   </div>
                 </div>
               </div>
@@ -277,7 +277,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                       log.status === 'current' ? 'bg-primary ring-2 ring-primary/20' : 'bg-line-2'
                     }`} />
                     <span className={`text-xs flex-1 ${log.status === 'upcoming' ? 'text-ink-4' : 'text-ink'}`}>{log.event}</span>
-                    <span className={`font-mono text-xs ${log.status === 'upcoming' ? 'text-ink-4' : 'text-primary'}`}>{log.time}</span>
+                    <span className={`text-xs ${log.status === 'upcoming' ? 'text-ink-4' : 'text-primary'}`}>{log.time}</span>
                   </div>
                 ))}
               </div>

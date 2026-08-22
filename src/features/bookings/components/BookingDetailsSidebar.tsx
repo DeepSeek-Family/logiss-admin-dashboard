@@ -45,7 +45,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
           <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="font-mono text-xs text-ink-4">#{selectedBooking.id}</span>
+                <span className="text-xs text-ink-4">#{selectedBooking.id}</span>
                 <TripStatusBadge status={selectedBooking.status} />
               </div>
               <h2 className="text-base font-semibold text-ink">Booking Details</h2>
@@ -170,7 +170,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                     </div>
                     <div>
                       <p className="text-xs text-ink-4 mb-0.5">Plate</p>
-                      <p className="text-xs font-mono text-ink">{assignedDriver.vehicle.plate}</p>
+                      <p className="text-xs text-ink">{assignedDriver.vehicle.plate}</p>
                     </div>
                   </div>
                 </div>

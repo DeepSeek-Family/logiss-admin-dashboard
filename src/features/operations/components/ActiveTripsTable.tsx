@@ -54,7 +54,7 @@ export const ActiveTripsTable = ({
                 return (
                   <tr key={trip.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={onRowClick}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-mono text-xs font-medium text-ink-3 tracking-normal uppercase">#{trip.id}</span>
+                      <span className="text-xs font-medium text-ink-3 tracking-normal uppercase">#{trip.id}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">

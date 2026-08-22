@@ -34,7 +34,7 @@ export const ReportCard = ({ report, selected, onClick }: ReportCardProps) => {
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-1">
           <SevIcon size={11} className={sev.iconClass} />
-          <span className="font-mono text-xs text-ink-4">{report.id}</span>
+          <span className="text-xs text-ink-4">{report.id}</span>
         </div>
         <span className="text-xs text-ink-4">{timeAgo(report?.submitted)}</span>
       </div>

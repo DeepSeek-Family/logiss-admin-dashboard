@@ -93,7 +93,7 @@ export const DriversTable = ({
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink leading-tight truncate">{driver.name}</p>
                       <p className="text-xs font-medium text-ink-3 mt-0.5 truncate">
-                        <span className="font-mono text-ink-2">{driver.id}</span>
+                        <span className="text-ink-2">{driver.id}</span>
                         {driver.email ? <span> · {driver.email}</span> : null}
                       </p>
                     </div>
@@ -101,7 +101,7 @@ export const DriversTable = ({
                 </td>
                 <td className="px-5 py-3">
                   <p className="text-sm font-semibold text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
-                  <p className="font-mono text-xs font-medium text-ink-2 mt-0.5">{driver?.vehicle?.plate || '—'}</p>
+                  <p className="text-xs font-medium text-ink-2 mt-0.5">{driver?.vehicle?.plate || '—'}</p>
                 </td>
                 <td className="px-5 py-3">
                   {getStatusBadge(driver.status)}

@@ -64,8 +64,8 @@ export const TransactionsTable = ({
             {filteredData.map((txn: any) => (
               <tr key={txn.id} className="hover:bg-primary-tint/20 transition-colors group cursor-pointer">
                 <td className="px-6 py-4">
-                  <p className="text-xs font-mono text-ink-3">{txn.id}</p>
-                  <p className="text-xs text-ink-4 font-mono mt-0.5">Ref: {txn.tripId}</p>
+                  <p className="text-xs text-ink-3">{txn.id}</p>
+                  <p className="text-xs text-ink-4 mt-0.5">Ref: {txn.tripId}</p>
                 </td>
                 <td className="px-6 py-4">
                   <p className="text-xs font-medium text-ink">{formatShortDate(txn.date)}</p>
@@ -81,12 +81,12 @@ export const TransactionsTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-0.5 text-xs font-medium text-ink-3">
-                    <span>Customer: <span className="font-medium text-ink font-mono">{money(txn.copay)}</span></span>
-                    <span>County: <span className="font-medium text-ink font-mono">{money(txn.countyShare)}</span></span>
+                    <span>Customer: <span className="font-medium text-ink ">{money(txn.copay)}</span></span>
+                    <span>County: <span className="font-medium text-ink ">{money(txn.countyShare)}</span></span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <p className="text-sm font-mono text-ink">{money(txn.amount)}</p>
+                  <p className="text-sm text-ink">{money(txn.amount)}</p>
                 </td>
                 <td className="px-6 py-4">
                   <Badge variant={txn.status === 'paid' ? 'accent' : txn.status === 'refunded' ? 'urgent' : 'warning'} className="uppercase text-xs w-fit">

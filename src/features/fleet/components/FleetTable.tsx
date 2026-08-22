@@ -95,7 +95,7 @@ export const FleetTable = ({
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-ink truncate">{v.year} {v.make} {v.model}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="font-mono text-xs text-ink-3 bg-bg px-1.5 py-0.5 rounded border border-line-2">{v.plate}</span>
+                          <span className="text-xs text-ink-3 bg-bg px-1.5 py-0.5 rounded border border-line-2">{v.plate}</span>
                           <span className="text-xs text-ink-4 font-medium">ID: {v.id.slice(0, 8)}</span>
                         </div>
                       </div>

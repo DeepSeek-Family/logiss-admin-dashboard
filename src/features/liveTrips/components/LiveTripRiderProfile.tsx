@@ -23,7 +23,7 @@ export const LiveTripRiderProfile: React.FC<LiveTripRiderProfileProps> = ({ prof
             <Avatar initials={profile.initials} size="lg" className="ring-4 ring-bg shadow-xl mb-4" />
             <h4 className="text-xl font-semibold text-ink leading-tight">{profile.name}</h4>
             <div className="flex items-center gap-2 mt-2">
-              <span className="font-mono text-xs text-ink-4">{profile.id || 'RID-2024-8821'}</span>
+              <span className="text-xs text-ink-4">{profile.id || 'RID-2024-8821'}</span>
               <Badge variant="accent" dot>Active</Badge>
             </div>
           </div>

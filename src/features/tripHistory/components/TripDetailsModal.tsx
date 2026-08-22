@@ -401,7 +401,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                     </div>
                     <div className="bg-bg rounded-xl p-3 border border-line-2 space-y-2">
                       <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Vehicle Type</span><span className="text-xs text-ink">{driver.vehicle?.type}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Plate Number</span><span className="text-xs font-mono text-ink bg-white px-2 py-0.5 rounded border border-line">{driver.vehicle?.plate}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Plate Number</span><span className="text-xs text-ink bg-white px-2 py-0.5 rounded border border-line">{driver.vehicle?.plate}</span></div>
                       <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Driver Rating</span><span className="text-xs text-ink">★ {driver.rating}</span></div>
                     </div>
                     <div className="flex gap-2">

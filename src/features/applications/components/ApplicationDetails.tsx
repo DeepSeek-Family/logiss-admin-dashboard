@@ -19,7 +19,7 @@ export const ApplicationDetails = ({ selectedApp, stages }: ApplicationDetailsPr
     <Card className="flex flex-col h-fit rounded-2xl border-2 border-line-2 shadow-sm">
       <div className="p-6 border-b border-line-2 flex items-center justify-between bg-tint/10">
         <div className="flex items-center gap-4">
-          <span className="font-mono text-sm text-ink-4 tracking-normal">#{selectedApp?.id || '---'}</span>
+          <span className="text-sm text-ink-4 tracking-normal">#{selectedApp?.id || '---'}</span>
           <h2 className="text-lg font-semibold text-ink">Application Details</h2>
         </div>
         <Badge variant="warning">{stages.find(s => s.id === selectedApp?.stage)?.label || 'Pending'}</Badge>
@@ -79,7 +79,7 @@ export const ApplicationDetails = ({ selectedApp, stages }: ApplicationDetailsPr
             <div className="bg-bg rounded-xl border border-line-2 p-4 grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-ink-4 mb-0.5">License No.</p>
-                <p className="text-xs font-mono text-ink">{selectedApp?.license?.number || '---'}</p>
+                <p className="text-xs text-ink">{selectedApp?.license?.number || '---'}</p>
               </div>
               <div>
                 <p className="text-xs text-ink-4 mb-0.5">Class</p>
@@ -104,7 +104,7 @@ export const ApplicationDetails = ({ selectedApp, stages }: ApplicationDetailsPr
               <div className="flex justify-between items-center border-t border-line-2 pt-2">
                 <div>
                   <p className="text-xs text-ink-4 mb-0.5">Policy</p>
-                  <p className="text-xs font-mono text-ink">INS-88291</p>
+                  <p className="text-xs text-ink">INS-88291</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-ink-4 mb-0.5">Expires</p>

@@ -29,7 +29,7 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
               </div>
               <div>
                 <p className="text-xs font-medium text-ink">{rep.type}</p>
-                <p className="text-xs text-ink-4 font-mono">{rep.id} · {rep.time}</p>
+                <p className="text-xs text-ink-4 ">{rep.id} · {rep.time}</p>
               </div>
             </div>
             <Badge variant={rep.severity === 'high' ? 'urgent' : rep.severity === 'medium' ? 'warning' : 'accent'}>

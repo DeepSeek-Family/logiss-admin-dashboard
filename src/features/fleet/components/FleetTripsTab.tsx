@@ -50,7 +50,7 @@ export const FleetTripsTab: React.FC<FleetTripsTabProps> = ({ vehicleTrips, driv
                       className="hover:bg-primary-tint/20 transition-colors group cursor-pointer animate-in fade-in"
                     >
                       <td className="px-4 py-4">
-                        <span className="text-xs font-mono text-ink-3 whitespace-nowrap">#{trip.id}</span>
+                        <span className="text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
@@ -88,7 +88,7 @@ export const FleetTripsTab: React.FC<FleetTripsTabProps> = ({ vehicleTrips, driv
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-mono text-xs text-ink">${(trip.cost || 0).toFixed(2)}</span>
+                        <span className="text-xs text-ink">${(trip.cost || 0).toFixed(2)}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <TripStatusBadge status={trip.status} />

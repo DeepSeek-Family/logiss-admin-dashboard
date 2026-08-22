@@ -35,7 +35,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
           <div>
             <h2 className="text-base font-semibold text-ink leading-tight">{report.type}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono text-xs text-ink-3">#{report.id}</span>
+              <span className="text-xs text-ink-3">#{report.id}</span>
               <span className="w-1 h-1 bg-line rounded-full" />
               <Badge variant={variant}>{report.status}</Badge>
               {report.severity === 'high' && (
@@ -115,7 +115,7 @@ export const DetailPanel = ({ report, onResolve }: DetailPanelProps) => {
                 <Navigation size={18} />
               </div>
               <div>
-                <p className="text-sm font-mono text-ink-3">Trip #{report.tripId}</p>
+                <p className="text-sm text-ink-3">Trip #{report.tripId}</p>
                 <p className="text-xs text-ink-3 font-medium mt-0.5">Submitted {formatDateTime(report.submitted)}</p>
               </div>
             </div>

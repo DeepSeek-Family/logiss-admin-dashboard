@@ -225,11 +225,11 @@ const Transactions = ({ role }: { role?: string | null }) => {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-xs text-ink-3">{s.count}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs font-semibold text-ink">{money(s.billed)}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs text-ink-3">{money(s.copay)}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs text-ink-3">{money(s.county)}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs text-accent">{money(s.paid)}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs text-warning">{money(s.pending)}</td>
+                  <td className="px-5 py-3 text-right text-xs font-semibold text-ink">{money(s.billed)}</td>
+                  <td className="px-5 py-3 text-right text-xs text-ink-3">{money(s.copay)}</td>
+                  <td className="px-5 py-3 text-right text-xs text-ink-3">{money(s.county)}</td>
+                  <td className="px-5 py-3 text-right text-xs text-accent">{money(s.paid)}</td>
+                  <td className="px-5 py-3 text-right text-xs text-warning">{money(s.pending)}</td>
                   <td className="px-5 py-3 text-right">
                     <button
                       onClick={() => generateInvoice(s.source)}

@@ -31,7 +31,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
               <h2 className="text-2xl font-semibold text-ink">Trip Focus Mode</h2>
               <Badge variant="accent" dot>Live Tracking</Badge>
             </div>
-            <p className="text-sm font-medium text-ink-3">Monitoring active assignment <span className="font-medium text-primary font-mono">#{selectedTrip.id}</span> · {selectedTrip.program || 'General Program'}</p>
+            <p className="text-sm font-medium text-ink-3">Monitoring active assignment <span className="font-medium text-primary ">#{selectedTrip.id}</span> · {selectedTrip.program || 'General Program'}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -90,8 +90,8 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                     <h4 className="text-base font-semibold text-ink">{selectedTrip.rider.name}</h4>
                     <p className="text-xs text-ink-4 mt-0.5">{selectedTrip.rider.phone || '(804) 555-0142'}</p>
                     <div className="flex flex-col gap-0.5 mt-1">
-                      {selectedTrip.passengerId && <p className="text-xs font-mono text-ink-4">PX: {selectedTrip.passengerId}</p>}
-                      {selectedTrip.authorizationId && <p className="text-xs font-mono text-ink-4">Auth: {selectedTrip.authorizationId}</p>}
+                      {selectedTrip.passengerId && <p className="text-xs text-ink-4">PX: {selectedTrip.passengerId}</p>}
+                      {selectedTrip.authorizationId && <p className="text-xs text-ink-4">Auth: {selectedTrip.authorizationId}</p>}
                     </div>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                           }`} />
                         <p className={`text-xs font-medium ${step.status === 'upcoming' ? 'text-ink-4' : 'text-ink'}`}>{step.event}</p>
                       </div>
-                      <span className={`font-mono text-xs ${step.status === 'upcoming' ? 'text-ink-4' : 'text-primary'}`}>{step.time}</span>
+                      <span className={`text-xs ${step.status === 'upcoming' ? 'text-ink-4' : 'text-primary'}`}>{step.time}</span>
                     </div>
                   </div>
                 ))}

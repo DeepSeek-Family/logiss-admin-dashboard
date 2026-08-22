@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X, Accessibility, Bed, Disc, Info, User } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
 import { FUNDING_SOURCES } from '@/data/mockData';
@@ -204,6 +204,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     const matchesSearch = !search ||
       (trip?.id || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.rider?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (trip?.mobility || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.passengerId || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.authorizationId || trip?.authId || '').toLowerCase().includes(search.toLowerCase()) ||
       (trip?.source || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -726,28 +727,29 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip ID</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Date</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Pickup Time</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Appt</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Rider</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Customer ID</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Auth ID</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap text-center">Status</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Driver</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Run</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Route</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Trip Reason</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Distance</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Type</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatch Time</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Perform</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Arrival Time</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Funding</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">County</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap text-right">Charge</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">User Note</th>
-                <th className="px-3 py-2.5 type-th whitespace-nowrap">Dispatcher/Admin Note</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Trip ID</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Date</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[105px]">Pickup Time</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Appt</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Customer ID</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Auth ID</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-center min-w-[135px]">Status</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Driver</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Run</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[280px]">Route</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">Trip Reason</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Distance</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Trip Type</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Dispatch Time</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Funding</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Dispatcher/Admin Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
@@ -757,7 +759,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   onClick={() => onRowSelect?.(trip.id)}
                   className={`transition-colors group cursor-pointer ${selectedMapId === trip.id ? 'bg-primary-tint/40 ring-1 ring-inset ring-primary/30' : selectedIds.includes(trip.id) ? 'bg-primary-tint/10' : 'hover:bg-primary-tint/20'}`}
                 >
-                  <td className="pl-6 pr-3 py-2.5 w-10" onClick={(e) => e.stopPropagation()}>
+                  <td className="pl-6 pr-3 py-3 w-10" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(trip.id)}
@@ -765,18 +767,18 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                     />
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[120px]">
                     <div className="flex flex-col gap-1">
-                      <span className="font-mono text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
+                      <span className="text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
                       {trip.source && <span className="text-xs text-ink-4 whitespace-nowrap">{trip.source}</span>}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[90px]">
                     <span className="text-xs font-medium text-ink whitespace-nowrap">{formatShortDate(trip.scheduledTime)}</span>
                   </td>
 
                   {/* Pickup Time */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[105px]">
                     <InlineTime
                       value={trip.pickupTime || to24h(trip.requestedPickup) || demoTimeFor(trip, 'departure')}
                       onCommit={(v) => updateTrip(trip.id, { pickupTime: v })}
@@ -784,7 +786,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Appointment Time */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[95px]">
                     <InlineTime
                       value={to24h(trip.appointmentTime)}
                       onCommit={(v) => updateTrip(trip.id, { appointmentTime: v })}
@@ -792,25 +794,71 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Rider */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-4 py-3 min-w-[200px]">
                     <div className="flex items-center gap-3">
                       <Avatar initials={trip.rider.initials} size="xs" />
                       <span className="text-xs font-medium text-ink whitespace-nowrap">{trip.rider.name}</span>
                     </div>
                   </td>
 
+                  {/* Mobility */}
+                  <td className="px-4 py-3 whitespace-nowrap min-w-[150px]">
+                    {(() => {
+                      const m = (trip.mobility || 'Ambulatory').trim();
+                      const lower = m.toLowerCase();
+                      if (lower.includes('wheelchair')) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <Accessibility size={13} className="shrink-0 text-indigo-600" />
+                            {m}
+                          </span>
+                        );
+                      }
+                      if (lower.includes('stretcher')) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                            <Bed size={13} className="shrink-0 text-rose-600" />
+                            {m}
+                          </span>
+                        );
+                      }
+                      if (lower.includes('walker') || lower.includes('rollator')) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            <Disc size={13} className="shrink-0 text-amber-600" />
+                            {m}
+                          </span>
+                        );
+                      }
+                      if (lower.includes('cane')) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            <Info size={13} className="shrink-0 text-amber-600" />
+                            {m}
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-bg text-ink-3 border border-line-2">
+                          <User size={13} className="shrink-0 text-ink-4" />
+                          {m || 'Ambulatory'}
+                        </span>
+                      );
+                    })()}
+                  </td>
+
                   {/* Customer ID */}
-                  <td className="px-3 py-2.5">
-                    <span className="font-mono text-xs text-ink-3 whitespace-nowrap" title={trip.passengerId || trip.rider?.passengerId || ''}>{trip.passengerId || trip.rider?.passengerId || '—'}</span>
+                  <td className="px-3.5 py-3 min-w-[110px]">
+                    <span className="text-xs text-ink-3 whitespace-nowrap" title={trip.passengerId || trip.rider?.passengerId || ''}>{trip.passengerId || trip.rider?.passengerId || '—'}</span>
                   </td>
 
                   {/* Authorization ID */}
-                  <td className="px-3 py-2.5">
-                    <span className="font-mono text-xs text-ink-3 whitespace-nowrap" title={trip.authorizationId || trip.authId || ''}>{trip.authorizationId || trip.authId || '—'}</span>
+                  <td className="px-3.5 py-3 min-w-[130px]">
+                    <span className="text-xs text-ink-3 whitespace-nowrap" title={trip.authorizationId || trip.authId || ''}>{trip.authorizationId || trip.authId || '—'}</span>
                   </td>
 
                   {/* Status */}
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="px-3.5 py-3 text-center min-w-[135px]">
                     <select
                       value={trip.status}
                       onChange={(e) => updateTrip(trip.id, { status: e.target.value })}
@@ -823,7 +871,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Driver (inline assignment — smart suggestions + force-assign) */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[160px]">
                     <DriverAssignSelect
                       trip={trip}
                       drivers={drivers}
@@ -834,12 +882,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Run */}
-                  <td className="px-3 py-2.5">
-                    <InlineText value={trip.driverRun} onCommit={(v) => updateTrip(trip.id, { driverRun: v })} placeholder="—" className="w-[84px] font-mono" />
+                  <td className="px-3.5 py-3 min-w-[95px]">
+                    <InlineText value={trip.driverRun} onCommit={(v) => updateTrip(trip.id, { driverRun: v })} placeholder="—" className="w-[84px] " />
                   </td>
 
                   {/* Route */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[280px]">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
                       <TruncatedText text={trip.pickup} className="text-xs font-semibold text-ink" />
@@ -861,7 +909,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Trip Reason */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[150px]">
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink">
                       <ClipboardList size={12} className="text-ink-4 shrink-0" />
                       <TruncatedText text={trip.reason || '—'} className="text-xs font-medium text-ink" max="max-w-[150px]" />
@@ -869,7 +917,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Distance */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[90px]">
                     <InlineText
                       value={trip.distance || (trip.miles ? `${trip.miles} mi` : '')}
                       onCommit={(v) => updateTrip(trip.id, { distance: v })}
@@ -878,28 +926,25 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     />
                   </td>
 
-                  {/* Type */}
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-col gap-1 items-start">
-                      <Badge variant="neutral" className="text-xs px-1.5 py-0.5">{trip.mobility || 'Standard'}</Badge>
-                      <div className="flex items-center gap-1 text-xs text-ink-4">
-                        {trip.type === 'round_trip' ? (
-                          <>
-                            <Repeat size={10} className="text-indigo-500" strokeWidth={2.5} />
-                            <span className="text-indigo-600/80">Round Trip</span>
-                          </>
-                        ) : (
-                          <>
-                            <MoveRight size={10} className="text-blue-500" strokeWidth={2.5} />
-                            <span className="text-blue-600/80">One Way</span>
-                          </>
-                        )}
-                      </div>
+                  {/* Trip Type */}
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
+                    <div className="flex items-center gap-1 text-xs text-ink-4">
+                      {trip.type === 'round_trip' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50/70 text-indigo-700 border border-indigo-100 font-medium">
+                          <Repeat size={11} className="text-indigo-600" strokeWidth={2.5} />
+                          Round Trip
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50/70 text-blue-700 border border-blue-100 font-medium">
+                          <MoveRight size={11} className="text-blue-600" strokeWidth={2.5} />
+                          One Way
+                        </span>
+                      )}
                     </div>
                   </td>
 
                   {/* Dispatch Time */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
                     <InlineTime
                       value={trip.dispatchTime || demoTimeFor(trip, 'dispatch')}
                       onCommit={(v) => updateTrip(trip.id, { dispatchTime: v })}
@@ -907,7 +952,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Perform (departure / trip start) */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[100px]">
                     <InlineTime
                       value={trip.departureTime || to24h(trip.actualPickup) || demoTimeFor(trip, 'departure')}
                       onCommit={(v) => updateTrip(trip.id, { departureTime: v })}
@@ -915,7 +960,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Arrival Time */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
                     <InlineTime
                       value={trip.arrivalTime || to24h(trip.actualDropoff) || demoTimeFor(trip, 'arrival')}
                       onCommit={(v) => updateTrip(trip.id, { arrivalTime: v })}
@@ -923,7 +968,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   {/* Funding */}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3.5 py-3 min-w-[120px]">
                     <div className="flex flex-col gap-1.5 items-start">
                       {(() => {
                         const fs = trip.fundingSource || trip.paymentMethod;
@@ -963,10 +1008,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="font-mono text-xs font-medium text-ink">{money(trip.cost)}</span>
+                      <span className="text-xs font-medium text-ink">{money(trip.cost)}</span>
                       <div className="flex items-center gap-1.5 opacity-80">
-                        <span className="font-mono text-xs font-medium text-ink-4">Cust: {money(trip.copay || 0)}</span>
-                        <span className="font-mono text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0))}</span>
+                        <span className="text-xs font-medium text-ink-4">Cust: {money(trip.copay || 0)}</span>
+                        <span className="text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0))}</span>
                       </div>
                     </div>
                   </td>

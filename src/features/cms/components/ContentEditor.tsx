@@ -16,7 +16,7 @@ export const ContentEditor = ({ activePage, content, setContent }: ContentEditor
           Page Content
         </div>
         <textarea
-          className="w-full h-[500px] p-6 bg-white border-2 border-line rounded-2xl text-ink font-mono text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none scrollbar-hide resize-none shadow-inner"
+          className="w-full h-[500px] p-6 bg-white border-2 border-line rounded-2xl text-ink text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none scrollbar-hide resize-none shadow-inner"
           value={value}
           onChange={(e) => setContent({ ...content, [activePage]: e.target.value })}
           placeholder="Start typing content here..."

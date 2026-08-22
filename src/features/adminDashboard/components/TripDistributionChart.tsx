@@ -41,7 +41,7 @@ export const TripDistributionChart = ({ monthlyData, maxRevenue }: TripDistribut
         <div className="absolute inset-0 flex flex-col justify-between pb-8 z-0">
           {[4, 3, 2, 1, 0].map(line => (
             <div key={line} className="flex items-center w-full gap-4">
-              <span className="w-12 text-right text-xs text-ink-4 font-mono">{money((maxRevenue / 4) * line)}</span>
+              <span className="w-12 text-right text-xs text-ink-4 ">{money((maxRevenue / 4) * line)}</span>
               <div className="flex-1 border-t border-dashed border-line-2"></div>
             </div>
           ))}

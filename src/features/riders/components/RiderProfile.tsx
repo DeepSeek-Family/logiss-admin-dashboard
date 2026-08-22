@@ -54,8 +54,8 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
           </div>
           <div className="flex flex-wrap items-center gap-4 text-ink-4 text-xs font-medium">
             <span className="flex items-center gap-1.5"><Star size={12} className="text-warning fill-warning" /> {selectedRider?.rating || 4.9} rating</span>
-            <span className="font-mono text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-ink-3">PX: {selectedRider?.passengerId || selectedRider?.id || '---'}</span>
-            <span className="font-mono text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-primary">Auth: {selectedRider?.authorizationId || selectedRider?.authId || '---'}</span>
+            <span className="text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-ink-3">PX: {selectedRider?.passengerId || selectedRider?.id || '---'}</span>
+            <span className="text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-primary">Auth: {selectedRider?.authorizationId || selectedRider?.authId || '---'}</span>
             <span className="text-ink-4">Joined {selectedRider?.joinedDate ? new Date(selectedRider.joinedDate).toLocaleDateString() : '—'}</span>
           </div>
         </div>
@@ -199,7 +199,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                   if (riderTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-medium text-ink-4">No Trip History Available</td></tr>;
                   return riderTrips.map((trip: any) => (
                     <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-ink-3">#{trip.id.slice(-4)}</td>
+                      <td className="px-6 py-4 text-xs text-ink-3">#{trip.id.slice(-4)}</td>
                       <td className="px-6 py-4">
                         <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
                         <p className="text-xs text-ink-4">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

@@ -64,7 +64,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               <div className="flex flex-wrap items-center gap-4 text-ink-4 text-xs font-medium">
                 <span className="flex items-center gap-1.5"><MapPin size={12} /> Richmond, VA</span>
                 <span className="flex items-center gap-1.5"><Star size={12} className="text-warning fill-warning" /> {selectedDriver?.rating || 4.9} rating</span>
-                <span className="font-mono text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-ink-3">{selectedDriver?.id}</span>
+                <span className="text-xs bg-bg px-2 py-0.5 rounded border border-line-2 text-ink-3">{selectedDriver?.id}</span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -117,7 +117,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     </div>
                     <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-line-2">
                       <span className="text-xs text-ink-4">License Plate</span>
-                      <span className="text-xs font-medium text-primary font-mono">{selectedDriver?.vehicle?.plate || '---'}</span>
+                      <span className="text-xs font-medium text-primary ">{selectedDriver?.vehicle?.plate || '---'}</span>
                     </div>
                     {role === 'admin' && (
                       <Button variant="outline" size="sm" className="w-full mt-4 bg-white" icon={Repeat}>Change Assignment</Button>
@@ -243,7 +243,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                       if (driverTrips.length === 0) return <tr><td colSpan={6} className="text-center py-20 font-medium text-ink-4">No Trip History Available</td></tr>;
                       return driverTrips.map((trip: any) => (
                         <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-6 py-4 font-mono text-xs text-ink-3">#{trip.id.slice(-4)}</td>
+                          <td className="px-6 py-4 text-xs text-ink-3">#{trip.id.slice(-4)}</td>
                           <td className="px-6 py-4">
                             <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
                             <p className="text-xs text-ink-4">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
@@ -292,7 +292,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     <Badge variant={doc.status === 'valid' ? 'accent' : 'warning'}>{doc.status}</Badge>
                   </div>
                   <h4 className="text-sm font-semibold text-ink mb-1">{doc.label}</h4>
-                  <p className="text-xs text-ink-4 mb-4 font-mono">ID: {doc.id} · Exp: {doc.expiry}</p>
+                  <p className="text-xs text-ink-4 mb-4 ">ID: {doc.id} · Exp: {doc.expiry}</p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setViewingDoc(doc)}
@@ -321,7 +321,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-ink">{viewingDoc.label}</h3>
-                    <p className="text-xs text-ink-4 font-mono">{viewingDoc.id}</p>
+                    <p className="text-xs text-ink-4 ">{viewingDoc.id}</p>
                   </div>
                 </div>
                 <button onClick={() => setViewingDoc(null)} className="p-1.5 hover:bg-bg rounded-lg text-ink-4 transition-all">
@@ -366,7 +366,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <p className="text-xs text-white/40 uppercase tracking-wider">License No.</p>
-                            <p className="text-xs font-mono font-medium truncate leading-none">{viewingDoc.id}</p>
+                            <p className="text-xs font-medium truncate leading-none">{viewingDoc.id}</p>
                           </div>
                           <div>
                             <p className="text-xs text-white/40 uppercase tracking-wider">Class</p>
@@ -393,7 +393,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 <div className="bg-bg rounded-2xl border border-line-2 p-4 mb-4">
                   <div className="flex items-center justify-between">
                     <span className="type-th">Document ID</span>
-                    <span className="text-xs font-mono text-ink">{viewingDoc.id}</span>
+                    <span className="text-xs text-ink">{viewingDoc.id}</span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <span className="type-th">Expiry Date</span>

@@ -19,7 +19,7 @@ export const ApplicationCard = ({ app, selected, onClick, stages }: ApplicationC
       }`}
     >
       <div className="flex justify-between items-start mb-3">
-        <span className="font-mono text-xs text-ink-4">#{app?.id || '---'}</span>
+        <span className="text-xs text-ink-4">#{app?.id || '---'}</span>
         <span className="text-xs text-ink-4">{app?.submitted ? timeAgo(app.submitted) : '---'}</span>
       </div>
       <div className="flex items-center gap-3 mb-4">

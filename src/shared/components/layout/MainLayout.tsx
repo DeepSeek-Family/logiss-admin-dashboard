@@ -273,7 +273,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               )}
             </button>
 
-            <Button variant="primary-light" size="sm" icon={Phone} className="font-mono">
+            <Button variant="primary-light" size="sm" icon={Phone} className="">
               (804) 555-LOGI
             </Button>
 

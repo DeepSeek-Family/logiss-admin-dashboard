@@ -17,7 +17,7 @@ export const EmergencyContactsTab = () => {
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium text-urgent mb-1">Emergency Operational Hotline</p>
-              <p className="text-xl font-semibold font-mono text-ink">(804) 555-9110</p>
+              <p className="text-xl font-semibold text-ink">(804) 555-9110</p>
               <p className="text-xs font-medium text-urgent/60 mt-1">Direct Priority Access · 24/7 Monitoring</p>
             </div>
           </div>
@@ -28,7 +28,7 @@ export const EmergencyContactsTab = () => {
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium text-primary mb-1">General Dispatch Control</p>
-              <p className="text-xl font-semibold font-mono text-ink">(804) 555-LOGI</p>
+              <p className="text-xl font-semibold text-ink">(804) 555-LOGI</p>
               <p className="text-xs text-ink-4 mt-1">Standard Operations · 6 AM – 10 PM EST</p>
             </div>
           </div>

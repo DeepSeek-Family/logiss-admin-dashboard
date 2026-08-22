@@ -162,7 +162,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
               </Badge>
             </div>
             <p className="text-xs text-ink-4 flex items-center gap-2 mt-1">
-              <Hash size={14} className="text-primary" /> {vehicle.id} · <span className="font-mono text-ink bg-bg px-2 py-0.5 rounded border border-line-2">{vehicle.plate}</span> · {vehicle.year}
+              <Hash size={14} className="text-primary" /> {vehicle.id} · <span className="text-ink bg-bg px-2 py-0.5 rounded border border-line-2">{vehicle.plate}</span> · {vehicle.year}
             </p>
           </div>
         </div>
@@ -251,7 +251,7 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                   <h3 className="text-lg font-semibold text-ink">Trip Ledger Detail</h3>
                   <TripStatusBadge status={selectedTrip.status} />
                 </div>
-                <p className="text-xs text-ink-3 font-semibold mt-1">Ref ID: <span className="font-mono text-ink bg-bg px-2 py-0.5 rounded border border-line-2 uppercase">#{selectedTrip.id}</span> · Authorization: {selectedTrip.authId || selectedTrip.authorizationId || 'County Auth'}</p>
+                <p className="text-xs text-ink-3 font-semibold mt-1">Ref ID: <span className="text-ink bg-bg px-2 py-0.5 rounded border border-line-2 uppercase">#{selectedTrip.id}</span> · Authorization: {selectedTrip.authId || selectedTrip.authorizationId || 'County Auth'}</p>
               </div>
               <button
                 onClick={() => setSelectedTripId(null)}
@@ -322,15 +322,15 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
                 <div className="grid grid-cols-3 gap-4 border-b border-line border-dashed pb-4 mb-4">
                   <div>
                     <p className="text-xs text-ink-4">Total Manifest Cost</p>
-                    <p className="text-lg font-semibold font-mono text-ink mt-1">${(selectedTrip.cost || 0).toFixed(2)}</p>
+                    <p className="text-lg font-semibold text-ink mt-1">${(selectedTrip.cost || 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-ink-4">Customer fare</p>
-                    <p className="text-lg font-semibold font-mono text-ink mt-1">${(selectedTrip.copay || 0).toFixed(2)}</p>
+                    <p className="text-lg font-semibold text-ink mt-1">${(selectedTrip.copay || 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-ink-4">County Reimbursable</p>
-                    <p className="text-lg font-semibold font-mono text-primary mt-1">${(selectedTrip.costToCounty != null ? selectedTrip.costToCounty : (selectedTrip.cost || 0)).toFixed(2)}</p>
+                    <p className="text-lg font-semibold text-primary mt-1">${(selectedTrip.costToCounty != null ? selectedTrip.costToCounty : (selectedTrip.cost || 0)).toFixed(2)}</p>
                   </div>
                 </div>
                 <div className="flex justify-between items-center text-xs text-ink-4">

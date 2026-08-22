@@ -56,7 +56,7 @@ export const AddVehicleModal = ({ onClose, onSave }: { onClose: () => void; onSa
               <div className="col-span-2">
                 <label className="block text-xs text-ink-4 mb-2.5 ml-1">VIN Number (17 Characters)</label>
                 <input
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink font-mono outline-none transition-all placeholder:text-ink-4/50 uppercase"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all placeholder:text-ink-4/50 uppercase"
                   placeholder="1FD..."
                   value={form.vin}
                   onChange={e => set('vin', e.target.value)}
