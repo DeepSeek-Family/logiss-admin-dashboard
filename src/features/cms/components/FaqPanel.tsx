@@ -30,7 +30,7 @@ const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 3,
     question: 'What funding sources are accepted?',
-    answer: 'LOGISS supports Medicaid - VA, Medicare, Chesterfield County, Henrico County, Richmond City, Hanover County, Self-Pay, Insurance, Facility Paid, and DSS. New sources can be added in Global Configuration → Funding Sources.',
+    answer: 'LOGISS supports Medicaid - VA, Medicare, Chesterfield County, Henrico County, Richmond City, Hanover County, Self-Pay, Insurance, Facility Paid, and DSS. New sources can be managed in Service & Tariffs → Funding Sources.',
     category: 'Dispatcher',
     expanded: false,
   },
