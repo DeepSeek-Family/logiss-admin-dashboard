@@ -113,28 +113,40 @@ const CMS = ({ role }: { role?: string | null }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Sidebar Nav */}
         <aside className="lg:col-span-3 space-y-2">
-          {pages.map(page => (
-            <button
-              key={page.id}
-              onClick={() => setActivePage(page.id)}
-              className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all group ${
-                activePage === page.id
-                  ? 'border-primary bg-primary-tint/20 shadow-md scale-[1.02]'
-                  : 'border-transparent bg-white hover:border-line hover:bg-bg'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors ${activePage === page.id ? 'bg-primary text-white' : 'bg-bg text-ink-3 group-hover:text-primary'}`}>
-                  <page.icon size={18} />
+          {pages.map(page => {
+            const isActive = activePage === page.id;
+            return (
+              <button
+                key={page.id}
+                type="button"
+                onClick={() => setActivePage(page.id)}
+                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${
+                  isActive
+                    ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                    : 'border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    isActive ? 'bg-primary text-white shadow-xs' : 'bg-bg text-ink-3 group-hover:text-primary group-hover:bg-primary/10'
+                  }`}>
+                    <page.icon size={17} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-semibold truncate transition-colors ${
+                      isActive ? 'text-primary' : 'text-ink group-hover:text-primary'
+                    }`}>
+                      {page.label}
+                    </p>
+                    <p className="text-xs font-normal text-ink-4 mt-0.5">
+                      Updated {page.lastUpdate}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className={`text-sm font-medium transition-colors ${activePage === page.id ? 'text-primary' : 'text-ink'}`}>{page.label}</p>
-                  <p className="type-th mt-0.5">Updated {page.lastUpdate}</p>
-                </div>
-              </div>
-              <ChevronRight size={14} className={activePage === page.id ? 'text-primary' : 'text-line'} />
-            </button>
-          ))}
+                <ChevronRight size={15} className={`shrink-0 transition-colors ${isActive ? 'text-primary' : 'text-ink-4 group-hover:text-ink-3'}`} />
+              </button>
+            );
+          })}
         </aside>
 
         {/* Editor Area */}
