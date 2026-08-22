@@ -76,10 +76,6 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   const [activeSection, setActiveSection] = useState<'counties' | 'rules' | 'mobility' | 'mileage'>('counties');
 
-  // Interactive Geofence Demo State
-  const [simPickup, setSimPickup] = useState('14201 Midlothian Turnpike, Midlothian, VA 23113');
-  const [simDropoff, setSimDropoff] = useState('13000 Hull Street Rd, Midlothian, VA 23112');
-
   // Modals state
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
   const [selectedCounty, setSelectedCounty] = useState<CountyConfig | null>(null);
@@ -188,8 +184,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           1. COUNTIES & REGIONAL PRICING MANAGEMENT (SIMPLIFIED)
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'counties' && (
-      <div className="space-y-6">
-        <Card className="p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between gap-4 mb-5">
           <h2 className="type-section-title">Service Counties & Rates</h2>
 
@@ -302,130 +297,6 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           <span className="text-ink-4">Central Virginia Coverage</span>
         </div>
       </Card>
-
-      {/* ─────────────────────────────────────────────────────────────
-          LIVE GPS GEOCODE & BOUNDARY TEST BENCH (DEMO)
-      ───────────────────────────────────────────────────────────── */}
-      <Card className="p-6 border-line-2 bg-white">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="type-section-title">Live GPS Geocode & Auto-Rate Simulator</h3>
-              <Badge variant="primary">Interactive Demo</Badge>
-            </div>
-            <p className="text-xs text-ink-3 mt-1">
-              Test how the GPS point-in-polygon engine detects inside/outside boundaries and calculates automatic rates
-            </p>
-          </div>
-        </div>
-
-        {/* 1-Click Demo Scenarios */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <span className="text-xs font-semibold text-ink-3">1-Click Test Cases:</span>
-          <button
-            type="button"
-            onClick={() => {
-              setSimPickup('14201 Midlothian Turnpike, Midlothian, VA 23113');
-              setSimDropoff('13000 Hull Street Rd, Midlothian, VA 23112');
-            }}
-            className="px-3 py-1.5 rounded-lg border border-accent/30 bg-accent-light/40 hover:bg-accent-light text-xs font-semibold text-accent transition-colors"
-          >
-            🟢 Test 1: Inside Chesterfield ($10.00)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSimPickup('14201 Midlothian Turnpike, Midlothian, VA 23113');
-              setSimDropoff('1201 E Broad St, Richmond, VA 23219');
-            }}
-            className="px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-xs font-semibold text-primary transition-colors"
-          >
-            🟡 Test 2: Cross-County to Richmond ($16.00)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSimPickup('11800 W Broad St, Henrico, VA 23233');
-              setSimDropoff('4900 Cox Rd, Glen Allen, VA 23060');
-            }}
-            className="px-3 py-1.5 rounded-lg border border-line-2 bg-bg hover:bg-bg/80 text-xs font-semibold text-ink transition-colors"
-          >
-            🔵 Test 3: Inside Henrico County ($12.00)
-          </button>
-        </div>
-
-        {/* Interactive Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="text-xs font-semibold text-ink mb-1 block">Pickup Address</label>
-            <input
-              type="text"
-              value={simPickup}
-              onChange={e => setSimPickup(e.target.value)}
-              placeholder="Enter pickup address or ZIP..."
-              className="input-base w-full text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-ink mb-1 block">Dropoff Address</label>
-            <input
-              type="text"
-              value={simDropoff}
-              onChange={e => setSimDropoff(e.target.value)}
-              placeholder="Enter dropoff address or ZIP..."
-              className="input-base w-full text-xs"
-            />
-          </div>
-        </div>
-
-        {/* Real-Time Geocode & Auto-Fare Output Card */}
-        {(() => {
-          const evalResult = evaluateTripBoundary(simPickup, simDropoff, 'Chesterfield County', counties);
-          const quoteResult = quoteFares({
-            county: evalResult.pickupCounty,
-            insideCounty: evalResult.isInsideCounty,
-            tripType: 'one_way',
-            miles: 8.5,
-          }, pricing);
-
-          return (
-            <div className={`p-4 rounded-xl border transition-all ${
-              evalResult.isInsideCounty
-                ? 'bg-accent-light/30 border-accent/30'
-                : 'bg-primary/5 border-primary/20'
-            }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${evalResult.isInsideCounty ? 'bg-accent' : 'bg-primary'}`} />
-                    <span className="text-xs font-bold text-ink">{evalResult.boundaryLabel}</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      evalResult.isInsideCounty ? 'bg-accent-light text-accent' : 'bg-primary/10 text-primary'
-                    }`}>
-                      {evalResult.isInsideCounty ? 'Inside Geofence' : 'Crosses County Boundary'}
-                    </span>
-                  </div>
-                  <div className="text-xs text-ink-4 flex items-center gap-4 flex-wrap">
-                    <span>Pickup: {evalResult.pickupCounty} {evalResult.pickupGPS ? `(GPS: ${evalResult.pickupGPS[0]}, ${evalResult.pickupGPS[1]})` : ''}</span>
-                    <span>Dropoff: {evalResult.dropoffCounty} {evalResult.dropoffGPS ? `(GPS: ${evalResult.dropoffGPS[0]}, ${evalResult.dropoffGPS[1]})` : ''}</span>
-                  </div>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <p className="text-xs text-ink-3">Auto-Calculated Passenger Copay</p>
-                  <p className={`text-lg font-bold ${evalResult.isInsideCounty ? 'text-accent' : 'text-primary'}`}>
-                    ${Number(quoteResult.copay).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-ink-4">
-                    {evalResult.isInsideCounty ? 'Standard Inside Local Rate' : `Local Rate + $${Number(pricing.rules?.crossCountySurcharge || 6).toFixed(2)} Cross-County Fee`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-      </Card>
-      </div>
       )}
 
       {/* ─────────────────────────────────────────────────────────────
