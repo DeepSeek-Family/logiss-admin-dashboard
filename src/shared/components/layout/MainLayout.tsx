@@ -114,7 +114,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
     group: 'Administration',
     roles: ['admin', 'dispatcher'],
     items: [
-      { id: ROUTES.transactions, label: 'Charge', icon: CreditCard, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.transactions, label: 'Finance', icon: CreditCard, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.coverage, label: 'Service Coverage', icon: MapPin, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.staff, label: 'User Management', icon: UserPlus, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin', 'dispatcher'] },
