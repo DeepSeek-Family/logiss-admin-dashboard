@@ -122,13 +122,13 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-6">
       {/* ─────────────────────────────────────────────────────────────
-          COVERAGE SUB-TABS NAVIGATION
+          COVERAGE SUB-TABS NAVIGATION (CLEAN & MINIMAL)
       ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit flex-wrap">
+      <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit flex-wrap">
         <button
           type="button"
           onClick={() => setActiveSection('counties')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             activeSection === 'counties'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
@@ -136,53 +136,38 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         >
           <MapPin size={16} />
           <span>Service Counties</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            activeSection === 'counties' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
-          }`}>
-            {counties.filter(c => c.status === 'active').length}
-          </span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection('rules')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             activeSection === 'rules'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
           }`}
         >
           <Sliders size={16} />
-          <span>Transit & Base Rules</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            activeSection === 'rules' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
-          }`}>
-            Global Policy
-          </span>
+          <span>Transit Rules</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection('mobility')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             activeSection === 'mobility'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
           }`}
         >
           <Accessibility size={16} />
-          <span>Mobility Types</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            activeSection === 'mobility' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
-          }`}>
-            {mobilityTypes.filter(m => m.status === 'active').length}
-          </span>
+          <span>Mobility Requirements</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection('mileage')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             activeSection === 'mileage'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
@@ -190,11 +175,6 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         >
           <Layers size={16} />
           <span>Mileage Tiers</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            activeSection === 'mileage' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
-          }`}>
-            {pricing.brackets.length}
-          </span>
         </button>
       </div>
 

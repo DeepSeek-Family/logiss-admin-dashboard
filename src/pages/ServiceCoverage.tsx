@@ -24,20 +24,10 @@ const ServiceCoverage = ({ role }: ServiceCoverageProps) => {
             <div>
               <h1 className="type-page-title">Service Coverage & Pricing</h1>
               <p className="text-ink-3 font-medium mt-0.5">
-                Manage service county territories, inside/outside fares, and mobility surcharge rates
+                Manage service county territories, local base rates, and transit surcharge policies
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Quick summary badges */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="accent" dot>
-            {activeCountiesCount} Active Counties
-          </Badge>
-          <Badge variant="primary">
-            {activeMobilityCount} Mobility Types
-          </Badge>
         </div>
       </div>
 
