@@ -98,6 +98,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
     }
   };
 
+  const [activeSection, setActiveSection] = useState<'counties' | 'mobility' | 'mileage'>('counties');
+
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     if (deleteTarget.type === 'county') {
@@ -113,8 +115,68 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-6">
       {/* ─────────────────────────────────────────────────────────────
+          COVERAGE SUB-TABS NAVIGATION
+      ───────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit flex-wrap">
+        <button
+          type="button"
+          onClick={() => setActiveSection('counties')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'counties'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <MapPin size={16} />
+          <span>Service Counties & Rates</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            activeSection === 'counties' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
+          }`}>
+            {counties.filter(c => c.status === 'active').length} Active
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('mobility')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'mobility'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Accessibility size={16} />
+          <span>Mobility Requirements</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            activeSection === 'mobility' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
+          }`}>
+            {mobilityTypes.filter(m => m.status === 'active').length} Active
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('mileage')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'mileage'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Layers size={16} />
+          <span>Mileage Billing Brackets</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            activeSection === 'mileage' ? 'bg-white/20 text-white' : 'bg-bg text-ink-3 border border-line-2'
+          }`}>
+            {pricing.brackets.length} Tiers
+          </span>
+        </button>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
           1. COUNTIES & REGIONAL PRICING MANAGEMENT
       ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'counties' && (
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div>
@@ -243,10 +305,12 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           </table>
         </div>
       </Card>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           2. MOBILITY TYPES & SURCHARGE FEES MANAGEMENT
       ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'mobility' && (
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div>
@@ -344,10 +408,12 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           })}
         </div>
       </Card>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           3. COUNTY GOVERNMENT MILEAGE BRACKETS
       ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'mileage' && (
       <Card className="p-6">
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -476,6 +542,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           </Button>
         )}
       </Card>
+      )}
 
       {/* Modals */}
       <CountyModal
