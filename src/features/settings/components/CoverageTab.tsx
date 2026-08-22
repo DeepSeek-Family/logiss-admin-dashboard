@@ -20,7 +20,8 @@ import {
   Clock,
   HelpCircle,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Landmark
 } from 'lucide-react';
 import { Card, Badge, Button } from '@/shared/components/ui';
 import {
@@ -36,6 +37,7 @@ import {
 import { CountyModal } from './CountyModal';
 import { MobilityModal } from './MobilityModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { FundingSourcesPanel } from '@/features/cms/components/FundingSourcesPanel';
 import toast from 'react-hot-toast';
 
 interface CoverageTabProps {
@@ -74,7 +76,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   const canEdit = role !== 'driver';
 
-  const [activeSection, setActiveSection] = useState<'counties' | 'rules' | 'mobility' | 'mileage'>('counties');
+  const [activeSection, setActiveSection] = useState<'counties' | 'funding' | 'rules' | 'mobility' | 'mileage'>('counties');
 
   // Modals state
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
@@ -96,27 +98,35 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   const handleSaveCounty = (data: Omit<CountyConfig, 'id'>) => {
     if (selectedCounty) {
       updateCounty(selectedCounty.id, data);
+      toast.success(`County "${data.name}" updated successfully!`);
     } else {
       addCounty(data);
+      toast.success(`County "${data.name}" added successfully!`);
     }
+    setIsCountyModalOpen(false);
+    setSelectedCounty(null);
   };
 
   const handleSaveMobility = (data: Omit<MobilityConfig, 'id'>) => {
     if (selectedMobility) {
       updateMobility(selectedMobility.id, data);
+      toast.success(`Mobility requirement "${data.name}" updated!`);
     } else {
       addMobility(data);
+      toast.success(`Mobility requirement "${data.name}" added!`);
     }
+    setIsMobilityModalOpen(false);
+    setSelectedMobility(null);
   };
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     if (deleteTarget.type === 'county') {
       deleteCounty(deleteTarget.id);
-      toast.success(`County "${deleteTarget.label}" deleted`);
-    } else if (deleteTarget.type === 'mobility') {
+      toast.success(`County "${deleteTarget.label}" removed.`);
+    } else {
       deleteMobility(deleteTarget.id);
-      toast.success(`Mobility requirement "${deleteTarget.label}" deleted`);
+      toast.success(`Mobility type "${deleteTarget.label}" removed.`);
     }
     setDeleteTarget(null);
   };
@@ -124,7 +134,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-6">
       {/* ─────────────────────────────────────────────────────────────
-          COVERAGE SUB-TABS NAVIGATION (CLEAN & MINIMAL)
+          COVERAGE & TARIFFS SUB-TABS NAVIGATION (CLEAN & MINIMAL)
       ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit flex-wrap">
         <button
@@ -138,6 +148,19 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         >
           <MapPin size={16} />
           <span>Service Counties</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('funding')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            activeSection === 'funding'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Landmark size={16} />
+          <span>Funding Sources</span>
         </button>
 
         <button
@@ -300,7 +323,16 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          2. TRANSIT RULES & GLOBAL SURCHARGES
+          2. FUNDING SOURCES & PAYERS MANAGEMENT
+      ───────────────────────────────────────────────────────────── */}
+      {activeSection === 'funding' && (
+      <Card className="p-6">
+        <FundingSourcesPanel />
+      </Card>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. TRANSIT RULES & GLOBAL SURCHARGES
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'rules' && (
       <div className="space-y-6">

@@ -21,7 +21,7 @@ const Settings = ({ role }: { role?: string | null }) => {
   const TABS = [
     { id: 'security', label: 'Security & Privacy', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'coverage', label: 'Service Coverage', icon: MapPin },
+    { id: 'coverage', label: 'Service & Tariffs', icon: MapPin },
     { id: 'contacts', label: 'Emergency Contacts', icon: Phone },
   ];
 

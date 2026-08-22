@@ -22,9 +22,9 @@ const ServiceCoverage = ({ role }: ServiceCoverageProps) => {
               <MapPin size={20} />
             </div>
             <div>
-              <h1 className="type-page-title">Service Coverage & Pricing</h1>
+              <h1 className="type-page-title">Service & Tariffs</h1>
               <p className="text-ink-3 font-medium mt-0.5">
-                Manage service county territories, local base rates, and transit surcharge policies
+                Manage service county territories, funding sources, transit rules, and mobility surcharges
               </p>
             </div>
           </div>
