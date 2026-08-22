@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { 
   Search, X, MapPin, CalendarClock, Plus, 
   Accessibility, Bed, User as UserIcon, Disc, Info, 
-  Clock, Navigation, ShieldCheck, Phone, ArrowRight
+  Clock, Navigation, ShieldCheck, Phone, ArrowRight, Zap, HeartPulse, Activity
 } from 'lucide-react';
 import { Avatar, Button } from '@/shared/components/ui';
+import { usePricing, DEFAULT_MOBILITY_TYPES } from '@/hooks/usePricing';
 
 interface ManualTripModalProps {
   trips: any[];
@@ -12,13 +13,17 @@ interface ManualTripModalProps {
   onSave: (trip: any) => void;
 }
 
-const mobilityOptions = [
-  { id: 'Ambulatory', label: 'Ambulatory', icon: UserIcon },
-  { id: 'Wheelchair', label: 'Wheelchair', icon: Accessibility },
-  { id: 'Walker', label: 'Walker', icon: Disc },
-  { id: 'Stretcher', label: 'Stretcher', icon: Bed },
-  { id: 'Cane', label: 'Cane', icon: Info }
-];
+const MOBILITY_ICON_MAP: { [key: string]: any } = {
+  User: UserIcon,
+  Accessibility,
+  Bed,
+  Disc,
+  Zap,
+  Info,
+  HeartPulse,
+  Shield: ShieldCheck,
+  Activity,
+};
 
 // Move helper outside to prevent re-creation on every render
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
@@ -30,6 +35,11 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
 );
 
 export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], onClose, onSave }) => {
+  const { pricing } = usePricing();
+  const availableMobility = (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
+    ? pricing.mobilityTypes.filter(m => m.status === 'active')
+    : DEFAULT_MOBILITY_TYPES;
+
   const [userType, setUserType] = useState('new');
   const [existingSearch, setExistingSearch] = useState('');
   const [selectedExistingRider, setSelectedExistingRider] = useState<any>(null);
@@ -53,9 +63,9 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
     type: 'one_way',
   });
 
-  const addStop = () => setForm(f => ({ ...f, stops: [...f.stops, ''] }));
-  const removeStop = (idx: number) => setForm(f => ({ ...f, stops: f.stops.filter((_, i) => i !== idx) }));
-  const updateStop = (idx: number, val: string) => setForm(f => ({ ...f, stops: f.stops.map((s, i) => i === idx ? val : s) }));
+  const addStop = () => setForm((f: any) => ({ ...f, stops: [...f.stops, ''] }));
+  const removeStop = (idx: number) => setForm((f: any) => ({ ...f, stops: f.stops.filter((_: any, i: number) => i !== idx) }));
+  const updateStop = (idx: number, val: string) => setForm((f: any) => ({ ...f, stops: f.stops.map((s: string, i: number) => i === idx ? val : s) }));
 
   const inputClass = "w-full bg-white border border-line-2 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none placeholder:text-ink-4 shadow-sm";
 
@@ -74,7 +84,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
   const selectRider = (rider: any) => {
     if (!rider) return;
     const parts = (rider.name || '').split(' ');
-    setForm(prev => ({
+    setForm((prev: any) => ({
       ...prev,
       firstName: parts[0] || '',
       lastName: parts.slice(1).join(' ') || '',
@@ -250,19 +260,28 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
               <div className="space-y-4">
                 <SectionHeader title="Mobility" icon={ShieldCheck} />
                 <div className="grid grid-cols-3 gap-2">
-                  {mobilityOptions.map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setForm({ ...form, mobility: opt.id })}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${form.mobility === opt.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-line-2 bg-white hover:border-primary/20'}`}
-                    >
-                      <div className={`p-2 rounded-lg ${form.mobility === opt.id ? 'bg-primary text-white' : 'bg-bg text-ink-4'}`}>
-                        <opt.icon size={16} />
-                      </div>
-                      <span className="text-xs font-medium">{opt.label}</span>
-                    </button>
-                  ))}
+                  {availableMobility.map(opt => {
+                    const IconComp = MOBILITY_ICON_MAP[opt.iconKey || 'Accessibility'] || Accessibility;
+                    const isSelected = form.mobility === opt.name || form.mobility === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setForm({ ...form, mobility: opt.name })}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-line-2 bg-white hover:border-primary/20'}`}
+                      >
+                        <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-bg text-ink-4'}`}>
+                          <IconComp size={16} />
+                        </div>
+                        <span className="text-xs font-medium">{opt.name}</span>
+                        {opt.fee > 0 && (
+                          <span className="text-xs font-semibold text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                            +${Number(opt.fee).toFixed(2)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

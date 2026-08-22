@@ -5,7 +5,7 @@ import {
   ShieldCheck, Car, Plus, Minus, Search, X,
   AlertCircle, Info, Phone, ArrowRight, Repeat,
   Accessibility, Bed, User, Disc, Zap, FileText,
-  DollarSign, Activity, MapPin, Users, Mail, Tag, Building2, Stethoscope, Lock
+  DollarSign, Activity, MapPin, Users, Mail, Tag, Building2, Stethoscope, Lock, HeartPulse
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
@@ -14,23 +14,36 @@ import { money } from '@/utils/helpers';
 import { FUNDING_SOURCES, riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
 import { tripService } from '@/services/tripService';
-import { quoteFares, inferInsideCounty, usePricing } from '@/hooks/usePricing';
+import { quoteFares, inferInsideCounty, usePricing, DEFAULT_COUNTIES, DEFAULT_MOBILITY_TYPES } from '@/hooks/usePricing';
 
 export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
 export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
 
-export const mobilityOptions = [
-  { id: 'Ambulatory', label: 'Ambulatory', icon: User },
-  { id: 'Wheelchair', label: 'Wheelchair', icon: Accessibility },
-  { id: 'Walker', label: 'Walker', icon: Disc },
-  { id: 'Rollator', label: 'Rollator', icon: Zap },
-  { id: 'Cane', label: 'Cane', icon: Info }
-];
+const MOBILITY_ICON_MAP: { [key: string]: any } = {
+  User,
+  Accessibility,
+  Bed,
+  Disc,
+  Zap,
+  Info,
+  HeartPulse,
+  Shield: ShieldCheck,
+  Activity,
+};
 
 export const BookingForm = () => {
   const navigate = useNavigate();
   const { trips } = useTrips();
   const { drivers } = useDrivers();
+  const { pricing } = usePricing();
+
+  const availableCounties = (pricing.counties && pricing.counties.length > 0)
+    ? pricing.counties.filter(c => c.status === 'active')
+    : DEFAULT_COUNTIES;
+
+  const availableMobility = (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
+    ? pricing.mobilityTypes.filter(m => m.status === 'active')
+    : DEFAULT_MOBILITY_TYPES;
 
   const [userType, setUserType] = useState('guest');
   const [existingSearch, setExistingSearch] = useState('');
@@ -57,6 +70,7 @@ export const BookingForm = () => {
     program: '',
     source: '',
     authNotes: '',
+    county: availableCounties[0]?.name || 'Chesterfield County',
     insideCounty: true,
     pickup: '',
     dropoff: '',
@@ -66,7 +80,7 @@ export const BookingForm = () => {
     returnPickup: '',
     tripType: 'one-way',
     isWillCall: false,
-    mobility: '',
+    mobility: 'Ambulatory',
     tripReason: 'Medical Appointment',
     totalSeats: 1,
     additionalNotes: '',
@@ -112,9 +126,8 @@ export const BookingForm = () => {
     toast.success(`Populated profile details for ${rider.name}!`);
   };
 
-  const { pricing } = usePricing();
-
   const quote = quoteFares({
+    county: form.county,
     insideCounty: form.insideCounty,
     tripType: form.tripType,
     miles: form.estMiles,
@@ -413,8 +426,23 @@ export const BookingForm = () => {
           </Card>
 
           <Card className="p-6 border-line-2 bg-white shadow-none">
-            <SectionHeader title="2. Pickup & Dropoff" icon={Navigation} />
-            <div className="space-y-5">
+            <SectionHeader title="2. Pickup, Dropoff & County Coverage" icon={Navigation} />
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Service County / Coverage Area</label>
+                <select
+                  className={inputClass}
+                  value={form.county}
+                  onChange={e => setForm({ ...form, county: e.target.value })}
+                >
+                  {availableCounties.map(c => (
+                    <option key={c.id} value={c.name}>
+                      {c.name} ({c.state || 'VA'}) — ${Number(c.insideRate).toFixed(2)} inside / ${Number(c.outsideRate).toFixed(2)} outside
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-primary bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary" /></div>
                 <div className="absolute left-1.5 top-8 bottom-[-32px] w-0.5 border-l border-dashed border-line-2" />
@@ -443,13 +471,31 @@ export const BookingForm = () => {
 
           <Card className="p-6 border-line-2 bg-white shadow-none">
             <SectionHeader title="3. Mobility Requirements" icon={ShieldCheck} />
-            <div className="flex items-center gap-2 overflow-x-hidden">
-              {mobilityOptions.map(opt => (
-                <button key={opt.id} type="button" onClick={() => setForm({ ...form, mobility: opt.id })} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all whitespace-nowrap ${form.mobility === opt.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-line-2 bg-bg hover:border-primary/20'}`}>
-                  <opt.icon size={16} className={form.mobility === opt.id ? 'text-primary' : 'text-ink-2'} />
-                  <span className="text-xs font-medium text-ink">{opt.label}</span>
-                </button>
-              ))}
+            <div className="flex items-center gap-2 flex-wrap">
+              {availableMobility.map(opt => {
+                const IconComp = MOBILITY_ICON_MAP[opt.iconKey || 'Accessibility'] || Accessibility;
+                const isSelected = form.mobility === opt.name || form.mobility === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, mobility: opt.name })}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all whitespace-nowrap ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary font-semibold text-primary'
+                        : 'border-line-2 bg-bg hover:border-primary/20 text-ink'
+                    }`}
+                  >
+                    <IconComp size={16} className={isSelected ? 'text-primary' : 'text-ink-2'} />
+                    <span className="text-xs font-medium">{opt.name}</span>
+                    {opt.fee > 0 && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                        +${Number(opt.fee).toFixed(2)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </Card>
 

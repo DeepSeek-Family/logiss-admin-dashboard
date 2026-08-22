@@ -1,8 +1,33 @@
-import { MapPin, Shield, Plus, Trash2 } from 'lucide-react';
-import { Card, Badge } from '@/shared/components/ui';
-import { usePricing, DEFAULT_PRICING } from '@/hooks/usePricing';
-
-const COUNTIES = ['Chesterfield', 'Henrico', 'Hanover', 'Richmond City', 'Powhatan', 'Goochland'];
+import { useState } from 'react';
+import {
+  MapPin,
+  Shield,
+  Plus,
+  Trash2,
+  Edit2,
+  Accessibility,
+  Bed,
+  Disc,
+  Zap,
+  User,
+  Info,
+  HeartPulse,
+  Activity,
+  Layers,
+  Sparkles,
+  DollarSign
+} from 'lucide-react';
+import { Card, Badge, Button } from '@/shared/components/ui';
+import {
+  usePricing,
+  DEFAULT_PRICING,
+  CountyConfig,
+  MobilityConfig
+} from '@/hooks/usePricing';
+import { CountyModal } from './CountyModal';
+import { MobilityModal } from './MobilityModal';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
+import toast from 'react-hot-toast';
 
 interface CoverageTabProps {
   role?: string | null;
@@ -13,147 +38,478 @@ const num = (v: string, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const ICON_MAP: { [key: string]: any } = {
+  User,
+  Accessibility,
+  Bed,
+  Disc,
+  Zap,
+  Info,
+  HeartPulse,
+  Shield,
+  Activity,
+};
+
 export const CoverageTab = ({ role }: CoverageTabProps) => {
-  const { pricing, setPricing } = usePricing();
+  const {
+    pricing,
+    setPricing,
+    addCounty,
+    updateCounty,
+    deleteCounty,
+    addMobility,
+    updateMobility,
+    deleteMobility
+  } = usePricing();
+
   const canEdit = role === 'admin' || role === 'dispatcher';
 
+  // County modal states
+  const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
+  const [selectedCounty, setSelectedCounty] = useState<CountyConfig | null>(null);
+
+  // Mobility modal states
+  const [isMobilityModalOpen, setIsMobilityModalOpen] = useState(false);
+  const [selectedMobility, setSelectedMobility] = useState<MobilityConfig | null>(null);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'county' | 'mobility';
+    id: string;
+    label: string;
+  } | null>(null);
+
+  const counties = pricing.counties || [];
+  const mobilityTypes = pricing.mobilityTypes || [];
+
+  const handleSaveCounty = (data: Omit<CountyConfig, 'id'>) => {
+    if (selectedCounty) {
+      updateCounty(selectedCounty.id, data);
+    } else {
+      addCounty(data);
+    }
+  };
+
+  const handleSaveMobility = (data: Omit<MobilityConfig, 'id'>) => {
+    if (selectedMobility) {
+      updateMobility(selectedMobility.id, data);
+    } else {
+      addMobility(data);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'county') {
+      deleteCounty(deleteTarget.id);
+      toast.success(`County "${deleteTarget.label}" deleted`);
+    } else if (deleteTarget.type === 'mobility') {
+      deleteMobility(deleteTarget.id);
+      toast.success(`Mobility requirement "${deleteTarget.label}" deleted`);
+    }
+    setDeleteTarget(null);
+  };
+
   return (
-    <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-5">
+    <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-6">
+      {/* ─────────────────────────────────────────────────────────────
+          1. COUNTIES & REGIONAL PRICING MANAGEMENT
+      ───────────────────────────────────────────────────────────── */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <p className="text-xs text-ink-4">Active Service Counties</p>
-          <Badge variant="accent" dot>{COUNTIES.length} Active</Badge>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {COUNTIES.map(c => (
-            <span key={c} className="flex items-center gap-1.5 px-3 py-1.5 bg-bg rounded-full border border-line-2 text-xs font-semibold text-ink-2">
-              <MapPin size={11} className="text-ink-4" /> {c}
-            </span>
-          ))}
-          {role === 'admin' && (
-            <button className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-line rounded-full text-xs text-ink-4 hover:text-primary hover:border-primary/40 transition-colors">
-              + Add County
-            </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="type-section-title">Service Counties & Pricing</h2>
+              <Badge variant="accent" dot>
+                {counties.filter(c => c.status === 'active').length} Active
+              </Badge>
+            </div>
+            <p className="text-xs text-ink-3 mt-1">
+              Add, edit, or configure customized inside/outside fare rates for each regional service county
+            </p>
+          </div>
+
+          {canEdit && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setSelectedCounty(null);
+                setIsCountyModalOpen(true);
+              }}
+            >
+              <Plus size={14} className="mr-1" /> Add County
+            </Button>
           )}
         </div>
-        <p className="text-xs text-ink-4 mt-5 flex items-center gap-1.5">
-          <Shield size={11} /> Pickup/dropoff text is used to flag inside vs outside until GPS geofence codes are loaded.
-        </p>
+
+        {/* Counties Table */}
+        <div className="overflow-x-auto rounded-xl border border-line-2 bg-white">
+          <table className="w-full text-left">
+            <thead className="bg-bg border-b border-line-2">
+              <tr>
+                <th className="px-4 py-3 type-th">County Name</th>
+                <th className="px-4 py-3 type-th">State</th>
+                <th className="px-4 py-3 type-th text-right">Inside Fare</th>
+                <th className="px-4 py-3 type-th text-right">Outside Fare</th>
+                <th className="px-4 py-3 type-th text-right">Pickup Fee</th>
+                <th className="px-4 py-3 type-th text-center">Status</th>
+                {canEdit && <th className="px-4 py-3 type-th text-center">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line-2">
+              {counties.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-ink-4">
+                    No service counties configured. Click "+ Add County" to create one.
+                  </td>
+                </tr>
+              ) : (
+                counties.map((c) => (
+                  <tr key={c.id} className="hover:bg-bg/40 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <MapPin size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-ink">{c.name}</p>
+                          {c.notes && <p className="text-xs text-ink-4">{c.notes}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs font-semibold text-ink-3">
+                      {c.state || 'VA'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs font-semibold text-ink">
+                        ${Number(c.insideRate || 0).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs font-semibold text-ink">
+                        ${Number(c.outsideRate || 0).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs font-medium text-ink-3">
+                        ${Number(c.pickupFee || 0).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          c.status === 'active'
+                            ? 'bg-accent-light text-accent'
+                            : 'bg-bg text-ink-4 border border-line-2'
+                        }`}
+                      >
+                        {c.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    {canEdit && (
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            title="Edit County"
+                            onClick={() => {
+                              setSelectedCounty(c);
+                              setIsCountyModalOpen(true);
+                            }}
+                            className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            title="Delete County"
+                            onClick={() => {
+                              setDeleteTarget({
+                                type: 'county',
+                                id: c.id,
+                                label: c.name,
+                              });
+                            }}
+                            className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
+      {/* ─────────────────────────────────────────────────────────────
+          2. MOBILITY TYPES & SURCHARGE FEES MANAGEMENT
+      ───────────────────────────────────────────────────────────── */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm font-semibold text-ink">Pricing</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="type-section-title">Mobility Requirements & Surcharges</h2>
+              <Badge variant="accent" dot>
+                {mobilityTypes.filter(m => m.status === 'active').length} Active
+              </Badge>
+            </div>
+            <p className="text-xs text-ink-3 mt-1">
+              Add and manage rider mobility equipment options and customized base surcharge fees
+            </p>
+          </div>
+
+          {canEdit && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setSelectedMobility(null);
+                setIsMobilityModalOpen(true);
+              }}
+            >
+              <Plus size={14} className="mr-1" /> Add Mobility Type
+            </Button>
+          )}
+        </div>
+
+        {/* Mobility Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {mobilityTypes.map((mob) => {
+            const IconComponent = ICON_MAP[mob.iconKey || 'Accessibility'] || Accessibility;
+            return (
+              <div
+                key={mob.id}
+                className="p-4 rounded-xl border border-line-2 bg-white hover:border-primary/30 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                        <IconComponent size={16} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-ink">{mob.name}</h3>
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                            mob.status === 'active'
+                              ? 'bg-accent-light text-accent'
+                              : 'bg-bg text-ink-4 border border-line-2'
+                          }`}
+                        >
+                          {mob.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                      {mob.fee > 0 ? `+$${Number(mob.fee).toFixed(2)}` : 'Free / $0.00'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-ink-3 line-clamp-2 mt-2">
+                    {mob.description || 'Standard requirement for scheduled bookings.'}
+                  </p>
+                </div>
+
+                {canEdit && (
+                  <div className="flex items-center justify-end gap-1 mt-4 pt-3 border-t border-line-2">
+                    <button
+                      onClick={() => {
+                        setSelectedMobility(mob);
+                        setIsMobilityModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-all flex items-center gap-1"
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteTarget({
+                          type: 'mobility',
+                          id: mob.id,
+                          label: mob.name,
+                        });
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium text-ink-3 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all flex items-center gap-1"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. COUNTY GOVERNMENT MILEAGE BRACKETS
+      ───────────────────────────────────────────────────────────── */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h2 className="type-section-title">Government & Mileage Billing Brackets</h2>
+            <p className="text-xs text-ink-3">Tiered mileage calculations for county contracts and billing</p>
+          </div>
           {canEdit && (
             <button
               type="button"
-              onClick={() => setPricing({ ...DEFAULT_PRICING, brackets: DEFAULT_PRICING.brackets.map(b => ({ ...b })), items: DEFAULT_PRICING.items.map(i => ({ ...i })) })}
-              className="text-xs text-ink-4 hover:text-primary"
+              onClick={() => {
+                setPricing({
+                  ...DEFAULT_PRICING,
+                  brackets: DEFAULT_PRICING.brackets.map(b => ({ ...b })),
+                  items: DEFAULT_PRICING.items.map(i => ({ ...i })),
+                  counties: DEFAULT_PRICING.counties.map(c => ({ ...c })),
+                  mobilityTypes: DEFAULT_PRICING.mobilityTypes.map(m => ({ ...m })),
+                });
+                toast.success('Default rates restored');
+              }}
+              className="text-xs font-medium text-ink-4 hover:text-primary transition-colors"
             >
               Reset defaults
             </button>
           )}
         </div>
-        <p className="text-xs text-ink-4 mb-5">Customer sees only the flat fare. County/government uses brackets and service items. Saved on this console.</p>
 
-        <p className="type-th mb-2">Customer flat fare (per leg)</p>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <label className="text-xs text-ink-3">
-            Inside county
-            <input
-              type="number" step="0.01" min="0" disabled={!canEdit}
-              value={pricing.customerInside}
-              onChange={e => setPricing({ ...pricing, customerInside: num(e.target.value, pricing.customerInside) })}
-              className="mt-1 w-full h-9 px-3 rounded-lg border border-line-2 text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20"
-            />
-          </label>
-          <label className="text-xs text-ink-3">
-            Outside county
-            <input
-              type="number" step="0.01" min="0" disabled={!canEdit}
-              value={pricing.customerOutside}
-              onChange={e => setPricing({ ...pricing, customerOutside: num(e.target.value, pricing.customerOutside) })}
-              className="mt-1 w-full h-9 px-3 rounded-lg border border-line-2 text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20"
-            />
-          </label>
-        </div>
+        <div className="space-y-2 mt-4 mb-3">
+          <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 text-xs font-semibold text-ink-3 px-2">
+            <span>Min Miles</span>
+            <span>Max Miles</span>
+            <span>Bracket Rate ($)</span>
+            <span></span>
+          </div>
 
-        <p className="type-th mb-2">County / government brackets (miles)</p>
-        <div className="space-y-2 mb-3">
           {pricing.brackets.map((b, i) => (
             <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
-              <input type="number" step="0.01" disabled={!canEdit} value={b.min}
-                onChange={e => setPricing({ ...pricing, brackets: pricing.brackets.map((row, idx) => idx === i ? { ...row, min: num(e.target.value, row.min) } : row) })}
-                className="h-9 px-2 rounded-lg border border-line-2 text-xs text-ink outline-none" placeholder="Min" />
-              <input type="number" step="0.01" disabled={!canEdit} value={b.max}
-                onChange={e => setPricing({ ...pricing, brackets: pricing.brackets.map((row, idx) => idx === i ? { ...row, max: num(e.target.value, row.max) } : row) })}
-                className="h-9 px-2 rounded-lg border border-line-2 text-xs text-ink outline-none" placeholder="Max" />
-              <input type="number" step="0.01" disabled={!canEdit} value={b.rate}
-                onChange={e => setPricing({ ...pricing, brackets: pricing.brackets.map((row, idx) => idx === i ? { ...row, rate: num(e.target.value, row.rate) } : row) })}
-                className="h-9 px-2 rounded-lg border border-line-2 text-xs text-ink outline-none" placeholder="Rate $" />
+              <input
+                type="number"
+                step="0.01"
+                disabled={!canEdit}
+                value={b.min}
+                onChange={e =>
+                  setPricing({
+                    ...pricing,
+                    brackets: pricing.brackets.map((row, idx) =>
+                      idx === i ? { ...row, min: num(e.target.value, row.min) } : row
+                    ),
+                  })
+                }
+                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary"
+                placeholder="Min"
+              />
+              <input
+                type="number"
+                step="0.01"
+                disabled={!canEdit}
+                value={b.max}
+                onChange={e =>
+                  setPricing({
+                    ...pricing,
+                    brackets: pricing.brackets.map((row, idx) =>
+                      idx === i ? { ...row, max: num(e.target.value, row.max) } : row
+                    ),
+                  })
+                }
+                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary"
+                placeholder="Max"
+              />
+              <input
+                type="number"
+                step="0.01"
+                disabled={!canEdit}
+                value={b.rate}
+                onChange={e =>
+                  setPricing({
+                    ...pricing,
+                    brackets: pricing.brackets.map((row, idx) =>
+                      idx === i ? { ...row, rate: num(e.target.value, row.rate) } : row
+                    ),
+                  })
+                }
+                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary font-semibold"
+                placeholder="Rate $"
+              />
               {canEdit ? (
-                <button type="button" onClick={() => setPricing({ ...pricing, brackets: pricing.brackets.filter((_, idx) => idx !== i) })} className="p-2 text-ink-4 hover:text-urgent">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPricing({
+                      ...pricing,
+                      brackets: pricing.brackets.filter((_, idx) => idx !== i),
+                    })
+                  }
+                  className="p-2 text-ink-4 hover:text-urgent rounded-lg transition-colors"
+                >
                   <Trash2 size={14} />
                 </button>
-              ) : <span />}
+              ) : (
+                <span />
+              )}
             </div>
           ))}
         </div>
+
         {canEdit && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               const last = pricing.brackets[pricing.brackets.length - 1];
-              setPricing({ ...pricing, brackets: [...pricing.brackets, { min: last ? last.max + 0.01 : 0, max: (last?.max || 0) + 10, rate: last?.rate || 0 }] });
+              setPricing({
+                ...pricing,
+                brackets: [
+                  ...pricing.brackets,
+                  {
+                    min: last ? Number((last.max + 0.01).toFixed(2)) : 0,
+                    max: (last?.max || 0) + 10,
+                    rate: (last?.rate || 0) + 20,
+                  },
+                ],
+              });
             }}
-            className="text-xs text-primary font-medium inline-flex items-center gap-1 mb-6"
+            className="text-xs text-primary"
           >
-            <Plus size={12} /> Add bracket
-          </button>
-        )}
-
-        <p className="type-th mb-2 mt-2">County billing items</p>
-        <label className="text-xs text-ink-3 block mb-3">
-          Pickup fee
-          <input
-            type="number" step="0.01" min="0" disabled={!canEdit}
-            value={pricing.pickupFee}
-            onChange={e => setPricing({ ...pricing, pickupFee: num(e.target.value, pricing.pickupFee) })}
-            className="mt-1 w-full h-9 px-3 rounded-lg border border-line-2 text-sm text-ink outline-none"
-          />
-        </label>
-        <div className="space-y-2">
-          {pricing.items.map((item, i) => (
-            <div key={item.id} className="grid grid-cols-[1fr_100px_auto] gap-2 items-center">
-              <input
-                disabled={!canEdit}
-                value={item.label}
-                onChange={e => setPricing({ ...pricing, items: pricing.items.map((row, idx) => idx === i ? { ...row, label: e.target.value, id: e.target.value || row.id } : row) })}
-                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none"
-              />
-              <input
-                type="number" step="0.01" disabled={!canEdit} value={item.amount}
-                onChange={e => setPricing({ ...pricing, items: pricing.items.map((row, idx) => idx === i ? { ...row, amount: num(e.target.value, row.amount) } : row) })}
-                className="h-9 px-2 rounded-lg border border-line-2 text-xs text-ink outline-none"
-              />
-              {canEdit ? (
-                <button type="button" onClick={() => setPricing({ ...pricing, items: pricing.items.filter((_, idx) => idx !== i) })} className="p-2 text-ink-4 hover:text-urgent">
-                  <Trash2 size={14} />
-                </button>
-              ) : <span />}
-            </div>
-          ))}
-        </div>
-        {canEdit && (
-          <button
-            type="button"
-            onClick={() => setPricing({ ...pricing, items: [...pricing.items, { id: `item-${Date.now()}`, label: 'New item', amount: 0 }] })}
-            className="text-xs text-primary font-medium inline-flex items-center gap-1 mt-3"
-          >
-            <Plus size={12} /> Add billing item
-          </button>
+            <Plus size={13} className="mr-1" /> Add Mileage Tier
+          </Button>
         )}
       </Card>
+
+      {/* Modals */}
+      <CountyModal
+        isOpen={isCountyModalOpen}
+        county={selectedCounty}
+        onClose={() => {
+          setIsCountyModalOpen(false);
+          setSelectedCounty(null);
+        }}
+        onSave={handleSaveCounty}
+      />
+
+      <MobilityModal
+        isOpen={isMobilityModalOpen}
+        mobility={selectedMobility}
+        onClose={() => {
+          setIsMobilityModalOpen(false);
+          setSelectedMobility(null);
+        }}
+        onSave={handleSaveMobility}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title={deleteTarget?.type === 'county' ? 'Delete Service County' : 'Delete Mobility Requirement'}
+        message={
+          deleteTarget?.type === 'county'
+            ? 'Are you sure you want to remove this service county from the system?'
+            : 'Are you sure you want to remove this mobility option? Any bookings referencing this will remain intact.'
+        }
+        itemLabel={deleteTarget?.label}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };
