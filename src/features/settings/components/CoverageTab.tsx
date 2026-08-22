@@ -136,7 +136,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-200 space-y-6">
       {/* ─────────────────────────────────────────────────────────────
-          COVERAGE & TARIFFS SUB-TABS NAVIGATION (CLEAN & MINIMAL)
+          COVERAGE & TARIFFS SUB-TABS NAVIGATION (LOGICAL FLOW)
       ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit flex-wrap">
         <button
@@ -154,41 +154,15 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
         <button
           type="button"
-          onClick={() => setActiveSection('facilities')}
+          onClick={() => setActiveSection('mileage')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            activeSection === 'facilities'
+            activeSection === 'mileage'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
           }`}
         >
-          <Building2 size={16} />
-          <span>Facilities & Hubs</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('funding')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            activeSection === 'funding'
-              ? 'bg-primary text-white shadow-sm'
-              : 'text-ink-3 hover:text-ink hover:bg-bg'
-          }`}
-        >
-          <Landmark size={16} />
-          <span>Funding Sources</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('rules')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            activeSection === 'rules'
-              ? 'bg-primary text-white shadow-sm'
-              : 'text-ink-3 hover:text-ink hover:bg-bg'
-          }`}
-        >
-          <Sliders size={16} />
-          <span>Transit Rules</span>
+          <Layers size={16} />
+          <span>Mileage Tiers</span>
         </button>
 
         <button
@@ -206,15 +180,41 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
         <button
           type="button"
-          onClick={() => setActiveSection('mileage')}
+          onClick={() => setActiveSection('rules')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            activeSection === 'mileage'
+            activeSection === 'rules'
               ? 'bg-primary text-white shadow-sm'
               : 'text-ink-3 hover:text-ink hover:bg-bg'
           }`}
         >
-          <Layers size={16} />
-          <span>Mileage Tiers</span>
+          <Sliders size={16} />
+          <span>Transit Rules</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('funding')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            activeSection === 'funding'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Landmark size={16} />
+          <span>Funding Sources</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('facilities')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            activeSection === 'facilities'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink hover:bg-bg'
+          }`}
+        >
+          <Building2 size={16} />
+          <span>Facilities & Hubs</span>
         </button>
       </div>
 
