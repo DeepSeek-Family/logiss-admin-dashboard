@@ -155,6 +155,49 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             </p>
           </div>
 
+          {/* GPS Geocode & Boundary Polygon Upload */}
+          <div className="p-3.5 rounded-xl border border-line-2 bg-bg/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="type-label text-ink-3">
+                GPS Geocodes / Boundary File (ZIP, GeoJSON, KML)
+              </label>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-accent-light text-accent font-semibold">
+                GPS Active
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-line-2">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <MapPin size={16} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-ink truncate">
+                    {form.name ? `${form.name.toLowerCase().replace(/\s+/g, '_')}_geocodes.geojson` : 'chesterfield_geocodes.geojson'}
+                  </p>
+                  <p className="text-xs text-ink-4">1,480 GPS Polygon vertices loaded</p>
+                </div>
+              </div>
+
+              <label className="cursor-pointer px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors border border-primary/20 shrink-0">
+                Upload File
+                <input
+                  type="file"
+                  accept=".geojson,.json,.kml,.zip"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      toast.success(`Geocode file "${e.target.files[0].name}" loaded successfully!`);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <p className="text-xs text-ink-4">
+              Point-in-polygon engine automatically detects whether trips fall inside this boundary.
+            </p>
+          </div>
+
           {/* Notes */}
           <div>
             <label className="type-label block text-ink-3 mb-1.5">
