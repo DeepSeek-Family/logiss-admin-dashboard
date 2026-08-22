@@ -29,6 +29,7 @@ const UserAccess = lazy(() => import('../pages/UserAccess'));
 const Riders = lazy(() => import('../pages/Riders'));
 const CreateBooking = lazy(() => import('../pages/CreateBooking'));
 const PushNotifications = lazy(() => import('../pages/PushNotifications'));
+const ServiceCoverage = lazy(() => import('../pages/ServiceCoverage'));
 
 type LazyPage = React.LazyExoticComponent<React.ComponentType<any>>;
 
@@ -55,6 +56,7 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: 'applications', Component: Applications },
   { path: 'reports', Component: Reports },
   { path: 'trips', Component: TripHistory },
+  { path: 'coverage', Component: ServiceCoverage, allowedRoles: ['admin', 'dispatcher'] },
   { path: 'settings', Component: Settings },
   { path: 'profile', Component: Profile },
   {
@@ -67,9 +69,9 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: 'schedule', Component: TripHistory },
   { path: 'notifications', Component: Notifications },
   { path: 'dashboard', Component: AdminDashboard, allowedRoles: ['admin'] },
-  { path: 'transactions', Component: Transactions, allowedRoles: ['admin'] },
-  { path: 'staff', Component: UserAccess, allowedRoles: ['admin'] },
-  { path: 'cms', Component: CMS, allowedRoles: ['admin'] },
-  { path: 'support', Component: CMS, allowedRoles: ['admin'] },
-  { path: 'push', Component: PushNotifications, allowedRoles: ['admin'] },
+  { path: 'transactions', Component: Transactions, allowedRoles: ['admin', 'dispatcher'] },
+  { path: 'staff', Component: UserAccess, allowedRoles: ['admin', 'dispatcher'] },
+  { path: 'cms', Component: CMS, allowedRoles: ['admin', 'dispatcher'] },
+  { path: 'support', Component: CMS, allowedRoles: ['admin', 'dispatcher'] },
+  { path: 'push', Component: PushNotifications, allowedRoles: ['admin', 'dispatcher'] },
 ];

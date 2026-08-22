@@ -11,6 +11,7 @@ export const ROUTES = {
   reports: '/reports',
   trips: '/trips',
   schedule: '/schedule',
+  coverage: '/coverage',
   settings: '/settings',
   profile: '/profile',
   fleet: '/fleet',

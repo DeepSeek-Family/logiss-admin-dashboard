@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Inbox,
   Map,
+  MapPin,
   Users,
   FileCheck,
   Flag,
@@ -40,11 +41,21 @@ interface NavItemProps {
   badgeVariant?: 'neutral' | 'white' | 'primary' | 'accent' | 'urgent';
 }
 
-const NavItem = ({ icon: Icon, label, badge, active, onClick, badgeVariant = 'neutral' }: NavItemProps) => (
+const NavItem: React.FC<NavItemProps> = ({
+  icon: Icon,
+  label,
+  badge,
+  active,
+  onClick,
+  badgeVariant = 'neutral',
+}) => (
   <div
     onClick={onClick}
-    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group relative ${active ? 'bg-primary text-white shadow-md shadow-primary/20 translate-x-1' : 'text-ink-2 hover:bg-bg hover:translate-x-1'
-      }`}
+    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group relative ${
+      active
+        ? 'bg-primary text-white shadow-sm font-semibold'
+        : 'text-ink-2 hover:bg-bg hover:text-ink font-medium'
+    }`}
   >
     <div className="flex items-center gap-3">
       <Icon size={20} className={active ? 'text-white' : 'text-ink-3 group-hover:text-primary transition-colors'} />
@@ -84,6 +95,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
       { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.coverage, label: 'Service Coverage', icon: MapPin, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
@@ -101,12 +113,12 @@ const NAV_CONFIG: NavConfigGroup[] = [
   },
   {
     group: 'Administration',
-    roles: ['admin'],
+    roles: ['admin', 'dispatcher'],
     items: [
-      { id: ROUTES.transactions, label: 'Charge', icon: CreditCard, roles: ['admin'] },
-      { id: ROUTES.staff, label: 'User Management', icon: UserPlus, roles: ['admin'] },
-      { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin'] },
-      { id: ROUTES.push, label: 'Push Notifications', icon: Send, roles: ['admin'] },
+      { id: ROUTES.transactions, label: 'Charge', icon: CreditCard, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.staff, label: 'User Management', icon: UserPlus, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.push, label: 'Push Notifications', icon: Send, roles: ['admin', 'dispatcher'] },
     ]
   }
 ];
