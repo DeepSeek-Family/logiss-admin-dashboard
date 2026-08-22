@@ -95,7 +95,6 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
       { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.coverage, label: 'Service Coverage', icon: MapPin, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
@@ -116,6 +115,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
     roles: ['admin', 'dispatcher'],
     items: [
       { id: ROUTES.transactions, label: 'Charge', icon: CreditCard, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.coverage, label: 'Service Coverage', icon: MapPin, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.staff, label: 'User Management', icon: UserPlus, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.push, label: 'Push Notifications', icon: Send, roles: ['admin', 'dispatcher'] },
