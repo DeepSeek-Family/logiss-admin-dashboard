@@ -144,17 +144,17 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         </div>
 
         {/* Counties Table */}
-        <div className="overflow-x-auto rounded-xl border border-line-2 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-line-2 bg-white shadow-sm">
           <table className="w-full text-left">
             <thead className="bg-bg border-b border-line-2">
               <tr>
-                <th className="px-4 py-3 type-th">County Name</th>
-                <th className="px-4 py-3 type-th">State</th>
-                <th className="px-4 py-3 type-th text-right">Inside Fare</th>
-                <th className="px-4 py-3 type-th text-right">Outside Fare</th>
-                <th className="px-4 py-3 type-th text-right">Pickup Fee</th>
-                <th className="px-4 py-3 type-th text-center">Status</th>
-                {canEdit && <th className="px-4 py-3 type-th text-center">Actions</th>}
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">County Name</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap min-w-[70px]">State</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[120px]">Inside Fare</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[120px]">Outside Fare</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Pickup Fee</th>
+                <th className="px-4 py-3 type-th whitespace-nowrap text-center min-w-[95px]">Status</th>
+                {canEdit && <th className="px-4 py-3 type-th whitespace-nowrap text-center min-w-[95px]">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
@@ -167,38 +167,38 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
               ) : (
                 counties.map((c) => (
                   <tr key={c.id} className="hover:bg-bg/40 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                          <MapPin size={14} />
+                    <td className="px-4 py-3.5 min-w-[200px]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <MapPin size={15} />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-ink">{c.name}</p>
-                          {c.notes && <p className="text-xs text-ink-4">{c.notes}</p>}
+                          <p className="text-xs font-semibold text-ink whitespace-nowrap">{c.name}</p>
+                          {c.notes && <p className="text-xs text-ink-4 whitespace-nowrap">{c.notes}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-ink-3">
+                    <td className="px-4 py-3.5 text-xs font-semibold text-ink-3 whitespace-nowrap min-w-[70px]">
                       {c.state || 'VA'}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">
                       <span className="text-xs font-semibold text-ink">
                         ${Number(c.insideRate || 0).toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">
                       <span className="text-xs font-semibold text-ink">
                         ${Number(c.outsideRate || 0).toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[110px]">
                       <span className="text-xs font-medium text-ink-3">
                         ${Number(c.pickupFee || 0).toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap min-w-[95px]">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           c.status === 'active'
                             ? 'bg-accent-light text-accent'
                             : 'bg-bg text-ink-4 border border-line-2'
@@ -208,8 +208,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                       </span>
                     </td>
                     {canEdit && (
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                      <td className="px-4 py-3.5 text-center whitespace-nowrap min-w-[95px]">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             title="Edit County"
                             onClick={() => {

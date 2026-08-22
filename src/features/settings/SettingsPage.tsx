@@ -26,7 +26,7 @@ const Settings = ({ role }: { role?: string | null }) => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto pb-16 animate-in fade-in duration-300">
+    <div className="w-full max-w-6xl mx-auto pb-16 px-4 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -38,15 +38,15 @@ const Settings = ({ role }: { role?: string | null }) => {
         </Button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Sidebar Nav */}
-        <nav className="lg:w-52 flex flex-row lg:flex-col gap-1 shrink-0">
+        <nav className="lg:w-60 w-full flex flex-row lg:flex-col gap-1.5 shrink-0 bg-white p-2.5 rounded-2xl border border-line-2 shadow-sm">
           {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full ${
-                tab === t.id ? 'bg-primary text-white' : 'text-ink-4 hover:bg-bg hover:text-ink'
+              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-left w-full ${
+                tab === t.id ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:bg-bg hover:text-ink'
               }`}
             >
               <t.icon size={16} />
@@ -56,7 +56,7 @@ const Settings = ({ role }: { role?: string | null }) => {
         </nav>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 w-full">
           {/* ── SECURITY ─────────────────────────────── */}
           {tab === 'security' && <SecurityTab />}
 
