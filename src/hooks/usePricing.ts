@@ -22,6 +22,7 @@ export interface MobilityConfig {
   name: string;
   fee: number;
   iconKey?: string;
+  iconUrl?: string;
   description?: string;
   status: 'active' | 'inactive';
 }

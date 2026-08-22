@@ -419,8 +419,12 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                 className="p-3.5 rounded-xl border border-line-2 bg-white hover:border-primary/30 transition-all flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <IconComponent size={18} />
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 overflow-hidden p-1">
+                    {mob.iconUrl ? (
+                      <img src={mob.iconUrl} alt={mob.name} className="w-full h-full object-contain" />
+                    ) : (
+                      <IconComponent size={18} />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-ink">{mob.name}</h3>

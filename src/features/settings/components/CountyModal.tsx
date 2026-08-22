@@ -155,34 +155,43 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             </p>
           </div>
 
-          {/* Status & Notes */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="type-label block text-ink-3 mb-1.5">
-                Service Status
-              </label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as 'active' | 'inactive' })}
-                className="input-base w-full cursor-pointer"
-              >
-                <option value="active">Active (In Service)</option>
-                <option value="inactive">Inactive (Suspended)</option>
-              </select>
-            </div>
+          {/* Notes */}
+          <div>
+            <label className="type-label block text-ink-3 mb-1.5">
+              Internal Notes
+            </label>
+            <input
+              type="text"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Optional region note..."
+              className="input-base w-full"
+            />
+          </div>
 
+          {/* Status Switch Toggle */}
+          <div className="flex items-center justify-between p-3.5 rounded-xl border border-line-2 bg-bg/40">
             <div>
-              <label className="type-label block text-ink-3 mb-1.5">
-                Internal Notes
-              </label>
-              <input
-                type="text"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Optional region note..."
-                className="input-base w-full"
-              />
+              <p className="text-xs font-semibold text-ink">Service Status</p>
+              <p className="text-xs text-ink-4">
+                {form.status === 'active' ? 'Active (In Service & dispatchable)' : 'Inactive (Suspended coverage)'}
+              </p>
             </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.status === 'active'}
+              onClick={() => setForm({ ...form, status: form.status === 'active' ? 'inactive' : 'active' })}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                form.status === 'active' ? 'bg-primary' : 'bg-line-2'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                  form.status === 'active' ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Footer Actions */}
