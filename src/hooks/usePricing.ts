@@ -81,9 +81,10 @@ export const DEFAULT_PRICING: PricingConfig = {
   counties: DEFAULT_COUNTIES,
   mobilityTypes: DEFAULT_MOBILITY_TYPES,
   brackets: [
-    { min: 0, max: 5.49, rate: 10 },
-    { min: 5.5, max: 10.49, rate: 20 },
-    { min: 10.5, max: 30, rate: 50 },
+    { min: 0, max: 5, rate: 10 },
+    { min: 5, max: 10, rate: 20 },
+    { min: 10, max: 30, rate: 50 },
+    { min: 30, max: 50, rate: 70 },
   ],
   items: [
     { id: 'Ambulatory', label: 'Ambulatory', amount: 0 },

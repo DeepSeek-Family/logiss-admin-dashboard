@@ -183,18 +183,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'counties' && (
       <Card className="p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="type-section-title">Service Counties & Local Rates</h2>
-              <Badge variant="accent" dot>
-                {counties.filter(c => c.status === 'active').length} Active
-              </Badge>
-            </div>
-            <p className="text-xs text-ink-3 mt-1">
-              Configure authorized service territories and standard local inside-county passenger fares
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <h2 className="type-section-title">Service Counties & Rates</h2>
 
           {canEdit && (
             <Button
@@ -237,10 +227,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                           <MapPin size={15} />
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-ink whitespace-nowrap">{c.name}</p>
-                          {c.notes && <p className="text-xs text-ink-4 whitespace-nowrap">{c.notes}</p>}
-                        </div>
+                        <span className="text-xs font-semibold text-ink whitespace-nowrap">{c.name}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-xs font-semibold text-ink-3 whitespace-nowrap min-w-[80px]">
@@ -301,31 +288,19 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          2. TRANSIT RULES & GLOBAL SURCHARGES (NEW DEDICATED TAB)
+          2. TRANSIT RULES & GLOBAL SURCHARGES
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'rules' && (
       <div className="space-y-6">
         <Card className="p-6">
           <div className="mb-5">
-            <div className="flex items-center gap-2">
-              <h2 className="type-section-title">Global Transit Policies & Surcharges</h2>
-              <Badge variant="primary">System-Wide</Badge>
-            </div>
-            <p className="text-xs text-ink-3 mt-1">
-              Set standard pickup fees, cross-county border penalties, and dispatch surcharges applied across all regions
-            </p>
+            <h2 className="type-section-title">Global Transit & Base Rules</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Base Pickup Fee */}
-            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ink">Base Dispatch / Pickup Fee ($)</label>
-                <DollarSign size={16} className="text-ink-4" />
-              </div>
-              <p className="text-xs text-ink-4">
-                Universal baseline fee added to every booking before distance calculations.
-              </p>
+            <div className="p-4 rounded-xl border border-line-2 bg-white space-y-2">
+              <label className="text-xs font-semibold text-ink block">Base Dispatch / Pickup Fee ($)</label>
               <div className="relative pt-1">
                 <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">$</span>
                 <input
@@ -341,14 +316,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
             </div>
 
             {/* Cross-County Surcharge */}
-            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ink">Cross-County Border Surcharge ($)</label>
-                <MapPin size={16} className="text-primary" />
-              </div>
-              <p className="text-xs text-ink-4">
-                Standard surcharge added to passenger fare when a trip crosses county borders.
-              </p>
+            <div className="p-4 rounded-xl border border-line-2 bg-white space-y-2">
+              <label className="text-xs font-semibold text-ink block">Cross-County Surcharge ($)</label>
               <div className="relative pt-1">
                 <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
                 <input
@@ -364,14 +333,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
             </div>
 
             {/* Intermediate Stop Fee */}
-            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ink">Intermediate Waypoint / Stop Fee ($)</label>
-                <Plus size={16} className="text-ink-4" />
-              </div>
-              <p className="text-xs text-ink-4">
-                Fee charged per intermediate stop requested along the route.
-              </p>
+            <div className="p-4 rounded-xl border border-line-2 bg-white space-y-2">
+              <label className="text-xs font-semibold text-ink block">Waypoint / Stop Fee ($)</label>
               <div className="relative pt-1">
                 <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
                 <input
@@ -387,14 +350,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
             </div>
 
             {/* Night Surcharge */}
-            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ink">After-Hours / Night Surcharge ($)</label>
-                <Clock size={16} className="text-ink-4" />
-              </div>
-              <p className="text-xs text-ink-4">
-                Dispatch premium for rides scheduled between 8:00 PM and 6:00 AM.
-              </p>
+            <div className="p-4 rounded-xl border border-line-2 bg-white space-y-2">
+              <label className="text-xs font-semibold text-ink block">Night Surcharge (8 PM - 6 AM) ($)</label>
               <div className="relative pt-1">
                 <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
                 <input
@@ -410,14 +367,8 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
             </div>
 
             {/* Weekend Surcharge */}
-            <div className="p-4 rounded-xl border border-line-2 bg-bg/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ink">Weekend Dispatch Surcharge ($)</label>
-                <Sparkles size={16} className="text-ink-4" />
-              </div>
-              <p className="text-xs text-ink-4">
-                Surcharge applied for Saturday and Sunday trip dispatches.
-              </p>
+            <div className="p-4 rounded-xl border border-line-2 bg-white space-y-2">
+              <label className="text-xs font-semibold text-ink block">Weekend Surcharge ($)</label>
               <div className="relative pt-1">
                 <span className="absolute left-3 top-3.5 text-ink-4 text-xs font-semibold">+$</span>
                 <input
@@ -431,46 +382,18 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                 />
               </div>
             </div>
-
-            {/* Live Pricing Formula Card */}
-            <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2.5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-primary font-semibold text-xs">
-                  <CheckCircle2 size={16} />
-                  <span>How Dynamic Pricing Works</span>
-                </div>
-                <div className="text-xs text-ink-3 space-y-1.5 mt-2">
-                  <p>• <strong>Inside County Fare:</strong> Local Base Fare (${Number(counties[0]?.localFare || 10).toFixed(2)})</p>
-                  <p>• <strong>Outside County Fare:</strong> Local Base + Cross-County (${Number((counties[0]?.localFare || 10) + rules.crossCountySurcharge).toFixed(2)})</p>
-                  <p>• <strong>Total Ride Cost:</strong> Mileage Tier + Base Fee + Mobility Surcharge</p>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-primary/10">
-                <span className="text-xs font-semibold text-primary">Formula automatically linked to Booking engine</span>
-              </div>
-            </div>
           </div>
         </Card>
       </div>
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          2. MOBILITY TYPES & SURCHARGE FEES MANAGEMENT
+          3. MOBILITY TYPES & SURCHARGE FEES (COMPACT & CLEAN)
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'mobility' && (
       <Card className="p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="type-section-title">Mobility Requirements & Surcharges</h2>
-              <Badge variant="accent" dot>
-                {mobilityTypes.filter(m => m.status === 'active').length} Active
-              </Badge>
-            </div>
-            <p className="text-xs text-ink-3 mt-1">
-              Add and manage rider mobility equipment options and customized base surcharge fees
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <h2 className="type-section-title">Mobility Requirements</h2>
 
           {canEdit && (
             <Button
@@ -486,57 +409,41 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           )}
         </div>
 
-        {/* Mobility Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* Clean, Compact Mobility Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {mobilityTypes.map((mob) => {
             const IconComponent = ICON_MAP[mob.iconKey || 'Accessibility'] || Accessibility;
             return (
               <div
                 key={mob.id}
-                className="p-4 rounded-xl border border-line-2 bg-white hover:border-primary/30 transition-all flex flex-col justify-between"
+                className="p-3.5 rounded-xl border border-line-2 bg-white hover:border-primary/30 transition-all flex items-center justify-between"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                        <IconComponent size={16} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-ink">{mob.name}</h3>
-                        <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                            mob.status === 'active'
-                              ? 'bg-accent-light text-accent'
-                              : 'bg-bg text-ink-4 border border-line-2'
-                          }`}
-                        >
-                          {mob.status === 'active' ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <IconComponent size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-ink">{mob.name}</h3>
+                    <span className="text-xs font-bold text-primary">
                       {mob.fee > 0 ? `+$${Number(mob.fee).toFixed(2)}` : 'Free / $0.00'}
                     </span>
                   </div>
-
-                  <p className="text-xs text-ink-3 line-clamp-2 mt-2">
-                    {mob.description || 'Standard requirement for scheduled bookings.'}
-                  </p>
                 </div>
 
                 {canEdit && (
-                  <div className="flex items-center justify-end gap-1 mt-4 pt-3 border-t border-line-2">
+                  <div className="flex items-center gap-1">
                     <button
+                      title="Edit"
                       onClick={() => {
                         setSelectedMobility(mob);
                         setIsMobilityModalOpen(true);
                       }}
-                      className="px-2.5 py-1 text-xs font-medium text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-all flex items-center gap-1"
+                      className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
                     >
-                      <Edit2 size={13} /> Edit
+                      <Edit2 size={14} />
                     </button>
                     <button
+                      title="Delete"
                       onClick={() => {
                         setDeleteTarget({
                           type: 'mobility',
@@ -544,9 +451,9 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                           label: mob.name,
                         });
                       }}
-                      className="px-2.5 py-1 text-xs font-medium text-ink-3 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all flex items-center gap-1"
+                      className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all"
                     >
-                      <Trash2 size={13} /> Delete
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 )}
@@ -558,15 +465,12 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          3. COUNTY GOVERNMENT MILEAGE BRACKETS
+          4. MILEAGE BILLING BRACKETS
       ───────────────────────────────────────────────────────────── */}
       {activeSection === 'mileage' && (
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h2 className="type-section-title">Government & Mileage Billing Brackets</h2>
-            <p className="text-xs text-ink-3">Tiered mileage calculations for county contracts and billing</p>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="type-section-title">Mileage Billing Brackets</h2>
           {canEdit && (
             <button
               type="button"
@@ -587,76 +491,89 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           )}
         </div>
 
-        <div className="space-y-2 mt-4 mb-3">
-          <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 text-xs font-semibold text-ink-3 px-2">
+        <div className="space-y-2.5 mt-4 mb-4">
+          <div className="grid grid-cols-[1fr_1fr_1fr_40px] gap-3 text-xs font-semibold text-ink-3 px-1">
             <span>Min Miles</span>
             <span>Max Miles</span>
-            <span>Bracket Rate ($)</span>
+            <span>Billing Rate ($)</span>
             <span></span>
           </div>
 
           {pricing.brackets.map((b, i) => (
-            <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
-              <input
-                type="number"
-                step="0.01"
-                disabled={!canEdit}
-                value={b.min}
-                onChange={e =>
-                  setPricing({
-                    ...pricing,
-                    brackets: pricing.brackets.map((row, idx) =>
-                      idx === i ? { ...row, min: num(e.target.value, row.min) } : row
-                    ),
-                  })
-                }
-                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary"
-                placeholder="Min"
-              />
-              <input
-                type="number"
-                step="0.01"
-                disabled={!canEdit}
-                value={b.max}
-                onChange={e =>
-                  setPricing({
-                    ...pricing,
-                    brackets: pricing.brackets.map((row, idx) =>
-                      idx === i ? { ...row, max: num(e.target.value, row.max) } : row
-                    ),
-                  })
-                }
-                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary"
-                placeholder="Max"
-              />
-              <input
-                type="number"
-                step="0.01"
-                disabled={!canEdit}
-                value={b.rate}
-                onChange={e =>
-                  setPricing({
-                    ...pricing,
-                    brackets: pricing.brackets.map((row, idx) =>
-                      idx === i ? { ...row, rate: num(e.target.value, row.rate) } : row
-                    ),
-                  })
-                }
-                className="h-9 px-3 rounded-lg border border-line-2 text-xs text-ink outline-none focus:border-primary font-semibold"
-                placeholder="Rate $"
-              />
+            <div key={i} className="grid grid-cols-[1fr_1fr_1fr_40px] gap-3 items-center">
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  disabled={!canEdit}
+                  value={b.min}
+                  onChange={e =>
+                    setPricing({
+                      ...pricing,
+                      brackets: pricing.brackets.map((row, idx) =>
+                        idx === i ? { ...row, min: num(e.target.value, row.min) } : row
+                      ),
+                    })
+                  }
+                  className="input-base w-full pr-8 text-xs font-semibold text-ink"
+                  placeholder="Min"
+                />
+                <span className="absolute right-2.5 top-2.5 text-xs text-ink-4 font-medium pointer-events-none">mi</span>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  disabled={!canEdit}
+                  value={b.max}
+                  onChange={e =>
+                    setPricing({
+                      ...pricing,
+                      brackets: pricing.brackets.map((row, idx) =>
+                        idx === i ? { ...row, max: num(e.target.value, row.max) } : row
+                      ),
+                    })
+                  }
+                  className="input-base w-full pr-8 text-xs font-semibold text-ink"
+                  placeholder="Max"
+                />
+                <span className="absolute right-2.5 top-2.5 text-xs text-ink-4 font-medium pointer-events-none">mi</span>
+              </div>
+
+              <div className="relative">
+                <span className="absolute left-2.5 top-2.5 text-xs text-ink-4 font-medium pointer-events-none">$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  disabled={!canEdit}
+                  value={b.rate}
+                  onChange={e =>
+                    setPricing({
+                      ...pricing,
+                      brackets: pricing.brackets.map((row, idx) =>
+                        idx === i ? { ...row, rate: num(e.target.value, row.rate) } : row
+                      ),
+                    })
+                  }
+                  className="input-base w-full pl-6 text-xs font-bold text-ink"
+                  placeholder="0.00"
+                />
+              </div>
+
               {canEdit ? (
                 <button
                   type="button"
+                  title="Remove Tier"
                   onClick={() =>
                     setPricing({
                       ...pricing,
                       brackets: pricing.brackets.filter((_, idx) => idx !== i),
                     })
                   }
-                  className="p-2 text-ink-4 hover:text-urgent rounded-lg transition-colors"
+                  className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all flex items-center justify-center"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={15} />
                 </button>
               ) : (
                 <span />
