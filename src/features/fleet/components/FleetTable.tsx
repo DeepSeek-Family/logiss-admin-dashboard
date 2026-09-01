@@ -1,5 +1,5 @@
-import { Search, ChevronRight, Truck, ShieldAlert, ClipboardCheck } from 'lucide-react';
-import { Card, Badge, Pagination } from '@/shared/components/ui';
+import { ChevronRight, Truck, ShieldAlert, ClipboardCheck } from 'lucide-react';
+import { Card, Badge, Pagination, SearchInput } from '@/shared/components/ui';
 import { AssignDriverCell } from './AssignDriverCell';
 
 const VEHICLE_PLACEHOLDER = '/vehicle-placeholder.svg';
@@ -61,12 +61,17 @@ export const FleetTable = ({
             </button>
           ))}
         </div>
-        <div className="relative w-full lg:w-72 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" size={16} />
-          <input type="text" placeholder="Search Assets, Plates, or IDs..."
-            className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-medium text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
-            value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} />
-        </div>
+        
+        <SearchInput
+          className="w-full lg:w-72"
+          placeholder="Search Assets, Plates, or IDs..."
+          paramName="searchTerm"
+          defaultValue={search}
+          onSearchChange={(debouncedVal) => {
+            setSearch(debouncedVal);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       <div className="overflow-auto max-h-[calc(100vh-24rem)]">

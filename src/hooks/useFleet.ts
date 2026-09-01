@@ -75,8 +75,14 @@ export const normalizeVehicle = (v: any) => {
   };
 };
 
-export const useFleet = () => {
-  const { data: apiResponse, isLoading, isError, error, refetch } = useGetAllVehiclesQuery();
+export const useFleet = (params?: { searchTerm?: string; search?: string; [key: string]: any }) => {
+  const queryParams = useMemo(() => {
+    if (!params) return undefined;
+    const term = params.searchTerm || params.search || '';
+    return term ? { searchTerm: term } : undefined;
+  }, [params]);
+
+  const { data: apiResponse, isLoading, isError, error, refetch } = useGetAllVehiclesQuery(queryParams);
   const [addNewVehicles] = useAddNewVehiclesMutation();
   const [updateVehicleApi] = useUpdateVehicleMutation();
   const [deleteVehicleApi] = useDeleteVehicleMutation();

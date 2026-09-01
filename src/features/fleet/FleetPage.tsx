@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { useFleet } from '@/hooks/useFleet';
@@ -16,11 +16,14 @@ import {
 
 const Fleet = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const { vehicles, loading: fleetLoading, addVehicle, handleAssign } = useFleet();
+  const [searchParams] = useSearchParams();
+  const urlSearch = searchParams.get('searchTerm') || searchParams.get('search') || '';
+  const [search, setSearch] = useState(urlSearch);
+
+  const { vehicles, loading: fleetLoading, addVehicle, handleAssign } = useFleet({ searchTerm: search });
   const { drivers, loading: driversLoading } = useDrivers();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -28,6 +31,13 @@ const Fleet = ({ role }: { role?: string | null }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    const querySearch = searchParams.get('searchTerm') || searchParams.get('search') || '';
+    if (querySearch !== search) {
+      setSearch(querySearch);
+    }
+  }, [searchParams]);
 
   const loading = fleetLoading || driversLoading;
 
