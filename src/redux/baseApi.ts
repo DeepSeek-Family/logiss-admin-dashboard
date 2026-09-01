@@ -32,6 +32,7 @@ export const baseApi = createApi({
     'Trips',
     'Drivers',
     'Fleet',
+    'Vehicles',
     'Applications',
     'Reports',
     'Notifications',
