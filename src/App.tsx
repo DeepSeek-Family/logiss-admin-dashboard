@@ -6,6 +6,9 @@ import MainLayout from '@/shared/components/layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Button } from '@/shared/components/ui';
 import { PrivateRoute } from '@/router/PrivateRoute';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { logout } from '@/redux/slice/authSlice';
+import { AUTH_TOKEN_KEY } from '@/constants/auth-storage';
 import {
   AppRouteConfig,
   SessionRole,
@@ -23,6 +26,10 @@ const LoadingScreen = () => (
 );
 
 function App() {
+  const dispatch = useAppDispatch();
+  const reduxToken = useAppSelector((state) => state.auth.token);
+  const token = reduxToken || (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null);
+
   const [role, setRole] = useState<SessionRole>(() => {
     try {
       const savedRole = window.localStorage.getItem('logiss-role');
@@ -31,6 +38,8 @@ function App() {
       return null;
     }
   });
+
+  const isAuthenticated = Boolean(token && role);
 
   const handleRoleSet = (newRole: string | null) => {
     const safeRole = isAppRole(newRole) ? newRole : null;
@@ -41,7 +50,10 @@ function App() {
     } catch { /* ignore */ }
   };
 
-  const handleLogout = () => handleRoleSet(null);
+  const handleLogout = () => {
+    dispatch(logout());
+    handleRoleSet(null);
+  };
 
   const renderRouteElement = (route: AppRouteConfig) => {
     if (!route.Component) return undefined;
@@ -74,7 +86,7 @@ function App() {
       <Router>
         <ErrorBoundary>
           <Routes>
-            <Route path={loginRoute.path} element={role ? <Navigate to="/" replace /> : <LoginPage setRole={handleRoleSet} />} />
+            <Route path={loginRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage setRole={handleRoleSet} />} />
             <Route path="/" element={<PrivateRoute role={role}><MainLayout role={role} onLogout={handleLogout} /></PrivateRoute>}>
               <Route index element={<Navigate to={getDefaultRoute(role)} replace />} />
               {authenticatedRoutes.map(renderAppRoute)}
