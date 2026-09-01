@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Navigation, Mail, Lock, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Navigation, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 
 interface LoginFormProps {
@@ -9,6 +9,7 @@ interface LoginFormProps {
   password: string;
   setPassword: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isLoading?: boolean;
   onBack: () => void;
 }
 
@@ -19,6 +20,7 @@ export const LoginForm = ({
   password,
   setPassword,
   onSubmit,
+  isLoading = false,
   onBack
 }: LoginFormProps) => {
   return (
@@ -67,8 +69,16 @@ export const LoginForm = ({
           </div>
         </div>
 
-        <Button type="submit" variant={selectedRole === 'admin' ? 'accent' : 'primary'} className="w-full h-12 text-sm mt-4">
-          Log In <ArrowRight size={16} className="ml-2" />
+        <Button type="submit" disabled={isLoading} variant={selectedRole === 'admin' ? 'accent' : 'primary'} className="w-full h-12 text-sm mt-4 flex items-center justify-center">
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Logging in...
+            </>
+          ) : (
+            <>
+              Log In <ArrowRight size={16} className="ml-2" />
+            </>
+          )}
         </Button>
 
         <button

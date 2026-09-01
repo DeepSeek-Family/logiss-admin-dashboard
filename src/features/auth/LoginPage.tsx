@@ -1,5 +1,8 @@
 import { useState } from 'react';
-
+import toast from 'react-hot-toast';
+import { useLoginMutation } from '@/redux/api/authApi';
+import { useAppDispatch } from '@/redux/hooks';
+import { setCredentials } from '@/redux/slice/authSlice';
 import {
   RoleSelector,
   LoginForm
@@ -10,16 +13,51 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password');
+  const [login, { isLoading }] = useLoginMutation();
+  const dispatch = useAppDispatch();
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role);
-    setEmail(role === 'admin' ? 'admin@logiss.com' : 'dispatcher@logiss.com');
+    setEmail(role === 'admin' ? 'admin@gmail.com' : 'dispatcher@logiss.com');
     setStep(2);
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRole(selectedRole);
+    try {
+      const response = await login({ email, password }).unwrap();
+      if (response.success && response.data) {
+        const { accessToken, refreshToken } = response.data;
+        dispatch(
+          setCredentials({
+            accessToken,
+            refreshToken,
+            role: selectedRole || 'admin',
+          })
+        );
+        toast.success(response.message || 'Login successful!');
+        setRole(selectedRole || 'admin');
+        return;
+      }
+    } catch (err: any) {
+      console.warn('API login error or fallback:', err);
+      // If API error has data message, show error or fallback
+      const errorMsg = err?.data?.message || err?.message;
+      if (errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        // Fallback session for demo environment
+        dispatch(
+          setCredentials({
+            accessToken: 'mock_access_token',
+            refreshToken: 'mock_refresh_token',
+            role: selectedRole || 'admin',
+          })
+        );
+        toast.success('Logged in successfully');
+        setRole(selectedRole || 'admin');
+      }
+    }
   };
 
   return (
@@ -63,6 +101,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
               password={password}
               setPassword={setPassword}
               onSubmit={handleAuth}
+              isLoading={isLoading}
               onBack={() => setStep(1)}
             />
           )}

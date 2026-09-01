@@ -1,17 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { AUTH_TOKEN_KEY } from '@/constants/auth-storage'
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/constants/auth-storage'
 
 interface AuthState {
   token: string | null
+  refreshToken: string | null
   role: string | null
   user: any | null
 }
 
 const initialToken = typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null
+const initialRefreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null
 const initialRole = typeof localStorage !== 'undefined' ? localStorage.getItem('logiss-role') : null
 
 const initialState: AuthState = {
   token: initialToken,
+  refreshToken: initialRefreshToken,
   role: initialRole,
   user: null,
 }
@@ -22,14 +25,23 @@ export const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ token?: string; role?: string; user?: any }>
+      action: PayloadAction<{ accessToken?: string; refreshToken?: string; token?: string; role?: string; user?: any }>
     ) => {
-      if (action.payload.token !== undefined) {
-        state.token = action.payload.token
-        if (action.payload.token) {
-          localStorage.setItem(AUTH_TOKEN_KEY, action.payload.token)
+      const accessToken = action.payload.accessToken || action.payload.token
+      if (accessToken !== undefined) {
+        state.token = accessToken
+        if (accessToken) {
+          localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
         } else {
           localStorage.removeItem(AUTH_TOKEN_KEY)
+        }
+      }
+      if (action.payload.refreshToken !== undefined) {
+        state.refreshToken = action.payload.refreshToken
+        if (action.payload.refreshToken) {
+          localStorage.setItem(REFRESH_TOKEN_KEY, action.payload.refreshToken)
+        } else {
+          localStorage.removeItem(REFRESH_TOKEN_KEY)
         }
       }
       if (action.payload.role !== undefined) {
@@ -46,9 +58,11 @@ export const authSlice = createSlice({
     },
     logout: (state) => {
       state.token = null
+      state.refreshToken = null
       state.role = null
       state.user = null
       localStorage.removeItem(AUTH_TOKEN_KEY)
+      localStorage.removeItem(REFRESH_TOKEN_KEY)
       localStorage.removeItem('logiss-role')
     },
   },
