@@ -8,6 +8,23 @@ import {
 import { fleetService } from '../services/fleetService';
 import toast from 'react-hot-toast';
 
+export const formatConfigurationType = (val: string): 'ambulatory_van' | 'wheelchair_van' | 'stretcher_van' => {
+  if (!val) return 'wheelchair_van';
+  const lower = val.toLowerCase().trim().replace(/\s+/g, '_');
+  if (lower === 'ambulatory_van' || lower === 'wheelchair_van' || lower === 'stretcher_van') {
+    return lower as any;
+  }
+  if (lower.includes('ambulatory')) return 'ambulatory_van';
+  if (lower.includes('stretcher')) return 'stretcher_van';
+  return 'wheelchair_van';
+};
+
+const displayTypeMap: Record<string, string> = {
+  ambulatory_van: 'Ambulatory Van',
+  wheelchair_van: 'Wheelchair Van',
+  stretcher_van: 'Stretcher Van'
+};
+
 export const normalizeVehicle = (v: any) => {
   if (!v) return v;
   const id = v._id || v.id;
@@ -15,7 +32,11 @@ export const normalizeVehicle = (v: any) => {
   const model = v.model || 'Transit 350';
   const year = v.year || new Date().getFullYear();
   const plate = v.licensePlateNumber || v.plate || '---';
-  const type = v.configurationType || v.type || 'Wheelchair Van';
+  
+  const rawType = v.configurationType || v.type || 'wheelchair_van';
+  const configurationType = formatConfigurationType(rawType);
+  const type = displayTypeMap[configurationType] || rawType;
+
   const capacity = v.maxPassengers || v.capacity || v.seats || 4;
   const status = v.status || (v.isActive === false ? 'maintenance' : 'available');
   const vin = v.vinNumber || v.vin || 'N/A';
@@ -38,7 +59,7 @@ export const normalizeVehicle = (v: any) => {
     plate,
     licensePlateNumber: plate,
     type,
-    configurationType: type,
+    configurationType,
     capacity,
     maxPassengers: capacity,
     seats: capacity,
@@ -75,7 +96,7 @@ export const useFleet = () => {
         year: Number(data.year) || 2024,
         licensePlateNumber: data.plate || data.licensePlateNumber || 'TX-4821-AB',
         vinNumber: data.vin || data.vinNumber || '1FTBW2XG5PKA12345',
-        configurationType: data.type || data.configurationType || 'wheelchair_van',
+        configurationType: formatConfigurationType(data.type || data.configurationType || 'wheelchair_van'),
         maxPassengers: Number(data.seats) || Number(data.maxPassengers) || 8,
         odometer: Number(data.mileage) || Number(data.odometer) || 25000,
         nextServiceDate: data.nextService ? new Date(data.nextService).toISOString() : new Date().toISOString(),
@@ -89,10 +110,12 @@ export const useFleet = () => {
       refetch();
       return result;
     } catch (err: any) {
-      console.warn('API addVehicle error, using local fallback:', err);
-      const fallback = await fleetService.addVehicle(data);
-      toast.success('Vehicle added');
-      return fallback;
+      console.warn('API addVehicle error or Zod error:', err);
+      const errorMsg = err?.data?.message || err?.data?.errorMessages?.[0]?.message || err?.message;
+      if (errorMsg) {
+        toast.error(errorMsg);
+      }
+      throw err;
     }
   }, [addNewVehicles, refetch]);
 
