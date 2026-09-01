@@ -14,12 +14,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.12.0",
     "date-fns": "^4.2.1",
     "lucide-react": "^1.11.0",
     "react": "^19.2.5",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.3.0",
     "react-router-dom": "^7.14.2"
   },
   "devDependencies": {

@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Trip, tripService } from '../services/tripService';
 import { quoteFares } from './usePricing';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { updateTrip as updateTripAction, setTrips as setTripsAction } from '@/redux/slice/tripsSlice';
 
 export const useTrips = (initialFilters: { status?: string } = {}) => {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const dispatch = useAppDispatch();
+  const reduxTrips = useAppSelector((state) => state.trips.items);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState(initialFilters);
 
@@ -12,39 +15,42 @@ export const useTrips = (initialFilters: { status?: string } = {}) => {
     try {
       setLoading(true);
       const data = await tripService.getTrips(filters);
-      setTrips(data);
+      dispatch(setTripsAction(data));
       setError(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, dispatch]);
 
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
 
+  const trips = filters.status && filters.status !== 'all'
+    ? reduxTrips.filter(t => t.status === filters.status)
+    : reduxTrips;
+
   const updateTrip = useCallback(async (id: string, patch: Partial<Trip>) => {
-    // Inside/outside dropdown is the only fare trigger here — booking/details
-    // already send cost/copay themselves. Keeps list edits in sync with rates.
     let nextPatch = patch;
     if ('insideCounty' in patch && !('cost' in patch) && !('copay' in patch)) {
-      const current = trips.find(t => t.id === id);
+      const current = reduxTrips.find(t => t.id === id);
       if (current) {
         const merged = { ...current, ...patch };
         const miles = merged.miles ?? (parseFloat(String(merged.distance || '').replace(/[^\d.]/g, '')) || 0);
         nextPatch = { ...patch, ...quoteFares({ insideCounty: merged.insideCounty, tripType: merged.type, miles, mobility: merged.mobility, stops: merged.stops }) };
       }
     }
-    setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...nextPatch } : t)));
+    dispatch(updateTripAction({ id, patch: nextPatch }));
     try {
       await tripService.updateTrip(id, nextPatch);
     } catch (err: any) {
       setError(err.message);
       fetchTrips();
     }
-  }, [fetchTrips, trips]);
+  }, [fetchTrips, reduxTrips, dispatch]);
 
   return { trips, loading, error, setFilters, refresh: fetchTrips, updateTrip };
 };
+
