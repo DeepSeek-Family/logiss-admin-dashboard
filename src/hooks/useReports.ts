@@ -22,5 +22,9 @@ export const useReports = () => {
     fetchReports();
   }, [fetchReports]);
 
-  return { reports, loading, error, refresh: fetchReports };
+  const updateReportStatus = useCallback((reportId: string, status: string) => {
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
+  }, []);
+
+  return { reports, loading, error, refresh: fetchReports, updateReportStatus };
 };

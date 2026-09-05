@@ -319,17 +319,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <Eye size={12} />
               <span>Preview</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('split')}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'split'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-ink-3 hover:text-ink'
-              }`}
-            >
-              <span>Split View</span>
-            </button>
           </div>
         </div>
 

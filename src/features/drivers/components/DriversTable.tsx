@@ -92,10 +92,7 @@ export const DriversTable = ({
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink leading-tight truncate">{driver.name}</p>
-                      <p className="text-xs font-medium text-ink-3 mt-0.5 truncate">
-                        <span className="text-ink-2">{driver.id}</span>
-                        {driver.email ? <span> · {driver.email}</span> : null}
-                      </p>
+                      <p className="text-xs text-ink-4 mt-0.5">{driver.id}</p>
                     </div>
                   </div>
                 </td>

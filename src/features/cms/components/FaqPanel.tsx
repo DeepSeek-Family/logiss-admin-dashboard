@@ -10,28 +10,28 @@ interface FaqItem {
   expanded: boolean;
 }
 
-const CATEGORIES = ['Dispatcher', 'Customer'];
+const CATEGORIES = ['Driver', 'Customer'];
 
 const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 1,
-    question: 'How do I reset a dispatcher password?',
-    answer: 'Go to User Access → find the dispatcher → click the three-dot menu → select Reset Password. A temporary password will be sent to their registered email.',
-    category: 'Dispatcher',
+    question: 'How do I start my shift and accept a trip?',
+    answer: 'Open the Driver app → tap "Go On Duty" → trips assigned to you will appear automatically. Tap "Accept" to confirm and get navigation directions.',
+    category: 'Driver',
     expanded: false,
   },
   {
     id: 2,
-    question: 'How do I assign a trip to a driver?',
-    answer: 'Open the trip from the Bookings list → click "Assign Driver" → select an available driver from the dropdown. The driver will receive a push notification immediately.',
-    category: 'Dispatcher',
+    question: 'How do I mark a trip as complete?',
+    answer: 'After dropping off the passenger, tap "Complete Trip" in the app. You will be prompted to confirm the drop-off location before the trip is closed.',
+    category: 'Driver',
     expanded: false,
   },
   {
     id: 3,
-    question: 'What funding sources are accepted?',
-    answer: 'LOGISS supports Medicaid - VA, Medicare, Chesterfield County, Henrico County, Richmond City, Hanover County, Self-Pay, Insurance, Facility Paid, and DSS. New sources can be managed in Service & Tariffs → Funding Sources.',
-    category: 'Dispatcher',
+    question: 'What do I do if a passenger is a no-show?',
+    answer: 'Wait at least 5 minutes after the scheduled pickup time. If the passenger does not appear, tap "No Show" in the app. Dispatch will be notified automatically.',
+    category: 'Driver',
     expanded: false,
   },
   {
@@ -61,7 +61,7 @@ export const FaqPanel = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
-  const [newCategory, setNewCategory] = useState('Dispatcher');
+  const [newCategory, setNewCategory] = useState('Driver');
 
   const filtered = activeCategory === 'All'
     ? faqs
@@ -341,7 +341,7 @@ export const FaqPanel = () => {
       </div>
 
       <p className="text-xs text-ink-4 text-center">
-        FAQ content is shown to dispatchers and drivers in the Help & Support section.
+        FAQ content is shown to drivers and customers in the Help &amp; Support section.
       </p>
     </div>
   );

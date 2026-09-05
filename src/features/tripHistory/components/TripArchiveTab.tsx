@@ -597,11 +597,11 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               {/* Hour of Day */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Hour of Day</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-nowrap gap-1.5">
                   {[
-                    { key: 'morning', label: 'Morning (6am-12pm)' },
-                    { key: 'afternoon', label: 'Afternoon (12pm-5pm)' },
-                    { key: 'evening', label: 'Evening (5pm-10pm)' }
+                    { key: 'morning',   label: 'Morning'   },
+                    { key: 'afternoon', label: 'Afternoon' },
+                    { key: 'evening',   label: 'Evening'   }
                   ].map(h => {
                     const isSel = hoursFilter.includes(h.key);
                     return (
@@ -612,7 +612,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           setHoursFilter(prev => prev.includes(h.key) ? prev.filter(k => k !== h.key) : [...prev, h.key]);
                           setCurrentPage(1);
                         }}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border whitespace-nowrap ${
                           isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
                         }`}
                       >

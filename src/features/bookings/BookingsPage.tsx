@@ -29,6 +29,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
   const [fundingFilter, setFundingFilter] = useState('all');
+  const [countyFilter, setCountyFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -64,8 +65,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
       (t?.dropoff || '').toLowerCase().includes(search);
 
     const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
+    const matchesCounty = countyFilter === 'all' || (t?.source || t?.county || '') === countyFilter;
 
-    return matchesTab && matchesSearch && matchesFunding;
+    return matchesTab && matchesSearch && matchesFunding && matchesCounty;
   });
 
   const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
@@ -304,6 +306,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setBookingSearch={setBookingSearch}
             fundingFilter={fundingFilter}
             setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
+            countyFilter={countyFilter}
+            setCountyFilter={(v: string) => { setCountyFilter(v); setCurrentPage(1); }}
             filteredTrips={filteredTrips}
             paginatedBookings={paginatedBookings}
             selectedTrips={selectedTrips}

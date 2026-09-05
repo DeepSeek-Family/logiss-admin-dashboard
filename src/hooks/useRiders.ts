@@ -21,5 +21,9 @@ export const useRiders = () => {
     setRiders(prev => prev.map(r => r.id === riderId ? { ...r, status: newStatus } : r));
   };
 
-  return { riders, loading, error, updateRiderStatus };
+  const updateRider = (riderId: string, updatedFields: Partial<any>) => {
+    setRiders(prev => prev.map(r => r.id === riderId ? { ...r, ...updatedFields } : r));
+  };
+
+  return { riders, loading, error, updateRiderStatus, updateRider };
 };
