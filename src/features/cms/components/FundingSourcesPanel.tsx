@@ -27,8 +27,6 @@ type UiPricingMethod = 'flat' | 'included_then_per_mile' | 'mileage_brackets';
 const METHODS: UiPricingMethod[] = ['flat', 'included_then_per_mile', 'mileage_brackets'];
 
 const uiMethod = (method: PricingMethod): UiPricingMethod => {
-  if (method === 'geofence') return 'flat';
-  if (method === 'base_per_mile') return 'included_then_per_mile';
   if (method === 'included_then_per_mile' || method === 'mileage_brackets') return method;
   return 'flat';
 };
@@ -210,21 +208,7 @@ export const FundingSourcesPanel = () => {
   };
 
   const applyUiMethod = (m: UiPricingMethod) => {
-    setDraft(prev => {
-      if (!prev) return prev;
-      if (m === 'flat' && prev.pricingMethod === 'geofence') {
-        return { ...prev, pricingMethod: 'flat', flatRate: prev.insideRate };
-      }
-      if (m === 'included_then_per_mile' && prev.pricingMethod === 'base_per_mile') {
-        return {
-          ...prev,
-          pricingMethod: 'included_then_per_mile',
-          includedMiles: 0,
-          includedRate: prev.baseFare,
-        };
-      }
-      return { ...prev, pricingMethod: m };
-    });
+    setDraft(prev => (prev ? { ...prev, pricingMethod: m } : prev));
   };
 
   const handleSave = () => {
@@ -234,18 +218,16 @@ export const FundingSourcesPanel = () => {
       return;
     }
     const method = uiMethod(draft.pricingMethod);
-    const geofenceToFlat = draft.pricingMethod === 'geofence';
-    const baseToIncluded = draft.pricingMethod === 'base_per_mile';
     updateFundingPolicy(selected.id, {
       name: draft.name.trim(),
       type: draft.type,
       active: draft.active,
       pricingMethod: method,
-      flatRate: geofenceToFlat ? draft.insideRate : draft.flatRate,
+      flatRate: draft.flatRate,
       baseFare: draft.baseFare,
       perMileRate: draft.perMileRate,
-      includedMiles: baseToIncluded ? 0 : draft.includedMiles,
-      includedRate: baseToIncluded ? draft.baseFare : draft.includedRate,
+      includedMiles: draft.includedMiles,
+      includedRate: draft.includedRate,
       brackets: draft.brackets,
       insideRate: draft.insideRate,
       outsideRate: draft.outsideRate,
@@ -588,15 +570,8 @@ export const FundingSourcesPanel = () => {
                     {currentMethod === 'flat' && (
                       <Field label="Flat rate">
                         <MoneyInput
-                          value={draft.pricingMethod === 'geofence' ? draft.insideRate : draft.flatRate}
-                          onChange={e => {
-                            const flatRate = Number(e.target.value) || 0;
-                            patchDraft(
-                              draft.pricingMethod === 'geofence'
-                                ? { pricingMethod: 'flat', flatRate }
-                                : { flatRate }
-                            );
-                          }}
+                          value={draft.flatRate}
+                          onChange={e => patchDraft({ flatRate: Number(e.target.value) || 0 })}
                         />
                       </Field>
                     )}
@@ -605,23 +580,10 @@ export const FundingSourcesPanel = () => {
                       <>
                         <Field label="Starting fare">
                           <MoneyInput
-                            value={
-                              draft.pricingMethod === 'base_per_mile'
-                                ? draft.baseFare
-                                : draft.includedRate
+                            value={draft.includedRate}
+                            onChange={e =>
+                              patchDraft({ includedRate: Number(e.target.value) || 0 })
                             }
-                            onChange={e => {
-                              const includedRate = Number(e.target.value) || 0;
-                              patchDraft(
-                                draft.pricingMethod === 'base_per_mile'
-                                  ? {
-                                      pricingMethod: 'included_then_per_mile',
-                                      includedMiles: 0,
-                                      includedRate,
-                                    }
-                                  : { includedRate }
-                              );
-                            }}
                           />
                         </Field>
                         <Field label="First miles">
@@ -629,16 +591,9 @@ export const FundingSourcesPanel = () => {
                             type="number"
                             step="1"
                             className={controlValue}
-                            value={draft.pricingMethod === 'base_per_mile' ? 0 : draft.includedMiles}
+                            value={draft.includedMiles}
                             onChange={e =>
-                              patchDraft({
-                                pricingMethod: 'included_then_per_mile',
-                                includedMiles: Number(e.target.value) || 0,
-                                includedRate:
-                                  draft.pricingMethod === 'base_per_mile'
-                                    ? draft.baseFare
-                                    : draft.includedRate,
-                              })
+                              patchDraft({ includedMiles: Number(e.target.value) || 0 })
                             }
                           />
                         </Field>

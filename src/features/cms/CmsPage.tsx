@@ -12,7 +12,6 @@ import {
   CheckCircle,
   ChevronRight,
   Building2,
-  DollarSign
 } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 

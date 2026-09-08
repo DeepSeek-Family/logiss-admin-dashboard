@@ -120,19 +120,6 @@ export const drivers = [
     tripsToday: 2, completedToday: 2, pendingDocUpdates: 1, joinedDate: '2024-02-28', battery: 31, connectivity: 'LTE' },
 ];
 
-// Funding source options used across the app
-export const FUNDING_SOURCES = [
-  'Medicaid - VA',
-  'Medicare Part B',
-  'DSS Medical',
-  'Chesterfield County',
-  'Henrico County',
-  'Hanover County',
-  'Self-Pay',
-  'Insurance',
-  'Facility Paid',
-];
-
 // Facilities & Programs registry — managed in CMS, used by Facility User assignment,
 // booking form program/source, etc. (single source of truth seed).
 export const FACILITY_PROGRAMS = [

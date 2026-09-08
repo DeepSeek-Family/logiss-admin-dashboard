@@ -7,7 +7,6 @@ export interface CountyGeofenceData {
   countyId: string;
   countyName: string;
   state: string;
-  polygonPointsCount: number;
   cities: string[];
   zipCodes: string[];
 }
@@ -32,7 +31,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-chesterfield',
     countyName: 'Chesterfield County',
     state: 'VA',
-    polygonPointsCount: 1480,
     cities: [
       'chesterfield',
       'midlothian',
@@ -58,7 +56,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-henrico',
     countyName: 'Henrico County',
     state: 'VA',
-    polygonPointsCount: 1120,
     cities: [
       'henrico',
       'glen allen',
@@ -83,7 +80,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-richmond',
     countyName: 'Richmond City',
     state: 'VA',
-    polygonPointsCount: 890,
     cities: [
       'richmond',
       'downtown richmond',
@@ -109,7 +105,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-hanover',
     countyName: 'Hanover County',
     state: 'VA',
-    polygonPointsCount: 960,
     cities: [
       'hanover',
       'mechanicsville',
@@ -129,7 +124,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-powhatan',
     countyName: 'Powhatan County',
     state: 'VA',
-    polygonPointsCount: 640,
     cities: [
       'powhatan',
       'flat rock',
@@ -144,7 +138,6 @@ export const VIRGINIA_COUNTY_GEOFENCES: CountyGeofenceData[] = [
     countyId: 'county-goochland',
     countyName: 'Goochland County',
     state: 'VA',
-    polygonPointsCount: 710,
     cities: [
       'goochland',
       'manakin-sabot',
@@ -353,7 +346,7 @@ export function isPointInAnyPolygon(point: [number, number], rings: [number, num
   return rings.some(ring => ring.length >= 3 && isPointInPolygon(point, ring));
 }
 
-/** Seed only Chesterfield — it has a real ~11-point outline, not a fake vertex count. */
+/** Seed Chesterfield’s approximate outline; other areas use ZIP/city until a fence is drawn. */
 export function seedFencePolygon(countyId?: string, countyName?: string): [number, number][] {
   const id = (countyId || '').toLowerCase();
   const name = (countyName || '').toLowerCase();

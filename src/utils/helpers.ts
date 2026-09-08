@@ -28,21 +28,6 @@ export const timeAgo = (iso: string | number | Date | null | undefined): string 
   return `${diffInDays}d ago`;
 };
 
-export const docExpiryStatus = (expires: string | number | Date | null | undefined): 'valid' | 'expired' | 'expiring' => {
-  if (!expires) return 'valid';
-  const now = new Date();
-  const expiryDate = new Date(expires);
-  const sixMonthsFromNow = new Date();
-  sixMonthsFromNow.setMonth(now.getMonth() + 6);
-
-  if (expiryDate < now) return 'expired';
-  if (expiryDate < sixMonthsFromNow) return 'expiring';
-  return 'valid';
-};
-
-export const findDriver = (drivers: any[], id: string | number) => drivers.find(d => d.id === id);
-export const findTrip = (trips: any[], id: string | number) => trips.find(t => t.id === id);
-
 export const tripTypeLabel = (type: string): string => {
   const map: Record<string, string> = {
     'round_trip': 'Round Trip',

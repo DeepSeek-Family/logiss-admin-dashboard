@@ -4,7 +4,7 @@ import type { CountyConfig } from '@/hooks/usePricing';
 
 const actionBtn = 'h-10 rounded-xl px-4 text-sm';
 
-/** Schematic outlines only — not the ZIP/city engine, not 1480 vertices. */
+/** Schematic outlines only — not the ZIP/city engine. */
 const SCHEMATIC: { id: string; d: string; lx: number; ly: number }[] = [
   { id: 'county-hanover', d: 'M 92 10 L 232 16 L 224 76 L 100 70 Z', lx: 158, ly: 42 },
   { id: 'county-goochland', d: 'M 10 46 L 102 40 L 110 116 L 16 126 Z', lx: 56, ly: 84 },

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, User as UserIcon, Navigation, Clock,
   ShieldCheck, Car, Plus, Minus, Search, X,
-  AlertCircle, Info, Phone, ArrowRight, Repeat,
+  Info, ArrowRight, Repeat,
   Accessibility, Bed, User, Disc, Zap, FileText,
-  DollarSign, Activity, MapPin, Users, Mail, Tag, Stethoscope, Lock, HeartPulse
+  DollarSign, Activity, Mail, Tag, Lock, HeartPulse
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
@@ -25,8 +25,8 @@ import {
 } from '@/hooks/usePricing';
 import { geocodeAddress } from '@/utils/geofenceEngine';
 
-export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
-export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
+const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
+const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
 
 const MOBILITY_ICON_MAP: { [key: string]: any } = {
   User,
@@ -272,7 +272,7 @@ export const BookingForm = () => {
     }
   }, [isRecurring, selectedDates]);
 
-  // Seed funding source if empty
+  // Seed payer if empty
   useEffect(() => {
     if (!form.fundingSourceId && fundingPolicies[0]) {
       setForm(prev => ({
@@ -761,7 +761,7 @@ export const BookingForm = () => {
               </div>
             </div>
 
-            {/* Funding Source & Program Context */}
+            {/* Payer & Program Context */}
             <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-ink-3">Payer</label>

@@ -2,11 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   Bold,
   Italic,
-  Underline,
   Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
   List,
   ListOrdered,
   Quote,
@@ -15,14 +11,8 @@ import {
   Minus,
   Undo,
   Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Sparkles,
   CheckCircle2,
-  HelpCircle
 } from 'lucide-react';
-import { Badge } from '@/shared/components/ui';
 
 interface ContentEditorProps {
   activePage: string;

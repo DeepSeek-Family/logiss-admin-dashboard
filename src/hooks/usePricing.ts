@@ -135,13 +135,6 @@ export const DEFAULT_REPORT_COLUMNS = [
   'Status',
 ];
 
-export const ALL_REPORT_COLUMNS = [
-  ...DEFAULT_REPORT_COLUMNS,
-  'Payer',
-  'Pickup',
-  'Dropoff',
-];
-
 export interface PolicyRateVersion {
   effectiveFrom: string;
   effectiveTo: string;
@@ -753,33 +746,6 @@ export function usePricing() {
     }));
   };
 
-  const addBillingClass = (cls: Omit<BillingClass, 'id'> & { id?: string }) => {
-    const item: BillingClass = {
-      id: cls.id || cls.name.trim().replace(/\s+/g, '_').toUpperCase(),
-      name: cls.name,
-      fee: Number(cls.fee) || 0,
-    };
-    setPricing(prev => ({
-      ...prev,
-      billingClasses: [...(prev.billingClasses || []), item],
-    }));
-    return item;
-  };
-
-  const updateBillingClass = (id: string, updates: Partial<BillingClass>) => {
-    setPricing(prev => ({
-      ...prev,
-      billingClasses: (prev.billingClasses || []).map(c => (c.id === id ? { ...c, ...updates } : c)),
-    }));
-  };
-
-  const deleteBillingClass = (id: string) => {
-    setPricing(prev => ({
-      ...prev,
-      billingClasses: (prev.billingClasses || []).filter(c => c.id !== id),
-    }));
-  };
-
   const addMobility = (mob: Omit<MobilityConfig, 'id'>) => {
     const newMob: MobilityConfig = {
       ...mob,
@@ -860,9 +826,6 @@ export function usePricing() {
     addMobility,
     updateMobility,
     deleteMobility,
-    addBillingClass,
-    updateBillingClass,
-    deleteBillingClass,
     addFundingPolicy,
     updateFundingPolicy,
     deleteFundingPolicy,

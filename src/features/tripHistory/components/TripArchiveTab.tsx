@@ -464,7 +464,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               </select>
             </div>
 
-            {/* Funding Source Filter */}
+            {/* Payer Filter */}
             <div className="flex items-center gap-2">
               <DollarSign size={12} className="text-ink-4" />
               <span className="text-xs text-ink-4">Payer</span>
