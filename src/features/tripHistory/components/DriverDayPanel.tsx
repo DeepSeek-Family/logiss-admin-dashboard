@@ -209,7 +209,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, d
                         >
                           <option value="">Unassigned</option>
                           {(drivers || []).map((d: any) => (
-                            <option key={d.id} value={d.id}>{d.name}{d.onDuty ? '' : ' (off-duty)'}</option>
+                            <option key={d.id} value={d.id}>{d.name}</option>
                           ))}
                         </select>
                         <button

@@ -152,10 +152,10 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-1.5">County / Source</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Payer</label>
                 <input
                   type="text"
-                  placeholder="e.g. Chesterfield County"
+                  placeholder="e.g. Powhatan DSS"
                   value={form.source}
                   onChange={e => handleChange('source', e.target.value)}
                   className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"

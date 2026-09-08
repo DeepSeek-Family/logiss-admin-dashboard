@@ -4,6 +4,12 @@ import { AssignDriverCell } from './AssignDriverCell';
 
 const VEHICLE_PLACEHOLDER = '/vehicle-placeholder.svg';
 
+function toSentenceCase(value?: string | null) {
+  const text = (value || '').trim();
+  if (!text) return '—';
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
+
 interface FleetTableProps {
   paginated: any[];
   drivers: any[];
@@ -20,7 +26,6 @@ interface FleetTableProps {
   setSearch: (val: string) => void;
   stats: any;
   statusConfig: any;
-  typeBadge: any;
   insuranceBadge: any;
   onNavigate: (path: string) => void;
 }
@@ -41,7 +46,6 @@ export const FleetTable = ({
   setSearch,
   stats,
   statusConfig,
-  typeBadge,
   insuranceBadge,
   onNavigate
 }: FleetTableProps) => {
@@ -103,12 +107,12 @@ export const FleetTable = ({
                   </td>
 
                   <td className="px-6 py-4">
-                    <Badge variant={typeBadge[v.type] || 'neutral'} className="text-xs font-medium px-2 py-0.5">{v.type}</Badge>
+                    <span className="text-sm font-medium text-ink">{toSentenceCase(v.type)}</span>
                   </td>
 
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${s.bg}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                    <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${s.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
                       {s.label}
                     </span>
                   </td>

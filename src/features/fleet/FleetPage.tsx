@@ -11,7 +11,6 @@ import {
   FleetTable,
   STATUS_CONFIG as statusConfig,
   INSURANCE_BADGE as insuranceBadge,
-  TYPE_BADGE as typeBadge
 } from '@/features/fleet';
 
 const Fleet = ({ role }: { role?: string | null }) => {
@@ -97,7 +96,6 @@ const Fleet = ({ role }: { role?: string | null }) => {
         setSearch={setSearch}
         stats={stats}
         statusConfig={statusConfig}
-        typeBadge={typeBadge}
         insuranceBadge={insuranceBadge}
         onNavigate={navigate}
       />

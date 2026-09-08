@@ -1,5 +1,6 @@
 import { Car, Calendar, RotateCcw, Settings } from 'lucide-react';
 import { Card } from '@/shared/components/ui';
+import { ROUTES } from '@/constants/routes';
 
 interface QuickActionsProps {
   onNavigate: (path: string) => void;
@@ -8,7 +9,7 @@ interface QuickActionsProps {
 const ACTIONS = [
   { icon: Car,        label: 'Fleet Manager', path: '/fleet',        iconCls: 'text-primary',      bgCls: 'bg-primary/10'    },
   { icon: Calendar,   label: 'Trip Logs',     path: '/bookings',     iconCls: 'text-accent',       bgCls: 'bg-accent/10'     },
-  { icon: RotateCcw,  label: 'Refunds',       path: '/transactions', iconCls: 'text-warning-dark', bgCls: 'bg-warning/10'    },
+  { icon: RotateCcw,  label: 'Refunds',       path: ROUTES.transactions, iconCls: 'text-warning-dark', bgCls: 'bg-warning/10'    },
   { icon: Settings,   label: 'Global Config', path: '/settings',     iconCls: 'text-ink-3',        bgCls: 'bg-ink/5'         },
 ];
 

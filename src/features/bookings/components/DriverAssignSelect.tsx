@@ -12,11 +12,11 @@ interface DriverAssignSelectProps {
 }
 
 /**
- * Driver picker with route-aware smart suggestions + force-assign.
+ * Driver picker with route-aware ranking + force-assign.
  * Ranking (availability, vehicle fit, time-overlap, route-area continuity, schedule
  * slack, mileage/workload) lives in suggestDrivers — shared with Auto-Assign and the
- * AI panel. Best-fit driver is marked ★. A flagged driver (busy / off-duty / wrong
- * vehicle) can still be picked — dispatcher override — but surfaces a warning.
+ * AI panel. Options show the driver name only. A flagged driver (busy / off-duty /
+ * wrong vehicle) can still be picked — dispatcher override — but surfaces a warning.
  */
 export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
   trip, drivers, allTrips, onAssign, className = '',
@@ -42,7 +42,7 @@ export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
       <option value="">Unassigned</option>
       {scored.map(s => (
         <option key={s.driver.id} value={s.driver.id}>
-          {s.driver.name}{s.tags.length ? ` · ${s.tags.join(' · ')}` : ''}
+          {s.driver.name}
         </option>
       ))}
     </select>

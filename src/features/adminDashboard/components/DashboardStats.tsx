@@ -1,6 +1,7 @@
 import { Car, Users, Calendar, TrendingUp } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui';
 import { money } from '@/utils/helpers';
+import { ROUTES } from '@/constants/routes';
 
 interface DashboardStatsProps {
   totalVehicles: number;
@@ -46,7 +47,7 @@ export const DashboardStats = ({
           accent="primary"
         />
       </div>
-      <div className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-95" onClick={() => onNavigate('/transactions')}>
+      <div className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-95" onClick={() => onNavigate(ROUTES.transactions)}>
         <StatCard
           label="Revenue (Month)"
           value={money(revenueThisMonth + 10000)}

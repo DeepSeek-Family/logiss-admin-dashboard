@@ -34,7 +34,27 @@ export const useTrips = (initialFilters: { status?: string } = {}) => {
       if (current) {
         const merged = { ...current, ...patch };
         const miles = merged.miles ?? (parseFloat(String(merged.distance || '').replace(/[^\d.]/g, '')) || 0);
-        nextPatch = { ...patch, ...quoteFares({ insideCounty: merged.insideCounty, tripType: merged.type, miles, mobility: merged.mobility, stops: merged.stops }) };
+        const quoted = quoteFares({
+          insideCounty: merged.insideCounty,
+          tripType: merged.type,
+          miles,
+          calculatedMiles: merged.calculatedMiles ?? miles,
+          actualMiles: merged.actualMiles,
+          mobility: merged.mobility,
+          stops: merged.stops,
+          fundingSourceId: merged.fundingSourceId,
+          fundingSource: merged.fundingSource,
+          tripDate: merged.scheduledTime,
+          pickup: merged.pickup,
+          dropoff: merged.dropoff,
+        });
+        nextPatch = {
+          ...patch,
+          ...quoted,
+          miles: quoted.billedMiles,
+          billingClassId: quoted.billingClassId,
+          billingClassName: quoted.billingClassName,
+        };
       }
     }
     setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...nextPatch } : t)));

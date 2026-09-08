@@ -10,7 +10,7 @@ import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '@/shar
 import { ManualTripModal } from '@/components/ManualTripModal';
 import { useTrips } from '@/hooks/useTrips';
 import { tripService } from '@/services/tripService';
-import { quoteFares } from '@/hooks/usePricing';
+import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
 import { useDrivers } from '@/hooks/useDrivers';
 import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from '@/utils/helpers';
 import { CancelTripModal } from '@/features/reports';
@@ -182,7 +182,37 @@ const Bookings = ({ role }: { role?: string | null }) => {
     }
   };
 
+  const hoursUntilPickup = (iso?: string) => {
+    if (!iso) return undefined;
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return undefined;
+    return (t - Date.now()) / 36e5;
+  };
+
+  const applyCancelToTrip = (trip: any, reason: string) => {
+    const isNoShow = /no.?show/i.test(reason);
+    const penalty = quotePenalty({
+      kind: isNoShow ? 'no_show' : 'late_cancel',
+      fundingSourceId: trip?.fundingSourceId,
+      fundingSource: trip?.fundingSource,
+      hoursBeforePickup: hoursUntilPickup(trip?.scheduledTime),
+      tripDate: trip?.scheduledTime,
+    });
+    return {
+      status: isNoShow ? 'no_show' : 'cancelled',
+      cancelReason: reason,
+      passengerCopay: penalty.passengerCopay,
+      copay: penalty.passengerCopay,
+      fundingSourceCharge: penalty.fundingSourceCharge,
+      costToCounty: penalty.fundingSourceCharge,
+      cost: penalty.fundingSourceCharge,
+    };
+  };
+
   const selectedBooking = selectedBookingId ? (trips || []).find((t: any) => t?.id === selectedBookingId) : null;
+  const selectedCancelPolicy = selectedBooking
+    ? findFundingPolicy(selectedBooking.fundingSourceId || selectedBooking.fundingSource)
+    : null;
   const assignedDriver = selectedBooking?.driverId ? drivers.find((d: any) => d.id === selectedBooking.driverId) : null;
 
   const driverQuery = driverSearch.toLowerCase().trim();
@@ -246,9 +276,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
       {showBulkCancelModal && (
         <CancelTripModal
           onClose={() => setShowBulkCancelModal(false)}
+          freeCancelHours={selectedCancelPolicy?.freeCancelHours}
+          lateCancelCharge={selectedCancelPolicy?.lateCancelCharge}
+          noShowCharge={selectedCancelPolicy?.noShowCharge}
           onConfirm={async (reason) => {
             try {
-              await Promise.all(selectedTrips.map(id => tripService.updateTripStatus(id, 'cancelled')));
+              await Promise.all(selectedTrips.map(id => {
+                const trip = trips.find((t: any) => t.id === id);
+                return updateTrip(id, applyCancelToTrip(trip, reason));
+              }));
               toast.success(`${selectedTrips.length} bookings cancelled`);
               setSelectedTrips([]);
               setShowBulkCancelModal(false);
@@ -263,10 +299,13 @@ const Bookings = ({ role }: { role?: string | null }) => {
       {showCancelModal && (
         <CancelTripModal
           onClose={() => setShowCancelModal(false)}
+          freeCancelHours={selectedCancelPolicy?.freeCancelHours}
+          lateCancelCharge={selectedCancelPolicy?.lateCancelCharge}
+          noShowCharge={selectedCancelPolicy?.noShowCharge}
           onConfirm={async (reason) => {
-            if (selectedBookingId) {
+            if (selectedBookingId && selectedBooking) {
               try {
-                await tripService.updateTripStatus(selectedBookingId, 'cancelled');
+                await updateTrip(selectedBookingId, applyCancelToTrip(selectedBooking, reason));
                 toast.success('Booking declined');
                 closeBooking();
                 refresh();

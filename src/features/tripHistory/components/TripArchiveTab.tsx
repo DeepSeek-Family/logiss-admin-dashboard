@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X, Accessibility, Bed, Disc, Info, User } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
-import { FUNDING_SOURCES } from '@/data/mockData';
+import { usePricing } from '@/hooks/usePricing';
 import { DriverAssignSelect } from '@/features/bookings';
 
 interface TripArchiveTabProps {
@@ -177,6 +177,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   setEndDate,
   inlineTimeSort = true,
 }) => {
+  const { pricing } = usePricing();
+  const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -354,8 +356,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       'Scheduled Pickup', 'Pickup Arrival', 'Drop-off Completed',
       'Trip Miles', 'Trip Reason', 'Vehicle/Service', 'Mobility',
       'No-Show', 'Cancelled',
-      'Funding Source', 'Inside County',
-      'Customer Fare', 'Government/County Cost', 'Type'
+      'Payer', 'Inside County',
+      'Passenger Copay', 'Payer Charge', 'Type', 'Leg'
     ];
 
     const rows = tripsToExport.map((trip: any) => {
@@ -380,9 +382,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       trip.status === 'cancelled' ? 'Yes' : 'No',
       `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
       trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
-      trip.copay || 0,
-      trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0),
-      trip.type
+      trip.passengerCopay ?? trip.copay ?? 0,
+      trip.fundingSourceCharge ?? (trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0)),
+      trip.type,
+      trip.legIndex ? `Leg ${trip.legIndex}` : (trip.type === 'round_trip' ? 'Round' : 'One-way')
       ];
     });
 
@@ -464,14 +467,14 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
             {/* Funding Source Filter */}
             <div className="flex items-center gap-2">
               <DollarSign size={12} className="text-ink-4" />
-              <span className="text-xs text-ink-4">Funding</span>
+              <span className="text-xs text-ink-4">Payer</span>
               <select
                 value={fundingFilter}
                 onChange={(e) => { setFundingFilter(e.target.value); setCurrentPage(1); }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
-                <option value="all">All Sources</option>
-                {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
+                <option value="all">All Payers</option>
+                {fundingOptions.map(fs => <option key={fs.id} value={fs.name}>{fs.name}</option>)}
               </select>
             </div>
 
@@ -745,7 +748,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Dispatch Time</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Funding</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
@@ -1008,10 +1011,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-xs font-medium text-ink">{money(trip.cost)}</span>
+                      <span className="text-xs font-medium text-primary">{money(trip.fundingSourceCharge ?? trip.costToCounty ?? trip.cost)}</span>
                       <div className="flex items-center gap-1.5 opacity-80">
-                        <span className="text-xs font-medium text-ink-4">Cust: {money(trip.copay || 0)}</span>
-                        <span className="text-xs font-medium text-ink-4">Cty: {money(trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0))}</span>
+                        <span className="text-xs font-medium text-ink-4">Copay: {money(trip.passengerCopay ?? trip.copay ?? 0)}</span>
+                        <span className="text-xs font-medium text-ink-4">Payer: {money(trip.fundingSourceCharge ?? (trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0)))}</span>
                       </div>
                     </div>
                   </td>

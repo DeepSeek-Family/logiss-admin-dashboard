@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, AlertCircle, FileDown } from 'lucide-react';
-import { Card, Badge, Avatar, Button } from '@/shared/components/ui';
+import { Card, Badge, Avatar } from '@/shared/components/ui';
 import { formatShortDate, money } from '@/utils/helpers';
 
 interface TransactionsTableProps {
@@ -10,6 +10,7 @@ interface TransactionsTableProps {
   setFilter: (val: string) => void;
   filteredData: any[];
   onRefundClick: (txn: any) => void;
+  onExportClick: (txn: any) => void;
 }
 
 export const TransactionsTable: React.FC<TransactionsTableProps> = ({
@@ -18,7 +19,8 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   filter,
   setFilter,
   filteredData,
-  onRefundClick
+  onRefundClick,
+  onExportClick
 }) => {
   return (
     <Card className="overflow-hidden border-line-2 shadow-sm p-0">
@@ -61,16 +63,16 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <th className="px-5 py-3 text-xs font-semibold text-ink-3">Transaction</th>
               <th className="px-5 py-3 text-xs font-semibold text-ink-3">Date</th>
               <th className="px-5 py-3 text-xs font-semibold text-ink-3">Rider</th>
-              <th className="px-5 py-3 text-xs font-semibold text-ink-3">Funding &amp; Payer</th>
-              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Fare Breakdown</th>
-              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Total</th>
+              <th className="px-5 py-3 text-xs font-semibold text-ink-3">Payer</th>
+              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Copay / Payer Charge</th>
+              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Payer Charge</th>
               <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Status</th>
-              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Action</th>
+              <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right min-w-[132px]">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line-2">
             {filteredData.map((txn: any) => (
-              <tr key={txn.id} className="hover:bg-bg/30 transition-colors group">
+              <tr key={txn.id} className="hover:bg-bg/30 transition-colors">
                 <td className="px-5 py-3.5">
                   <span className="text-xs font-bold text-ink">{txn.id}</span>
                   <span className="block text-xs font-normal text-ink-4 mt-0.5">Ref: {txn.tripId}</span>
@@ -91,12 +93,12 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </td>
                 <td className="px-5 py-3.5 text-right whitespace-nowrap">
                   <div className="text-xs space-y-0.5">
-                    <div className="text-ink-4">Copay: <span className="text-ink-2 font-medium">{money(txn.copay)}</span></div>
-                    <div className="text-ink-4">County: <span className="text-primary font-semibold">{money(txn.countyShare)}</span></div>
+                    <div className="text-ink-4">Passenger Copay: <span className="text-ink-2 font-medium">{money(txn.copay)}</span></div>
+                    <div className="text-ink-4">Payer Charge: <span className="text-primary font-semibold">{money(txn.countyShare)}</span></div>
                   </div>
                 </td>
                 <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                  <span className="text-xs font-bold text-ink">{money(txn.amount)}</span>
+                  <span className="text-xs font-bold text-primary">{money(txn.amount)}</span>
                 </td>
                 <td className="px-5 py-3.5 text-center whitespace-nowrap">
                   <Badge
@@ -107,15 +109,25 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   </Badge>
                 </td>
                 <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                  {txn.status === 'paid' && (
+                  <div className="inline-flex items-center justify-end gap-1">
                     <button
                       type="button"
-                      onClick={() => onRefundClick(txn)}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-urgent hover:bg-urgent/10 transition-colors opacity-0 group-hover:opacity-100"
+                      title="Export CSV"
+                      onClick={() => onExportClick(txn)}
+                      className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     >
-                      Refund
+                      <FileDown size={14} />
                     </button>
-                  )}
+                    {txn.status === 'paid' && (
+                      <button
+                        type="button"
+                        onClick={() => onRefundClick(txn)}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-urgent hover:bg-urgent/10 transition-colors"
+                      >
+                        Refund
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

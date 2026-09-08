@@ -196,7 +196,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   ? (page === '/trips' && location.search.includes('tab=schedule'))
                   : (item.id === ROUTES.trips
                     ? (page === ROUTES.trips && !location.search.includes('tab=schedule'))
-                    : (page === item.id || (item.id !== '/' && page.startsWith(item.id))));
+                    : (item.id === ROUTES.transactions
+                      ? (page === '/finance' || page === '/transactions')
+                      : (page === item.id || (item.id !== '/' && page.startsWith(item.id)))));
 
                 return (
                   <NavItem

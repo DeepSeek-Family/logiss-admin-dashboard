@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
-  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2
+  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
 import { Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
+import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
 
 interface TripDetailsModalProps {
   trip: any;
@@ -52,6 +53,12 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
   const [editMode, setEditMode] = useState(startInEdit);
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [overrideReason, setOverrideReason] = useState('');
+  const [performMode, setPerformMode] = useState(false);
+  const [performMiles, setPerformMiles] = useState(
+    trip?.miles != null ? String(trip.miles) : numFrom(trip?.distance)
+  );
+  const [performNote, setPerformNote] = useState('');
 
   // Editable working copy — everything except the rider's name.
   const [form, setForm] = useState({
@@ -75,9 +82,9 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
     escort: trip?.escort || '',
     notes: trip?.notes || '',
     privateNotes: trip?.privateNotes || '',
-    cost: trip?.cost ?? '',
-    copay: trip?.copay ?? '',
-    costToCounty: trip?.costToCounty ?? '',
+    cost: trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost ?? '',
+    copay: trip?.passengerCopay ?? trip?.copay ?? '',
+    costToCounty: trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost ?? '',
     paymentMethod: trip?.paymentMethod || '',
     paymentStatus: trip?.paymentStatus || '',
     authorizationId: trip?.authorizationId || trip?.authId || '',
@@ -91,21 +98,88 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
 
   const driver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
 
-  // Customer fare (copay) and county billable are independent — not Total − Copay.
+  // Passenger copay and funding charge are independent — never Total − Copay.
   const numF = (v: any) => { const n = parseFloat(String(v ?? '').replace(/[^\d.]/g, '')); return isNaN(n) ? 0 : n; };
-  const AVG_MIN_PER_MILE = 2.5; // city NEMT average incl. stops/traffic
+  const AVG_MIN_PER_MILE = 2.5;
   const milesNow = editMode ? numF(form.distance) : (trip?.miles != null ? Number(trip.miles) : numF(trip?.distance));
   const estDurationMin = milesNow > 0 ? Math.max(5, Math.round(milesNow * AVG_MIN_PER_MILE)) : 0;
-  const costNow = editMode ? numF(form.cost) : numF(trip?.cost);
-  const copayNow = editMode ? numF(form.copay) : numF(trip?.copay);
+  const costNow = editMode ? numF(form.cost) : numF(trip?.fundingSourceCharge ?? trip?.cost);
+  const copayNow = editMode ? numF(form.copay) : numF(trip?.passengerCopay ?? trip?.copay);
   const costToCountyNow = editMode
     ? (form.costToCounty === '' ? costNow : numF(form.costToCounty))
-    : (trip?.costToCounty != null && trip.costToCounty !== '' ? numF(trip.costToCounty) : costNow);
+    : numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost);
+
+  const snapshot = trip?.pricingSnapshot;
+  const auditEvents: any[] = Array.isArray(trip?.auditTrail) && trip.auditTrail.length
+    ? trip.auditTrail
+    : [
+        {
+          id: 'legacy-created',
+          at: trip?.submittedTime || trip?.scheduledTime,
+          by: 'Dispatcher Portal',
+          action: 'created',
+          summary: 'Trip submitted by Dispatcher Portal',
+        },
+        ...(driver
+          ? [{
+              id: 'legacy-assign',
+              at: trip?.submittedTime || trip?.scheduledTime,
+              by: 'System',
+              action: 'assigned',
+              summary: `Assigned to ${driver.name}`,
+            }]
+          : []),
+      ];
+
+  const isRoundTripLeg = trip?.type === 'round_trip' || trip?.linkedLegId || trip?.legIndex;
+  const legIndex = trip?.legIndex || 1;
+  const legTotal = trip?.linkedLegId || trip?.type === 'round_trip' ? 2 : 1;
+
+  const fareChanged =
+    numF(form.copay) !== numF(trip?.passengerCopay ?? trip?.copay) ||
+    numF(form.costToCounty === '' ? form.cost : form.costToCounty) !==
+      numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost);
 
   const handleSave = () => {
+    if (fareChanged && !overrideReason.trim()) {
+      toast.error('Enter a reason when changing Passenger Copay or Payer Charge');
+      return;
+    }
+
     const scheduledTime = form.scheduledDate && form.scheduledTimeOfDay
       ? `${form.scheduledDate}T${form.scheduledTimeOfDay}:00`
       : trip.scheduledTime;
+
+    const nextCopay = form.copay === '' ? 0 : Number(form.copay);
+    const nextCharge = costToCountyNow;
+    const nowIso = new Date().toISOString();
+
+    const newAudit = [...auditEvents];
+    if (fareChanged) {
+      newAudit.push({
+        id: `evt-${Date.now()}-fare`,
+        at: nowIso,
+        by: 'Admin Console',
+        action: 'fare_override',
+        reason: overrideReason.trim(),
+        before: {
+          passengerCopay: numF(trip?.passengerCopay ?? trip?.copay),
+          fundingSourceCharge: numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost),
+        },
+        after: { passengerCopay: nextCopay, fundingSourceCharge: nextCharge },
+        summary: `Fare adjusted: ${overrideReason.trim()}`,
+      });
+    }
+    if (form.driverId && form.driverId !== trip.driverId) {
+      const newDriver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
+      newAudit.push({
+        id: `evt-${Date.now()}-assign`,
+        at: nowIso,
+        by: 'Admin Console',
+        action: 'assigned',
+        summary: `Assigned to ${newDriver?.name || form.driverId}`,
+      });
+    }
 
     const patch: Record<string, any> = {
       scheduledTime,
@@ -115,7 +189,6 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
       reason: form.reason,
       distance: form.distance ? `${form.distance} mi` : '',
       miles: form.distance === '' ? undefined : Number(form.distance),
-      // Derived — always recomputed, never hand-entered.
       duration: estDurationMin ? `${estDurationMin} min` : '',
       returnType: form.returnType,
       source: form.source,
@@ -128,20 +201,23 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
       escort: form.escort,
       notes: form.notes,
       privateNotes: form.privateNotes,
-      cost: form.cost === '' ? 0 : Number(form.cost),
-      copay: form.copay === '' ? 0 : Number(form.copay),
-      costToCounty: costToCountyNow,
+      cost: nextCharge,
+      copay: nextCopay,
+      passengerCopay: nextCopay,
+      costToCounty: nextCharge,
+      fundingSourceCharge: nextCharge,
       paymentMethod: form.paymentMethod,
       paymentStatus: form.paymentStatus,
       authorizationId: form.authorizationId,
       driverId: form.driverId,
-      // Name is intentionally not editable; phone/age are.
+      auditTrail: newAudit,
       rider: { ...(trip.rider || {}), phone: form.phone, age: form.age === '' ? undefined : Number(form.age) },
     };
     if (form.driverId && (trip.status === 'pending_review' || !trip.status)) patch.status = 'assigned';
 
     onUpdate?.(trip.id, patch);
     setEditMode(false);
+    setOverrideReason('');
     toast.success('Trip updated');
   };
 
@@ -181,13 +257,24 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 {trip.rating && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"><TrendingUp size={12} /> ★ {trip.rating}</span>}
               </h2>
               <p className="text-xs text-ink-4 mt-1">Submitted: {trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p>
+              {isRoundTripLeg && (
+                <div className="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/15 text-xs font-semibold text-primary">
+                  <Link2 size={12} />
+                  Leg {legIndex} of {legTotal}
+                  {trip.legLabel ? ` · ${trip.legLabel}` : ''}
+                  {trip.linkedLegId ? ` · linked ${trip.linkedLegId}` : ''}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {!editMode && !cancelMode && (
+            {!editMode && !cancelMode && !performMode && (
               <>
                 <Button variant="outline" size="sm" icon={Pencil} onClick={() => setEditMode(true)}>Edit Details</Button>
-                {trip.status !== 'cancelled' && (
+                {(trip.status === 'no_show' || trip.status === 'cancelled') && (
+                  <Button variant="primary" size="sm" onClick={() => setPerformMode(true)}>Complete manually</Button>
+                )}
+                {trip.status !== 'cancelled' && trip.status !== 'completed' && (
                   <button onClick={() => setCancelMode(true)} className="px-4 py-2 bg-urgent/10 text-urgent border border-urgent/20 rounded-xl text-xs font-medium hover:bg-urgent hover:text-white transition-all shadow-sm">
                     Cancel Trip
                   </button>
@@ -205,11 +292,109 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 <input placeholder="Reason for cancellation..." className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
                 <Button variant="primary" className="bg-urgent hover:bg-urgent/90" size="sm" onClick={() => {
                   if (!cancelReason) return toast.error('Please provide a reason');
-                  onUpdate?.(trip.id, { status: 'cancelled', cancelReason });
+                  const isNoShow = /no.?show/i.test(cancelReason);
+                  const hours = trip?.scheduledTime
+                    ? (new Date(trip.scheduledTime).getTime() - Date.now()) / 36e5
+                    : undefined;
+                  const penalty = quotePenalty({
+                    kind: isNoShow ? 'no_show' : 'late_cancel',
+                    fundingSourceId: trip.fundingSourceId,
+                    fundingSource: trip.fundingSource,
+                    hoursBeforePickup: hours,
+                    tripDate: trip.scheduledTime,
+                  });
+                  const nowIso = new Date().toISOString();
+                  onUpdate?.(trip.id, {
+                    status: isNoShow ? 'no_show' : 'cancelled',
+                    cancelReason,
+                    passengerCopay: penalty.passengerCopay,
+                    copay: penalty.passengerCopay,
+                    fundingSourceCharge: penalty.fundingSourceCharge,
+                    costToCounty: penalty.fundingSourceCharge,
+                    cost: penalty.fundingSourceCharge,
+                    auditTrail: [
+                      ...auditEvents,
+                      {
+                        id: `evt-${Date.now()}-cancel`,
+                        at: nowIso,
+                        by: 'Admin Console',
+                        action: isNoShow ? 'no_show' : 'cancelled',
+                        reason: cancelReason,
+                        summary: penalty.waived ? `${cancelReason} · no charge` : `${cancelReason} · ${penalty.reason}`,
+                      },
+                    ],
+                  });
                   setCancelMode(false);
-                  toast.success('Trip cancelled successfully');
+                  toast.success(isNoShow ? 'Marked no-show' : 'Trip cancelled');
                 }}>Confirm</Button>
                 <button onClick={() => setCancelMode(false)} className="p-2 text-ink-4 hover:text-ink"><X size={16} /></button>
+              </div>
+            )}
+            {performMode && (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setPerformMode(false)}>Discard</Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const calc = parseFloat(performMiles) || 0;
+                    const quoted = quoteFares({
+                      insideCounty: trip.insideCounty,
+                      tripType: trip.type,
+                      miles: calc,
+                      calculatedMiles: calc,
+                      mobility: trip.mobility,
+                      stops: trip.stops,
+                      fundingSourceId: trip.fundingSourceId,
+                      fundingSource: trip.fundingSource,
+                      tripDate: trip.scheduledTime,
+                      pickup: form.pickup || trip.pickup,
+                      dropoff: form.dropoff || trip.dropoff,
+                    });
+                    const nowIso = new Date().toISOString();
+                    const priorStatus = trip.status;
+                    onUpdate?.(trip.id, {
+                      status: 'completed',
+                      priorStatus,
+                      pickup: form.pickup || trip.pickup,
+                      dropoff: form.dropoff || trip.dropoff,
+                      driverId: form.driverId || trip.driverId,
+                      miles: quoted.billedMiles,
+                      calculatedMiles: calc,
+                      billingClassId: quoted.billingClassId,
+                      billingClassName: quoted.billingClassName,
+                      passengerCopay: quoted.passengerCopay,
+                      copay: quoted.passengerCopay,
+                      fundingSourceCharge: quoted.fundingSourceCharge,
+                      costToCounty: quoted.fundingSourceCharge,
+                      cost: quoted.fundingSourceCharge,
+                      pricingSnapshot: quoted.snapshot,
+                      auditTrail: [
+                        ...auditEvents,
+                        {
+                          id: `evt-${Date.now()}-manual-perform`,
+                          at: nowIso,
+                          by: 'Admin Console',
+                          action: 'manual_perform',
+                          reason: performNote.trim() || 'Manual complete after prior status',
+                          summary: `Completed manually (was ${priorStatus})`,
+                          before: {
+                            passengerCopay: numF(trip?.passengerCopay ?? trip?.copay),
+                            fundingSourceCharge: numF(trip?.fundingSourceCharge ?? trip?.cost),
+                          },
+                          after: {
+                            passengerCopay: quoted.passengerCopay,
+                            fundingSourceCharge: quoted.fundingSourceCharge,
+                          },
+                        },
+                      ],
+                    });
+                    setPerformMode(false);
+                    toast.success('Trip completed. Prior status kept in audit.');
+                  }}
+                >
+                  Complete & bill
+                </Button>
               </div>
             )}
             <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-line-2 hover:bg-line-2 hover:text-ink transition-colors text-ink-4 shadow-sm">
@@ -223,6 +408,22 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
           {editMode && (
             <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 border border-primary/15 rounded-xl px-4 py-2.5">
               <Pencil size={13} /> Editing mode — update any field except the rider's name, then Save Changes.
+            </div>
+          )}
+
+          {performMode && (
+            <div className="mb-5 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <p className="text-xs font-semibold text-primary">Manual perform — re-quote and mark completed. The previous {trip.status} stays on the audit trail.</p>
+              <div className="grid grid-cols-2 gap-3 max-w-md">
+                <div>
+                  <p className="text-xs text-ink-4 mb-1">Miles</p>
+                  <input className={INPUT} type="number" step="0.1" value={performMiles} onChange={e => setPerformMiles(e.target.value)} />
+                </div>
+                <div>
+                  <p className="text-xs text-ink-4 mb-1">Note</p>
+                  <input className={INPUT} value={performNote} onChange={e => setPerformNote(e.target.value)} placeholder="Why this was completed" />
+                </div>
+              </div>
             </div>
           )}
 
@@ -391,7 +592,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 {editMode ? (
                   <select value={form.driverId} onChange={(e) => set('driverId', e.target.value)} className={`${INPUT} cursor-pointer`}>
                     <option value="">Unassigned</option>
-                    {(drivers || []).map(d => <option key={d.id} value={d.id}>{d.name} · {d.vehicle?.type}</option>)}
+                    {(drivers || []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 ) : driver ? (
                   <div className="space-y-5">
@@ -423,33 +624,77 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><CreditCard size={14} /> Billing & Payment</h3>
                 <div className="space-y-4">
-                  <div className="flex items-end justify-between bg-bg p-4 rounded-xl border border-line-2">
-                    <div>
-                      <p className="text-xs text-ink-4 mb-1">County / government</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-bg p-4 rounded-xl border border-line-2">
+                      <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide mb-1">Passenger Copay</p>
                       {editMode ? (
-                        <input type="number" step="0.01" value={String(form.cost)} onChange={(e) => set('cost', e.target.value)} className={`${INPUT} w-28`} />
+                        <input type="number" step="0.01" value={String(form.copay)} onChange={(e) => set('copay', e.target.value)} className={INPUT} />
                       ) : (
-                        <p className="text-2xl font-semibold text-primary leading-none">{money(trip.cost)}</p>
+                        <p className="text-xl font-semibold text-ink">{money(copayNow)}</p>
                       )}
+                      <p className="text-xs text-ink-4 mt-1">Rider-facing · never mixed with payer charge</p>
                     </div>
-                    {editMode ? (
-                      <select value={form.paymentStatus} onChange={(e) => set('paymentStatus', e.target.value)} className={`${INPUT} w-32 cursor-pointer`}>
-                        {['Pending', 'Approved', 'Paid', 'charged', 'Denied'].map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    ) : (
-                      <Badge variant={['Paid', 'Approved', 'charged'].includes(trip.paymentStatus) ? 'accent' : 'warning'}>{trip.paymentStatus || 'Pending'}</Badge>
-                    )}
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/15">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Payer Charge</p>
+                        {editMode ? (
+                          <select value={form.paymentStatus} onChange={(e) => set('paymentStatus', e.target.value)} className={`${INPUT} w-28 cursor-pointer`}>
+                            {['Pending', 'Approved', 'Paid', 'charged', 'Denied'].map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <Badge variant={['Paid', 'Approved', 'charged'].includes(trip.paymentStatus) ? 'accent' : 'warning'}>{trip.paymentStatus || 'Pending'}</Badge>
+                        )}
+                      </div>
+                      {editMode ? (
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={String(form.costToCounty === '' ? form.cost : form.costToCounty)}
+                          onChange={(e) => {
+                            set('costToCounty', e.target.value);
+                            set('cost', e.target.value);
+                          }}
+                          className={INPUT}
+                        />
+                      ) : (
+                        <p className="text-xl font-semibold text-primary">{money(costToCountyNow)}</p>
+                      )}
+                      <p className="text-xs text-ink-4 mt-1">{trip.fundingSource || 'Payer'} · admin bill</p>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10">
+
+                  {editMode && fareChanged && (
                     <div>
-                      <p className="text-xs font-medium text-primary mb-1">Customer fare</p>
-                      {editMode ? <input type="number" step="0.01" value={String(form.copay)} onChange={(e) => set('copay', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(trip.copay || 0)}</p>}
+                      <label className="text-xs font-semibold text-ink-4 mb-1 block">Override reason (required)</label>
+                      <input
+                        className={INPUT}
+                        placeholder="Why are you changing copay or payer charge?"
+                        value={overrideReason}
+                        onChange={e => setOverrideReason(e.target.value)}
+                      />
                     </div>
-                    <div className="sm:border-l border-primary/20 sm:pl-4">
-                      <p className="text-xs font-medium text-primary mb-1">Cost to County</p>
-                      {editMode ? <input type="number" step="0.01" value={String(form.costToCounty)} onChange={(e) => set('costToCounty', e.target.value)} className={INPUT} /> : <p className="text-lg font-semibold text-ink">{money(costToCountyNow)}</p>}
+                  )}
+
+                  {snapshot && (
+                    <div className="rounded-xl border border-line-2 bg-bg/50 p-3 space-y-2">
+                      <p className="text-xs font-bold text-ink-3 uppercase tracking-wider flex items-center gap-1.5">
+                        <Camera size={12} /> Pricing snapshot at quote
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <p className="text-ink-4">Payer <span className="font-semibold text-ink">{snapshot.fundingSourceName}</span></p>
+                        <p className="text-ink-4">Method <span className="font-semibold text-ink">{snapshot.methodLabel || PRICING_METHOD_LABELS[snapshot.pricingMethod as PricingMethod]}</span></p>
+                        <p className="text-ink-4">Miles <span className="font-semibold text-ink">{snapshot.miles}</span></p>
+                        {snapshot.billingClassName && (
+                          <p className="text-ink-4">Class <span className="font-semibold text-ink">{snapshot.billingClassName}</span></p>
+                        )}
+                        <p className="text-ink-4">Boundary <span className="font-semibold text-ink">{snapshot.insideCounty ? 'Inside' : 'Outside'}</span></p>
+                        <p className="text-ink-4">Effective <span className="font-semibold text-ink">{snapshot.effectiveFrom || '—'}{snapshot.effectiveTo ? ` → ${snapshot.effectiveTo}` : ''}</span></p>
+                        <p className="text-ink-4">Quoted <span className="font-semibold text-ink">{snapshot.quotedAt ? formatDateTime(snapshot.quotedAt) : '—'}</span></p>
+                      </div>
+                      <p className="text-xs text-ink-4">Completed trips keep this snapshot even if admin rates change later.</p>
                     </div>
-                  </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     {Field({ label: 'Payment Method', k: 'paymentMethod' })}
                     {Field({ label: 'Auth ID', k: 'authorizationId' })}
@@ -461,16 +706,28 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Shield size={14} /> Audit Trail</h3>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-line-2 mt-1.5 shrink-0" />
-                    <div><p className="text-xs font-medium text-ink-3">Trip submitted by <span className="font-medium text-ink">Dispatcher Portal</span></p><p className="text-xs text-ink-4">{trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p></div>
-                  </div>
-                  {driver && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                      <div><p className="text-xs font-medium text-ink-3">Assigned to <span className="font-medium text-ink">{driver.name}</span></p><p className="text-xs text-ink-4">System Auto-log</p></div>
+                  {[...auditEvents].reverse().map((evt: any) => (
+                    <div key={evt.id || `${evt.at}-${evt.action}`} className="flex items-start gap-3">
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                        evt.action === 'fare_override' ? 'bg-warning' : evt.action === 'assigned' ? 'bg-primary' : 'bg-line'
+                      }`} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-ink-3">
+                          {evt.summary || evt.action}
+                          {evt.by ? <> · <span className="font-medium text-ink">{evt.by}</span></> : null}
+                        </p>
+                        {evt.reason && (
+                          <p className="text-xs text-ink-4 mt-0.5">Reason: {evt.reason}</p>
+                        )}
+                        {evt.before && evt.after && (
+                          <p className="text-xs text-ink-4 mt-0.5">
+                            Copay {money(evt.before.passengerCopay)} → {money(evt.after.passengerCopay)} · Payer {money(evt.before.fundingSourceCharge)} → {money(evt.after.fundingSourceCharge)}
+                          </p>
+                        )}
+                        <p className="text-xs text-ink-4">{evt.at ? formatDateTime(evt.at) : 'N/A'}</p>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               </section>
             </div>

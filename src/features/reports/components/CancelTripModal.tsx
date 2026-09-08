@@ -5,9 +5,18 @@ import { Card, Button } from '@/shared/components/ui';
 interface CancelTripModalProps {
   onClose: () => void;
   onConfirm: (reason: string) => void;
+  freeCancelHours?: number;
+  lateCancelCharge?: number;
+  noShowCharge?: number;
 }
 
-export const CancelTripModal = ({ onClose, onConfirm }: CancelTripModalProps) => {
+export const CancelTripModal = ({
+  onClose,
+  onConfirm,
+  freeCancelHours = 2,
+  lateCancelCharge = 0,
+  noShowCharge = 0,
+}: CancelTripModalProps) => {
   const [reason, setReason] = useState('Rider Request');
   const reasons = [
     { id: 'Rider Request', label: 'Rider Requested Cancellation', sub: 'Rider called to cancel due to personal reasons or schedule change.' },
@@ -50,7 +59,9 @@ export const CancelTripModal = ({ onClose, onConfirm }: CancelTripModalProps) =>
         <div className="p-6 bg-bg/50 border-t border-line-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary">
             <Clock size={16} />
-            <span className="text-xs font-medium">Free cancellation window active</span>
+            <span className="text-xs font-medium">
+              Free if cancelled {freeCancelHours}h+ before pickup
+            </span>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose}>Keep Booking</Button>

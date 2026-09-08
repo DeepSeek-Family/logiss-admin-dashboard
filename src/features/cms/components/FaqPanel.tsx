@@ -37,7 +37,7 @@ const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 4,
     question: 'How do I cancel my scheduled trip?',
-    answer: 'To cancel a trip, please call our dispatch center at least 24 hours in advance. Late cancellations may be subject to a fee depending on your funding source.',
+    answer: 'To cancel a trip, please call our dispatch center at least 24 hours in advance. Late cancellations may be subject to a fee depending on your payer.',
     category: 'Customer',
     expanded: false,
   },

@@ -5,8 +5,9 @@ import {
   Clock, Navigation, ShieldCheck, Phone, ArrowRight, Zap, HeartPulse, Activity
 } from 'lucide-react';
 import { Avatar, Button } from '@/shared/components/ui';
-import { usePricing, DEFAULT_MOBILITY_TYPES, DEFAULT_COUNTIES } from '@/hooks/usePricing';
-import { evaluateTripBoundary } from '@/utils/geofenceEngine';
+import { usePricing, DEFAULT_MOBILITY_TYPES, DEFAULT_COUNTIES, quoteFares, findFundingPolicy } from '@/hooks/usePricing';
+import { evaluateTripBoundary, geocodeAddress } from '@/utils/geofenceEngine';
+import { money } from '@/utils/helpers';
 
 interface ManualTripModalProps {
   trips: any[];
@@ -67,14 +68,68 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
     mobility: 'Ambulatory',
     type: 'one_way',
   });
+  const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
 
-  const boundaryEval = evaluateTripBoundary(form.pickup, form.dropoff, form.source || 'Chesterfield County', availableCounties);
+  const fundingPolicies = (pricing.fundingPolicies || []).filter(p => p.active);
+  const previewPolicy = findFundingPolicy(form.source, pricing) || fundingPolicies[0] || null;
+  const boundaryEval = evaluateTripBoundary(
+    form.pickup,
+    form.dropoff,
+    form.source || 'Chesterfield County',
+    availableCounties,
+    previewPolicy?.serviceAreaIds,
+    {
+      pickupGps: tripGps.pickup,
+      dropoffGps: tripGps.dropoff,
+      payerPolygons: previewPolicy?.geofencePolygons,
+    }
+  );
+  const previewQuote = quoteFares(
+    {
+      insideCounty: form.insideCounty,
+      tripType: form.type === 'round_trip' ? 'round-trip' : 'one-way',
+      miles: 10,
+      calculatedMiles: 10,
+      mobility: form.mobility,
+      fundingSourceId: previewPolicy?.id,
+      pickup: form.pickup,
+      dropoff: form.dropoff,
+    },
+    pricing
+  );
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      const pickupGps = form.pickup.trim() ? await geocodeAddress(form.pickup) : null;
+      const dropoffGps = form.dropoff.trim() ? await geocodeAddress(form.dropoff) : null;
+      if (!alive) return;
+      setTripGps({
+        pickup: pickupGps || undefined,
+        dropoff: dropoffGps || undefined,
+      });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [form.pickup, form.dropoff]);
 
   React.useEffect(() => {
     if (!form.pickup || !form.dropoff) return;
-    const evaluation = evaluateTripBoundary(form.pickup, form.dropoff, form.source || 'Chesterfield County', availableCounties);
+    const evaluation = evaluateTripBoundary(
+      form.pickup,
+      form.dropoff,
+      form.source || 'Chesterfield County',
+      availableCounties,
+      previewPolicy?.serviceAreaIds,
+      {
+        pickupGps: tripGps.pickup,
+        dropoffGps: tripGps.dropoff,
+        payerPolygons: previewPolicy?.geofencePolygons,
+      }
+    );
     setForm(prev => prev.insideCounty === evaluation.isInsideCounty ? prev : { ...prev, insideCounty: evaluation.isInsideCounty });
-  }, [form.pickup, form.dropoff, form.source, availableCounties]);
+  }, [form.pickup, form.dropoff, form.source, availableCounties, previewPolicy?.serviceAreaIds, previewPolicy?.geofencePolygons, tripGps.pickup, tripGps.dropoff]);
 
   const addStop = () => setForm((f: any) => ({ ...f, stops: [...f.stops, ''] }));
   const removeStop = (idx: number) => setForm((f: any) => ({ ...f, stops: f.stops.filter((_: any, i: number) => i !== idx) }));
@@ -196,8 +251,8 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                     </div>
                   </div>
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 flex items-center font-medium text-xs">SRC</div>
-                    <input className={`${inputClass} pl-12`} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} placeholder="Source / County / Program (e.g. Chesterfield County)" required />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 flex items-center font-medium text-xs">PAY</div>
+                    <input className={`${inputClass} pl-12`} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} placeholder="Payer (e.g. Powhatan DSS)" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="relative">
@@ -262,7 +317,9 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                       <span className="font-semibold">{boundaryEval.boundaryLabel}</span>
                     </div>
                     <span className={`font-bold ${form.insideCounty ? 'text-accent' : 'text-primary'}`}>
-                      {form.insideCounty ? 'Inside Copay ($10.00)' : 'Cross-County (+$6.00 Surcharge)'}
+                      {form.insideCounty
+                        ? `Inside · Copay ${money(previewPolicy?.passengerCopayInside ?? previewQuote.customerUnit)}`
+                        : `Outside · Copay ${money(previewPolicy?.passengerCopayOutside ?? previewQuote.customerUnit)}`}
                     </span>
                   </div>
                 )}
@@ -312,11 +369,6 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
                           )}
                         </div>
                         <span className="text-xs font-medium">{opt.name}</span>
-                        {opt.fee > 0 && (
-                          <span className="text-xs font-semibold text-primary px-1.5 py-0.5 rounded bg-primary/10">
-                            +${Number(opt.fee).toFixed(2)}
-                          </span>
-                        )}
                       </button>
                     );
                   })}
