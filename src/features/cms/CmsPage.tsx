@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import {
   FileText,
   Shield,
@@ -15,6 +16,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
+import { useUpdateRuleMutation } from '@/redux/api/rulesApi';
 
 import {
   OrgSettingsForm,
@@ -42,6 +44,7 @@ const CMS = ({ role }: { role?: string | null }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [updateRule] = useUpdateRuleMutation();
 
   const pages = [
     { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
@@ -60,10 +63,10 @@ const CMS = ({ role }: { role?: string | null }) => {
   };
 
   const [content, setContent] = useState<ContentState>({
-    terms: `1. Acceptance of Terms\nBy using LOGISS, you agree to these terms...\n\n2. Dispatcher Responsibility\nDispatchers must verify all medical requirements before assignment...`,
-    privacy: `Your privacy is important to us. This policy explains how we collect and use your data to provide medical transportation services...`,
-    faq: `Q: How to reset dispatcher password?\nA: Go to Security settings...\n\nQ: What is a Will-Call trip?\nA: A trip where the return time is not fixed...`,
-    about: `LOGISS is a premier medical transportation management platform...`
+    terms: '',
+    privacy: '',
+    faq: '',
+    about: ''
   });
 
   const [orgSettings, setOrgSettings] = useState<OrgSettings>({
@@ -78,13 +81,30 @@ const CMS = ({ role }: { role?: string | null }) => {
     status: 'Operational'
   });
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    }, 1500);
+  const handleSave = async () => {
+    if (['terms', 'privacy', 'about'].includes(activePage)) {
+      try {
+        setIsSaving(true);
+        await updateRule({
+          type: activePage,
+          content: content[activePage] || '',
+        }).unwrap();
+        toast.success(`${activePage.toUpperCase()} saved successfully!`);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      } catch (err: any) {
+        toast.error(err?.data?.message || 'Failed to save rule content');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      setIsSaving(true);
+      setTimeout(() => {
+        setIsSaving(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }, 1000);
+    }
   };
 
   const activePageData = pages.find(p => p.id === activePage);

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold,
   Italic,
@@ -22,17 +22,35 @@ import {
   Edit3,
   Sparkles,
   CheckCircle2,
-  HelpCircle
+  HelpCircle,
+  Loader2,
 } from 'lucide-react';
 import { Badge } from '@/shared/components/ui';
+import { useGetRuleByTypeQuery, RuleType } from '@/redux/api/rulesApi';
 
 interface ContentEditorProps {
   activePage: string;
   content: { [key: string]: string };
-  setContent: (val: { [key: string]: string }) => void;
+  setContent: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
 export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, content, setContent }) => {
+  const isRulePage = ['terms', 'privacy', 'about'].includes(activePage);
+
+  const { data: ruleResponse, isLoading, isFetching } = useGetRuleByTypeQuery(
+    activePage as RuleType,
+    { skip: !isRulePage }
+  );
+
+  useEffect(() => {
+    if (isRulePage && ruleResponse?.data?.content !== undefined) {
+      setContent((prev) => ({
+        ...prev,
+        [activePage]: ruleResponse.data.content,
+      }));
+    }
+  }, [ruleResponse, activePage, isRulePage, setContent]);
+
   const value = content[activePage] || '';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
@@ -335,42 +353,51 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
 
         {/* Editor Body */}
         <div className="relative">
-          {viewMode === 'edit' && (
-            <textarea
-              ref={textareaRef}
-              className="w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 focus:ring-0 border-none"
-              value={value}
-              onChange={(e) => updateContent(e.target.value)}
-              placeholder="Write your document content here... Use the toolbar above or standard markdown formatting."
-            />
-          )}
+          {isLoading || isFetching ? (
+            <div className="flex flex-col items-center justify-center h-[460px] text-ink-3 gap-3 bg-bg/10">
+              <Loader2 size={24} className="animate-spin text-primary" />
+              <p className="text-sm font-medium">Loading {activePage} content...</p>
+            </div>
+          ) : (
+            <>
+              {viewMode === 'edit' && (
+                <textarea
+                  ref={textareaRef}
+                  className="w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 focus:ring-0 border-none"
+                  value={value}
+                  onChange={(e) => updateContent(e.target.value)}
+                  placeholder="Write your document content here... Use the toolbar above or standard markdown formatting."
+                />
+              )}
 
-          {viewMode === 'preview' && (
-            <div className="w-full h-[460px] p-6 bg-bg/20 overflow-y-auto">
-              {value.trim() ? (
-                renderPreview(value)
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-ink-4">
-                  <Eye size={32} className="mb-2 opacity-30" />
-                  <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
+              {viewMode === 'preview' && (
+                <div className="w-full h-[460px] p-6 bg-bg/20 overflow-y-auto">
+                  {value.trim() ? (
+                    renderPreview(value)
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-ink-4">
+                      <Eye size={32} className="mb-2 opacity-30" />
+                      <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {viewMode === 'split' && (
-            <div className="grid grid-cols-2 divide-x divide-line-2 h-[460px]">
-              <textarea
-                ref={textareaRef}
-                className="w-full h-full p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 border-none"
-                value={value}
-                onChange={(e) => updateContent(e.target.value)}
-                placeholder="Write your document content here..."
-              />
-              <div className="w-full h-full p-6 bg-bg/20 overflow-y-auto">
-                {renderPreview(value)}
-              </div>
-            </div>
+              {viewMode === 'split' && (
+                <div className="grid grid-cols-2 divide-x divide-line-2 h-[460px]">
+                  <textarea
+                    ref={textareaRef}
+                    className="w-full h-full p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 border-none"
+                    value={value}
+                    onChange={(e) => updateContent(e.target.value)}
+                    placeholder="Write your document content here..."
+                  />
+                  <div className="w-full h-full p-6 bg-bg/20 overflow-y-auto">
+                    {renderPreview(value)}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
