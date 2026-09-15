@@ -338,7 +338,7 @@ export const FaqPanel = () => {
                     {roleUpper === 'DISPATCHER' ? 'Dispatcher' : roleUpper === 'USER' ? 'User' : faq.role}
                   </span>
 
-                  {/* Actions - ALWAYS VISIBLE NOW */}
+                  {/* Actions */}
                   <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                     {editingId === faq._id ? (
                       <>
@@ -361,7 +361,7 @@ export const FaqPanel = () => {
                       </>
                     ) : (
                       <>
-                        {/* Edit Button - Always Visible */}
+                        {/* Edit Button */}
                         <button
                           onClick={() => startEdit(faq)}
                           className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-lg transition-all border border-primary/20"
@@ -371,7 +371,7 @@ export const FaqPanel = () => {
                           <span>Edit</span>
                         </button>
 
-                        {/* Delete Button - Always Visible */}
+                        {/* Delete Button */}
                         {deleteConfirmId === faq._id ? (
                           <div className="flex items-center gap-1 animate-in fade-in duration-150">
                             <button
@@ -399,9 +399,18 @@ export const FaqPanel = () => {
                           </button>
                         )}
 
-                        <span className="ml-1 text-ink-3">
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </span>
+                        {/* Expand / Collapse Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(faq._id);
+                          }}
+                          className="p-1.5 ml-1 text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          title={isExpanded ? 'Collapse Answer' : 'Expand Answer'}
+                        >
+                          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </button>
                       </>
                     )}
                   </div>
