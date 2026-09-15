@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Building2 } from 'lucide-react';
-import { Badge } from '@/shared/components/ui';
+import { Badge, Button } from '@/shared/components/ui';
 import { useFacilities, type Facility } from '@/hooks/useFacilities';
+
+const actionBtn = 'h-10 rounded-xl px-4 text-sm';
+const controlClass =
+  'h-10 box-border w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
 
 const TYPE_OPTIONS = ['Hospital', 'Nursing Home', 'Program', 'Clinic', 'Other'];
 
@@ -50,41 +54,40 @@ export const FacilitiesPanel = () => {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-ink">Facilities &amp; Programs</p>
-          <p className="text-xs text-ink-4 mt-0.5">{items.filter(f => f.active).length} active · {items.filter(f => !f.active).length} disabled</p>
-        </div>
-        <button
+        <h2 className="type-section-title">Facilities</h2>
+        <Button
+          variant="primary"
+          size="md"
+          className={actionBtn}
           onClick={() => { setShowAddForm(true); setEditingId(null); }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
         >
-          <Plus size={14} /> Add Facility
-        </button>
+          <Plus size={16} /> Add
+        </Button>
       </div>
 
       {showAddForm && (
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
           <p className="text-xs font-bold text-primary uppercase tracking-wider">New Facility / Program</p>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Name</label>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">Name</label>
               <input
                 type="text" value={newName} onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addItem()}
                 placeholder="e.g. St. Francis Medical Center" autoFocus
-                className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                className={controlClass}
               />
             </div>
-            <div className="w-44">
-              <label className="text-xs font-semibold text-ink-4 uppercase mb-1 block">Type</label>
-              <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all">
+            <div className="w-52">
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">Type</label>
+              <select value={newType} onChange={e => setNewType(e.target.value)} className={controlClass}>
                 {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => { setShowAddForm(false); setNewName(''); }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-ink-3 hover:text-ink rounded-lg border border-line-2 bg-white transition-colors"><X size={13} /> Cancel</button>
-            <button onClick={addItem} disabled={!newName.trim()} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><Check size={13} /> Add</button>
+            <button type="button" onClick={() => { setShowAddForm(false); setNewName(''); }} className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-ink-3 border border-line-2 rounded-xl bg-white"><X size={16} /> Cancel</button>
+            <button type="button" onClick={addItem} disabled={!newName.trim()} className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-white bg-primary rounded-xl disabled:opacity-40"><Check size={16} /> Add</button>
           </div>
         </div>
       )}
@@ -156,7 +159,6 @@ export const FacilitiesPanel = () => {
         ))}
       </div>
 
-      <p className="text-xs text-ink-4 text-center">Active facilities appear in Facility User assignment and booking program selection.</p>
     </div>
   );
 };

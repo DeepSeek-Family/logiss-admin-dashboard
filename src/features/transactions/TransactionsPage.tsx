@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Download, Clock, RotateCcw, Loader2, DollarSign, Receipt, FileText, Landmark, Calendar } from 'lucide-react';
-import { Button, StatCard, Card } from '@/shared/components/ui';
+import { Download, Clock, RotateCcw, Loader2, DollarSign, Receipt, FileText } from 'lucide-react';
+import { Button, StatCard } from '@/shared/components/ui';
+import { useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useTrips } from '@/hooks/useTrips';
 import { money } from '@/utils/helpers';
+import { usePricing, findFundingPolicy } from '@/hooks/usePricing';
 
 import {
   FundingAllocation,
@@ -11,20 +14,99 @@ import {
 } from '@/features/transactions';
 import { Can } from '@/features/userAccess';
 
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
+
+const LEDGER_COLUMNS = [
+  'Invoice #', 'Trip ID', 'Date', 'Rider', 'Pickup', 'Dropoff',
+  'Payer', 'Auth ID', 'Payer Charge', 'Passenger Copay', 'Status', 'Method',
+];
+
+function toDayKey(value: string | number | Date | null | undefined): string {
+  if (value == null || value === '') return '';
+  if (typeof value === 'string') {
+    const m = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  min?: string;
+  max?: string;
+}) {
+  return (
+    <label className="flex items-center gap-2 bg-white border border-line-2 rounded-xl pl-2.5 pr-2 h-9 shadow-2xs">
+      <span className="text-[10px] font-bold uppercase tracking-wide text-ink-4 shrink-0">{label}</span>
+      <input
+        type="date"
+        value={value}
+        min={min || undefined}
+        max={max || undefined}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* native fallback */ } }}
+        className="text-xs font-medium text-ink outline-none bg-transparent cursor-pointer min-w-[9.5rem] [color-scheme:light]"
+        aria-label={label}
+      />
+    </label>
+  );
+}
+
 export const Transactions = ({ role }: { role?: string | null }) => {
   const { trips, loading } = useTrips();
+  const { pricing } = usePricing();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<'transactions' | 'invoices'>('transactions');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [showRefundModal, setShowRefundModal] = useState<any>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
+  const startDate = fromParam && YMD.test(fromParam) ? fromParam : '';
+  const endDate = toParam && YMD.test(toParam) ? toParam : '';
+
+  const setDateRange = (from: string, to: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (from && YMD.test(from)) next.set('from', from);
+    else next.delete('from');
+    if (to && YMD.test(to)) next.set('to', to);
+    else next.delete('to');
+    setSearchParams(next, { replace: true });
+  };
+
+  const setStartDate = (value: string) => {
+    const from = YMD.test(value) ? value : '';
+    const to = from && endDate && from > endDate ? from : endDate;
+    setDateRange(from, to);
+  };
+
+  const setEndDate = (value: string) => {
+    const to = YMD.test(value) ? value : '';
+    const from = to && startDate && to < startDate ? to : startDate;
+    setDateRange(from, to);
+  };
 
   // Generate transactions based on trips
   const transactions = useMemo(() => {
     return (trips || []).map((t: any) => {
-      const copay = t.copay || 0;
-      const countyShare = t.costToCounty != null ? t.costToCounty : (t.cost || 0);
+      const copay = t.passengerCopay != null ? t.passengerCopay : (t.copay || 0);
+      const countyShare = t.fundingSourceCharge != null
+        ? t.fundingSourceCharge
+        : (t.costToCounty != null ? t.costToCounty : (t.cost || 0));
       return {
         id: `TXN-${t.id.split('-')[1] || t.id.slice(-4)}`,
         tripId: t.id,
@@ -36,21 +118,37 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         status: t.paymentStatus === 'charged' || t.paymentStatus === 'Paid' || t.paymentStatus === 'Approved' ? 'paid' : t.paymentStatus === 'refunded' ? 'refunded' : 'pending',
         method: t.paymentMethod || 'Insurance',
         fundingSource: t.fundingSource || t.paymentMethod || 'Self-Pay',
+        fundingSourceId: t.fundingSourceId,
         authId: t.authorizationId || t.authId || '',
+        miles: t.miles,
+        calculatedMiles: t.calculatedMiles,
+        actualMiles: t.actualMiles,
+        insideCounty: t.insideCounty,
+        billingClassId: t.billingClassId,
+        billingClassName: t.billingClassName,
+        driverName: t.driverName,
+        driver: t.driver,
+        pickup: t.pickup,
+        dropoff: t.dropoff,
+        paymentStatus: t.paymentStatus,
       };
     }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [trips]);
 
-  const filteredData = transactions.filter((t: any) => {
-    const matchesSearch = t.id.toLowerCase().includes(search.toLowerCase()) ||
-      t.tripId.toLowerCase().includes(search.toLowerCase()) ||
-      t.rider?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filter === 'all' ? true : t.status === filter;
-    const day = t.date ? new Date(t.date) : null;
-    const matchesStart = !startDate || (day && day >= new Date(startDate + 'T00:00:00'));
-    const matchesEnd = !endDate || (day && day <= new Date(endDate + 'T23:59:59'));
-    return matchesSearch && matchesStatus && matchesStart && matchesEnd;
-  });
+  const filteredData = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return transactions.filter((t: any) => {
+      const matchesSearch = !q ||
+        t.id.toLowerCase().includes(q) ||
+        t.tripId.toLowerCase().includes(q) ||
+        (t.rider?.name || '').toLowerCase().includes(q);
+      const matchesStatus = filter === 'all' ? true : t.status === filter;
+      const day = toDayKey(t.date);
+      const matchesStart = !startDate || (!!day && day >= startDate);
+      const matchesEnd = !endDate || (!!day && day <= endDate);
+      return matchesSearch && matchesStatus && matchesStart && matchesEnd;
+    });
+  }, [transactions, search, filter, startDate, endDate]);
 
   // Calculate totals
   const totalRevenue = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.amount, 0);
@@ -76,32 +174,58 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     return Object.values(m).sort((a: any, b: any) => b.billed - a.billed);
   }, [filteredData]);
 
-  const downloadCSV = (filename: string, lines: string[]) => {
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const downloadCSV = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
-    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
-  const rowsToCsv = (rows: any[]) => {
-    const headers = ['Invoice #', 'Trip ID', 'Date', 'Rider', 'Funding Source', 'Auth ID', 'County Cost', 'Customer Fare', 'Cost to County', 'Status', 'Method'];
-    const body = rows.map((t: any) => [
-      t.id, t.tripId,
-      new Date(t.date).toLocaleDateString(),
-      `"${t.rider?.name || 'Unknown'}"`,
-      `"${t.fundingSource}"`,
-      `"${t.authId || 'N/A'}"`,
-      (t.amount || 0).toFixed(2),
-      (t.copay || 0).toFixed(2),
-      (t.countyShare || 0).toFixed(2),
-      t.status, `"${t.method}"`,
-    ].join(','));
-    return [headers.join(','), ...body];
+  const cellForColumn = (col: string, t: any): string => {
+    switch (col) {
+      case 'Trip ID': return t.tripId;
+      case 'Date': return new Date(t.date).toLocaleDateString();
+      case 'Rider': return `"${t.rider?.name || 'Unknown'}"`;
+      case 'Miles': return String(t.miles ?? '');
+      case 'Calculated Miles': return String(t.calculatedMiles ?? t.miles ?? '');
+      case 'Actual Miles': return String(t.actualMiles ?? '');
+      case 'Inside/Outside': return t.insideCounty === false ? 'Outside' : 'Inside';
+      case 'Billing Class': return t.billingClassName || t.billingClassId || '';
+      case 'Driver': return `"${t.driverName || t.driver?.name || ''}"`;
+      case 'Pickup': return `"${t.pickup || ''}"`;
+      case 'Dropoff': return `"${t.dropoff || ''}"`;
+      case 'Route': return `"${t.pickup || ''} → ${t.dropoff || ''}"`;
+      case 'Passenger Copay': return (t.copay || 0).toFixed(2);
+      case 'Payer Charge':
+      case 'Funding Source Charge': return (t.countyShare || 0).toFixed(2);
+      case 'Auth ID': return `"${t.authId || 'N/A'}"`;
+      case 'Status': return t.status;
+      default: return '';
+    }
+  };
+
+  const rowsToCsv = (rows: any[], sourceName?: string) => {
+    const policy = sourceName
+      ? findFundingPolicy(sourceName, pricing)
+      : null;
+    const headers = policy?.reportColumns?.length
+      ? policy.reportColumns
+      : LEDGER_COLUMNS;
+
+    const body = rows.map((t: any) =>
+      headers.map(h => {
+        if (h === 'Invoice #') return t.id;
+        if (h === 'Payer' || h === 'Funding Source') return `"${t.fundingSource || ''}"`;
+        if (h === 'Method') return `"${t.method || ''}"`;
+        return cellForColumn(h, t) || '';
+      }).join(',')
+    );
+    return [headers.join(','), ...body].join('\n');
   };
 
   const generateInvoice = (source: string) => {
@@ -115,17 +239,27 @@ export const Transactions = ({ role }: { role?: string | null }) => {
       `Invoice — ${source}`,
       `Generated,${today}`,
       `Trips,${rows.length}`,
+      `Note,Passenger Copay and Payer Charge are separate streams`,
       '',
-      ...rowsToCsv(rows),
+      rowsToCsv(rows, source),
       '',
-      `TOTALS,,,,,,${billed.toFixed(2)},${copay.toFixed(2)},${county.toFixed(2)}`,
-    ];
+      `TOTALS — Payer Charge,${county.toFixed(2)}`,
+      `TOTALS — Passenger Copay,${copay.toFixed(2)}`,
+      `TOTALS — Payer Charge (invoice),${billed.toFixed(2)}`,
+    ].join('\n');
     downloadCSV(`Invoice_${source.replace(/[^a-z0-9]+/gi, '-')}_${today}.csv`, lines);
   };
 
   const exportLedger = () => {
-    if (filteredData.length === 0) return;
-    downloadCSV(`LOGISS_Finance_Ledger_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv(filteredData));
+    if (filteredData.length === 0) {
+      toast.error('No transactions in this date range to export.');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const range = startDate || endDate
+      ? `${startDate || 'start'}_to_${endDate || 'end'}`
+      : today;
+    downloadCSV(`LOGISS_Finance_Ledger_${range}.csv`, rowsToCsv(filteredData));
   };
 
   const handleRefund = () => {
@@ -157,31 +291,15 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           </p>
         </div>
 
-        <Can role={role} perm="finance.export">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-white border border-line-2 rounded-xl px-2.5 py-1.5 shadow-2xs">
-              <Calendar size={14} className="text-ink-4" />
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="text-xs font-medium text-ink outline-none bg-transparent cursor-pointer"
-                title="Start date"
-              />
-              <span className="text-xs text-ink-4">to</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="text-xs font-medium text-ink outline-none bg-transparent cursor-pointer"
-                title="End date"
-              />
-            </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateField label="From" value={startDate} onChange={setStartDate} max={endDate} />
+          <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} />
+          <Can role={role} perm="finance.export">
             <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>
               Export CSV
             </Button>
-          </div>
-        </Can>
+          </Can>
+        </div>
       </div>
 
       {/* Sub-View Switcher */}
@@ -213,9 +331,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         </button>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          VIEW 1: TRANSACTIONS & GENERAL LEDGER
-      ───────────────────────────────────────────────────────────── */}
+      {/* VIEW 1: TRANSACTIONS & GENERAL LEDGER */}
       {view === 'transactions' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Top 3 KPI StatCards */}
@@ -252,13 +368,14 @@ export const Transactions = ({ role }: { role?: string | null }) => {
             setFilter={setFilter}
             filteredData={filteredData}
             onRefundClick={(item: any) => setShowRefundModal(item)}
+            onExportClick={(item: any) => {
+              downloadCSV(`LOGISS_${item.id}_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv([item]));
+            }}
           />
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────
-          VIEW 2: PAYER INVOICES & SETTLEMENTS
-      ───────────────────────────────────────────────────────────── */}
+      {/* VIEW 2: PAYER INVOICES & SETTLEMENTS */}
       {view === 'invoices' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Funding Stream Breakdown */}
@@ -272,7 +389,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           <div className="bg-white border border-line-2 rounded-2xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
               <div>
-                <h3 className="text-sm font-bold text-ink">Invoices by Funding Source</h3>
+                <h3 className="text-sm font-bold text-ink">Invoices by Payer</h3>
                 <p className="text-xs text-ink-4 mt-0.5">Generate and download itemized billing statement per payer</p>
               </div>
               <span className="text-xs font-semibold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
@@ -284,11 +401,11 @@ export const Transactions = ({ role }: { role?: string | null }) => {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-bg/40 border-b border-line-2">
                   <tr>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3">Funding Source</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3">Payer</th>
                     <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Trips</th>
                     <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Total Billed</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Rider Copay</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">County Share</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Passenger Copay</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Payer Charge</th>
                     <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Paid</th>
                     <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Pending</th>
                     <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Action</th>

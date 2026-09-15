@@ -7,7 +7,7 @@ import {
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, money } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
-import { FUNDING_SOURCES } from '@/data/mockData';
+import { usePricing } from '@/hooks/usePricing';
 import { DriverAssignSelect } from './DriverAssignSelect';
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
@@ -83,6 +83,8 @@ interface BookingsListProps {
   setBookingSearch: (val: string) => void;
   fundingFilter: string;
   setFundingFilter: (val: string) => void;
+  countyFilter: string;
+  setCountyFilter: (val: string) => void;
   filteredTrips: any[];
   paginatedBookings: any[];
   selectedTrips: string[];
@@ -110,11 +112,15 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
+  countyFilter, setCountyFilter,
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
-  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
+  setSelectedTrips, handleBulkAction, updateTrip,   onEditTrip, onRowSelect, selectedMapId
 }) => {
+  const { pricing } = usePricing();
+  const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
+
   return (
     <div className="flex flex-col gap-4 flex-1 min-h-0">
       <div className="flex items-center gap-1 border-b border-line-2 shrink-0">
@@ -145,14 +151,29 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <DollarSign size={12} className="text-ink-4" />
-          <span className="text-xs text-ink-4">Funding</span>
+          <span className="text-xs text-ink-4">Payer</span>
           <select
             value={fundingFilter}
             onChange={e => setFundingFilter(e.target.value)}
             className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
           >
-            <option value="all">All Sources</option>
-            {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
+            <option value="all">All Payers</option>
+            {fundingOptions.map(fs => <option key={fs.id} value={fs.name}>{fs.name}</option>)}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin size={12} className="text-ink-4" />
+          <span className="text-xs text-ink-4">County</span>
+          <select
+            value={countyFilter}
+            onChange={e => setCountyFilter(e.target.value)}
+            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+          >
+            <option value="all">All Counties</option>
+            <option value="Richmond City">Richmond City</option>
+            <option value="Chesterfield County">Chesterfield County</option>
+            <option value="Henrico County">Henrico County</option>
+            <option value="Hanover County">Hanover County</option>
           </select>
         </div>
       </div>
@@ -240,7 +261,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Dispatch Time</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Funding</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge (est.)</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
@@ -505,10 +526,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Charge (estimated) */}
                       <td className="px-3 py-2.5 text-right">
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-xs font-medium text-ink">{money(booking.cost || 0)}</span>
+                          <span className="text-xs font-medium text-primary">{money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
                           <div className="flex items-center gap-1.5 opacity-80">
-                            <span className="text-xs text-ink-4">Cust: {money(booking.copay || 0)}</span>
-                            <span className="text-xs text-ink-4">Cty: {money(booking.costToCounty != null ? booking.costToCounty : booking.cost || 0)}</span>
+                            <span className="text-xs text-ink-4">Copay: {money(booking.passengerCopay ?? booking.copay ?? 0)}</span>
+                            <span className="text-xs text-ink-4">Payer: {money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
                           </div>
                         </div>
                       </td>

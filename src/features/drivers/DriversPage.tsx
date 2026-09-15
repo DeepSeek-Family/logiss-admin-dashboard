@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { UserPlus, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { UserPlus, AlertTriangle, Car, X, Check } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useTrips } from '@/hooks/useTrips';
@@ -12,14 +13,20 @@ import {
 } from '@/features/drivers';
 
 const Drivers = ({ role }: { role?: string | null }) => {
+  const navigate = useNavigate();
   const { drivers, loading, error, addDriver } = useDrivers();
   const { trips } = useTrips();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignSuccess, setAssignSuccess] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Track which vehicle was assigned per driver
+  const [assignedVehicles, setAssignedVehicles] = useState<Record<string, any>>({});
 
   if (loading) {
     return (
@@ -74,14 +81,90 @@ const Drivers = ({ role }: { role?: string | null }) => {
     return <Badge variant={variant} className="w-fit">{label}</Badge>;
   };
 
+  // Mock vehicles for assign modal
+  const mockVehicles = [
+    { id: 'V001', name: 'Ford Transit', type: 'Ambulatory Van', plate: 'VA-4KL-8392' },
+    { id: 'V002', name: 'Toyota Sienna', type: 'Wheelchair Van', plate: 'VA-2MX-5510' },
+    { id: 'V003', name: 'Honda Odyssey', type: 'Standard', plate: 'VA-9TQ-1147' },
+  ];
+
   if (selectedDriver) {
     return (
-      <DriverProfile
-        selectedDriver={selectedDriver}
-        setSelectedDriverId={setSelectedDriverId}
-        role={role}
-        trips={trips}
-      />
+      <>
+        {/* Assign Vehicle Modal */}
+        {showAssignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl border border-line-2 shadow-xl w-full max-w-sm mx-4 p-6 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Car size={18} className="text-primary" />
+                  <h3 className="text-base font-bold text-ink">Assign Vehicle</h3>
+                </div>
+                <button onClick={() => { setShowAssignModal(false); setSelectedVehicleId(null); }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 hover:bg-bg transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="text-xs text-ink-4 mb-4">Select a vehicle to assign to <span className="font-semibold text-ink">{selectedDriver.name}</span></p>
+              <div className="space-y-2 mb-5">
+                {mockVehicles.map(v => (
+                  <button key={v.id} onClick={() => setSelectedVehicleId(v.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                      selectedVehicleId === v.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-line-2 hover:border-primary/30 hover:bg-bg'
+                    }`}>
+                    <div className="w-8 h-8 rounded-lg bg-bg border border-line-2 flex items-center justify-center shrink-0">
+                      <Car size={14} className="text-ink-3" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-ink">{v.name}</p>
+                      <p className="text-xs text-ink-4">{v.type} · {v.plate}</p>
+                    </div>
+                    {selectedVehicleId === v.id && <Check size={15} className="text-primary shrink-0" />}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-9 text-sm"
+                  onClick={() => { setShowAssignModal(false); setSelectedVehicleId(null); }}>
+                  Cancel
+                </Button>
+                <Button variant="primary" className="flex-1 h-9 text-sm"
+                  onClick={() => {
+                    const vehicle = mockVehicles.find(v => v.id === selectedVehicleId);
+                    if (vehicle && selectedDriver) {
+                      setAssignedVehicles(prev => ({ ...prev, [selectedDriver.id]: vehicle }));
+                    }
+                    setShowAssignModal(false);
+                    setAssignSuccess(true);
+                    setTimeout(() => setAssignSuccess(false), 3000);
+                  }}
+                  disabled={!selectedVehicleId}>
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success toast */}
+        {assignSuccess && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+            <Check size={15} /> Vehicle assigned successfully
+          </div>
+        )}
+
+        <DriverProfile
+          selectedDriver={selectedDriver}
+          setSelectedDriverId={setSelectedDriverId}
+          role={role}
+          trips={trips}
+          onAssignVehicle={() => { setShowAssignModal(true); setSelectedVehicleId(null); }}
+          onViewFleet={() => navigate('/fleet')}
+          assignedVehicle={assignedVehicles[selectedDriver.id] || null}
+        />
+      </>
     );
   }
 

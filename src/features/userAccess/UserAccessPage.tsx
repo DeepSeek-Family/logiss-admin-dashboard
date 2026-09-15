@@ -41,7 +41,7 @@ const UserAccess = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="type-page-title">User Management</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage Admin, Dispatch (permission-based) &amp; Facility User access</p>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage Admin, Driver &amp; Customer access</p>
         </div>
         <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>Invite User</Button>
       </div>

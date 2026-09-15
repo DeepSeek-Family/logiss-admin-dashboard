@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, MapPin, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { CountyConfig } from '@/hooks/usePricing';
-import toast from 'react-hot-toast';
+import { resolveFenceLists, parsePolygon, seedFencePolygon } from '@/utils/geofenceEngine';
+import { GeofenceDrawMap } from './GeofenceDrawMap';
 
 interface CountyModalProps {
   isOpen: boolean;
@@ -11,25 +12,40 @@ interface CountyModalProps {
   onSave: (data: Omit<CountyConfig, 'id'>) => void;
 }
 
+function parseZip(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 5) return digits;
+  if (digits.length === 9) return digits.slice(0, 5);
+  return null;
+}
+
 export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProps) => {
   const [form, setForm] = useState({
     name: '',
     state: 'VA',
     localFare: 10,
     status: 'active' as 'active' | 'inactive',
-    notes: '',
+    zipCodes: [] as string[],
+    cities: [] as string[],
+    polygon: [] as [number, number][],
   });
-
+  const [zipDraft, setZipDraft] = useState('');
+  const [cityDraft, setCityDraft] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (county) {
+      const lists = resolveFenceLists(county);
       setForm({
         name: county.name || '',
         state: county.state || 'VA',
         localFare: county.localFare != null ? county.localFare : 10,
         status: county.status || 'active',
-        notes: county.notes || '',
+        zipCodes: [...lists.zipCodes],
+        cities: [...lists.cities],
+        polygon: Array.isArray(county.polygon)
+          ? parsePolygon(county.polygon)
+          : seedFencePolygon(county.id, county.name),
       });
     } else {
       setForm({
@@ -37,57 +53,100 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
         state: 'VA',
         localFare: 10,
         status: 'active',
-        notes: '',
+        zipCodes: [],
+        cities: [],
+        polygon: [],
       });
     }
+    setZipDraft('');
+    setCityDraft('');
     setErrors({});
   }, [county, isOpen]);
 
   if (!isOpen) return null;
+
+  const addZip = () => {
+    const zip = parseZip(zipDraft);
+    if (!zip) {
+      setErrors(prev => ({ ...prev, zip: 'Enter a 5-digit ZIP' }));
+      return;
+    }
+    if (form.zipCodes.includes(zip)) {
+      setZipDraft('');
+      setErrors(prev => ({ ...prev, zip: '' }));
+      return;
+    }
+    setForm({ ...form, zipCodes: [...form.zipCodes, zip] });
+    setZipDraft('');
+    setErrors(prev => ({ ...prev, zip: '' }));
+  };
+
+  const addCity = () => {
+    const city = cityDraft.trim();
+    if (!city) {
+      setErrors(prev => ({ ...prev, city: 'Enter a city or town' }));
+      return;
+    }
+    if (form.cities.some(c => c.toLowerCase() === city.toLowerCase())) {
+      setCityDraft('');
+      setErrors(prev => ({ ...prev, city: '' }));
+      return;
+    }
+    setForm({ ...form, cities: [...form.cities, city] });
+    setCityDraft('');
+    setErrors(prev => ({ ...prev, city: '' }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
 
     if (!form.name.trim()) {
-      newErrors.name = 'County name is required';
+      newErrors.name = 'Area name is required';
     }
-    if (form.localFare < 0) {
-      newErrors.localFare = 'Local base fare cannot be negative';
-    }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    const zipCodes = form.zipCodes.map(z => parseZip(z) || z.trim()).filter(Boolean);
+    const uniqueZips = [...new Set(zipCodes)];
+    const seenCities = new Set<string>();
+    const cities: string[] = [];
+    for (const raw of form.cities) {
+      const city = raw.trim();
+      if (!city) continue;
+      const key = city.toLowerCase();
+      if (seenCities.has(key)) continue;
+      seenCities.add(key);
+      cities.push(city);
+    }
+
     onSave({
       name: form.name.trim(),
       state: form.state.trim().toUpperCase(),
-      localFare: Number(form.localFare),
+      localFare: Number(form.localFare) || 0,
       status: form.status,
-      notes: form.notes.trim(),
+      notes: county?.notes || '',
+      zipCodes: uniqueZips,
+      cities,
+      polygon: parsePolygon(form.polygon),
     });
-
-    toast.success(county ? 'County updated successfully' : 'County added successfully');
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-line-2">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/50">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-line-2">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/50 sticky top-0 z-10">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <MapPin size={18} />
             </div>
-            <div>
-              <h2 className="type-section-title">{county ? 'Edit Service County' : 'Add New Service County'}</h2>
-              <p className="text-xs text-ink-3">Configure regional territory and base local fare rate</p>
-            </div>
+            <h2 className="type-section-title">{county ? 'Edit service area' : 'Add service area'}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 text-ink-4 hover:text-ink hover:bg-bg rounded-lg transition-colors"
           >
@@ -95,13 +154,10 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className="type-label block text-ink-3 mb-1.5">
-                County / City Name *
-              </label>
+              <label className="type-label block text-ink-3 mb-1.5">Area name *</label>
               <input
                 type="text"
                 value={form.name}
@@ -109,8 +165,8 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                   setForm({ ...form, name: e.target.value });
                   if (errors.name) setErrors({ ...errors, name: '' });
                 }}
-                placeholder="e.g. Chesterfield County"
-                className={`input-base w-full ${errors.name ? 'border-urgent focus:ring-urgent/20' : ''}`}
+                placeholder="Chesterfield County"
+                className={`input-base h-10 w-full ${errors.name ? 'border-urgent focus:ring-urgent/20' : ''}`}
               />
               {errors.name && (
                 <p className="text-xs text-urgent mt-1 flex items-center gap-1">
@@ -118,108 +174,138 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                 </p>
               )}
             </div>
-
             <div>
-              <label className="type-label block text-ink-3 mb-1.5">
-                State
-              </label>
+              <label className="type-label block text-ink-3 mb-1.5">State</label>
               <input
                 type="text"
                 value={form.state}
                 onChange={(e) => setForm({ ...form, state: e.target.value })}
                 placeholder="VA"
                 maxLength={3}
-                className="input-base w-full uppercase"
+                className="input-base h-10 w-full uppercase"
               />
             </div>
           </div>
 
-          {/* Local Base Rate */}
-          <div className="p-4 rounded-xl bg-bg/60 border border-line-2 space-y-2">
-            <label className="text-xs font-medium text-ink block">
-              Local County Base Fare ($) *
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-2 text-ink-4 text-xs font-semibold">$</span>
-              <input
-                type="number"
-                step="0.50"
-                min="0"
-                value={form.localFare}
-                onChange={(e) => setForm({ ...form, localFare: parseFloat(e.target.value) || 0 })}
-                className="input-base w-full pl-7 font-semibold text-ink"
-              />
-            </div>
-            <p className="text-xs text-ink-4">
-              Standard local transit copay for trips originating within this county.
-            </p>
-          </div>
+          <GeofenceDrawMap
+            key={county?.id || 'new'}
+            polygon={form.polygon}
+            onChange={poly => setForm(f => ({ ...f, polygon: poly }))}
+          />
 
-          {/* GPS Geocode & Boundary Polygon Upload */}
-          <div className="p-3.5 rounded-xl border border-line-2 bg-bg/40 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="type-label text-ink-3">
-                GPS Geocodes / Boundary File (ZIP, GeoJSON, KML)
-              </label>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-accent-light text-accent font-semibold">
-                GPS Active
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-line-2">
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  <MapPin size={16} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="type-label block text-ink-3 mb-1.5">ZIP codes</label>
+              {form.zipCodes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto mb-2">
+                  {form.zipCodes.map(zip => (
+                    <span
+                      key={zip}
+                      className="inline-flex items-center gap-0.5 h-7 pl-2 pr-0.5 rounded-lg bg-bg border border-line-2 text-xs font-medium text-ink"
+                    >
+                      {zip}
+                      <button
+                        type="button"
+                        aria-label={`Remove ZIP ${zip}`}
+                        onClick={() =>
+                          setForm({ ...form, zipCodes: form.zipCodes.filter(z => z !== zip) })
+                        }
+                        className="p-0.5 text-ink-4 hover:text-urgent rounded"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-ink truncate">
-                    {form.name ? `${form.name.toLowerCase().replace(/\s+/g, '_')}_geocodes.geojson` : 'chesterfield_geocodes.geojson'}
-                  </p>
-                  <p className="text-xs text-ink-4">1,480 GPS Polygon vertices loaded</p>
-                </div>
-              </div>
-
-              <label className="cursor-pointer px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors border border-primary/20 shrink-0">
-                Upload File
+              )}
+              <div className="flex gap-1.5">
                 <input
-                  type="file"
-                  accept=".geojson,.json,.kml,.zip"
-                  className="hidden"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
+                  value={zipDraft}
                   onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      toast.success(`Geocode file "${e.target.files[0].name}" loaded successfully!`);
+                    setZipDraft(e.target.value.replace(/\D/g, '').slice(0, 5));
+                    if (errors.zip) setErrors({ ...errors, zip: '' });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addZip();
                     }
                   }}
+                  placeholder="5-digit ZIP"
+                  className={`input-base h-10 w-full ${errors.zip ? 'border-urgent focus:ring-urgent/20' : ''}`}
                 />
-              </label>
+                <Button type="button" variant="outline" onClick={addZip} className="h-10 shrink-0 rounded-xl px-3 text-sm">
+                  <Plus size={16} /> Add
+                </Button>
+              </div>
+              {errors.zip && (
+                <p className="text-xs text-urgent mt-1 flex items-center gap-1">
+                  <AlertCircle size={12} /> {errors.zip}
+                </p>
+              )}
             </div>
-            <p className="text-xs text-ink-4">
-              Point-in-polygon engine automatically detects whether trips fall inside this boundary.
-            </p>
-          </div>
 
-          {/* Notes */}
-          <div>
-            <label className="type-label block text-ink-3 mb-1.5">
-              Internal Notes
-            </label>
-            <input
-              type="text"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Optional region note..."
-              className="input-base w-full"
-            />
-          </div>
-
-          {/* Status Switch Toggle */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl border border-line-2 bg-bg/40">
             <div>
-              <p className="text-xs font-semibold text-ink">Service Status</p>
-              <p className="text-xs text-ink-4">
-                {form.status === 'active' ? 'Active (In Service & dispatchable)' : 'Inactive (Suspended coverage)'}
-              </p>
+              <label className="type-label block text-ink-3 mb-1.5">Cities</label>
+              {form.cities.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto mb-2">
+                  {form.cities.map(city => (
+                    <span
+                      key={city}
+                      className="inline-flex items-center gap-0.5 h-7 pl-2 pr-0.5 rounded-lg bg-bg border border-line-2 text-xs font-medium text-ink"
+                    >
+                      {city}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${city}`}
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            cities: form.cities.filter(c => c.toLowerCase() !== city.toLowerCase()),
+                          })
+                        }
+                        className="p-0.5 text-ink-4 hover:text-urgent rounded"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={cityDraft}
+                  onChange={(e) => {
+                    setCityDraft(e.target.value);
+                    if (errors.city) setErrors({ ...errors, city: '' });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCity();
+                    }
+                  }}
+                  placeholder="City or town"
+                  className={`input-base h-10 w-full ${errors.city ? 'border-urgent focus:ring-urgent/20' : ''}`}
+                />
+                <Button type="button" variant="outline" onClick={addCity} className="h-10 shrink-0 rounded-xl px-3 text-sm">
+                  <Plus size={16} /> Add
+                </Button>
+              </div>
+              {errors.city && (
+                <p className="text-xs text-urgent mt-1 flex items-center gap-1">
+                  <AlertCircle size={12} /> {errors.city}
+                </p>
+              )}
             </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-ink">Active</p>
             <button
               type="button"
               role="switch"
@@ -237,14 +323,24 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             </button>
           </div>
 
-          {/* Footer Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-line-2">
-            <Button variant="ghost" type="button" onClick={onClose}>
+            <Button
+              variant="outline"
+              size="md"
+              type="button"
+              onClick={onClose}
+              className="h-10 min-w-[7rem] rounded-xl px-4 text-sm"
+            >
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
-              <CheckCircle2 size={16} className="mr-1.5" />
-              {county ? 'Save Changes' : 'Add County'}
+            <Button
+              variant="primary"
+              size="md"
+              type="submit"
+              className="h-10 min-w-[7.5rem] rounded-xl px-4 text-sm"
+            >
+              <CheckCircle2 size={16} />
+              {county ? 'Save' : 'Add area'}
             </Button>
           </div>
         </form>

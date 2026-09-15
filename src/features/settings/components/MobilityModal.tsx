@@ -170,7 +170,7 @@ export const MobilityModal = ({ isOpen, mobility, onClose, onSave }: MobilityMod
                   step="1.00"
                   min="0"
                   value={form.fee}
-                  onChange={(e) => setForm({ ...form, fee: parseFloat(e.target.value) || 0 })}
+                  onChange={e => setForm({ ...form, fee: parseFloat(e.target.value) || 0 })}
                   className="input-base w-full pl-7 font-bold text-ink"
                 />
               </div>

@@ -1,11 +1,10 @@
 import { AlertOctagon, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { Badge } from '@/shared/components/ui';
 import { timeAgo } from '@/utils/helpers';
 
 export const SEVERITY = {
-  high: { icon: AlertOctagon, iconClass: 'text-urgent', badge: 'urgent', bg: 'bg-urgent-light', label: 'High' },
-  medium: { icon: AlertTriangle, iconClass: 'text-warning', badge: 'warning', bg: 'bg-warning-light', label: 'Medium' },
-  low: { icon: ShieldAlert, iconClass: 'text-ink-4', badge: 'neutral', bg: 'bg-bg', label: 'Low' },
+  high:   { icon: AlertOctagon,  iconClass: 'text-urgent',  dot: 'bg-urgent',  label: 'High'   },
+  medium: { icon: AlertTriangle, iconClass: 'text-warning', dot: 'bg-warning', label: 'Medium' },
+  low:    { icon: ShieldAlert,   iconClass: 'text-accent',  dot: 'bg-accent',  label: 'Low'    },
 };
 
 interface ReportCardProps {
@@ -16,26 +15,25 @@ interface ReportCardProps {
 
 export const ReportCard = ({ report, selected, onClick }: ReportCardProps) => {
   const sev = SEVERITY[report.severity as keyof typeof SEVERITY] || SEVERITY.low;
-  const SevIcon = sev.icon;
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-        selected
-          ? 'border-primary/40 bg-primary/5 shadow-sm'
-          : 'border-line-2 bg-white hover:border-line hover:bg-bg/40'
+      className={`w-full text-left px-4 py-3.5 border-b border-line-2 transition-colors relative ${
+        selected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-bg/60 border-l-2 border-l-transparent'
       }`}
     >
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-ink line-clamp-1 flex-1 mr-2">{report.type}</p>
-        <Badge variant={sev.badge} className="text-xs px-1.5 py-0 shrink-0">{sev.label}</Badge>
-      </div>
-      <div className="flex items-center justify-between mt-1">
-        <div className="flex items-center gap-1">
-          <SevIcon size={11} className={sev.iconClass} />
-          <span className="text-xs text-ink-4">{report.id}</span>
+      {/* Severity dot + title + priority */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${sev.dot}`} />
+          <p className="text-sm font-medium text-ink truncate">{report.type}</p>
         </div>
+        <span className={`text-xs font-semibold shrink-0 ${sev.iconClass}`}>{sev.label}</span>
+      </div>
+      {/* ID + time */}
+      <div className="flex items-center justify-between mt-1 pl-4">
+        <span className="text-xs text-ink-4">{report.id}</span>
         <span className="text-xs text-ink-4">{timeAgo(report?.submitted)}</span>
       </div>
     </button>

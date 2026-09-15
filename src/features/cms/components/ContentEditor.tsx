@@ -2,11 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold,
   Italic,
-  Underline,
   Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
   List,
   ListOrdered,
   Quote,
@@ -15,15 +11,11 @@ import {
   Minus,
   Undo,
   Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Eye,
-  Edit3,
-  Sparkles,
   CheckCircle2,
   HelpCircle,
   Loader2,
+  Eye,
+  Edit3,
 } from 'lucide-react';
 import { Badge } from '@/shared/components/ui';
 import { useGetRuleByTypeQuery, RuleType } from '@/redux/api/rulesApi';
@@ -178,7 +170,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
       <div className="bg-white rounded-2xl border border-line-2 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
         {/* Rich Formatting Toolbar */}
         <div className="bg-bg/60 border-b border-line-2 px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
-          {/* Left formatting buttons */}
           <div className="flex items-center gap-1 flex-wrap">
             {/* History */}
             <div className="flex items-center gap-0.5 pr-1.5 border-r border-line-2">
@@ -351,7 +342,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
           </div>
         </div>
 
-        {/* Editor Body */}
         <div className="relative">
           {isLoading || isFetching ? (
             <div className="flex flex-col items-center justify-center h-[460px] text-ink-3 gap-3 bg-bg/10">

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Lock, Bell, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
 
 import {
   SecurityTab,
@@ -9,12 +8,13 @@ import {
 
 const Settings = () => {
   const [tab, setTab] = useState('security');
-  const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSavePreferences = () => {
+    setToast(true);
+    setTimeout(() => setToast(false), 3000);
   };
+
 
   const TABS = [
     { id: 'security', label: 'Security & Privacy', icon: Lock },
@@ -29,9 +29,6 @@ const Settings = () => {
           <h1 className="type-page-title">System Settings</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-normal">Security, coverage, and pricing preferences</p>
         </div>
-        <Button variant="primary" onClick={handleSave}>
-          {saved ? <><CheckCircle2 size={14} className="inline mr-1.5" />Saved</> : 'Save Changes'}
-        </Button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -53,11 +50,18 @@ const Settings = () => {
 
         {/* Content */}
         <div className="flex-1 min-w-0 w-full">
+          {/* Toast */}
+          {toast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300 text-sm font-medium">
+              <CheckCircle2 size={15} /> Settings saved successfully
+            </div>
+          )}
+
           {/* ── SECURITY ─────────────────────────────── */}
           {tab === 'security' && <SecurityTab />}
 
           {/* ── NOTIFICATIONS ────────────────────────── */}
-          {tab === 'notifications' && <NotificationsTab onSave={handleSave} />}
+          {tab === 'notifications' && <NotificationsTab onSave={handleSavePreferences} />}
         </div>
       </div>
     </div>

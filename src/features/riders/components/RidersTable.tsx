@@ -75,7 +75,7 @@ export const RidersTable = ({
         <table className="w-full text-left">
           <thead className="bg-bg/10 border-b border-line-2/50">
             <tr>
-              {['Rider', 'IDs', 'County / Source', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
+              {['Rider', 'IDs', 'County / Payer', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>

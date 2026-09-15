@@ -3,21 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, User as UserIcon, Navigation, Clock,
   ShieldCheck, Car, Plus, Minus, Search, X,
-  AlertCircle, Info, Phone, ArrowRight, Repeat,
+  Info, ArrowRight, Repeat,
   Accessibility, Bed, User, Disc, Zap, FileText,
-  DollarSign, Activity, MapPin, Users, Mail, Tag, Building2, Stethoscope, Lock, HeartPulse
+  DollarSign, Activity, Mail, Tag, Lock, HeartPulse
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { money } from '@/utils/helpers';
-import { FUNDING_SOURCES, riders } from '@/data/mockData';
+import { riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
 import { tripService } from '@/services/tripService';
-import { quoteFares, inferInsideCounty, usePricing, DEFAULT_COUNTIES, DEFAULT_MOBILITY_TYPES, evaluateTripBoundary, detectCountyFromAddress } from '@/hooks/usePricing';
+import {
+  quoteFares,
+  usePricing,
+  DEFAULT_COUNTIES,
+  DEFAULT_MOBILITY_TYPES,
+  evaluateTripBoundary,
+  detectCountyFromAddress,
+  findFundingPolicy,
+} from '@/hooks/usePricing';
+import { geocodeAddress } from '@/utils/geofenceEngine';
 
-export const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
-export const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
+const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
+const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
 
 const MOBILITY_ICON_MAP: { [key: string]: any } = {
   User,
@@ -66,6 +75,7 @@ export const BookingForm = () => {
     email: '',
     authId: '',
     passengerId: '',
+    fundingSourceId: '',
     fundingSource: '',
     program: '',
     source: '',
@@ -88,9 +98,18 @@ export const BookingForm = () => {
     grossFare: 0,
     countyContribution: 0,
     manualFareOverride: false,
+    overrideReason: '',
     advancePaid: 0,
-    estMiles: 10
+    estMiles: 10,
+    actualMiles: 0,
   });
+  const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
+
+  const fundingPolicies = (pricing.fundingPolicies || []).filter(p => p.active);
+  const selectedPolicy =
+    findFundingPolicy(form.fundingSourceId || form.fundingSource, pricing) ||
+    fundingPolicies[0] ||
+    null;
 
   const filteredRiders = existingSearch.trim() === ''
     ? []
@@ -115,6 +134,7 @@ export const BookingForm = () => {
       passengerId: rider.passengerId || '',
       authId: rider.authorizationId || '',
       fundingSource: rider.fundingSource || '',
+      fundingSourceId: findFundingPolicy(rider.fundingSource, pricing)?.id || '',
       source: rider.source || '',
       program: rider.program || '',
       mobility: rider.mobility || '',
@@ -131,11 +151,29 @@ export const BookingForm = () => {
     insideCounty: form.insideCounty,
     tripType: form.tripType,
     miles: form.estMiles,
+    calculatedMiles: form.estMiles,
+    actualMiles: form.actualMiles || undefined,
     mobility: form.mobility,
     stops: form.stops,
+    fundingSourceId: form.fundingSourceId || selectedPolicy?.id,
+    fundingSource: form.fundingSource || selectedPolicy?.name,
+    pickup: form.pickup,
+    dropoff: form.dropoff,
+    tripDate: selectedDates[0] instanceof Date ? selectedDates[0].toISOString() : String(selectedDates[0] || ''),
   }, pricing);
 
-  const boundaryEval = evaluateTripBoundary(form.pickup, form.dropoff, form.county, availableCounties);
+  const boundaryEval = evaluateTripBoundary(
+    form.pickup,
+    form.dropoff,
+    form.county,
+    availableCounties,
+    selectedPolicy?.serviceAreaIds,
+    {
+      pickupGps: tripGps.pickup,
+      dropoffGps: tripGps.dropoff,
+      payerPolygons: selectedPolicy?.geofencePolygons,
+    }
+  );
 
   // Calculate the dates for repeating booking
   const getRecurringDates = () => {
@@ -165,9 +203,36 @@ export const BookingForm = () => {
   const recurringDates = isRecurring ? getRecurringDates() : [];
 
   useEffect(() => {
+    let alive = true;
+    (async () => {
+      const pickupGps = form.pickup.trim() ? await geocodeAddress(form.pickup) : null;
+      const dropoffGps = form.dropoff.trim() ? await geocodeAddress(form.dropoff) : null;
+      if (!alive) return;
+      setTripGps({
+        pickup: pickupGps || undefined,
+        dropoff: dropoffGps || undefined,
+      });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [form.pickup, form.dropoff]);
+
+  useEffect(() => {
     if (!form.pickup || !form.dropoff) return;
-    const detected = detectCountyFromAddress(form.pickup, availableCounties);
-    const evaluation = evaluateTripBoundary(form.pickup, form.dropoff, form.county || detected.countyName, availableCounties);
+    const detected = detectCountyFromAddress(form.pickup, availableCounties, tripGps.pickup);
+    const evaluation = evaluateTripBoundary(
+      form.pickup,
+      form.dropoff,
+      form.county || detected.countyName,
+      availableCounties,
+      selectedPolicy?.serviceAreaIds,
+      {
+        pickupGps: tripGps.pickup,
+        dropoffGps: tripGps.dropoff,
+        payerPolygons: selectedPolicy?.geofencePolygons,
+      }
+    );
     
     setForm(prev => {
       let updated = { ...prev };
@@ -179,12 +244,13 @@ export const BookingForm = () => {
       }
       return updated;
     });
-  }, [form.pickup, form.dropoff, form.county, availableCounties]);
+  }, [form.pickup, form.dropoff, form.county, availableCounties, selectedPolicy?.serviceAreaIds, selectedPolicy?.geofencePolygons, tripGps.pickup, tripGps.dropoff]);
 
   useEffect(() => {
     if (form.manualFareOverride) return;
-    setForm(prev => prev.grossFare === quote.cost ? prev : { ...prev, grossFare: quote.cost });
-  }, [quote.cost, form.manualFareOverride]);
+    const next = quote.fundingSourceCharge;
+    setForm(prev => prev.grossFare === next ? prev : { ...prev, grossFare: next });
+  }, [quote.fundingSourceCharge, form.manualFareOverride]);
 
   // Auto-select the day of the week of the first Service Date
   useEffect(() => {
@@ -206,9 +272,23 @@ export const BookingForm = () => {
     }
   }, [isRecurring, selectedDates]);
 
-  const customerFare = quote.copay;
-  const governmentFare = form.manualFareOverride ? form.grossFare : quote.cost;
+  // Seed payer if empty
+  useEffect(() => {
+    if (!form.fundingSourceId && fundingPolicies[0]) {
+      setForm(prev => ({
+        ...prev,
+        fundingSourceId: fundingPolicies[0].id,
+        fundingSource: fundingPolicies[0].name,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only seed once when policies exist
+  }, [form.fundingSourceId, pricing.fundingPolicies?.length]);
+
+  const customerFare = quote.passengerCopay;
+  const governmentFare = form.manualFareOverride ? form.grossFare : quote.fundingSourceCharge;
   const dueToDriver = Math.max(0, customerFare - form.advancePaid);
+  const perLegCharge = quote.legQuotes[0]?.fundingSourceCharge ?? governmentFare;
+  const perLegCopay = quote.legQuotes[0]?.passengerCopay ?? customerFare;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,6 +298,14 @@ export const BookingForm = () => {
     }
     if (!form.mobility) {
       toast.error('Please select mobility requirement');
+      return;
+    }
+    if (!form.fundingSourceId && !form.fundingSource) {
+      toast.error('Please select a payer');
+      return;
+    }
+    if (form.manualFareOverride && !form.overrideReason.trim()) {
+      toast.error('Override reason is required when manually changing the payer charge');
       return;
     }
     if (isRecurring && recurringDays.length === 0) {
@@ -238,15 +326,19 @@ export const BookingForm = () => {
       return;
     }
 
+    const isRoundTrip = form.tripType === 'round-trip';
+    const tripCount = (isRecurring ? recurringDates.length : selectedDates.length) * (isRoundTrip ? 2 : 1);
+
     const toastId = toast.loading(
       isRecurring 
-        ? `Scheduling ${recurringDates.length} recurring trips...` 
-        : `Dispatching ${selectedDates.length > 1 ? selectedDates.length + ' trips' : 'trip record'}...`
+        ? `Scheduling ${tripCount} trip legs...` 
+        : `Dispatching ${tripCount} billing record${tripCount > 1 ? 's' : ''}...`
     );
 
     const datesToSchedule = isRecurring ? recurringDates : selectedDates;
+    const nowIso = new Date().toISOString();
+    const policyName = selectedPolicy?.name || form.fundingSource || 'Self-Pay';
     
-    // Create and save each trip
     datesToSchedule.forEach((date) => {
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -268,44 +360,121 @@ export const BookingForm = () => {
       const name = `${form.firstName} ${form.lastName}`.trim();
       const initials = `${form.firstName.charAt(0) || ''}${form.lastName.charAt(0) || ''}`.toUpperCase();
 
-      const newTrip = {
-        id: `LOGISS-${Math.floor(1000 + Math.random() * 9000)}`,
-        rider: {
-          name,
-          initials: initials || '?',
-          phone: form.phone,
-          email: form.email,
-          passengerId: form.passengerId
+      const parentId = `LOGISS-${Math.floor(1000 + Math.random() * 9000)}`;
+      const returnId = isRoundTrip ? `LOGISS-${Math.floor(1000 + Math.random() * 9000)}` : undefined;
+
+      const baseAudit = [
+        {
+          id: `evt-${Date.now()}-created`,
+          at: nowIso,
+          by: 'Dispatcher Portal',
+          action: 'created',
+          summary: 'Trip submitted from booking console',
         },
-        status: selectedDriver ? 'assigned' : 'pending_review',
-        driverId: selectedDriver ? selectedDriver.id : undefined,
-        type: form.tripType === 'round-trip' ? 'round_trip' : 'one_way',
-        mobility: form.mobility,
-        pickup: form.pickup,
-        dropoff: form.dropoff,
-        stops: form.stops,
-        scheduledTime,
-        dropoffTime,
-        miles: form.estMiles,
-        cost: governmentFare,
-        copay: customerFare,
-        costToCounty: governmentFare,
-        fundingSource: form.fundingSource || 'Self-Pay',
-        insideCounty: form.insideCounty,
-        reason: form.tripReason,
-        authNotes: form.authNotes,
-        source: form.source || 'Chesterfield County',
-        program: form.program || 'General Medical'
+        ...(selectedDriver
+          ? [{
+              id: `evt-${Date.now()}-assign`,
+              at: nowIso,
+              by: 'Dispatcher Portal',
+              action: 'assigned',
+              summary: `Assigned to ${selectedDriver.name}`,
+            }]
+          : []),
+        ...(form.manualFareOverride
+          ? [{
+              id: `evt-${Date.now()}-override`,
+              at: nowIso,
+              by: 'Dispatcher Portal',
+              action: 'fare_override',
+              reason: form.overrideReason.trim(),
+              before: { fundingSourceCharge: quote.fundingSourceCharge / quote.legs, passengerCopay: perLegCopay },
+              after: {
+                fundingSourceCharge: isRoundTrip ? perLegCharge : governmentFare,
+                passengerCopay: perLegCopay,
+              },
+              summary: `Payer charge overridden: ${form.overrideReason.trim()}`,
+            }]
+          : []),
+      ];
+
+      const buildLeg = (legIndex: 1 | 2, id: string, linkedLegId?: string) => {
+        const outbound = legIndex === 1;
+        const legCopay = perLegCopay;
+        const legCharge = form.manualFareOverride && !isRoundTrip
+          ? governmentFare
+          : form.manualFareOverride && isRoundTrip
+            ? Number((governmentFare / 2).toFixed(2))
+            : perLegCharge;
+
+        return {
+          id,
+          rider: {
+            name,
+            initials: initials || '?',
+            phone: form.phone,
+            email: form.email,
+            passengerId: form.passengerId
+          },
+          status: selectedDriver ? 'assigned' : 'pending_review',
+          driverId: selectedDriver ? selectedDriver.id : undefined,
+          type: isRoundTrip ? 'round_trip' : 'one_way',
+          legIndex,
+          legLabel: outbound ? (isRoundTrip ? 'Outbound' : 'One-way') : 'Return',
+          parentTripId: isRoundTrip ? parentId : undefined,
+          linkedLegId,
+          mobility: form.mobility,
+          pickup: outbound ? form.pickup : form.dropoff,
+          dropoff: outbound ? form.dropoff : form.pickup,
+          stops: outbound ? form.stops : [],
+          scheduledTime: outbound
+            ? scheduledTime
+            : (form.returnPickup
+                ? `${dateStr}T${form.returnPickup}:00`
+                : scheduledTime),
+          dropoffTime,
+          miles: quote.billedMiles || form.estMiles,
+          calculatedMiles: form.estMiles,
+          actualMiles: form.actualMiles || undefined,
+          billingClassId: quote.billingClassId,
+          billingClassName: quote.billingClassName,
+          cost: legCharge,
+          copay: legCopay,
+          passengerCopay: legCopay,
+          costToCounty: legCharge,
+          fundingSourceCharge: legCharge,
+          fundingSource: policyName,
+          fundingSourceId: selectedPolicy?.id || form.fundingSourceId,
+          pricingSnapshot: quote.snapshot
+            ? {
+                ...quote.snapshot,
+                quotedAt: nowIso,
+                overridden: form.manualFareOverride,
+                overrideReason: form.manualFareOverride ? form.overrideReason.trim() : undefined,
+              }
+            : null,
+          auditTrail: baseAudit,
+          insideCounty: form.insideCounty,
+          reason: form.tripReason,
+          authNotes: form.authNotes,
+          source: form.source || form.county || 'Chesterfield County',
+          program: form.program || 'General Medical',
+          submittedTime: nowIso,
+        };
       };
 
-      tripService.createTrip(newTrip);
+      if (isRoundTrip && returnId) {
+        tripService.createTrip(buildLeg(1, parentId, returnId));
+        tripService.createTrip(buildLeg(2, returnId, parentId));
+      } else {
+        tripService.createTrip(buildLeg(1, parentId));
+      }
     });
 
     setTimeout(() => {
       toast.success(
         isRecurring
-          ? `${recurringDates.length} recurring trips successfully scheduled!`
-          : `${selectedDates.length} trip(s) successfully dispatched!`, 
+          ? `${tripCount} trip legs successfully scheduled!`
+          : `${tripCount} billing record(s) dispatched!`, 
         {
           id: toastId,
           icon: '✅',
@@ -442,7 +611,7 @@ export const BookingForm = () => {
             <SectionHeader title="2. Pickup, Dropoff & County Coverage" icon={Navigation} />
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-ink-2 mb-1 block">Service County / Coverage Area</label>
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Service area</label>
                 <select
                   className={inputClass}
                   value={form.county}
@@ -450,7 +619,7 @@ export const BookingForm = () => {
                 >
                   {availableCounties.map(c => (
                     <option key={c.id} value={c.name}>
-                      {c.name} ({c.state || 'VA'}) — ${Number(c.localFare || 10).toFixed(2)} Base Fare
+                      {c.name} ({c.state || 'VA'})
                     </option>
                   ))}
                 </select>
@@ -492,7 +661,9 @@ export const BookingForm = () => {
                     <span className="font-semibold">{boundaryEval.boundaryLabel}</span>
                   </div>
                   <span className={`font-bold ${boundaryEval.isInsideCounty ? 'text-accent' : 'text-primary'}`}>
-                    {boundaryEval.isInsideCounty ? 'Inside Copay ($10.00)' : 'Cross-County (+$6.00 Surcharge)'}
+                    {boundaryEval.isInsideCounty
+                      ? `Inside · Copay ${money(selectedPolicy?.passengerCopayInside ?? quote.customerUnit)}`
+                      : `Outside · Copay ${money(selectedPolicy?.passengerCopayOutside ?? quote.customerUnit)}`}
                   </span>
                 </div>
               )}
@@ -522,11 +693,6 @@ export const BookingForm = () => {
                       <IconComp size={16} className={isSelected ? 'text-primary' : 'text-ink-2'} />
                     )}
                     <span className="text-xs font-medium">{opt.name}</span>
-                    {opt.fee > 0 && (
-                      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                        +${Number(opt.fee).toFixed(2)}
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -595,30 +761,29 @@ export const BookingForm = () => {
               </div>
             </div>
 
-            {/* Funding Source & Program Context */}
-            <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Payer & Program Context */}
+            <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-ink-3">Funding Source</label>
+                <label className="text-xs font-medium text-ink-3">Payer</label>
                 <div className="relative">
                   <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                  <select className={`${inputClass} pl-8`} value={form.fundingSource} onChange={e => setForm({ ...form, fundingSource: e.target.value })}>
-                    <option value="">Select source...</option>
-                    {FUNDING_SOURCES.map(fs => <option key={fs} value={fs}>{fs}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-ink-3">County Jurisdiction</label>
-                <div className="relative">
-                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                  <select className={`${inputClass} pl-8`} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}>
-                    <option value="">Select county...</option>
-                    <option value="Chesterfield County">Chesterfield County</option>
-                    <option value="Henrico County">Henrico County</option>
-                    <option value="Hanover County">Hanover County</option>
-                    <option value="Richmond City">Richmond City</option>
-                    <option value="Goochland County">Goochland County</option>
-                    <option value="Powhatan County">Powhatan County</option>
+                  <select
+                    className={`${inputClass} pl-8`}
+                    value={form.fundingSourceId || selectedPolicy?.id || ''}
+                    onChange={e => {
+                      const p = fundingPolicies.find(x => x.id === e.target.value);
+                      setForm({
+                        ...form,
+                        fundingSourceId: e.target.value,
+                        fundingSource: p?.name || '',
+                        manualFareOverride: false,
+                      });
+                    }}
+                  >
+                    {fundingPolicies.length === 0 && <option value="">Add a payer first</option>}
+                    {fundingPolicies.map(fs => (
+                      <option key={fs.id} value={fs.id}>{fs.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -642,8 +807,7 @@ export const BookingForm = () => {
             {/* Inside / Outside County */}
             <div className="pt-5 border-t border-line-2 mt-5 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-ink-2">Trip Jurisdiction</p>
-                <p className="text-xs text-ink-4 mt-0.5">Auto from pickup/dropoff; override if needed. Customer fare follows this flag.</p>
+                <p className="text-xs font-medium text-ink-2">Inside service area</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-xs font-medium ${!form.insideCounty ? 'text-urgent' : 'text-ink-4'}`}>Outside</span>
@@ -867,55 +1031,165 @@ export const BookingForm = () => {
           </Card>
 
           <Card className="p-6 border-line-2 bg-bg/20 shadow-none">
-            <SectionHeader title="8. Fare & Payment Audit" icon={DollarSign} />
+            <SectionHeader title="8. Fare & Payment" icon={DollarSign} />
             {!form.mobility ? (
               <p className="text-xs font-medium text-ink-3 text-center py-6">Select mobility requirement</p>
+            ) : !selectedPolicy ? (
+              <p className="text-xs font-medium text-ink-3 text-center py-6">
+                Add a payer in Settings → Coverage to quote fares.
+              </p>
             ) : (
               <div className="space-y-4">
-                <div className="flex justify-between text-xs font-medium text-ink-4">
-                  <span>Est. miles (county bracket)</span>
-                  <input type="number" step="0.1" min="0" className="w-20 text-right bg-transparent border-b border-line-2 outline-none text-sm text-ink" value={form.estMiles} onChange={e => setForm({ ...form, estMiles: Number(e.target.value) || 0 })} />
-                </div>
-                <div className="flex justify-between items-end bg-white p-4 rounded-2xl border border-line-2">
-                  <div>
-                    <p className="text-xs font-medium text-ink-3">Customer fare</p>
-                    <p className="text-xs text-ink-4 mt-0.5">{form.insideCounty ? 'Inside' : 'Outside'} · {quote.legs} leg{quote.legs > 1 ? 's' : ''}{quote.legs > 1 ? ' (return billed separately)' : ''}</p>
-                    <p className="text-xl font-semibold text-primary mt-1">{money(customerFare)}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-ink-3">
+                    {selectedPolicy.name} · {quote.methodLabel}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink-4">Est. miles / leg</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className="w-20 text-right bg-white border border-line-2 rounded-lg px-2 py-1 outline-none text-sm text-ink"
+                      value={form.estMiles}
+                      onChange={e => setForm({ ...form, estMiles: Number(e.target.value) || 0 })}
+                    />
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-ink-3">Advance</p>
-                    <div className="relative w-28 mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-3">$</span>
-                      <input type="number" className="w-full pl-8 pr-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink text-right outline-none shadow-sm" value={form.advancePaid} onChange={e => setForm({ ...form, advancePaid: Number(e.target.value) || 0 })} />
+                </div>
+
+                {/* Dual payment streams — never a single Trip Cost */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border border-line-2">
+                    <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide">Passenger Copay</p>
+                    <p className="text-xs text-ink-4 mt-0.5">
+                      {form.insideCounty ? 'Inside area' : 'Outside area'} · rider-facing
+                    </p>
+                    <p className="text-2xl font-semibold text-ink mt-2">{money(customerFare)}</p>
+                    {quote.legs > 1 && (
+                      <p className="text-xs text-ink-4 mt-1">{money(perLegCopay)} × {quote.legs} legs</p>
+                    )}
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border border-primary/20 ring-1 ring-primary/10">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Payer Charge</p>
+                    <p className="text-xs text-ink-4 mt-0.5">Sponsor / government bill · admin</p>
+                    <div className="flex items-end gap-2 mt-2">
+                      <span className="text-sm font-medium text-ink-3 mb-1">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        readOnly={!form.manualFareOverride}
+                        className={`w-full text-2xl font-semibold bg-transparent border-b outline-none ${
+                          form.manualFareOverride ? 'border-primary text-primary' : 'border-transparent text-primary'
+                        }`}
+                        value={governmentFare}
+                        onChange={e =>
+                          setForm({
+                            ...form,
+                            grossFare: Number(e.target.value) || 0,
+                            manualFareOverride: true,
+                          })
+                        }
+                      />
+                    </div>
+                    {quote.legs > 1 && !form.manualFareOverride && (
+                      <p className="text-xs text-ink-4 mt-1">{money(perLegCharge)} × {quote.legs} legs</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Round-trip dual legs */}
+                {quote.legs > 1 && (
+                  <div className="rounded-2xl border border-line-2 bg-white overflow-hidden">
+                    <div className="px-4 py-2.5 bg-bg border-b border-line-2">
+                      <p className="text-xs font-bold text-ink-3 uppercase tracking-wider">
+                        Round-trip · two billing legs
+                      </p>
+                    </div>
+                    <div className="divide-y divide-line-2/60">
+                      {quote.legQuotes.map(leg => (
+                        <div key={leg.legIndex} className="px-4 py-3 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-ink">{leg.label}</p>
+                            <p className="text-xs text-ink-4">{leg.miles} mi · separate record on dispatch</p>
+                          </div>
+                          <div className="text-right text-xs space-y-0.5">
+                            <p className="text-ink-3">Copay <span className="font-semibold text-ink">{money(leg.passengerCopay)}</span></p>
+                            <p className="text-ink-3">Payer <span className="font-semibold text-primary">{money(leg.fundingSourceCharge)}</span></p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-                <div className="flex justify-between text-xs font-medium text-ink-4 pt-1">
-                  <span>County / government (admin only)</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-ink-3">$</span>
-                    <input type="number" readOnly={!form.manualFareOverride} className={`w-20 text-right bg-transparent border-b outline-none text-sm ${form.manualFareOverride ? 'border-primary text-primary' : 'border-transparent text-ink'}`} value={governmentFare} onChange={e => setForm({ ...form, grossFare: Number(e.target.value) || 0, manualFareOverride: true })} />
-                  </div>
-                </div>
-                <p className="text-xs text-ink-4">Bracket + pickup fee + mobility item from Settings → Coverage. Not shown as customer charge.</p>
+                )}
 
-                <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm mt-2">
+                {/* Manual override */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.manualFareOverride}
+                      onChange={e =>
+                        setForm({
+                          ...form,
+                          manualFareOverride: e.target.checked,
+                          overrideReason: e.target.checked ? form.overrideReason : '',
+                          grossFare: e.target.checked ? form.grossFare : quote.fundingSourceCharge,
+                        })
+                      }
+                      className="rounded border-line-2 text-primary focus:ring-primary/20"
+                    />
+                    <span className="text-xs font-semibold text-ink-3">Manual payer-charge override</span>
+                  </label>
+                  {form.manualFareOverride && (
+                    <div>
+                      <label className="text-xs font-semibold text-ink-4 mb-1 block">
+                        Override reason (required · saved to audit trail)
+                      </label>
+                      <input
+                        className={inputClass}
+                        placeholder="e.g. Contract exception approved by county liaison"
+                        value={form.overrideReason}
+                        onChange={e => setForm({ ...form, overrideReason: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="text-xs font-medium text-ink-3">Due to Driver (customer cash)</p>
+                    <p className="text-xs font-medium text-ink-3">Due to Driver (from passenger copay)</p>
                     <p className="text-lg font-semibold text-ink">{money(dueToDriver)}</p>
                   </div>
-                  <Badge variant={dueToDriver > 0 ? "warning" : "accent"} className="text-xs py-1.5 px-5 font-medium">
-                    {dueToDriver > 0 ? "Cash" : "Paid"}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-ink-4">Advance</p>
+                      <div className="relative w-24">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-ink-3">$</span>
+                        <input
+                          type="number"
+                          className="w-full pl-6 pr-2 py-1 bg-bg border border-line-2 rounded-lg text-sm text-right outline-none"
+                          value={form.advancePaid}
+                          onChange={e => setForm({ ...form, advancePaid: Number(e.target.value) || 0 })}
+                        />
+                      </div>
+                    </div>
+                    <Badge variant={dueToDriver > 0 ? 'warning' : 'accent'} className="text-xs py-1.5 px-4 font-medium">
+                      {dueToDriver > 0 ? 'Cash' : 'Paid'}
+                    </Badge>
+                  </div>
                 </div>
 
                 {isRecurring && recurringDates.length > 0 && (
-                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl flex justify-between items-center mt-2.5 animate-in zoom-in-95 duration-200">
-                    <div>
-                      <p className="text-xs font-medium text-primary">Recurring customer total</p>
-                      <p className="text-xs font-semibold text-ink-3">{money(customerFare)} × {recurringDates.length} trips</p>
+                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl space-y-1 animate-in zoom-in-95 duration-200">
+                    <p className="text-xs font-medium text-primary">Recurring totals ({recurringDates.length} days)</p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-3">Passenger Copay</span>
+                      <span className="font-semibold text-ink">{money(customerFare * recurringDates.length)}</span>
                     </div>
-                    <p className="text-lg font-semibold text-primary">{money(customerFare * recurringDates.length)}</p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-3">Payer Charge</span>
+                      <span className="font-semibold text-primary">{money(governmentFare * recurringDates.length)}</span>
+                    </div>
                   </div>
                 )}
               </div>

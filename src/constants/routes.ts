@@ -17,7 +17,7 @@ export const ROUTES = {
   fleet: '/fleet',
   fleetDetails: (id: string) => `/fleet/${id}`,
   notifications: '/notifications',
-  transactions: '/transactions',
+  transactions: '/finance',
   staff: '/staff',
   cms: '/cms',
   support: '/support',

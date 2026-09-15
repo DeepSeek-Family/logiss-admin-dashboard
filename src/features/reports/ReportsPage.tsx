@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Flag, ShieldCheck, ShieldAlert, Plus, Search } from 'lucide-react';
-import { Card, Badge, Button } from '@/shared/components/ui';
+import { AlertTriangle, ShieldCheck, ShieldAlert, Plus, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Button } from '@/shared/components/ui';
 import { useReports } from '@/hooks/useReports';
 
 import {
@@ -11,71 +11,73 @@ import {
 } from '@/features/reports';
 
 const Reports = ({ role }: { role?: string | null }) => {
-  const { reports = [], loading, error } = useReports();
+  const { reports = [], loading, error, updateReportStatus } = useReports();
   const [activeTab, setActiveTab] = useState('open');
-  const [filterType, setFilterType] = useState('all');
+  const [filterPeople, setFilterPeople] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <div className="w-16 h-16 bg-urgent-light rounded-full flex items-center justify-center text-urgent mb-4">
+        <div className="w-16 h-16 bg-urgent/10 rounded-full flex items-center justify-center text-urgent mb-4">
           <AlertTriangle size={32} />
         </div>
         <h3 className="text-xl font-semibold text-ink">Connection Issue</h3>
-        <p className="text-ink-3 max-w-xs mt-2 mb-6">We encountered an error while fetching the incident reports. Please try refreshing the page.</p>
-        <Button variant="primary" onClick={() => window.location.reload()}>Refresh Dashboard</Button>
+        <p className="text-ink-4 max-w-xs mt-2 mb-6 text-sm">Failed to load incident reports. Please try refreshing.</p>
+        <Button variant="primary" onClick={() => window.location.reload()}>Refresh</Button>
       </div>
     );
   }
 
   if (loading && reports.length === 0) {
     return (
-      <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
-        <div className="space-y-2">
-          <div className="w-56 h-8 bg-line-2 rounded-xl animate-pulse" />
-          <div className="w-72 h-4 bg-line-2 rounded-lg animate-pulse" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-bg rounded-2xl animate-pulse border border-line-2" />)}
-        </div>
-        <div className="h-[520px] bg-bg rounded-2xl animate-pulse border border-line-2" />
+      <div className="flex flex-col gap-4 animate-in fade-in duration-300">
+        <div className="w-56 h-8 bg-line-2 rounded-xl animate-pulse" />
+        <div className="h-[600px] bg-bg rounded-2xl animate-pulse border border-line-2" />
       </div>
     );
   }
 
-  const openCount = (reports || []).filter(r => r?.status === 'open').length;
-  const reviewCount = (reports || []).filter(r => r?.status === 'reviewing').length;
+  const openCount     = (reports || []).filter(r => r?.status === 'open').length;
+  const reviewCount   = (reports || []).filter(r => r?.status === 'reviewing').length;
   const resolvedCount = (reports || []).filter(r => r?.status === 'resolved').length;
+
+  const TABS = [
+    { id: 'open',      label: 'Open',        count: openCount     },
+    { id: 'reviewing', label: 'Under review', count: reviewCount   },
+    { id: 'resolved',  label: 'Resolved',    count: resolvedCount },
+    { id: 'all',       label: 'All reports', count: (reports || []).length },
+  ];
 
   const filteredReports = (reports || []).filter(r => {
     if (!r) return false;
-    const matchesTab = activeTab === 'all' ? true : r.status === activeTab;
-    const matchesSource = filterType === 'all' ? true : (r.filedBy?.role || '').toLowerCase() === filterType;
-    const searchLower = (search || '').trim().toLowerCase();
-    const matchesSearch = searchLower === '' ? true
-      : (r.type || '').toLowerCase().includes(searchLower)
-      || (r.filedBy?.name || '').toLowerCase().includes(searchLower)
-      || (r.subject?.name || '').toLowerCase().includes(searchLower)
-      || String(r.id || '').includes(searchLower);
-    return matchesTab && matchesSource && matchesSearch;
+    const matchTab    = activeTab === 'all' ? true : r.status === activeTab;
+    const matchPeople = filterPeople === 'all' ? true : (r.filedBy?.role || '').toLowerCase() === filterPeople;
+    const matchPrio   = filterPriority === 'all' ? true : r.severity === filterPriority;
+    const q           = (search || '').trim().toLowerCase();
+    const matchSearch = !q ? true
+      : (r.type || '').toLowerCase().includes(q)
+      || (r.filedBy?.name || '').toLowerCase().includes(q)
+      || (r.subject?.name || '').toLowerCase().includes(q)
+      || String(r.id || '').includes(q);
+    return matchTab && matchPeople && matchPrio && matchSearch;
   });
 
   const selectedReport = selectedReportId
     ? (reports || []).find(r => r?.id === selectedReportId)
     : filteredReports[0] ?? null;
 
-  const TABS = [
-    { id: 'open', label: 'Open', count: openCount, dot: openCount > 0 },
-    { id: 'reviewing', label: 'Reviewing', count: reviewCount, dot: false },
-    { id: 'resolved', label: 'Resolved', count: resolvedCount, dot: false },
-    { id: 'all', label: 'All Reports', count: (reports || []).length, dot: false },
-  ];
-
   return (
-    <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
+    <div className="flex flex-col gap-0 animate-in fade-in duration-300 pb-12">
       {showCreateModal && (
         <CreateReportModal
           onClose={() => setShowCreateModal(false)}
@@ -83,132 +85,139 @@ const Reports = ({ role }: { role?: string | null }) => {
         />
       )}
 
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+      {/* ── PAGE HEADER ────────────────────── */}
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="type-page-title">Incident Reports</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Monitor and resolve safety alerts and operational reports</p>
+          <p className="text-sm text-ink-4 mt-0.5">Review safety and operational reports</p>
         </div>
-        <Button variant="danger" icon={Plus} onClick={() => setShowCreateModal(true)}>
-          File Report
+        <Button variant="outline" icon={Plus} onClick={() => setShowCreateModal(true)} className="h-9 text-sm">
+          File report
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Open', value: openCount, sub: 'needs action', icon: AlertTriangle, color: 'bg-urgent-light text-urgent', highlight: openCount > 0 },
-          { label: 'Under Review', value: reviewCount, sub: 'being investigated', icon: Clock, color: 'bg-warning-light text-warning', highlight: false },
-          { label: 'Resolved', value: resolvedCount, sub: 'cases closed', icon: CheckCircle2, color: 'bg-accent-light text-accent', highlight: false },
-          { label: 'Total Reports', value: (reports || []).length, sub: 'all time', icon: Flag, color: 'bg-primary-light text-primary', highlight: false },
-        ].map(s => (
-          <Card key={s.label} className={`p-5 flex items-center gap-4 ${s.highlight ? 'ring-2 ring-urgent/20' : ''}`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}>
-              <s.icon size={20} />
-            </div>
-            <div className="min-w-0">
-              <p className="type-th leading-none">{s.label}</p>
-              <p className="text-3xl font-semibold text-ink mt-1 leading-none">{s.value}</p>
-              <p className="text-xs text-ink-4 mt-1">{s.sub}</p>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300 text-sm font-medium">
+          {toast}
+        </div>
+      )}
 
-      {/* Main Panel */}
-      <Card className="overflow-hidden flex flex-col" style={{ minHeight: '520px' }}>
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2/50 bg-bg/20 shrink-0">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl">
+      {/* ── MAIN CARD ────────────────────── */}
+      <div className="bg-white border border-line-2 rounded-2xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+
+        {/* Tabs row */}
+        <div className="flex items-center justify-between px-5 border-b border-line-2">
+          {/* Underline tabs */}
+          <div className="flex items-center gap-1">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setSelectedReportId(null); }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id
-                    ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-                    : 'text-ink-4 hover:text-ink'
-                  }`}
+                className={`flex items-center gap-1.5 px-3 py-3.5 text-sm font-medium border-b-2 -mb-px transition-all ${
+                  activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-ink-4 hover:text-ink'
+                }`}
               >
                 {tab.label}
-                {tab.count > 0 && (
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-medium ${activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-line-2/60 text-ink-4'
-                    }`}>
-                    {tab.count}
-                  </span>
-                )}
-                {tab.dot && activeTab !== tab.id && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-urgent animate-pulse" />
-                )}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                  activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-bg text-ink-4'
+                }`}>
+                  {tab.count}
+                </span>
               </button>
             ))}
           </div>
-
-          {/* Right Controls */}
-          <div className="flex items-center gap-2.5">
-            {/* Source Filter */}
-            <div className="flex bg-bg/60 p-0.5 rounded-xl">
-              {['all', 'rider', 'driver'].map(type => (
-                <button
-                  key={type}
-                  onClick={() => setFilterType(type)}
-                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all capitalize ${filterType === type ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary' : 'text-ink-4 hover:text-ink'
-                    }`}
-                >
-                  {type === 'all' ? 'All' : `${type}s`}
-                </button>
-              ))}
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={13} />
-              <input
-                type="text"
-                placeholder="Search reports..."
-                value={search}
-                onChange={e => { setSearch(e.target.value); setSelectedReportId(null); }}
-                className="pl-8 pr-3 py-1.5 bg-bg/60 focus:bg-white rounded-xl text-xs font-medium focus:ring-4 focus:ring-primary/10 outline-none w-44 transition-all"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Split Panel Body */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left — Report List */}
-          <div className="w-[300px] shrink-0 border-r border-line-2/40 overflow-y-auto p-3 space-y-1.5 bg-bg/10">
-            {filteredReports.length > 0 ? (
-              filteredReports.map(report => (
-                <ReportCard
-                  key={report.id}
-                  report={report}
-                  selected={selectedReport?.id === report.id}
-                  onClick={() => setSelectedReportId(report.id)}
+        {/* Split panel body */}
+        <div className="flex overflow-hidden" style={{ height: 'calc(100% - 49px)' }}>
+
+          {/* ── LEFT LIST ─────────────────── */}
+          <div className="w-[300px] shrink-0 border-r border-line-2 flex flex-col overflow-hidden">
+            {/* Search + filters toolbar */}
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line-2">
+              <div className="flex-1 flex items-center gap-1.5 bg-bg border border-line-2 rounded-lg px-2.5 py-1.5">
+                <Search size={12} className="text-ink-4 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search reports..."
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setSelectedReportId(null); }}
+                  className="bg-transparent text-xs outline-none w-full text-ink placeholder:text-ink-4"
                 />
-              ))
-            ) : (
-              <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center px-8 py-16">
-                <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center mb-4">
-                  <ShieldCheck size={28} className="text-ink-4" />
-                </div>
-                <p className="text-sm font-medium text-ink-4">No incidents found</p>
-                <p className="text-xs text-ink-4 mt-1">Try adjusting your filters</p>
               </div>
-            )}
+              {/* People filter */}
+              <div className="relative">
+                <select
+                  value={filterPeople}
+                  onChange={e => setFilterPeople(e.target.value)}
+                  className="appearance-none pl-2.5 pr-6 py-1.5 text-xs font-medium bg-bg border border-line-2 rounded-lg text-ink-3 outline-none cursor-pointer"
+                >
+                  <option value="all">All people</option>
+                  <option value="rider">Riders</option>
+                  <option value="driver">Drivers</option>
+                </select>
+                <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
+              </div>
+              {/* Priority filter */}
+              <div className="relative">
+                <select
+                  value={filterPriority}
+                  onChange={e => setFilterPriority(e.target.value)}
+                  className="appearance-none pl-2.5 pr-6 py-1.5 text-xs font-medium bg-bg border border-line-2 rounded-lg text-ink-3 outline-none cursor-pointer"
+                >
+                  <option value="all">Priority</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+                <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Report list */}
+            <div className="flex-1 overflow-y-auto">
+              {filteredReports.length > 0 ? (
+                filteredReports.map(report => (
+                  <ReportCard
+                    key={report.id}
+                    report={report}
+                    selected={selectedReport?.id === report.id}
+                    onClick={() => setSelectedReportId(report.id)}
+                  />
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-16 px-6">
+                  <div className="w-12 h-12 bg-bg rounded-xl flex items-center justify-center mb-3">
+                    <ShieldCheck size={22} className="text-ink-4" />
+                  </div>
+                  <p className="text-sm font-medium text-ink-4">No incidents found</p>
+                  <p className="text-xs text-ink-4 mt-1">Try adjusting filters</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right — Detail View */}
+          {/* ── RIGHT DETAIL ──────────────── */}
           <div className="flex-1 overflow-hidden bg-white">
             {selectedReport ? (
               <DetailPanel
                 report={selectedReport}
-                onResolve={() => setActiveTab('resolved')}
+                onResolve={() => {
+                  updateReportStatus(selectedReport.id, 'resolved');
+                  showToast(`Incident #${selectedReport.id} resolved`);
+                }}
+                onMarkReview={() => {
+                  updateReportStatus(selectedReport.id, 'reviewing');
+                  showToast(`Incident #${selectedReport.id} marked under review`);
+                }}
               />
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-bg/5">
-                <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center mb-4">
-                  <ShieldAlert size={32} className="text-ink-4" />
+              <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center mb-4">
+                  <ShieldAlert size={28} className="text-ink-4" />
                 </div>
                 <p className="text-sm font-medium text-ink-4">Select an incident to investigate</p>
                 <p className="text-xs text-ink-4 mt-1">Choose a report from the list on the left</p>
@@ -216,7 +225,7 @@ const Reports = ({ role }: { role?: string | null }) => {
             )}
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

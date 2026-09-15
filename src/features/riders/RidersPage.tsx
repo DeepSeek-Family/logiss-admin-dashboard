@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Check } from 'lucide-react';
 import { useRiders } from '@/hooks/useRiders';
 import { useTrips } from '@/hooks/useTrips';
 
 import {
   RiderProfile,
   RiderKpiStrip,
-  RidersTable
+  RidersTable,
+  EditRiderModal
 } from '@/features/riders';
 
 const Riders = ({ role }: { role?: string | null }) => {
-  const { riders, loading, error, updateRiderStatus } = useRiders();
+  const { riders, loading, error, updateRiderStatus, updateRider } = useRiders();
   const { trips } = useTrips();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -20,6 +21,8 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSuccessToast, setEditSuccessToast] = useState(false);
 
   const handleCopyPhone = (phone: string) => {
     navigator.clipboard.writeText(phone);
@@ -70,16 +73,38 @@ const Riders = ({ role }: { role?: string | null }) => {
 
   if (selectedRider) {
     return (
-      <RiderProfile
-        selectedRider={selectedRider}
-        trips={trips}
-        role={role}
-        onBack={() => setSelectedRiderId(null)}
-        profileTab={profileTab}
-        setProfileTab={setProfileTab}
-        copiedPhone={copiedPhone}
-        onCopyPhone={handleCopyPhone}
-      />
+      <>
+        {showEditModal && (
+          <EditRiderModal
+            rider={selectedRider}
+            onClose={() => setShowEditModal(false)}
+            onSave={(updated) => {
+              updateRider(selectedRider.id, updated);
+              setShowEditModal(false);
+              setEditSuccessToast(true);
+              setTimeout(() => setEditSuccessToast(false), 3000);
+            }}
+          />
+        )}
+
+        {editSuccessToast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+            <Check size={15} /> Rider profile updated successfully
+          </div>
+        )}
+
+        <RiderProfile
+          selectedRider={selectedRider}
+          trips={trips}
+          role={role}
+          onBack={() => setSelectedRiderId(null)}
+          profileTab={profileTab}
+          setProfileTab={setProfileTab}
+          copiedPhone={copiedPhone}
+          onCopyPhone={handleCopyPhone}
+          onEditRider={() => setShowEditModal(true)}
+        />
+      </>
     );
   }
 

@@ -213,7 +213,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
         <table className="w-full text-left border-collapse min-w-[980px]">
           <thead className="bg-bg/50 border-b border-line-2">
             <tr>
-              {['#', 'Stop', 'Time', 'Appt', 'ETA', 'Travel', 'Dist', 'On/Sp', 'Address', 'City', 'Funding', 'Status', ''].map((h, i) => (
+              {['#', 'Stop', 'Time', 'Appt', 'ETA', 'Travel', 'Dist', 'On/Sp', 'Address', 'City', 'Payer', 'Status', ''].map((h, i) => (
                 <th key={h || i} className="px-3 py-2.5 type-th whitespace-nowrap">{h}</th>
               ))}
             </tr>

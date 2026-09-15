@@ -17,8 +17,8 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
     <div className="bg-white border border-line-2 rounded-2xl p-5 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-ink">Funding Stream Allocation</h3>
-          <p className="text-xs text-ink-4 mt-0.5">Distribution between County Claims and Rider Copays</p>
+          <h3 className="text-sm font-bold text-ink">Payer vs Copay Allocation</h3>
+          <p className="text-xs text-ink-4 mt-0.5">Passenger Copay vs Payer Charge (never combined as one trip cost)</p>
         </div>
         <span className="text-xs font-bold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
           Total: {money(streamTotal)}
@@ -33,12 +33,12 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
               <div
                 className="bg-primary transition-all duration-500 rounded-l-full"
                 style={{ width: `${(countyTotal / streamTotal) * 100}%` }}
-                title={`County Claims: ${money(countyTotal)} (${countyPercent}%)`}
+                title={`Payer Charge: ${money(countyTotal)} (${countyPercent}%)`}
               />
               <div
                 className="bg-accent transition-all duration-500 rounded-r-full"
                 style={{ width: `${(copayTotal / streamTotal) * 100}%` }}
-                title={`Customer Fare: ${money(copayTotal)} (${copayPercent}%)`}
+                title={`Passenger Copay: ${money(copayTotal)} (${copayPercent}%)`}
               />
             </>
           ) : (
@@ -54,7 +54,7 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
             <Landmark size={18} />
           </div>
           <div>
-            <p className="text-xs font-medium text-ink-3">County Subsidies &amp; Claims</p>
+            <p className="text-xs font-medium text-ink-3">Payer Charge</p>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className="text-base font-bold text-primary">{money(countyTotal)}</span>
               <span className="text-xs font-semibold text-primary/70">({countyPercent}%)</span>
@@ -67,7 +67,7 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
             <Users size={18} />
           </div>
           <div>
-            <p className="text-xs font-medium text-ink-3">Customer Copay &amp; Self-Pay</p>
+            <p className="text-xs font-medium text-ink-3">Passenger Copay</p>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className="text-base font-bold text-accent">{money(copayTotal)}</span>
               <span className="text-xs font-semibold text-accent/70">({copayPercent}%)</span>

@@ -69,6 +69,7 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: 'schedule', Component: TripHistory },
   { path: 'notifications', Component: Notifications },
   { path: 'dashboard', Component: AdminDashboard, allowedRoles: ['admin'] },
+  { path: 'finance', Component: Transactions, allowedRoles: ['admin', 'dispatcher'] },
   { path: 'transactions', Component: Transactions, allowedRoles: ['admin', 'dispatcher'] },
   { path: 'staff', Component: UserAccess, allowedRoles: ['admin', 'dispatcher'] },
   { path: 'cms', Component: CMS, allowedRoles: ['admin', 'dispatcher'] },

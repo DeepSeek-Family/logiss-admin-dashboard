@@ -31,9 +31,3 @@ export const STATUS_CONFIG: { [key: string]: any } = {
 };
 
 export const INSURANCE_BADGE: { [key: string]: any } = { valid: 'accent', expiring: 'warning', expired: 'urgent' };
-
-export const TYPE_BADGE: { [key: string]: any } = {
-  'Ambulatory Van': 'primary',
-  'Wheelchair Van': 'accent',
-  'Stretcher Van': 'warning',
-};
