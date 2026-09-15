@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FileText,
   Shield,
@@ -12,7 +13,6 @@ import {
   CheckCircle,
   ChevronRight,
   Building2,
-  DollarSign
 } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 
@@ -39,9 +39,25 @@ interface OrgSettings {
 }
 
 const CMS = ({ role }: { role?: string | null }) => {
-  const [activePage, setActivePage] = useState('org');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const pages = [
+    { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
+    { id: 'terms', label: 'Terms & Conditions', icon: FileText, lastUpdate: '2026-04-10', type: 'text' },
+    { id: 'privacy', label: 'Privacy Policy', icon: Shield, lastUpdate: '2026-04-12', type: 'text' },
+    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'faq' },
+    { id: 'about', label: 'About Us', icon: Info, lastUpdate: '2026-03-20', type: 'text' },
+  ];
+
+  const validTabIds = pages.map(p => p.id);
+  const tabFromUrl = searchParams.get('tab');
+  const activePage = validTabIds.includes(tabFromUrl || '') ? (tabFromUrl as string) : 'org';
+
+  const handleTabChange = (tabId: string) => {
+    setSearchParams({ tab: tabId }, { replace: true });
+  };
 
   const [content, setContent] = useState<ContentState>({
     terms: `1. Acceptance of Terms\nBy using LOGISS, you agree to these terms...\n\n2. Dispatcher Responsibility\nDispatchers must verify all medical requirements before assignment...`,
@@ -70,14 +86,6 @@ const CMS = ({ role }: { role?: string | null }) => {
       setTimeout(() => setShowSuccess(false), 3000);
     }, 1500);
   };
-
-  const pages = [
-    { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
-    { id: 'terms', label: 'Terms & Conditions', icon: FileText, lastUpdate: '2026-04-10', type: 'text' },
-    { id: 'privacy', label: 'Privacy Policy', icon: Shield, lastUpdate: '2026-04-12', type: 'text' },
-    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'faq' },
-    { id: 'about', label: 'About Us', icon: Info, lastUpdate: '2026-03-20', type: 'text' },
-  ];
 
   const activePageData = pages.find(p => p.id === activePage);
 
@@ -117,7 +125,7 @@ const CMS = ({ role }: { role?: string | null }) => {
               <button
                 key={page.id}
                 type="button"
-                onClick={() => setActivePage(page.id)}
+                onClick={() => handleTabChange(page.id)}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${
                   isActive
                     ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
