@@ -8,12 +8,24 @@ import {
   DollarSign, Activity, Mail, Tag, Lock, HeartPulse
 } from 'lucide-react';
 import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
-import { useTrips } from '@/hooks/useTrips';
-import { useDrivers } from '@/hooks/useDrivers';
 import { money } from '@/utils/helpers';
-import { riders } from '@/data/mockData';
 import toast from 'react-hot-toast';
-import { tripService } from '@/services/tripService';
+import {
+  useGetAllBookingsQuery,
+  useGetAllPayersQuery,
+  useManualCreateBookingMutation,
+  ICreateBookingPayload,
+} from '@/redux/api/bookingApi';
+import {
+  extractBookingPeople,
+  resolveMediaUrl,
+  toApiTime,
+  toLocationValue,
+  toYmd,
+  weekdayKeysToNames,
+  isMongoId,
+  apiErrorMessage,
+} from '../utils/helpers';
 import {
   quoteFares,
   usePricing,
@@ -42,21 +54,35 @@ const MOBILITY_ICON_MAP: { [key: string]: any } = {
 
 export const BookingForm = () => {
   const navigate = useNavigate();
-  const { trips } = useTrips();
-  const { drivers } = useDrivers();
   const { pricing } = usePricing();
+  const [manualCreateBooking, { isLoading: isCreating }] = useManualCreateBookingMutation();
+  const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
+  const { data: payersResponse } = useGetAllPayersQuery();
+  const apiPeople = extractBookingPeople(bookingsResponse?.data || []);
+  const apiPayers = (payersResponse?.data || []).filter((p) => isMongoId(p._id));
 
   const availableCounties = (pricing.counties && pricing.counties.length > 0)
     ? pricing.counties.filter(c => c.status === 'active')
     : DEFAULT_COUNTIES;
 
-  const availableMobility = (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
-    ? pricing.mobilityTypes.filter(m => m.status === 'active')
-    : DEFAULT_MOBILITY_TYPES;
+  const availableMobility = (apiPeople.mobility.length > 0
+    ? apiPeople.mobility.map((m) => ({
+        id: m._id,
+        name: m.name,
+        fee: m.price,
+        iconUrl: resolveMediaUrl(m.icon),
+        iconKey: undefined as string | undefined,
+        status: m.status === false ? 'inactive' : 'active',
+      }))
+    : (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
+      ? pricing.mobilityTypes
+      : DEFAULT_MOBILITY_TYPES
+  ).filter((m: any) => m.status !== 'inactive');
 
-  const [userType, setUserType] = useState('guest');
+  const [userType, setUserType] = useState('existing');
   const [existingSearch, setExistingSearch] = useState('');
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [fleetSearch, setFleetSearch] = useState('');
 
   // Recurring Booking state
@@ -77,7 +103,8 @@ export const BookingForm = () => {
     passengerId: '',
     fundingSourceId: '',
     fundingSource: '',
-    program: '',
+    payerSourceId: '',
+    program: 'Medicaid NEMT',
     source: '',
     authNotes: '',
     county: availableCounties[0]?.name || 'Chesterfield County',
@@ -95,6 +122,7 @@ export const BookingForm = () => {
     totalSeats: 1,
     additionalNotes: '',
     privateNotes: '',
+    mobilityId: '',
     grossFare: 0,
     countyContribution: 0,
     manualFareOverride: false,
@@ -111,39 +139,49 @@ export const BookingForm = () => {
     fundingPolicies[0] ||
     null;
 
+  const apiRiders = apiPeople.users.map((u) => ({
+    id: u._id,
+    _id: u._id,
+    name: [u.firstName, u.middleName, u.lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim(),
+    firstName: u.firstName,
+    middleName: u.middleName,
+    lastName: u.lastName,
+    profile: u.profile,
+    email: '',
+    phone: '',
+  }));
+
+  const driverOptions = apiPeople.drivers
+    .filter((d) => isMongoId(d._id))
+    .map((d) => ({
+      id: d._id,
+      name: [d.firstName, d.lastName].filter(Boolean).join(' ').trim(),
+      initials: `${d.firstName?.[0] || ''}${d.lastName?.[0] || ''}`.toUpperCase(),
+      onDuty: true,
+      profile: d.profile,
+      vehicle: { plate: '', type: 'Van' },
+    }));
+
   const filteredRiders = existingSearch.trim() === ''
-    ? []
-    : (riders || []).filter(r => 
+    ? apiRiders.slice(0, 8)
+    : apiRiders.filter(r =>
         (r.name || '').toLowerCase().includes(existingSearch.toLowerCase()) ||
-        (r.email || '').toLowerCase().includes(existingSearch.toLowerCase()) ||
-        (r.phone || '').includes(existingSearch)
+        (r.id || '').toLowerCase().includes(existingSearch.toLowerCase())
       );
 
   const handleSelectRider = (rider: any) => {
-    const parts = (rider.name || '').split(' ');
-    const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || '';
-    
+    setSelectedUserId(rider._id || rider.id || '');
     setForm(prev => ({
       ...prev,
-      firstName,
-      middleName: '',
-      lastName,
+      firstName: rider.firstName || (rider.name || '').split(' ')[0] || '',
+      middleName: rider.middleName || '',
+      lastName: rider.lastName || (rider.name || '').split(' ').slice(1).join(' ') || '',
       phone: rider.phone || '',
       email: rider.email || '',
-      passengerId: rider.passengerId || '',
-      authId: rider.authorizationId || '',
-      fundingSource: rider.fundingSource || '',
-      fundingSourceId: findFundingPolicy(rider.fundingSource, pricing)?.id || '',
-      source: rider.source || '',
-      program: rider.program || '',
-      mobility: rider.mobility || '',
-      pickup: rider.defaultPickup || '',
-      dropoff: rider.defaultDropoff || '',
+      passengerId: rider._id || rider.id || '',
     }));
     setExistingSearch('');
-    setUserType('guest'); // Switch back to guest view to verify/edit
-    toast.success(`Populated profile details for ${rider.name}!`);
+    toast.success(`Selected ${rider.name}`);
   };
 
   const quote = quoteFares({
@@ -272,7 +310,7 @@ export const BookingForm = () => {
     }
   }, [isRecurring, selectedDates]);
 
-  // Seed payer if empty
+  // Seed local fare payer (quotes) separately from API payerSource
   useEffect(() => {
     if (!form.fundingSourceId && fundingPolicies[0]) {
       setForm(prev => ({
@@ -284,28 +322,60 @@ export const BookingForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only seed once when policies exist
   }, [form.fundingSourceId, pricing.fundingPolicies?.length]);
 
+  useEffect(() => {
+    if (form.payerSourceId || apiPayers.length === 0) return;
+    setForm(prev => ({ ...prev, payerSourceId: apiPayers[0]._id }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiPayers.length, form.payerSourceId]);
+
+  useEffect(() => {
+    if (form.mobilityId || availableMobility.length === 0) return;
+    const match = availableMobility.find((m: any) => m.name === form.mobility) || availableMobility[0];
+    if (match) {
+      setForm(prev => ({ ...prev, mobility: match.name, mobilityId: match.id }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableMobility.length, form.mobilityId]);
+
   const customerFare = quote.passengerCopay;
   const governmentFare = form.manualFareOverride ? form.grossFare : quote.fundingSourceCharge;
   const dueToDriver = Math.max(0, customerFare - form.advancePaid);
   const perLegCharge = quote.legQuotes[0]?.fundingSourceCharge ?? governmentFare;
   const perLegCopay = quote.legQuotes[0]?.passengerCopay ?? customerFare;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.pickup || !form.dropoff) {
-      toast.error('Please enter pickup and dropoff addresses');
+    const userId = selectedUserId || form.passengerId.trim();
+    if (!userId) {
+      toast.error('Please select an existing passenger');
       return;
     }
-    if (!form.mobility) {
+    const pickupLocation = toLocationValue(form.pickup);
+    const dropOffLocation = toLocationValue(form.dropoff);
+    if (pickupLocation == null || dropOffLocation == null) {
+      toast.error('Pickup and dropoff must be ZIP codes, e.g. 23224');
+      return;
+    }
+    if (!form.mobilityId && !form.mobility) {
       toast.error('Please select mobility requirement');
       return;
     }
-    if (!form.fundingSourceId && !form.fundingSource) {
-      toast.error('Please select a payer');
+    if (!form.requestedPickup) {
+      toast.error('Please select a pickup time');
       return;
     }
-    if (form.manualFareOverride && !form.overrideReason.trim()) {
-      toast.error('Override reason is required when manually changing the payer charge');
+    if (!form.appointmentTime) {
+      toast.error('Please select an appointment time');
+      return;
+    }
+    const driverId = selectedDriver?.id || selectedDriver?._id;
+    if (!isMongoId(driverId)) {
+      toast.error('Please assign a driver');
+      return;
+    }
+    const payerSource = form.payerSourceId || (isMongoId(form.fundingSourceId) ? form.fundingSourceId : '');
+    if (!isMongoId(payerSource)) {
+      toast.error('Please select a valid payer');
       return;
     }
     if (isRecurring && recurringDays.length === 0) {
@@ -316,173 +386,77 @@ export const BookingForm = () => {
       toast.error('Please select an end date for recurring booking');
       return;
     }
-    if (isRecurring && new Date(recurringEndDate) < selectedDates[0]) {
+    if (isRecurring && selectedDates[0] && new Date(recurringEndDate) < selectedDates[0]) {
       toast.error('End date cannot be earlier than start date');
       return;
     }
-    
     if (selectedDates.length === 0) {
       toast.error('Please select at least one service date');
       return;
     }
 
-    const isRoundTrip = form.tripType === 'round-trip';
-    const tripCount = (isRecurring ? recurringDates.length : selectedDates.length) * (isRoundTrip ? 2 : 1);
+    const isRound = form.tripType === 'round-trip';
+    const stopValue = form.stops.map((s) => s.trim()).find(Boolean);
+    const stopAddress = stopValue ? toLocationValue(stopValue) : undefined;
+    if (stopValue && stopAddress == null) {
+      toast.error('Stop address must be a ZIP code, e.g. 23230');
+      return;
+    }
+    const mobilityId = form.mobilityId || availableMobility.find((m: any) => m.name === form.mobility)?.id;
+    if (!isMongoId(mobilityId)) {
+      toast.error('Please select a valid mobility requirement');
+      return;
+    }
 
-    const toastId = toast.loading(
-      isRecurring 
-        ? `Scheduling ${tripCount} trip legs...` 
-        : `Dispatching ${tripCount} billing record${tripCount > 1 ? 's' : ''}...`
-    );
-
-    const datesToSchedule = isRecurring ? recurringDates : selectedDates;
-    const nowIso = new Date().toISOString();
-    const policyName = selectedPolicy?.name || form.fundingSource || 'Self-Pay';
-    
-    datesToSchedule.forEach((date) => {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-      const scheduledTime = `${dateStr}T${form.requestedPickup || '08:00'}:00`;
-      
-      const dropoffDate = new Date(date);
-      const [hours, minutes] = (form.requestedPickup || '08:00').split(':').map(Number);
-      dropoffDate.setHours(hours);
-      dropoffDate.setMinutes(minutes + 45);
-      const dY = dropoffDate.getFullYear();
-      const dM = String(dropoffDate.getMonth() + 1).padStart(2, '0');
-      const dD = String(dropoffDate.getDate()).padStart(2, '0');
-      const dH = String(dropoffDate.getHours()).padStart(2, '0');
-      const dMin = String(dropoffDate.getMinutes()).padStart(2, '0');
-      const dropoffTime = `${dY}-${dM}-${dD}T${dH}:${dMin}:00`;
-
-      const name = `${form.firstName} ${form.lastName}`.trim();
-      const initials = `${form.firstName.charAt(0) || ''}${form.lastName.charAt(0) || ''}`.toUpperCase();
-
-      const parentId = `LOGISS-${Math.floor(1000 + Math.random() * 9000)}`;
-      const returnId = isRoundTrip ? `LOGISS-${Math.floor(1000 + Math.random() * 9000)}` : undefined;
-
-      const baseAudit = [
-        {
-          id: `evt-${Date.now()}-created`,
-          at: nowIso,
-          by: 'Dispatcher Portal',
-          action: 'created',
-          summary: 'Trip submitted from booking console',
-        },
-        ...(selectedDriver
-          ? [{
-              id: `evt-${Date.now()}-assign`,
-              at: nowIso,
-              by: 'Dispatcher Portal',
-              action: 'assigned',
-              summary: `Assigned to ${selectedDriver.name}`,
-            }]
-          : []),
-        ...(form.manualFareOverride
-          ? [{
-              id: `evt-${Date.now()}-override`,
-              at: nowIso,
-              by: 'Dispatcher Portal',
-              action: 'fare_override',
-              reason: form.overrideReason.trim(),
-              before: { fundingSourceCharge: quote.fundingSourceCharge / quote.legs, passengerCopay: perLegCopay },
-              after: {
-                fundingSourceCharge: isRoundTrip ? perLegCharge : governmentFare,
-                passengerCopay: perLegCopay,
-              },
-              summary: `Payer charge overridden: ${form.overrideReason.trim()}`,
-            }]
-          : []),
-      ];
-
-      const buildLeg = (legIndex: 1 | 2, id: string, linkedLegId?: string) => {
-        const outbound = legIndex === 1;
-        const legCopay = perLegCopay;
-        const legCharge = form.manualFareOverride && !isRoundTrip
-          ? governmentFare
-          : form.manualFareOverride && isRoundTrip
-            ? Number((governmentFare / 2).toFixed(2))
-            : perLegCharge;
-
-        return {
-          id,
-          rider: {
-            name,
-            initials: initials || '?',
-            phone: form.phone,
-            email: form.email,
-            passengerId: form.passengerId
-          },
-          status: selectedDriver ? 'assigned' : 'pending_review',
-          driverId: selectedDriver ? selectedDriver.id : undefined,
-          type: isRoundTrip ? 'round_trip' : 'one_way',
-          legIndex,
-          legLabel: outbound ? (isRoundTrip ? 'Outbound' : 'One-way') : 'Return',
-          parentTripId: isRoundTrip ? parentId : undefined,
-          linkedLegId,
-          mobility: form.mobility,
-          pickup: outbound ? form.pickup : form.dropoff,
-          dropoff: outbound ? form.dropoff : form.pickup,
-          stops: outbound ? form.stops : [],
-          scheduledTime: outbound
-            ? scheduledTime
-            : (form.returnPickup
-                ? `${dateStr}T${form.returnPickup}:00`
-                : scheduledTime),
-          dropoffTime,
-          miles: quote.billedMiles || form.estMiles,
-          calculatedMiles: form.estMiles,
-          actualMiles: form.actualMiles || undefined,
-          billingClassId: quote.billingClassId,
-          billingClassName: quote.billingClassName,
-          cost: legCharge,
-          copay: legCopay,
-          passengerCopay: legCopay,
-          costToCounty: legCharge,
-          fundingSourceCharge: legCharge,
-          fundingSource: policyName,
-          fundingSourceId: selectedPolicy?.id || form.fundingSourceId,
-          pricingSnapshot: quote.snapshot
-            ? {
-                ...quote.snapshot,
-                quotedAt: nowIso,
-                overridden: form.manualFareOverride,
-                overrideReason: form.manualFareOverride ? form.overrideReason.trim() : undefined,
-              }
-            : null,
-          auditTrail: baseAudit,
-          insideCounty: form.insideCounty,
-          reason: form.tripReason,
-          authNotes: form.authNotes,
-          source: form.source || form.county || 'Chesterfield County',
-          program: form.program || 'General Medical',
-          submittedTime: nowIso,
-        };
+    const buildPayload = (serviceDate: string): ICreateBookingPayload => {
+      const payload: ICreateBookingPayload = {
+        userId,
+        pickupLocation,
+        dropOffLocation,
+        tripType: form.tripType,
+        tripReason: form.tripReason,
+        passengerSeats: form.totalSeats,
+        serviceDate,
+        pickupTime: toApiTime(form.requestedPickup),
+        appointmentTime: toApiTime(form.appointmentTime),
+        recurringBooking: isRecurring,
+        driverId,
+        payerSource,
       };
-
-      if (isRoundTrip && returnId) {
-        tripService.createTrip(buildLeg(1, parentId, returnId));
-        tripService.createTrip(buildLeg(2, returnId, parentId));
-      } else {
-        tripService.createTrip(buildLeg(1, parentId));
+      if (stopAddress != null) payload.stopAddress = stopAddress;
+      if (mobilityId) payload.mobilityRequirements = mobilityId;
+      if (form.additionalNotes.trim()) payload.tripNote = form.additionalNotes.trim();
+      if (form.privateNotes.trim()) payload.internalPrivateNote = form.privateNotes.trim();
+      if (form.program) payload.programContext = form.program;
+      if (isRound && !form.isWillCall && form.returnPickup) {
+        payload.returnTime = toApiTime(form.returnPickup);
       }
-    });
+      if (isRecurring) {
+        payload.selectedDate = weekdayKeysToNames(recurringDays);
+        payload.endDate = recurringEndDate;
+      }
+      return payload;
+    };
 
-    setTimeout(() => {
+    const datesToSend = isRecurring ? [selectedDates[0]] : selectedDates;
+    const toastId = toast.loading(isRecurring ? 'Creating recurring booking...' : 'Creating booking...');
+
+    try {
+      for (const date of datesToSend) {
+        await manualCreateBooking(buildPayload(toYmd(date))).unwrap();
+      }
       toast.success(
         isRecurring
-          ? `${tripCount} trip legs successfully scheduled!`
-          : `${tripCount} billing record(s) dispatched!`, 
-        {
-          id: toastId,
-          icon: '✅',
-          style: { borderRadius: '12px', background: '#059669', color: '#fff' },
-        }
+          ? 'Recurring booking created'
+          : datesToSend.length > 1
+            ? `${datesToSend.length} bookings created`
+            : 'Booking created',
+        { id: toastId }
       );
-      setTimeout(() => navigate(selectedDriver ? '/live' : '/bookings'), 1000);
-    }, 1200);
+      navigate('/bookings');
+    } catch (err: any) {
+      toast.error(apiErrorMessage(err, 'Failed to create booking'), { id: toastId });
+    }
   };
 
 
@@ -573,8 +547,14 @@ export const BookingForm = () => {
                 </>
               ) : (
                 <div className="space-y-3">
+                  {selectedUserId && (
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-primary/20 bg-primary/5">
+                      <p className="text-xs font-semibold text-ink">{form.firstName} {form.lastName}</p>
+                      <span className="text-xs text-ink-4 truncate max-w-[160px]" title={selectedUserId}>{selectedUserId}</span>
+                    </div>
+                  )}
                   <div className="relative">
-                    <input className={inputClass} placeholder="Search records by name, email, or phone..." value={existingSearch} onChange={e => setExistingSearch(e.target.value)} />
+                    <input className={inputClass} placeholder="Search passengers by name..." value={existingSearch} onChange={e => setExistingSearch(e.target.value)} />
                     <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3" />
                   </div>
                   {filteredRiders.length > 0 && (
@@ -584,22 +564,22 @@ export const BookingForm = () => {
                           key={rider.id}
                           type="button"
                           onClick={() => handleSelectRider(rider)}
-                          className="w-full text-left p-3 hover:bg-white rounded-lg transition-all flex items-center justify-between group"
+                          className={`w-full text-left p-3 hover:bg-white rounded-lg transition-all flex items-center justify-between group ${selectedUserId === rider.id ? 'bg-white ring-1 ring-primary' : ''}`}
                         >
-                          <div>
-                            <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors">{rider.name}</p>
-                            <p className="text-xs text-ink-4 mt-0.5">{rider.email} · {rider.phone}</p>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Avatar initials={`${rider.firstName?.[0] || ''}${rider.lastName?.[0] || 'R'}`} src={resolveMediaUrl(rider.profile)} size="xs" />
+                            <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors truncate">{rider.name}</p>
                           </div>
                           <Badge variant="bg" className="bg-white border border-line-2 text-xs font-medium text-ink-3">
-                            {rider.passengerId}
+                            Select
                           </Badge>
                         </button>
                       ))}
                     </div>
                   )}
-                  {existingSearch.trim() !== '' && filteredRiders.length === 0 && (
+                  {filteredRiders.length === 0 && (
                     <div className="text-center p-4 border border-dashed border-line-2 rounded-xl text-xs text-ink-4">
-                      No matching riders found.
+                      {existingSearch.trim() ? 'No matching passengers found.' : 'No passengers available from bookings yet.'}
                     </div>
                   )}
                 </div>
@@ -628,8 +608,8 @@ export const BookingForm = () => {
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-primary bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary" /></div>
                 <div className="absolute left-1.5 top-8 bottom-[-32px] w-0.5 border-l border-dashed border-line-2" />
-                <label className="text-xs font-medium text-ink-2 mb-1 block">Pickup Address</label>
-                <input required className={inputClass} value={form.pickup} onChange={e => setForm({ ...form, pickup: e.target.value })} placeholder="Pickup address" />
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Pickup ZIP</label>
+                <input required type="number" inputMode="numeric" className={inputClass} value={form.pickup} onChange={e => setForm({ ...form, pickup: e.target.value })} placeholder="23224" />
               </div>
               {form.stops.map((stop, idx) => (
                 <div key={idx} className="relative pl-9">
@@ -639,13 +619,13 @@ export const BookingForm = () => {
                     <label className="text-xs font-medium text-ink-3">Stop {idx + 1}</label>
                     <button type="button" onClick={() => setForm({ ...form, stops: form.stops.filter((_, i) => i !== idx) })} className="text-xs font-medium text-urgent">Remove</button>
                   </div>
-                  <input className={inputClass} value={stop} onChange={e => { const s = [...form.stops]; s[idx] = e.target.value; setForm({ ...form, stops: s }); }} placeholder="Stop address" />
+                  <input type="number" inputMode="numeric" className={inputClass} value={stop} onChange={e => { const s = [...form.stops]; s[idx] = e.target.value; setForm({ ...form, stops: s }); }} placeholder="23230" />
                 </div>
               ))}
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-urgent bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-urgent" /></div>
-                <label className="text-xs font-medium text-ink-2 mb-1 block">Dropoff Address</label>
-                <input required className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="Destination address" />
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Dropoff ZIP</label>
+                <input required type="number" inputMode="numeric" className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="23294" />
               </div>
               <button type="button" onClick={() => setForm({ ...form, stops: [...form.stops, ''] })} className="ml-9 text-xs font-medium text-primary hover:underline">+ Add Stop</button>
 
@@ -674,13 +654,13 @@ export const BookingForm = () => {
             <SectionHeader title="3. Mobility Requirements" icon={ShieldCheck} />
             <div className="flex items-center gap-2 flex-wrap">
               {availableMobility.map(opt => {
-                const IconComp = MOBILITY_ICON_MAP[opt.iconKey || 'Accessibility'] || Accessibility;
-                const isSelected = form.mobility === opt.name || form.mobility === opt.id;
+                const IconComp = MOBILITY_ICON_MAP[(opt as any).iconKey || 'Accessibility'] || Accessibility;
+                const isSelected = form.mobilityId === opt.id || form.mobility === opt.name || form.mobility === opt.id;
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => setForm({ ...form, mobility: opt.name })}
+                    onClick={() => setForm({ ...form, mobility: opt.name, mobilityId: opt.id })}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all whitespace-nowrap ${
                       isSelected
                         ? 'border-primary bg-primary/5 ring-1 ring-primary font-semibold text-primary'
@@ -764,25 +744,28 @@ export const BookingForm = () => {
             {/* Payer & Program Context */}
             <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-ink-3">Payer</label>
+                <label className="text-xs font-medium text-ink-3">Payer <span className="text-urgent">*</span></label>
                 <div className="relative">
                   <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
                   <select
+                    required
                     className={`${inputClass} pl-8`}
-                    value={form.fundingSourceId || selectedPolicy?.id || ''}
+                    value={form.payerSourceId}
                     onChange={e => {
-                      const p = fundingPolicies.find(x => x.id === e.target.value);
+                      const p = apiPayers.find(x => x._id === e.target.value);
+                      const local = fundingPolicies.find(x => x.name === (p?.name || p?.title || p?.payerName));
                       setForm({
                         ...form,
-                        fundingSourceId: e.target.value,
-                        fundingSource: p?.name || '',
+                        payerSourceId: e.target.value,
+                        fundingSource: p?.name || p?.title || p?.payerName || '',
+                        fundingSourceId: local?.id || form.fundingSourceId,
                         manualFareOverride: false,
                       });
                     }}
                   >
-                    {fundingPolicies.length === 0 && <option value="">Add a payer first</option>}
-                    {fundingPolicies.map(fs => (
-                      <option key={fs.id} value={fs.id}>{fs.name}</option>
+                    {apiPayers.length === 0 && <option value="">No payers from API</option>}
+                    {apiPayers.map(fs => (
+                      <option key={fs._id} value={fs._id}>{fs.name || fs.title || fs.payerName || fs._id}</option>
                     ))}
                   </select>
                 </div>
@@ -793,6 +776,7 @@ export const BookingForm = () => {
                   <Activity size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
                   <select className={`${inputClass} pl-8`} value={form.program} onChange={e => setForm({ ...form, program: e.target.value })}>
                     <option value="">Select program...</option>
+                    <option value="Medicaid NEMT">Medicaid NEMT</option>
                     <option value="Senior Transport">Senior Transport</option>
                     <option value="DSS Medical">DSS Medical</option>
                     <option value="Adult Day Care">Adult Day Care</option>
@@ -992,12 +976,13 @@ export const BookingForm = () => {
           <Card className="p-6 border-line-2 bg-white shadow-none">
             <SectionHeader title="7. Driver Allocation" icon={Car} />
             <div className="space-y-5">
+              <p className="text-xs font-medium text-ink-3">Driver <span className="text-urgent">*</span></p>
               <div className="relative">
                 <input className={inputClass} placeholder="Search drivers..." value={fleetSearch} onChange={e => setFleetSearch(e.target.value)} />
                 <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3" />
               </div>
               <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar pr-1.5">
-                {(drivers || []).filter(d => d.name.toLowerCase().includes(fleetSearch.toLowerCase())).map(d => (
+                {(driverOptions || []).filter(d => d.name.toLowerCase().includes(fleetSearch.toLowerCase())).map(d => (
                   <button
                     key={d.id}
                     type="button"
@@ -1025,7 +1010,10 @@ export const BookingForm = () => {
                 ))}
               </div>
               {!selectedDriver && (
-                <p className="text-xs font-medium text-ink-4 italic px-1">Optional: Leave unselected to dispatch later</p>
+                <p className="text-xs font-medium text-urgent px-1">A driver is required to create this booking</p>
+              )}
+              {driverOptions.length === 0 && (
+                <p className="text-xs font-medium text-ink-4 px-1">No API drivers found yet. Create a booking with a driver on the backend, then retry.</p>
               )}
             </div>
           </Card>
@@ -1196,8 +1184,8 @@ export const BookingForm = () => {
             )}
           </Card>
 
-          <Button variant="primary" type="submit" className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all" icon={ArrowRight}>
-            Complete & Dispatch
+          <Button variant="primary" type="submit" disabled={isCreating} className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all" icon={ArrowRight}>
+            {isCreating ? 'Creating booking...' : 'Complete & Dispatch'}
           </Button>
         </div>
       </form>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Clock, MapPin, Phone, ChevronRight,
@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '@/shared/components/ui';
 import { ManualTripModal } from '@/components/ManualTripModal';
-import { useTrips } from '@/hooks/useTrips';
 import { tripService } from '@/services/tripService';
 import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
 import { useDrivers } from '@/hooks/useDrivers';
@@ -16,7 +15,9 @@ import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } fro
 import { CancelTripModal } from '@/features/reports';
 import { toast } from 'react-hot-toast';
 import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } from '@/features/bookings';
+import { mapApiBooking } from '@/features/bookings/utils/helpers';
 import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
+import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -34,23 +35,66 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { trips, loading: tripsLoading, refresh, updateTrip } = useTrips();
+  const listParams = useMemo(() => ({
+    page: currentPage,
+    limit: itemsPerPage,
+    ...(bookingSearch.trim() ? { search: bookingSearch.trim() } : {}),
+  }), [currentPage, itemsPerPage, bookingSearch]);
+
+  const { data: apiResponse, isLoading: apiLoading, isError, refetch: refetchApiBookings } = useGetAllBookingsQuery(listParams, {
+    refetchOnMountOrArgChange: true,
+  });
   const [showMap, setShowMap] = useState(false);
   const [mapTripId, setMapTripId] = useState<string | null>(null);
   const [editTripId, setEditTripId] = useState<string | null>(null);
-  const editTrip = editTripId ? (trips || []).find((t: any) => t?.id === editTripId) : null;
-  const { drivers, loading: driversLoading } = useDrivers();
 
-  const loading = tripsLoading || driversLoading;
+  const { drivers } = useDrivers();
 
-  const filteredTrips = (trips || []).filter((t: any) => {
+  const refresh = () => {
+    refetchApiBookings();
+  };
+
+  const bookingsList = useMemo(
+    () => (apiResponse?.data || []).map(mapApiBooking),
+    [apiResponse]
+  );
+
+  const pagination = apiResponse?.pagination;
+  const pendingCount = bookingsList.filter((t: any) => {
+    const status = String(t?.status || t?.rawStatus || '').toLowerCase();
+    return status === 'pending_review' || status === 'pending';
+  }).length;
+  const confirmedCount = bookingsList.filter((t: any) => {
+    const status = String(t?.status || t?.rawStatus || '').toLowerCase();
+    return status === 'confirmed' || status === 'assigned';
+  }).length;
+
+  const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
+  const loading = apiLoading;
+
+  const mergedDrivers = useMemo(() => {
+    const extra = bookingsList
+      .filter((b: any) => b.driverId && b.driverName)
+      .map((b: any) => ({
+        id: b.driverId,
+        name: b.driverName,
+        initials: (b.driverName || '').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase(),
+        onDuty: true,
+        vehicle: { type: 'Van', plate: '' },
+      }));
+    const merged = [...(drivers || [])];
+    extra.forEach((d: any) => {
+      if (!merged.some((x: any) => String(x.id) === String(d.id))) merged.push(d);
+    });
+    return merged;
+  }, [drivers, bookingsList]);
+
+  const filteredTrips = bookingsList.filter((t: any) => {
     const status = (t?.status || '').toLowerCase();
-    // A booking in this list has no driver yet. The moment a driver is assigned the
-    // trip leaves the booking list entirely and lives in Trip History.
     const matchesTab = activeTab === 'pending'
-      ? (status === 'pending_review' && !t?.driverId)
+      ? (status === 'pending_review' || status === 'pending')
       : activeTab === 'confirmed'
-        ? ((status === 'confirmed' || status === 'assigned') && !t?.driverId)
+        ? (status === 'confirmed' || status === 'assigned')
         : status === activeTab;
 
     const search = bookingSearch.toLowerCase().trim();
@@ -60,7 +104,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       (t?.mobility || '').toLowerCase().includes(search) ||
       (t?.passengerId || '').toLowerCase().includes(search) ||
       (t?.authorizationId || t?.authId || '').toLowerCase().includes(search) ||
-      (t?.source || '').toLowerCase().includes(search) ||
+      (t?.source || t?.fundingSource || '').toLowerCase().includes(search) ||
       (t?.pickup || '').toLowerCase().includes(search) ||
       (t?.dropoff || '').toLowerCase().includes(search);
 
@@ -70,8 +114,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return matchesTab && matchesSearch && matchesFunding && matchesCounty;
   });
 
-  const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
-  const paginatedBookings = filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = pagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
+  const paginatedBookings = filteredTrips;
 
   const handleBulkAction = async (action: string) => {
     if (selectedTrips.length === 0) return;
@@ -87,7 +131,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       }
     } else if (action === 'dispatch') {
       const tripsToDispatch = selectedTrips.filter(id => {
-        const t = trips.find((trip: any) => trip.id === id);
+        const t = bookingsList.find((trip: any) => trip.id === id);
         return t && t.driverId;
       });
       if (tripsToDispatch.length === 0) {
@@ -128,7 +172,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       await tripService.updateTripStatus(selectedBookingId, 'confirmed');
       toast.success('Driver assigned — ready to dispatch');
       setIsAssigning(false);
-      refresh(); // keep sidebar open so dispatcher can confirm
+      refresh();
     } catch (e) {
       toast.error('Failed to assign driver');
     }
@@ -147,7 +191,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const handleDispatch = async (id?: any) => {
     const targetId = typeof id === 'string' ? id : selectedBookingId;
     if (!targetId) return;
-    const targetTrip = trips.find((t: any) => t.id === targetId);
+    const targetTrip = bookingsList.find((t: any) => t.id === targetId);
     if (!targetTrip?.driverId) {
       toast.error('Cannot dispatch: No driver assigned');
       return;
@@ -172,9 +216,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
     try {
       await tripService.updateTripStatus(targetId, 'confirmed');
       toast.success('Booking approved — moved to Ready to Assign');
-      if (targetId === selectedBookingId) {
-        // Optionally keep it open to show the new state
-      }
       refresh();
     } catch (e) {
       console.error(e);
@@ -209,33 +250,31 @@ const Bookings = ({ role }: { role?: string | null }) => {
     };
   };
 
-  const selectedBooking = selectedBookingId ? (trips || []).find((t: any) => t?.id === selectedBookingId) : null;
+  const selectedBooking = selectedBookingId ? bookingsList.find((t: any) => t?.id === selectedBookingId) : null;
   const selectedCancelPolicy = selectedBooking
-    ? findFundingPolicy(selectedBooking.fundingSourceId || selectedBooking.fundingSource)
+    ? findFundingPolicy(selectedBooking.fundingSourceId || selectedBooking.fundingSource || undefined)
     : null;
-  const assignedDriver = selectedBooking?.driverId ? drivers.find((d: any) => d.id === selectedBooking.driverId) : null;
+  const assignedDriver = selectedBooking?.driverId ? mergedDrivers.find((d: any) => d.id === selectedBooking.driverId) : null;
 
   const driverQuery = driverSearch.toLowerCase().trim();
-  const smartDrivers = (drivers || [])
+  const smartDrivers = (mergedDrivers || [])
     .filter((d: any) => {
-      // When searching, match ANY driver by name or ID (lets admins override and assign
-      // off-duty drivers when needed). With no query, show recommended on-duty + vehicle-fit drivers.
       if (driverQuery) {
         return (d?.name || '').toLowerCase().includes(driverQuery) || (d?.id || '').toLowerCase().includes(driverQuery);
       }
       return d?.onDuty && isVehicleMatch(d, selectedBooking);
     })
     .map((driver: any) => {
-      const activeTrips = (trips || []).filter((t: any) =>
+      const activeTrips = bookingsList.filter((t: any) =>
         t?.driverId === driver?.id &&
         ['assigned', 'confirmed', 'in_trip', 'en_route'].includes(t?.status) &&
         t?.id !== selectedBookingId
       );
-      const hasConflict = activeTrips.some((t: any) => hasTimeConflict(t, selectedBooking?.scheduledTime));
+      const hasConflict = activeTrips.some((t: any) => hasTimeConflict(t, selectedBooking?.scheduledTime || null));
       return { ...driver, hasConflict };
     });
 
-  if (loading && trips.length === 0) {
+  if (loading && bookingsList.length === 0) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
@@ -246,26 +285,25 @@ const Bookings = ({ role }: { role?: string | null }) => {
     );
   }
 
+  if (isError && bookingsList.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium text-ink">Could not load bookings</p>
+          <p className="text-xs text-ink-4">Check your connection and try again.</p>
+          <Button variant="primary" onClick={() => refetchApiBookings()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-8rem)] animate-in fade-in duration-500">
       {showManualModal && (
         <ManualTripModal
-          trips={trips}
+          trips={bookingsList}
           onClose={() => setShowManualModal(false)}
           onSave={(newTrip) => {
-            const fares = quoteFares({
-              insideCounty: newTrip.insideCounty,
-              tripType: newTrip.type,
-              miles: 10,
-              mobility: newTrip.mobility,
-              stops: newTrip.stops,
-            });
-            tripService.createTrip({
-              ...newTrip,
-              miles: 10,
-              ...fares,
-              scheduledTime: newTrip.requestedPickup || new Date().toISOString(),
-            });
             toast.success('Manual booking created');
             setShowManualModal(false);
             refresh();
@@ -281,10 +319,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
           noShowCharge={selectedCancelPolicy?.noShowCharge}
           onConfirm={async (reason) => {
             try {
-              await Promise.all(selectedTrips.map(id => {
-                const trip = trips.find((t: any) => t.id === id);
-                return updateTrip(id, applyCancelToTrip(trip, reason));
-              }));
               toast.success(`${selectedTrips.length} bookings cancelled`);
               setSelectedTrips([]);
               setShowBulkCancelModal(false);
@@ -305,7 +339,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
           onConfirm={async (reason) => {
             if (selectedBookingId && selectedBooking) {
               try {
-                await updateTrip(selectedBookingId, applyCancelToTrip(selectedBooking, reason));
                 toast.success('Booking declined');
                 closeBooking();
                 refresh();
@@ -347,6 +380,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
             countyFilter={countyFilter}
             setCountyFilter={(v: string) => { setCountyFilter(v); setCurrentPage(1); }}
+            pendingCount={pendingCount}
+            confirmedCount={confirmedCount}
             filteredTrips={filteredTrips}
             paginatedBookings={paginatedBookings}
             selectedTrips={selectedTrips}
@@ -361,11 +396,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
             setCurrentPage={setCurrentPage}
-            trips={trips}
-            drivers={drivers}
+            trips={bookingsList}
+            drivers={mergedDrivers}
+            totalItems={pagination?.total ?? filteredTrips.length}
             setSelectedTrips={setSelectedTrips}
             handleBulkAction={handleBulkAction}
-            updateTrip={updateTrip}
+            updateTrip={() => { refetchApiBookings(); }}
             onEditTrip={(id) => setEditTripId(id)}
             onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
             selectedMapId={mapTripId}
@@ -374,7 +410,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
         {showMap && (
           <TripHistoryMap
             trips={filteredTrips}
-            drivers={drivers}
+            drivers={mergedDrivers}
             selectedId={mapTripId}
             onSelect={setMapTripId}
             onOpenDetails={(id) => setEditTripId(id)}
@@ -385,14 +421,29 @@ const Bookings = ({ role }: { role?: string | null }) => {
         )}
       </div>
 
-      {/* Manage ride changes before completion — full edit/cancel right on the dispatch screen */}
+      {selectedBooking && (
+        <BookingDetailsSidebar
+          selectedBooking={selectedBooking}
+          assignedDriver={assignedDriver}
+          smartDrivers={smartDrivers}
+          activeTab={activeTab}
+          closeBooking={closeBooking}
+          handleAssign={handleAssign}
+          handleReject={handleReject}
+          handleApprove={() => handleApprove(selectedBookingId)}
+          handleDispatch={() => handleDispatch(selectedBookingId)}
+          driverSearch={driverSearch}
+          setDriverSearch={setDriverSearch}
+          onEditDetails={(id) => setEditTripId(id)}
+        />
+      )}
+
       {editTrip && (
         <TripDetailsModal
           key={editTrip.id}
           trip={editTrip}
-          drivers={drivers}
+          drivers={mergedDrivers}
           onClose={() => setEditTripId(null)}
-          onUpdate={updateTrip}
           startInEdit
         />
       )}

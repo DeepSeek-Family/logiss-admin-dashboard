@@ -31,6 +31,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { trips, drivers } from '@/data/mockData';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ROUTES } from '@/constants/routes';
+import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -94,7 +95,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
     items: [
       { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
       { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, badge: '8', roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
@@ -137,6 +138,10 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
   const { unreadCount } = useNotifications();
+  const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 1 });
+  const bookingsBadge = bookingsMeta?.pagination?.total != null
+    ? String(bookingsMeta.pagination.total)
+    : undefined;
 
   const liveTripsCount = (trips || []).filter((t: any) => ['in_trip', 'en_route', 'arrived'].includes(t?.status)).length;
   const activeDriversCount = (drivers || []).filter((d: any) => d?.onDuty).length;
@@ -190,7 +195,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                     <span className="w-1.5 h-1.5 rounded-full bg-accent pulse-dot"></span>
                     {liveTripsCount}
                   </div>
-                ) : item.badge;
+                ) : item.id === ROUTES.bookings
+                  ? bookingsBadge
+                  : item.badge;
 
                 const isActive = item.id.includes('tab=schedule')
                   ? (page === '/trips' && location.search.includes('tab=schedule'))

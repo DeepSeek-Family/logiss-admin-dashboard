@@ -9,6 +9,7 @@ import { formatShortDate, money } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { DriverAssignSelect } from './DriverAssignSelect';
+import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
 const INLINE_INPUT =
@@ -85,6 +86,8 @@ interface BookingsListProps {
   setFundingFilter: (val: string) => void;
   countyFilter: string;
   setCountyFilter: (val: string) => void;
+  pendingCount?: number;
+  confirmedCount?: number;
   filteredTrips: any[];
   paginatedBookings: any[];
   selectedTrips: string[];
@@ -101,6 +104,7 @@ interface BookingsListProps {
   setCurrentPage: (page: number) => void;
   trips: any[];
   drivers: any[];
+  totalItems?: number;
   setSelectedTrips: (trips: string[]) => void;
   handleBulkAction: (action: string) => void;
   updateTrip: (id: string, patch: Record<string, any>) => void;
@@ -112,10 +116,11 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
-  countyFilter, setCountyFilter,
+  countyFilter, setCountyFilter, pendingCount, confirmedCount,
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
+  totalItems,
   setSelectedTrips, handleBulkAction, updateTrip,   onEditTrip, onRowSelect, selectedMapId
 }) => {
   const { pricing } = usePricing();
@@ -128,13 +133,13 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('pending'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => t.status === 'pending_review' && !t?.driverId).length}</span>
+          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{pendingCount ?? (trips || []).filter((t: any) => t.status === 'pending_review' || t.status === 'pending').length}</span>
         </button>
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{(trips || []).filter((t: any) => (t.status === 'confirmed' || t.status === 'assigned') && !t?.driverId).length}</span>
+          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{confirmedCount ?? (trips || []).filter((t: any) => t.status === 'confirmed' || t.status === 'assigned').length}</span>
         </button>
       </div>
 
@@ -302,13 +307,13 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
                       {/* Date */}
                       <td className="px-3.5 py-3 whitespace-nowrap min-w-[90px]">
-                        <span className="text-xs font-medium text-ink whitespace-nowrap">{booking?.scheduledTime ? formatShortDate(booking.scheduledTime) : (booking?.submittedTime ? formatShortDate(booking.submittedTime) : '-')}</span>
+                        <span className="text-xs font-medium text-ink whitespace-nowrap">{booking?.serviceDate ? formatShortDate(booking.serviceDate) : (booking?.scheduledTime ? formatShortDate(booking.scheduledTime) : '-')}</span>
                       </td>
 
                       {/* Pickup Time (editable) */}
                       <td className="px-3.5 py-3 whitespace-nowrap min-w-[105px]">
                         <InlineTime
-                          value={booking?.requestedPickup || (booking?.scheduledTime ? String(booking.scheduledTime).slice(11, 16) : '')}
+                          value={booking?.pickupTime || booking?.requestedPickup || ''}
                           onCommit={(v) => updateTrip(booking.id, { requestedPickup: v })}
                         />
                       </td>
@@ -321,7 +326,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Rider */}
                       <td className="px-4 py-3 min-w-[200px]">
                         <div className="flex items-center gap-3">
-                          <Avatar initials={booking?.rider?.initials || '?'} size="xs" />
+                          <Avatar initials={booking?.rider?.initials || '?'} src={resolveMediaUrl(booking?.rider?.profile)} size="xs" />
                           <p className="text-xs font-medium text-ink leading-tight whitespace-nowrap">{booking?.rider?.name || 'Unknown'}</p>
                         </div>
                       </td>
@@ -437,7 +442,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       <td className="px-3.5 py-3 min-w-[150px]">
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink max-w-[160px]">
                           <ClipboardList size={12} className="text-ink-4 shrink-0" />
-                          <span className="truncate" title={booking?.reason || ''}>{booking?.reason || '—'}</span>
+                          <span className="truncate" title={booking?.tripReason || booking?.reason || ''}>{booking?.tripReason || booking?.reason || '—'}</span>
                         </span>
                       </td>
 
@@ -454,7 +459,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Trip Type */}
                       <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
                         <div className="flex items-center gap-1 text-xs text-ink-4">
-                          {booking?.type === 'round_trip' ? (
+                          {isRoundTrip(booking?.tripType || booking?.type) ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50/70 text-indigo-700 border border-indigo-100 font-medium">
                               <Repeat size={11} className="text-indigo-600" strokeWidth={2.5} />
                               Round Trip
@@ -463,6 +468,11 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50/70 text-blue-700 border border-blue-100 font-medium">
                               <MoveRight size={11} className="text-blue-600" strokeWidth={2.5} />
                               One Way
+                            </span>
+                          )}
+                          {booking?.isRecurring && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/5 text-primary border border-primary/15 font-medium" title={(booking.recurringDays || []).join(', ')}>
+                              Recurring
                             </span>
                           )}
                         </div>
@@ -536,12 +546,12 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
                       {/* User Note (from rider app) */}
                       <td className="px-3 py-2.5">
-                        <InlineText value={booking.notes} onCommit={(v) => updateTrip(booking.id, { notes: v })} placeholder="Add note…" className="w-[150px]" />
+                        <InlineText value={booking.tripNote || booking.notes} onCommit={(v) => updateTrip(booking.id, { notes: v })} placeholder="Add note…" className="w-[150px]" />
                       </td>
 
                       {/* Dispatcher/Admin Note (internal) */}
                       <td className="px-3 py-2.5">
-                        <InlineText value={booking.privateNotes} onCommit={(v) => updateTrip(booking.id, { privateNotes: v })} placeholder="Internal note…" className="w-[150px]" />
+                        <InlineText value={booking.internalPrivateNote || booking.privateNotes} onCommit={(v) => updateTrip(booking.id, { privateNotes: v })} placeholder="Internal note…" className="w-[150px]" />
                       </td>
 
                     </tr>
@@ -550,7 +560,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               </table>
             </div>
             <div className="shrink-0">
-              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredTrips.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }} />
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems ?? filteredTrips.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }} />
             </div>
           </>
         ) : (

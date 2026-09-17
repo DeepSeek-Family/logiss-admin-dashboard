@@ -1,11 +1,28 @@
+const parseLocalYmd = (value: string): Date | null => {
+  const ymd = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!ymd) return null;
+  return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+};
+
 export const formatTime = (iso: string | number | Date | null | undefined): string => {
   if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  if (typeof iso === 'string' && /^\d{1,2}:\d{2}(?::\d{2})?\s*(AM|PM)$/i.test(iso.trim())) {
+    return iso.trim().replace(/\s+/g, ' ');
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : '';
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
 export const formatShortDate = (iso: string | number | Date | null | undefined): string => {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (typeof iso === 'string') {
+    const local = parseLocalYmd(iso);
+    if (local) return local.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 export const formatDateTime = (iso: string | number | Date | null | undefined): string => {
@@ -31,7 +48,9 @@ export const timeAgo = (iso: string | number | Date | null | undefined): string 
 export const tripTypeLabel = (type: string): string => {
   const map: Record<string, string> = {
     'round_trip': 'Round Trip',
-    'one_way': 'One Way'
+    'round-trip': 'Round Trip',
+    'one_way': 'One Way',
+    'one-way': 'One Way',
   };
   return map[type] || type;
 };

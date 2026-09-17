@@ -3,7 +3,8 @@ import {
   XCircle, Navigation, Users, Edit2, Search, MapPin 
 } from 'lucide-react';
 import { Avatar, Badge, Button, TripStatusBadge } from '@/shared/components/ui';
-import { tripTypeLabel, formatTime } from '@/utils/helpers';
+import { tripTypeLabel, formatTime, formatShortDate } from '@/utils/helpers';
+import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
 
 interface BookingDetailsSidebarProps {
   selectedBooking: any;
@@ -71,29 +72,42 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
             {/* Passenger Info Card */}
             <section className="bg-bg rounded-2xl border border-line-2 overflow-hidden">
               <div className="flex items-center gap-3 p-4 border-b border-line-2">
-                <Avatar initials={selectedBooking.rider.initials} size="md" className="shrink-0" />
+                <Avatar initials={selectedBooking.rider.initials} src={resolveMediaUrl(selectedBooking.rider.profile)} size="md" className="shrink-0" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-ink">{selectedBooking.rider.name}</h3>
                   <p className="text-xs text-ink-4 mt-0.5">
-                    {selectedBooking.rider.phone} · PX: {selectedBooking.passengerId || 'N/A'}
+                    {selectedBooking.rider.phone ? `${selectedBooking.rider.phone} · ` : ''}
+                    ID: {selectedBooking.passengerId || 'N/A'}
                   </p>
-                  <p className="text-xs text-ink-4">
-                    Auth: <span className="text-primary">{selectedBooking.authorizationId || selectedBooking.authId || '---'}</span>
-                  </p>
+                  {(selectedBooking.authorizationId || selectedBooking.authId) && (
+                    <p className="text-xs text-ink-4">
+                      Auth: <span className="text-primary">{selectedBooking.authorizationId || selectedBooking.authId}</span>
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 divide-x divide-y divide-line-2">
                 <div className="p-3">
+                  <p className="type-label text-ink-4 mb-0.5">Service Date</p>
+                  <p className="text-sm font-semibold text-ink">{selectedBooking.serviceDate ? formatShortDate(selectedBooking.serviceDate) : 'N/A'}</p>
+                </div>
+                <div className="p-3">
                   <p className="type-label text-ink-4 mb-0.5">Pickup Time</p>
-                  <p className="text-sm font-semibold text-ink">{selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime)}</p>
+                  <p className="text-sm font-semibold text-ink">{selectedBooking.pickupTime || selectedBooking.requestedPickup || formatTime(selectedBooking.scheduledTime) || 'N/A'}</p>
                 </div>
                 <div className="p-3">
                   <p className="type-label text-ink-4 mb-0.5">Appointment</p>
                   <p className="text-sm font-semibold text-primary">{selectedBooking.appointmentTime || 'N/A'}</p>
                 </div>
+                {isRoundTrip(selectedBooking.tripType || selectedBooking.type) && (
+                  <div className="p-3">
+                    <p className="type-label text-ink-4 mb-0.5">Return Time</p>
+                    <p className="text-sm font-semibold text-ink">{selectedBooking.returnTime || selectedBooking.returnPickup || 'N/A'}</p>
+                  </div>
+                )}
                 <div className="p-3">
                   <p className="type-label text-ink-4 mb-0.5">Trip Type</p>
-                  <p className="text-xs font-medium text-ink">{tripTypeLabel(selectedBooking.type)}</p>
+                  <p className="text-xs font-medium text-ink">{tripTypeLabel(selectedBooking.tripType || selectedBooking.type)}</p>
                 </div>
                 <div className="p-3">
                   <p className="type-label text-ink-4 mb-0.5">Mobility</p>

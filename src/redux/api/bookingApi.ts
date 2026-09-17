@@ -78,18 +78,33 @@ export interface ISingleBookingResponse {
   data: IBooking
 }
 
+export interface IPayerSource {
+  _id: string
+  name?: string
+  title?: string
+  payerName?: string
+  status?: boolean
+  [key: string]: any
+}
+
+export interface IPayersListResponse {
+  success: boolean
+  message?: string
+  data: IPayerSource[]
+}
+
 export interface ICreateBookingPayload {
-  userId?: string
-  pickupLocation: string | number
-  dropOffLocation: string | number
-  stopAddress?: string | number
+  userId: string
+  pickupLocation: number
+  dropOffLocation: number
+  stopAddress?: number
   mobilityRequirements?: string
   tripNote?: string
   internalPrivateNote?: string
   tripType?: 'round-trip' | 'one-way' | string
   tripReason?: string
   passengerSeats?: number
-  payerSource?: string
+  payerSource: string
   programContext?: string
   serviceDate?: string
   appointmentTime?: string
@@ -98,7 +113,7 @@ export interface ICreateBookingPayload {
   recurringBooking?: boolean
   selectedDate?: string[]
   endDate?: string
-  driverId?: string
+  driverId: string
   vehicleId?: string
   [key: string]: any
 }
@@ -111,14 +126,40 @@ export interface IGetBookingsQueryParams {
   [key: string]: any
 }
 
+const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
+  const list = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.data?.data)
+        ? response.data.data
+        : []
+  const pagination = response?.pagination || response?.data?.pagination
+  return {
+    success: response?.success !== false,
+    message: response?.message || '',
+    pagination,
+    data: list,
+  }
+}
+
 export const bookingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => ({
-        url: '/booking',
-        method: 'GET',
-        params: params || {},
-      }),
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {}
+        if (params && typeof params === 'object') {
+          if (params.page != null) queryParams.page = params.page
+          if (params.limit != null) queryParams.limit = params.limit
+          if (params.search) queryParams.search = params.search
+        }
+        return {
+          url: '/booking',
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
           ? [
@@ -126,6 +167,22 @@ export const bookingApi = baseApi.injectEndpoints({
               { type: 'bookings', id: 'LIST' },
             ]
           : [{ type: 'bookings', id: 'LIST' }],
+    }),
+    getAllPayers: builder.query<IPayersListResponse, void>({
+      query: () => ({
+        url: '/payers',
+        method: 'GET',
+      }),
+      transformResponse: (response: any): IPayersListResponse => ({
+        success: response?.success !== false,
+        message: response?.message,
+        data: Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [],
+      }),
+      providesTags: ['Payers'],
     }),
     manualCreateBooking: builder.mutation<ISingleBookingResponse, ICreateBookingPayload>({
       query: (body) => ({
@@ -135,28 +192,13 @@ export const bookingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'bookings', id: 'LIST' }],
     }),
-    createBooking: builder.mutation<ISingleBookingResponse, ICreateBookingPayload>({
-      query: (body) => ({
-        url: '/booking',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: [{ type: 'bookings', id: 'LIST' }],
-    }),
-    getBookingById: builder.query<ISingleBookingResponse, string>({
-      query: (id) => ({
-        url: `/booking/${id}`,
-        method: 'GET',
-      }),
-      providesTags: (_result, _error, id) => [{ type: 'bookings', id }],
-    }),
+ 
   }),
   overrideExisting: false,
 })
 
 export const {
   useGetAllBookingsQuery,
+  useGetAllPayersQuery,
   useManualCreateBookingMutation,
-  useCreateBookingMutation,
-  useGetBookingByIdQuery,
 } = bookingApi
