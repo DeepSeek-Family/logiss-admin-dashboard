@@ -9,6 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   Upload,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import {
@@ -17,10 +19,20 @@ import {
   type FundingSourcePolicy,
   type PricingMethod,
 } from '@/hooks/usePricing';
+import {
+  useGetPayersQuery,
+  useCreatePayerMutation,
+  useUpdatePayerMutation,
+} from '@/redux/api/coverageApi';
+import {
+  PAYER_TYPE_OPTIONS,
+  normalizePayerType,
+  payerTypeLabel,
+  type PayerType,
+} from '@/features/cms/constants/payerTypes';
+import { apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { parseGeoJsonDocument, parsePolygons } from '@/utils/geofenceEngine';
 import toast from 'react-hot-toast';
-
-const TYPE_OPTIONS = ['Government', 'County payer', 'City', 'Insurance', 'Self-pay', 'Facility', 'Other'];
 
 type UiPricingMethod = 'flat' | 'included_then_per_mile' | 'mileage_brackets';
 
@@ -165,43 +177,72 @@ const EditorSection = ({
   );
 };
 
-export const FundingSourcesPanel = () => {
+interface FundingSourcesPanelProps {
+  canEdit?: boolean;
+}
+
+export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps) => {
   const {
     pricing,
     addFundingPolicy,
     updateFundingPolicy,
-    deleteFundingPolicy,
   } = usePricing();
 
-  const policies = pricing.fundingPolicies || [];
-  const [selectedId, setSelectedId] = useState<string | null>(policies[0]?.id || null);
-  const [draft, setDraft] = useState<FundingSourcePolicy | null>(() =>
-    policies[0] ? clonePolicy(policies[0]) : null
-  );
+  const { data: payersResponse, isLoading, isError, error, refetch } = useGetPayersQuery();
+  const [createPayer, { isLoading: isCreating }] = useCreatePayerMutation();
+  const [updatePayer, { isLoading: isSavingPayer }] = useUpdatePayerMutation();
+
+  const payers = payersResponse?.data || [];
+  const localPolicies = pricing.fundingPolicies || [];
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<FundingSourcePolicy | null>(null);
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState('Government');
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [newType, setNewType] = useState<PayerType>('government');
+  const [draftPayerType, setDraftPayerType] = useState<PayerType>('government');
   const [coversAreasOpen, setCoversAreasOpen] = useState(true);
   const geofenceInputRef = useRef<HTMLInputElement>(null);
 
-  const selected = policies.find(p => p.id === selectedId) || null;
+  const selected = payers.find(p => p._id === selectedId) || null;
 
   useEffect(() => {
-    const current = policies.find(p => p.id === selectedId) || null;
-    setDraft(current ? clonePolicy(current) : null);
-    setDeleteConfirm(false);
+    if (!selectedId && payers[0]?._id) setSelectedId(payers[0]._id);
+  }, [payers, selectedId]);
+
+  useEffect(() => {
+    const apiPayer = payers.find(p => p._id === selectedId);
+    if (!apiPayer) {
+      setDraft(null);
+      return;
+    }
+    const local = localPolicies.find(p => p.id === apiPayer._id);
+    const apiType = normalizePayerType(apiPayer.type);
+    setDraftPayerType(apiType);
+    if (local) {
+      setDraft(clonePolicy({ ...local, name: apiPayer.name, type: payerTypeLabel(apiType), active: apiPayer.isActive !== false }));
+      return;
+    }
+    setDraft(clonePolicy({
+      id: apiPayer._id,
+      name: apiPayer.name,
+      type: payerTypeLabel(apiType),
+      active: apiPayer.isActive !== false,
+      pricingMethod: 'included_then_per_mile',
+    } as FundingSourcePolicy));
     setCoversAreasOpen(true);
-  }, [selectedId]);
+  }, [selectedId, payers, localPolicies]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return policies;
-    return policies.filter(
-      p => p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
+    if (!q) return payers;
+    return payers.filter(
+      p => p.name.toLowerCase().includes(q) || payerTypeLabel(p.type).toLowerCase().includes(q)
     );
-  }, [policies, search]);
+  }, [payers, search]);
+
+  const policyForPayer = (payerId: string) => localPolicies.find(p => p.id === payerId);
 
   const patchDraft = (updates: Partial<FundingSourcePolicy>) => {
     setDraft(prev => (prev ? { ...prev, ...updates } : prev));
@@ -211,16 +252,28 @@ export const FundingSourcesPanel = () => {
     setDraft(prev => (prev ? { ...prev, pricingMethod: m } : prev));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selected || !draft) return;
     if (!draft.name.trim()) {
       toast.error('Payer name is required');
       return;
     }
+    const typeValue = normalizePayerType(draftPayerType);
+
+    try {
+      await updatePayer({
+        id: selected._id,
+        body: { name: draft.name.trim(), type: typeValue },
+      }).unwrap();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to save payer'));
+      return;
+    }
+
     const method = uiMethod(draft.pricingMethod);
-    updateFundingPolicy(selected.id, {
+    const pricingPayload = {
       name: draft.name.trim(),
-      type: draft.type,
+      type: payerTypeLabel(typeValue),
       active: draft.active,
       pricingMethod: method,
       flatRate: draft.flatRate,
@@ -236,36 +289,55 @@ export const FundingSourcesPanel = () => {
       serviceAreaIds: [...(draft.serviceAreaIds || [])],
       geofencePolygons: parsePolygons(draft.geofencePolygons),
       geofenceFileName: draft.geofenceFileName || '',
-    });
+    };
+
+    if (policyForPayer(selected._id)) {
+      updateFundingPolicy(selected._id, pricingPayload);
+    } else {
+      addFundingPolicy({ id: selected._id, ...pricingPayload });
+    }
     toast.success('Payer saved');
   };
 
   const handleCancelEdits = () => {
     if (!selected) return;
-    setDraft(clonePolicy(selected));
-  };
-
-  const handleAdd = () => {
-    if (!newName.trim()) return;
-    const created = addFundingPolicy({
-      name: newName.trim(),
-      type: newType,
+    setDraftPayerType(normalizePayerType(selected.type));
+    const local = policyForPayer(selected._id);
+    if (local) {
+      setDraft(clonePolicy(local));
+      return;
+    }
+    setDraft(clonePolicy({
+      id: selected._id,
+      name: selected.name,
+      type: payerTypeLabel(normalizePayerType(selected.type)),
+      active: selected.isActive !== false,
       pricingMethod: 'included_then_per_mile',
-    });
-    setSelectedId(created.id);
-    setNewName('');
-    setNewType('Government');
-    setShowAdd(false);
-    toast.success('Payer created');
+    } as FundingSourcePolicy));
   };
 
-  const handleDelete = () => {
-    if (!selected) return;
-    const next = policies.filter(p => p.id !== selected.id);
-    deleteFundingPolicy(selected.id);
-    setSelectedId(next[0]?.id || null);
-    setDeleteConfirm(false);
-    toast.success('Payer removed');
+  const handleAdd = async () => {
+    if (!newName.trim()) return;
+    try {
+      const typeValue = normalizePayerType(newType);
+      const res = await createPayer({ name: newName.trim(), type: typeValue }).unwrap();
+      const id = res.data?._id;
+      if (id) {
+        addFundingPolicy({
+          id,
+          name: newName.trim(),
+          type: payerTypeLabel(typeValue),
+          pricingMethod: 'included_then_per_mile',
+        });
+        setSelectedId(id);
+      }
+      setNewName('');
+      setNewType('government');
+      setShowAdd(false);
+      toast.success('Payer created');
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to create payer'));
+    }
   };
 
   const MAX_GEOFENCE_BYTES = 2 * 1024 * 1024;
@@ -301,22 +373,44 @@ export const FundingSourcesPanel = () => {
   };
 
   const currentMethod = draft ? uiMethod(draft.pricingMethod) : 'flat';
+  const saving = isSavingPayer || isCreating;
+
+  if (isLoading) {
+    return (
+      <div className="py-16 flex flex-col items-center gap-3 text-ink-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm">Loading payers…</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="py-16 flex flex-col items-center gap-3 text-center">
+        <AlertTriangle className="text-urgent opacity-60" size={32} />
+        <p className="text-sm text-ink-3">{apiErrorMessage(error, 'Failed to load payers')}</p>
+        <button type="button" onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <h2 className="type-section-title">Payers</h2>
-        <Button
-          variant="primary"
-          size="md"
-          className={actionBtn}
-          onClick={() => {
-            setShowAdd(true);
-            setDeleteConfirm(false);
-          }}
-        >
-          <Plus size={16} /> Add
-        </Button>
+        {canEdit && (
+          <Button
+            variant="primary"
+            size="md"
+            className={actionBtn}
+            onClick={() => setShowAdd(true)}
+            disabled={saving}
+          >
+            <Plus size={16} /> Add
+          </Button>
+        )}
       </div>
 
       {showAdd && (
@@ -335,9 +429,9 @@ export const FundingSourcesPanel = () => {
               />
             </div>
             <Field label="Type">
-              <select className={controlSelect} value={newType} onChange={e => setNewType(e.target.value)}>
-                {TYPE_OPTIONS.map(t => (
-                  <option key={t}>{t}</option>
+              <select className={controlSelect} value={newType} onChange={e => setNewType(e.target.value as PayerType)}>
+                {PAYER_TYPE_OPTIONS.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </Field>
@@ -379,39 +473,41 @@ export const FundingSourcesPanel = () => {
                 <p className="text-sm font-medium text-ink-4">No payers</p>
               </div>
             )}
-            {filtered.map(p => (
+            {filtered.map(p => {
+              const local = policyForPayer(p._id);
+              const isActive = p.isActive !== false;
+              return (
               <button
-                key={p.id}
+                key={p._id}
                 type="button"
-                onClick={() => {
-                  setSelectedId(p.id);
-                  setDeleteConfirm(false);
-                }}
+                onClick={() => setSelectedId(p._id)}
                 className={`w-full text-left px-4 py-3.5 border-l-[3px] transition-colors ${
-                  selectedId === p.id
+                  selectedId === p._id
                     ? 'bg-primary/10 border-l-primary'
                     : 'border-l-transparent hover:bg-bg'
-                } ${!p.active ? 'opacity-60' : ''}`}
+                } ${!isActive ? 'opacity-60' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-ink truncate">{p.name}</p>
                     <div className="mt-2 flex items-center gap-2">
-                      <span className={`${listChip} ${typeChipTone(p.type)}`}>
-                        {sentenceCase(p.type)}
+                      <span className={`${listChip} ${typeChipTone(payerTypeLabel(normalizePayerType(p.type)))}`}>
+                        {payerTypeLabel(normalizePayerType(p.type))}
                       </span>
-                      <span className={`${listChip} ${methodChipTone}`}>
-                        {methodChip(p.pricingMethod)}
-                      </span>
+                      {local && (
+                        <span className={`${listChip} ${methodChipTone}`}>
+                          {methodChip(local.pricingMethod)}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span
-                    className={`shrink-0 w-2.5 h-2.5 rounded-full ${p.active ? 'bg-accent' : 'bg-line'}`}
-                    title={p.active ? 'Active' : 'Inactive'}
+                    className={`shrink-0 w-2.5 h-2.5 rounded-full ${isActive ? 'bg-accent' : 'bg-line'}`}
+                    title={isActive ? 'Active' : 'Inactive'}
                   />
                 </div>
               </button>
-            ))}
+            );})}
           </div>
         </div>
 
@@ -436,17 +532,23 @@ export const FundingSourcesPanel = () => {
                     <Field label="Type">
                       <select
                         className={controlSelect}
-                        value={draft.type}
-                        onChange={e => patchDraft({ type: e.target.value })}
+                        value={draftPayerType}
+                        onChange={e => {
+                          const value = normalizePayerType(e.target.value);
+                          setDraftPayerType(value);
+                          patchDraft({ type: payerTypeLabel(value) });
+                        }}
+                        disabled={!canEdit}
                       >
-                        {TYPE_OPTIONS.map(t => (
-                          <option key={t}>{t}</option>
+                        {PAYER_TYPE_OPTIONS.map(t => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
                         ))}
                       </select>
                     </Field>
                     <button
                       type="button"
                       onClick={() => patchDraft({ active: !draft.active })}
+                      disabled={!canEdit}
                       className={`h-10 flex items-center gap-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${
                         draft.active
                           ? 'bg-accent-light text-accent border-accent/30'
@@ -458,35 +560,6 @@ export const FundingSourcesPanel = () => {
                       />
                       {draft.active ? 'Active' : 'Inactive'}
                     </button>
-                    <div className="shrink-0">
-                      {deleteConfirm ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={handleDelete}
-                            className="h-10 px-3 text-xs font-bold text-white bg-urgent rounded-xl"
-                          >
-                            Confirm delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirm(false)}
-                            className="h-10 px-3 text-xs font-semibold border border-line-2 rounded-xl bg-white"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setDeleteConfirm(true)}
-                          className="h-10 w-10 flex items-center justify-center text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl"
-                          title="Delete payer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
                   </div>
                 </EditorSection>
 
@@ -531,10 +604,11 @@ export const FundingSourcesPanel = () => {
                     {(() => {
                       const rings = parsePolygons(draft.geofencePolygons);
                       const name = draft.geofenceFileName || '';
+                      const savedPolicy = selected ? policyForPayer(selected._id) : null;
                       const saved =
-                        !!selected &&
-                        (selected.geofenceFileName || '') === name &&
-                        JSON.stringify(parsePolygons(selected.geofencePolygons)) ===
+                        !!savedPolicy &&
+                        (savedPolicy.geofenceFileName || '') === name &&
+                        JSON.stringify(parsePolygons(savedPolicy.geofencePolygons)) ===
                           JSON.stringify(rings);
                       if (rings.length === 0) {
                         return 'No fence file. Empty fence = all trips inside.';
@@ -729,27 +803,31 @@ export const FundingSourcesPanel = () => {
                 </EditorSection>
               </div>
 
-              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-line-2 bg-white shrink-0">
-                <Button
-                  variant="outline"
-                  size="md"
-                  type="button"
-                  onClick={handleCancelEdits}
-                  className={`${actionBtn} min-w-[7rem]`}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  type="button"
-                  onClick={handleSave}
-                  className={`${actionBtn} min-w-[7.5rem]`}
-                >
-                  <CheckCircle2 size={16} />
-                  Save
-                </Button>
-              </div>
+              {canEdit && (
+                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-line-2 bg-white shrink-0">
+                  <Button
+                    variant="outline"
+                    size="md"
+                    type="button"
+                    onClick={handleCancelEdits}
+                    className={`${actionBtn} min-w-[7rem]`}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    type="button"
+                    onClick={() => void handleSave()}
+                    className={`${actionBtn} min-w-[7.5rem]`}
+                    disabled={saving}
+                  >
+                    <CheckCircle2 size={16} />
+                    {saving ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -293,7 +293,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         </section>
       )}
 
-      {activeSection === 'funding' && <FundingSourcesPanel />}
+      {activeSection === 'funding' && <FundingSourcesPanel canEdit={canEdit} />}
 
       {activeSection === 'fees' && (
         <div className="space-y-6 w-full max-w-2xl">
@@ -392,7 +392,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
       {activeSection === 'facilities' && (
         <Card className="p-5">
-          <FacilitiesPanel />
+          <FacilitiesPanel canEdit={canEdit} />
         </Card>
       )}
 

@@ -182,7 +182,13 @@ export const bookingApi = baseApi.injectEndpoints({
             ? response.data
             : [],
       }),
-      providesTags: ['Payers'],
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'Payers' as const, id: _id })),
+              { type: 'Payers', id: 'LIST' },
+            ]
+          : [{ type: 'Payers', id: 'LIST' }],
     }),
     manualCreateBooking: builder.mutation<ISingleBookingResponse, ICreateBookingPayload>({
       query: (body) => ({
