@@ -5,14 +5,6 @@ import {
   Trash2,
   Edit2,
   Accessibility,
-  Bed,
-  Disc,
-  Zap,
-  User,
-  Info,
-  HeartPulse,
-  Activity,
-  Shield,
   Landmark,
   Building2,
 } from 'lucide-react';
@@ -20,11 +12,10 @@ import { Card, Button } from '@/shared/components/ui';
 import {
   usePricing,
   CountyConfig,
-  MobilityConfig,
   DEFAULT_TRANSIT_RULES,
 } from '@/hooks/usePricing';
 import { CountyModal } from './CountyModal';
-import { MobilityModal } from './MobilityModal';
+import { MobilityFeesSection } from './MobilityFeesSection';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { AreaZoneCard } from './AreaZoneCard';
 import { FundingSourcesPanel } from '@/features/cms/components/FundingSourcesPanel';
@@ -39,18 +30,6 @@ interface CoverageTabProps {
 const num = (v: string, fallback = 0) => {
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : fallback;
-};
-
-const ICON_MAP: { [key: string]: any } = {
-  User,
-  Accessibility,
-  Bed,
-  Disc,
-  Zap,
-  Info,
-  HeartPulse,
-  Shield,
-  Activity,
 };
 
 type Section = 'counties' | 'funding' | 'fees' | 'facilities';
@@ -76,9 +55,6 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
     addCounty,
     updateCounty,
     deleteCounty,
-    addMobility,
-    updateMobility,
-    deleteMobility,
   } = usePricing();
 
   const canEdit = role !== 'driver';
@@ -86,16 +62,13 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
   const [selectedCounty, setSelectedCounty] = useState<CountyConfig | null>(null);
   const [mapAreaId, setMapAreaId] = useState<string | null>(null);
-  const [isMobilityModalOpen, setIsMobilityModalOpen] = useState(false);
-  const [selectedMobility, setSelectedMobility] = useState<MobilityConfig | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: 'county' | 'mobility';
+    type: 'county';
     id: string;
     label: string;
   } | null>(null);
 
   const counties = pricing.counties || [];
-  const mobilityTypes = pricing.mobilityTypes || [];
   const rules = pricing.rules || DEFAULT_TRANSIT_RULES;
   const zoneId = mapAreaId && counties.some(c => c.id === mapAreaId) ? mapAreaId : counties[0]?.id || null;
 
@@ -111,25 +84,10 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
     setSelectedCounty(null);
   };
 
-  const handleSaveMobility = (data: Omit<MobilityConfig, 'id'>) => {
-    if (selectedMobility) {
-      updateMobility(selectedMobility.id, data);
-      toast.success(`Updated ${data.name}`);
-    } else {
-      addMobility(data);
-      toast.success(`Added ${data.name}`);
-    }
-    setIsMobilityModalOpen(false);
-    setSelectedMobility(null);
-  };
-
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     if (deleteTarget.type === 'county') {
       deleteCounty(deleteTarget.id);
-      toast.success(`Removed ${deleteTarget.label}`);
-    } else {
-      deleteMobility(deleteTarget.id);
       toast.success(`Removed ${deleteTarget.label}`);
     }
     setDeleteTarget(null);
@@ -323,70 +281,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
           </div>
         </section>
 
-        <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
-            <header className="flex items-center justify-between gap-4 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
-                  2
-                </span>
-                <h2 className="text-sm font-semibold text-primary">Mobility</h2>
-              </div>
-              {canEdit && (
-                <Button
-                  variant="primary"
-                  size="md"
-                  className={actionBtn}
-                  onClick={() => {
-                    setSelectedMobility(null);
-                    setIsMobilityModalOpen(true);
-                  }}
-                >
-                  <Plus size={16} /> Add
-                </Button>
-              )}
-            </header>
-            <div className="p-5">
-            <div className="rounded-xl border border-line-2 divide-y divide-line-2">
-              {mobilityTypes.map(mob => {
-                const IconComponent = ICON_MAP[mob.iconKey || 'Accessibility'] || Accessibility;
-                return (
-                  <div key={mob.id} className="flex items-center gap-3 min-h-12 py-3 px-4">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <IconComponent size={16} className="text-ink-4 shrink-0" />
-                      <span className="text-sm font-semibold text-ink truncate">{mob.name}</span>
-                    </div>
-                    <span className="w-16 shrink-0 text-right text-sm font-semibold text-ink tabular-nums">
-                      {mob.fee > 0 ? `+$${Number(mob.fee).toFixed(2)}` : '$0'}
-                    </span>
-                    {canEdit && (
-                      <div className="flex items-center shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedMobility(mob);
-                            setIsMobilityModalOpen(true);
-                          }}
-                          className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setDeleteTarget({ type: 'mobility', id: mob.id, label: mob.name })
-                          }
-                          className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            </div>
-        </section>
+        <MobilityFeesSection canEdit={canEdit} />
         </div>
       )}
 
@@ -408,24 +303,10 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
       />
       )}
 
-      <MobilityModal
-        isOpen={isMobilityModalOpen}
-        mobility={selectedMobility}
-        onClose={() => {
-          setIsMobilityModalOpen(false);
-          setSelectedMobility(null);
-        }}
-        onSave={handleSaveMobility}
-      />
-
       <DeleteConfirmModal
         isOpen={!!deleteTarget}
-        title={deleteTarget?.type === 'county' ? 'Remove area' : 'Remove mobility'}
-        message={
-          deleteTarget?.type === 'county'
-            ? 'This area will no longer appear on the service map.'
-            : 'Existing trips keep their mobility label.'
-        }
+        title="Remove area"
+        message="This area will no longer appear on the service map."
         itemLabel={deleteTarget?.label}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

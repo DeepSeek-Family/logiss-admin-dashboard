@@ -43,6 +43,7 @@ export const baseApi = createApi({
     'Payers',
     'Riders',
     'Facilities',
+    'Mobility',
   ],
   endpoints: () => ({}),
 })
