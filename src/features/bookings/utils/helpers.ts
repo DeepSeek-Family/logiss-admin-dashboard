@@ -58,13 +58,7 @@ export const toLocationValue = (value: string): number | null => {
   return null;
 };
 
-export const resolveMediaUrl = (path?: string): string | undefined => {
-  if (!path) return undefined;
-  if (/^https?:\/\//i.test(path)) return path;
-  const base = import.meta.env.VITE_API_BASE_URL || '';
-  const origin = base.replace(/\/api\/v\d+\/?$/i, '').replace(/\/$/, '');
-  return origin ? `${origin}${path.startsWith('/') ? path : `/${path}`}` : path;
-};
+export { imageUrl, resolveMediaUrl } from '@/utils/imageUrl';
 
 export const isMongoId = (value?: string): boolean => /^[a-fA-F0-9]{24}$/.test(String(value || '').trim());
 

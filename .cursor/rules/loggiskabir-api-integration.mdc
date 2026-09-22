@@ -49,7 +49,7 @@ export const { useGetItemsQuery } = exampleApi
 
 - Query args: **one object** `{ page, limit, search, id }` — never multiple positional args on `query`.
 - Mutations: **`invalidatesTags`** for related lists/detail tags.
-- Reuse shared helpers from `@/features/bookings/utils/helpers` where applicable: `resolveMediaUrl`, `apiErrorMessage`, `isMongoId`, time/location mappers.
+- Reuse `@/utils/imageUrl` (`imageUrl`, `resolveMediaUrl`) for API image paths; `@/features/bookings/utils/helpers` for `apiErrorMessage`, `isMongoId`, time/location mappers.
 
 ## UI and clean code
 

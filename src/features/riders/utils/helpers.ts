@@ -1,5 +1,6 @@
 import type { IRider } from '@/redux/api/ridersApi'
-import { isMongoId, resolveMediaUrl } from '@/features/bookings/utils/helpers'
+import { isMongoId } from '@/features/bookings/utils/helpers'
+import { resolveMediaUrl } from '@/utils/imageUrl'
 
 export const riderFullName = (rider?: Pick<IRider, 'firstName' | 'middleName' | 'lastName'> | null): string => {
   if (!rider) return ''

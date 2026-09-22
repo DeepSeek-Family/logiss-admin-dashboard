@@ -1,6 +1,7 @@
 import type { IDriverUser } from '@/redux/api/driversApi'
 import { formatShortDate } from '@/utils/helpers'
-import { isMongoId, resolveMediaUrl } from '@/features/bookings/utils/helpers'
+import { isMongoId } from '@/features/bookings/utils/helpers'
+import { resolveMediaUrl } from '@/utils/imageUrl'
 
 export const driverFullName = (driver?: Pick<IDriverUser, 'firstName' | 'middleName' | 'lastName'> | null): string => {
   if (!driver) return ''

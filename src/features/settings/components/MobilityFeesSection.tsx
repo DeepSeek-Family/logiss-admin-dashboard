@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { MobilityModal } from './MobilityModal';
-import { resolveMediaUrl } from '@/features/bookings/utils/helpers';
+import { imageUrl } from '@/utils/imageUrl';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
 import {
   useGetMobilitiesQuery,
@@ -47,7 +47,7 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
     id: m._id,
     name: m.name,
     price: m.price,
-    iconUrl: resolveMediaUrl(m.icon),
+    iconUrl: imageUrl(m.icon) || undefined,
     status: m.status !== false,
   });
 
@@ -132,7 +132,7 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
                 <div className="py-10 text-center text-sm text-ink-4">No mobility options yet</div>
               ) : (
                 items.map(mob => {
-                  const iconUrl = resolveMediaUrl(mob.icon);
+                  const iconUrl = imageUrl(mob.icon);
                   return (
                     <div key={mob._id} className={`flex items-center gap-3 min-h-12 py-3 px-4 ${mob.status === false ? 'opacity-50' : ''}`}>
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
