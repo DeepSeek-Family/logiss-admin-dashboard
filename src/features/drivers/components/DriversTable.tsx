@@ -87,11 +87,7 @@ export const DriversTable = ({
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0 w-10 h-10">
-                      {driver.image ? (
-                        <img src={driver.image} alt={driver.name} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <Avatar initials={driver.initials} size="sm" />
-                      )}
+                      <Avatar initials={driver.initials} src={driver.image} size="md" />
                       {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" />}
                     </div>
                     <div className="min-w-0">

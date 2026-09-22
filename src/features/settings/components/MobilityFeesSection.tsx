@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Plus,
   Edit2,
@@ -39,6 +39,16 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selected, setSelected] = useState<MobilityModalItem | null>(null);
+  const [brokenIconIds, setBrokenIconIds] = useState<Set<string>>(() => new Set());
+
+  const markIconBroken = useCallback((id: string) => {
+    setBrokenIconIds(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   const items = data?.data || [];
   const saving = isCreating || isUpdating;
@@ -133,11 +143,17 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
               ) : (
                 items.map(mob => {
                   const iconUrl = imageUrl(mob.icon);
+                  const showIcon = Boolean(iconUrl) && !brokenIconIds.has(mob._id);
                   return (
                     <div key={mob._id} className={`flex items-center gap-3 min-h-12 py-3 px-4 ${mob.status === false ? 'opacity-50' : ''}`}>
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {iconUrl ? (
-                          <img src={iconUrl} alt="" className="w-8 h-8 rounded-lg object-contain border border-line-2 bg-white p-0.5 shrink-0" />
+                        {showIcon ? (
+                          <img
+                            src={iconUrl}
+                            alt=""
+                            className="w-8 h-8 rounded-lg object-contain border border-line-2 bg-white p-0.5 shrink-0"
+                            onError={() => markIconBroken(mob._id)}
+                          />
                         ) : (
                           <Accessibility size={16} className="text-ink-4 shrink-0" />
                         )}

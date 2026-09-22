@@ -88,11 +88,7 @@ export const RidersTable = ({
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0 w-10 h-10">
-                      {rider.image ? (
-                        <img src={rider.image} alt={rider.name} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <Avatar initials={rider.initials} size="sm" />
-                      )}
+                      <Avatar initials={rider.initials} src={rider.image} size="md" />
                       {rider.status === 'active' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>}
                     </div>
                     <div className="min-w-0">

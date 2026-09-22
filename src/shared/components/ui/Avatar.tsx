@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const avatarMap: { [key: string]: string } = {
   'DW': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop',
@@ -26,6 +26,12 @@ interface AvatarProps {
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ initials, src, size = 'md', online = false, className = '', shape = 'circle' }) => {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [src]);
+
   const sizes: { [key in NonNullable<AvatarProps['size']>]: string } = {
     xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-xs',
@@ -35,13 +41,18 @@ export const Avatar: React.FC<AvatarProps> = ({ initials, src, size = 'md', onli
     full: 'w-full h-full',
   };
 
-  const imageSrc = src || avatarMap[initials];
+  const imageSrc = !imgFailed && src ? src : !src ? avatarMap[initials] : undefined;
   const roundedClass = shape === 'square' ? 'rounded-[inherit]' : 'rounded-full';
 
   return (
     <div className={`relative flex-shrink-0 ${className}`}>
       {imageSrc ? (
-        <img src={imageSrc} alt={initials} className={`${sizes[size]} ${roundedClass} object-cover shadow-sm ring-1 ring-black/5`} />
+        <img
+          src={imageSrc}
+          alt={initials}
+          className={`${sizes[size]} ${roundedClass} object-cover shadow-sm ring-1 ring-black/5`}
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <div className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-medium shadow-sm`}>
           {initials}
