@@ -3,11 +3,12 @@ import { Card } from '@/shared/components/ui';
 
 interface RiderKpiStripProps {
   riders: any[];
+  total?: number;
 }
 
-export const RiderKpiStrip = ({ riders }: RiderKpiStripProps) => {
+export const RiderKpiStrip = ({ riders, total }: RiderKpiStripProps) => {
   const stats = [
-    { label: 'Total Riders', value: (riders || []).length, sub: 'registered accounts', icon: Users, color: 'bg-primary-light text-primary' },
+    { label: 'Total Riders', value: total ?? (riders || []).length, sub: 'registered accounts', icon: Users, color: 'bg-primary-light text-primary' },
     { label: 'Active', value: (riders || []).filter(r => r?.status === 'active').length, sub: 'active passengers', icon: Activity, color: 'bg-accent-light text-accent' },
     { label: 'Suspended', value: (riders || []).filter(r => r?.status === 'suspended').length, sub: 'temporarily restricted', icon: AlertTriangle, color: 'bg-warning-light text-warning-dark' },
     { label: 'Banned', value: (riders || []).filter(r => r?.status === 'banned').length, sub: 'access revoked', icon: Star, color: 'bg-urgent-light text-urgent' },

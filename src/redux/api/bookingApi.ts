@@ -190,7 +190,10 @@ export const bookingApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: [{ type: 'bookings', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'bookings', id: 'LIST' },
+        { type: 'Riders', id: 'LIST' },
+      ],
     }),
  
   }),

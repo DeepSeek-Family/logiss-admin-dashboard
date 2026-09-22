@@ -104,7 +104,7 @@ export const RidersTable = ({
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium text-ink-3">
-                      <span className="text-ink-4 mr-0.5">PX:</span> {rider.passengerId || rider.id}
+                      <span className="text-ink-4 mr-0.5">ID:</span> {rider.passengerId || rider.id}
                     </span>
                     <span className="text-xs text-primary">
                       <span className="text-primary-dark/60 mr-0.5">AUTH:</span> {rider.authorizationId || rider.authId || '---'}
@@ -167,15 +167,19 @@ export const RidersTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge
-                    variant={
-                      rider.mobility === 'Wheelchair' ? 'accent' :
-                      rider.mobility === 'Ambulatory' ? 'neutral' : 'warning'
-                    }
-                    className="font-medium py-0.5 px-2 text-xs rounded-full"
-                  >
-                    {rider.mobility || 'Ambulatory'}
-                  </Badge>
+                  {rider.mobility ? (
+                    <Badge
+                      variant={
+                        rider.mobility === 'Wheelchair' ? 'accent' :
+                        rider.mobility === 'Ambulatory' ? 'neutral' : 'warning'
+                      }
+                      className="font-medium py-0.5 px-2 text-xs rounded-full"
+                    >
+                      {rider.mobility}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-ink-4">—</span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-xs font-medium text-ink-3">{rider?.phone || '---'}</span>

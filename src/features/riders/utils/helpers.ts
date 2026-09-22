@@ -1,0 +1,63 @@
+import type { IRider } from '@/redux/api/ridersApi'
+import { isMongoId, resolveMediaUrl } from '@/features/bookings/utils/helpers'
+
+export const riderFullName = (rider?: Pick<IRider, 'firstName' | 'middleName' | 'lastName'> | null): string => {
+  if (!rider) return ''
+  return [rider.firstName, rider.middleName, rider.lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+}
+
+export const riderInitials = (rider?: Pick<IRider, 'firstName' | 'lastName'> | null): string => {
+  if (!rider) return 'R'
+  return `${rider.firstName?.[0] || ''}${rider.lastName?.[0] || ''}`.toUpperCase() || 'R'
+}
+
+export const mapRiderStatus = (rider: IRider): string => {
+  if (rider.isBanned) return 'banned'
+  const app = String(rider.applicationStatus || '').toLowerCase()
+  if (app === 'suspended') return 'suspended'
+  if (app === 'banned') return 'banned'
+  if (rider.verified || app === 'approved' || app === 'active') return 'active'
+  return 'inactive'
+}
+
+export const mapApiRider = (rider: IRider) => {
+  const id = rider._id || rider.id || ''
+  const name = riderFullName(rider) || 'Rider'
+  const countyRaw = rider.county ? String(rider.county) : ''
+
+  return {
+    id,
+    _id: id,
+    name,
+    firstName: rider.firstName,
+    middleName: rider.middleName,
+    lastName: rider.lastName,
+    initials: riderInitials(rider),
+    email: rider.email || '',
+    phone: rider.contact || '',
+    contact: rider.contact || '',
+    image: resolveMediaUrl(rider.profile),
+    profile: rider.profile,
+    passengerId: id,
+    authorizationId: rider.authorizationID || '',
+    authId: rider.authorizationID || '',
+    county: countyRaw && !isMongoId(countyRaw) ? countyRaw : '',
+    countyId: countyRaw,
+    source: '',
+    program: '',
+    mobility: '',
+    totalTrips: rider.trip ?? 0,
+    rating: undefined as number | undefined,
+    status: mapRiderStatus(rider),
+    rawStatus: rider.applicationStatus,
+    verified: Boolean(rider.verified),
+    isBanned: Boolean(rider.isBanned),
+    dateOfBirth: rider.dateOfBirth,
+    joinedDate: rider.createdAt,
+    createdAt: rider.createdAt,
+    updatedAt: rider.updatedAt,
+    role: rider.role,
+  }
+}
+
+export type MappedRider = ReturnType<typeof mapApiRider>

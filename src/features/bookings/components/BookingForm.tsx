@@ -16,6 +16,8 @@ import {
   useManualCreateBookingMutation,
   ICreateBookingPayload,
 } from '@/redux/api/bookingApi';
+import { useGetRidersQuery } from '@/redux/api/ridersApi';
+import { riderFullName } from '@/features/riders/utils/helpers';
 import {
   extractBookingPeople,
   resolveMediaUrl,
@@ -58,6 +60,7 @@ export const BookingForm = () => {
   const [manualCreateBooking, { isLoading: isCreating }] = useManualCreateBookingMutation();
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
   const { data: payersResponse } = useGetAllPayersQuery();
+  const { data: ridersResponse } = useGetRidersQuery({ page: 1, limit: 100 });
   const apiPeople = extractBookingPeople(bookingsResponse?.data || []);
   const apiPayers = (payersResponse?.data || []).filter((p) => isMongoId(p._id));
 
@@ -139,16 +142,17 @@ export const BookingForm = () => {
     fundingPolicies[0] ||
     null;
 
-  const apiRiders = apiPeople.users.map((u) => ({
-    id: u._id,
-    _id: u._id,
-    name: [u.firstName, u.middleName, u.lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim(),
-    firstName: u.firstName,
-    middleName: u.middleName,
-    lastName: u.lastName,
-    profile: u.profile,
-    email: '',
-    phone: '',
+  const apiRiders = (ridersResponse?.data || []).filter((r) => isMongoId(r._id)).map((r) => ({
+    id: r._id,
+    _id: r._id,
+    name: riderFullName(r),
+    firstName: r.firstName,
+    middleName: r.middleName,
+    lastName: r.lastName,
+    profile: r.profile,
+    email: r.email || '',
+    phone: r.contact || '',
+    authorizationId: r.authorizationID || '',
   }));
 
   const driverOptions = apiPeople.drivers
@@ -179,6 +183,7 @@ export const BookingForm = () => {
       phone: rider.phone || '',
       email: rider.email || '',
       passengerId: rider._id || rider.id || '',
+      authId: rider.authorizationId || rider.authId || prev.authId,
     }));
     setExistingSearch('');
     toast.success(`Selected ${rider.name}`);
