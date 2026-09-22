@@ -38,12 +38,13 @@ interface ApplicationDetailsProps {
   onRequestInfo?: () => void;
   onApprove?: () => void;
   onSendToBackgroundCheck?: () => void;
+  actionsDisabled?: boolean;
 }
 
 export const ApplicationDetails = ({
   selectedApp, stages,
   docStatuses, onDocStatusChange,
-  onReject, onRequestInfo, onApprove, onSendToBackgroundCheck,
+  onReject, onRequestInfo, onApprove, onSendToBackgroundCheck, actionsDisabled = false,
 }: ApplicationDetailsProps) => {
   const stageIndex    = selectedApp?.stage || 0;
   const appStatus     = selectedApp?._status || 'reviewing';
@@ -123,7 +124,7 @@ export const ApplicationDetails = ({
                 <h2 className="text-xl font-bold text-ink">{selectedApp?.name || '—'}</h2>
                 <div className="flex flex-wrap gap-3 text-xs text-ink-4 mt-1">
                   <span className="flex items-center gap-1"><MapPin size={12} /> {selectedApp?.county || '—'}</span>
-                  <span className="flex items-center gap-1"><Phone size={12} /> {selectedApp?.phone || '(804) 555-0000'}</span>
+                  <span className="flex items-center gap-1"><Phone size={12} /> {selectedApp?.phone || '—'}</span>
                   <span className="flex items-center gap-1"><Mail size={12} /> {selectedApp?.email || '—'}</span>
                 </div>
               </div>
@@ -314,23 +315,23 @@ export const ApplicationDetails = ({
         <div className="px-6 py-3 bg-white border-t border-line-2 flex items-center gap-3">
           {!isFrozen ? (
             <>
-              <button onClick={onReject}
-                className="flex items-center gap-1.5 text-sm font-semibold text-urgent hover:opacity-75 transition-opacity">
+              <button onClick={onReject} disabled={actionsDisabled}
+                className="flex items-center gap-1.5 text-sm font-semibold text-urgent hover:opacity-75 transition-opacity disabled:opacity-40">
                 <XCircle size={16} /> Reject
               </button>
               <div className="flex-1" />
-              <Button variant="outline" icon={MessageSquare} className="h-9 text-sm" onClick={onRequestInfo}>
+              <Button variant="outline" icon={MessageSquare} className="h-9 text-sm" onClick={onRequestInfo} disabled={actionsDisabled}>
                 Request info
               </Button>
-              {/* Send to BG check when stage=2 and all docs verified */}
               {stageIndex === 2 && allVerified && (
-                <Button variant="outline" icon={ArrowRight} className="h-9 text-sm border-primary/30 text-primary" onClick={onSendToBackgroundCheck}>
+                <Button variant="outline" icon={ArrowRight} className="h-9 text-sm border-primary/30 text-primary" onClick={onSendToBackgroundCheck} disabled={actionsDisabled}>
                   Background Check
                 </Button>
               )}
               <div className="relative group">
-                <Button variant="primary" icon={FileCheck} className={`h-9 text-sm ${!allVerified ? 'opacity-40 cursor-not-allowed' : ''}`}
-                  onClick={allVerified ? onApprove : undefined}>
+                <Button variant="primary" icon={FileCheck} className={`h-9 text-sm ${!allVerified || actionsDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  onClick={allVerified && !actionsDisabled ? onApprove : undefined}
+                  disabled={actionsDisabled}>
                   Approve application
                 </Button>
                 {!allVerified && (

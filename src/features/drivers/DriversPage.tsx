@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, AlertTriangle, Car, X, Check } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
-import { useDrivers } from '@/hooks/useDrivers';
-import { useTrips } from '@/hooks/useTrips';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
+import { apiErrorMessage } from '@/features/bookings/utils/helpers';
 
 import {
   AddDriverModal,
@@ -14,8 +15,6 @@ import {
 
 const Drivers = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const { drivers, loading, error, addDriver } = useDrivers();
-  const { trips } = useTrips();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
@@ -25,10 +24,26 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  // Track which vehicle was assigned per driver
   const [assignedVehicles, setAssignedVehicles] = useState<Record<string, any>>({});
 
-  if (loading) {
+  const listParams = useMemo(() => ({
+    page: currentPage,
+    limit: itemsPerPage,
+    ...(search.trim() ? { search: search.trim() } : {}),
+  }), [currentPage, itemsPerPage, search]);
+
+  const { data: driversResponse, isLoading, isError, error, refetch } = useGetDriversQuery(listParams, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const drivers = useMemo(
+    () => (driversResponse?.data || []).map(mapApiDriver),
+    [driversResponse],
+  );
+
+  const pagination = driversResponse?.pagination;
+
+  if (isLoading && drivers.length === 0) {
     return (
       <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
         <div className="flex items-center justify-between">
@@ -45,30 +60,36 @@ const Drivers = ({ role }: { role?: string | null }) => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
         <h3 className="text-lg font-semibold text-ink mb-2">Failed to load drivers</h3>
-        <p className="text-ink-3 text-sm">{error}</p>
+        <p className="text-ink-3 text-sm mb-4">{apiErrorMessage(error, 'Unable to fetch drivers')}</p>
+        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
+          Retry
+        </button>
       </div>
     );
   }
 
-  const filteredDrivers = (drivers || []).filter((d: any) => {
-    const nameMatch = (d?.name || '').toLowerCase().includes((search || '').toLowerCase());
-    const idMatch = (d?.id || '').toLowerCase().includes((search || '').toLowerCase());
+  const filteredDrivers = drivers.filter((d: any) => {
+    const q = (search || '').toLowerCase();
+    const nameMatch = (d?.name || '').toLowerCase().includes(q);
+    const idMatch = (d?.id || '').toLowerCase().includes(q);
+    const emailMatch = (d?.email || '').toLowerCase().includes(q);
     let matchesTab = true;
     if (activeTab === 'on_duty') matchesTab = d?.onDuty;
     if (activeTab === 'off_duty') matchesTab = !d?.onDuty;
     if (activeTab === 'attention') matchesTab = (d?.pendingDocUpdates || 0) > 0;
-    return (nameMatch || idMatch) && matchesTab;
+    return (nameMatch || idMatch || emailMatch || !q) && matchesTab;
   });
 
-  const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
-  const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalItems = activeTab === 'all' ? (pagination?.total ?? filteredDrivers.length) : filteredDrivers.length;
+  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedDrivers = filteredDrivers;
 
-  const selectedDriver = (drivers || []).find((d: any) => d.id === selectedDriverId);
+  const selectedDriver = drivers.find((d: any) => d.id === selectedDriverId);
 
   const getStatusBadge = (status: string) => {
     const config: { [key: string]: any } = {
@@ -81,7 +102,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
     return <Badge variant={variant} className="w-fit">{label}</Badge>;
   };
 
-  // Mock vehicles for assign modal
   const mockVehicles = [
     { id: 'V001', name: 'Ford Transit', type: 'Ambulatory Van', plate: 'VA-4KL-8392' },
     { id: 'V002', name: 'Toyota Sienna', type: 'Wheelchair Van', plate: 'VA-2MX-5510' },
@@ -91,7 +111,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
   if (selectedDriver) {
     return (
       <>
-        {/* Assign Vehicle Modal */}
         {showAssignModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="bg-white rounded-2xl border border-line-2 shadow-xl w-full max-w-sm mx-4 p-6 animate-in zoom-in-95 duration-200">
@@ -148,7 +167,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
           </div>
         )}
 
-        {/* Success toast */}
         {assignSuccess && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
             <Check size={15} /> Vehicle assigned successfully
@@ -159,7 +177,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
           selectedDriver={selectedDriver}
           setSelectedDriverId={setSelectedDriverId}
           role={role}
-          trips={trips}
+          trips={[]}
           onAssignVehicle={() => { setShowAssignModal(true); setSelectedVehicleId(null); }}
           onViewFleet={() => navigate('/fleet')}
           assignedVehicle={assignedVehicles[selectedDriver.id] || null}
@@ -173,18 +191,13 @@ const Drivers = ({ role }: { role?: string | null }) => {
       {showAddModal && (
         <AddDriverModal
           onClose={() => setShowAddModal(false)}
-          onSave={async (data) => {
-            try {
-              await addDriver(data);
-              setShowAddModal(false);
-            } catch (err) {
-              console.error(err);
-            }
+          onSave={async () => {
+            setShowAddModal(false);
+            refetch();
           }}
         />
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Driver Network</h1>
@@ -195,10 +208,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
         )}
       </div>
 
-      {/* KPI Strip */}
-      <DriverKpiStrip drivers={drivers} />
+      <DriverKpiStrip drivers={drivers} total={pagination?.total} />
 
-      {/* Table Card */}
       <DriversTable
         drivers={drivers}
         activeTab={activeTab}
@@ -209,7 +220,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
         setCurrentPage={setCurrentPage}
         totalPages={totalPages}
         paginatedDrivers={paginatedDrivers}
-        filteredCount={filteredDrivers.length}
+        filteredCount={totalItems}
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}
         onDriverClick={setSelectedDriverId}

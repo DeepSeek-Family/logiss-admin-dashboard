@@ -1,0 +1,69 @@
+---
+description: Loggiskabir Dashboard — API integration, Redux RTK Query, no mock data, clean UI
+alwaysApply: true
+---
+
+# Loggiskabir Dashboard — integration standards
+
+Frontend UI is largely done. Ongoing work is **backend integration**: replace mock/local data with live APIs using the patterns below.
+
+## Mock data — remove, do not extend
+
+- Do **not** import from `@/data/mockData` or `src/data/mockData.ts` in features, pages, hooks, or services you touch for integration.
+- Do **not** add new mock arrays or hardcoded list data when the user provides an endpoint and response shape.
+- Prefer **RTK Query hooks** (`useGetXQuery`, `useXMutation`) in pages/components over legacy hooks that only read mock state (`useTrips`, `useRiders`, `tripService` with mock fallback) unless you are explicitly migrating that hook in the same change.
+- Show **loading**, **error + retry**, and **empty** states; use API `pagination.total` for counts and pagination, not `array.length` of a mock list.
+
+## When the user gives endpoint + JSON
+
+1. Add or update **`src/redux/api/<domain>Api.ts`** (do not scatter raw `fetch` in components).
+2. Match **field names and types** from the sample response (`_id`, `authorizationID`, `contact`, `bookingStatus`, nested `userId` / `driverId`, etc.).
+3. Add **`transformResponse`** normalizers when the API wraps lists as `{ success, message, pagination, data }` (see `bookingApi`, `ridersApi`).
+4. Register the slice: **`import './api/<domain>Api'`** in `src/redux/apis.ts`.
+5. Add **`tagTypes`** in `src/redux/baseApi.ts` if the domain needs cache invalidation.
+6. Map API → UI in **`src/features/<feature>/utils/helpers.ts`** (e.g. `mapApiBooking`, `mapApiRider`); keep components thin.
+
+## Redux / RTK Query pattern
+
+```typescript
+// src/redux/api/exampleApi.ts
+export const exampleApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    getItems: builder.query<IListResponse, IQueryParams | void>({
+      query: (params) => ({
+        url: '/path',
+        method: 'GET',
+        params: { page: params?.page, limit: params?.limit, search: params?.search },
+      }),
+      transformResponse: normalizeListResponse,
+      providesTags: (result) =>
+        result?.data
+          ? [...result.data.map(({ _id }) => ({ type: 'Tag' as const, id: _id })), { type: 'Tag', id: 'LIST' }]
+          : [{ type: 'Tag', id: 'LIST' }],
+    }),
+  }),
+  overrideExisting: false,
+})
+export const { useGetItemsQuery } = exampleApi
+```
+
+- Query args: **one object** `{ page, limit, search, id }` — never multiple positional args on `query`.
+- Mutations: **`invalidatesTags`** for related lists/detail tags.
+- Reuse shared helpers from `@/features/bookings/utils/helpers` where applicable: `resolveMediaUrl`, `apiErrorMessage`, `isMongoId`, time/location mappers.
+
+## UI and clean code
+
+- Use **`@/shared/components/ui`** (`Card`, `Button`, `Badge`, `Pagination`, `Avatar`, `EmptyState`, etc.) before inventing new primitives.
+- Feature code lives under **`src/features/<name>/`**; pages re-export from features when already structured that way.
+- **Minimal diffs**: only change files needed for the integration task; match existing naming, imports (`@/…`), and Tailwind/utility classes.
+- **Types**: export interfaces next to endpoints; avoid `any` in new code unless mapping unknown API extras.
+- **Validation**: align POST bodies with backend (Mongo IDs for refs, numeric ZIPs for locations when API expects numbers); surface `apiErrorMessage` via toast.
+- **Comments**: only for non-obvious business rules, not for obvious code.
+
+## Checklist per integrated screen
+
+- [ ] Endpoint in `src/redux/api/*Api.ts` + import in `apis.ts`
+- [ ] Mock/hook usage removed from that feature’s page/components
+- [ ] Response mapped to existing UI props (no fake defaults that contradict API)
+- [ ] Pagination/search wired to query params when API supports them
+- [ ] `npm run typecheck` passes for touched files

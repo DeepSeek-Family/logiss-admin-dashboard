@@ -86,8 +86,12 @@ export const DriversTable = ({
               <tr key={driver.id} className="hover:bg-primary-tint/40 transition-colors group cursor-pointer" onClick={() => onDriverClick(driver.id)}>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="relative shrink-0">
-                      <Avatar initials={driver.initials} size="sm" />
+                    <div className="relative shrink-0 w-10 h-10">
+                      {driver.image ? (
+                        <img src={driver.image} alt={driver.name} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <Avatar initials={driver.initials} size="sm" />
+                      )}
                       {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" />}
                     </div>
                     <div className="min-w-0">
@@ -109,9 +113,11 @@ export const DriversTable = ({
                   </p>
                   <p className="text-xs font-medium text-ink-3 mt-0.5 flex items-center gap-1.5">
                     {(driver?.totalTrips || 0).toLocaleString()} total
-                    <span className="inline-flex items-center gap-0.5 text-warning font-semibold">
-                      <Star size={12} fill="currentColor" /> {driver?.rating || 0}
-                    </span>
+                    {driver?.rating != null && (
+                      <span className="inline-flex items-center gap-0.5 text-warning font-semibold">
+                        <Star size={12} fill="currentColor" /> {driver.rating}
+                      </span>
+                    )}
                   </p>
                 </td>
                 <td className="px-5 py-3">
