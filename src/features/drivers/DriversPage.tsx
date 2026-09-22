@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, AlertTriangle, Car, X, Check } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
-import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { useCreateDriverMutation, useGetDriversQuery } from '@/redux/api/driversApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import toast from 'react-hot-toast';
 
 import {
   AddDriverModal,
@@ -35,6 +36,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const { data: driversResponse, isLoading, isError, error, refetch } = useGetDriversQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
+  const [createDriver, { isLoading: isCreatingDriver }] = useCreateDriverMutation();
 
   const drivers = useMemo(
     () => (driversResponse?.data || []).map(mapApiDriver),
@@ -190,10 +192,18 @@ const Drivers = ({ role }: { role?: string | null }) => {
     <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
       {showAddModal && (
         <AddDriverModal
+          saving={isCreatingDriver}
           onClose={() => setShowAddModal(false)}
-          onSave={async () => {
-            setShowAddModal(false);
-            refetch();
+          onSave={async (payload) => {
+            try {
+              await createDriver(payload).unwrap();
+              toast.success('Driver account created');
+              setShowAddModal(false);
+              refetch();
+            } catch (err) {
+              toast.error(apiErrorMessage(err, 'Failed to create driver'));
+              throw err;
+            }
           }}
         />
       )}

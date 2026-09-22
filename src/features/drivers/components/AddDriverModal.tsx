@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, X, AlertTriangle, Check, UploadCloud, Eye, EyeOff, ShieldCheck, FileText, Mail, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
+import type { ICreateDriverInput } from '@/features/drivers/utils/createDriverForm';
 
-export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) => {
+type LicensePhotoState = {
+  file: File;
+  name: string;
+  size: string;
+  previewUrl?: string;
+};
+
+interface AddDriverModalProps {
+  onClose: () => void;
+  onSave: (data: ICreateDriverInput) => Promise<void>;
+  saving?: boolean;
+}
+
+export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverModalProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<any>({
     firstName: '',
     lastName: '',
@@ -42,7 +57,7 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
     if (step === 2) {
       if (!form.licenseNumber) return 'License number is required.';
       if (!form.licenseExpiry) return 'License expiry date is required.';
-      if (!form.licensePhoto) return 'Please upload a license photo to proceed.';
+      if (!form.licensePhoto?.file) return 'Please upload a license photo to proceed.';
       return '';
     }
     if (step === 3) {
@@ -54,61 +69,57 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
     return '';
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      set('licensePhoto', {
-        name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        url: URL.createObjectURL(file),
-      });
+  const setLicenseFile = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      setStepError('License file must be under 10MB.');
+      return;
     }
-  };
-
-  const triggerMockUpload = () => {
-    // Premium instant mock upload if they don't want to upload a real file
+    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
     set('licensePhoto', {
-      name: `DL_${form.lastName || 'DRIVER'}_FRONT.png`,
-      size: '1.4 MB',
-      url: '#',
-    });
+      file,
+      name: file.name,
+      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+      previewUrl,
+    } as LicensePhotoState);
   };
 
-  const handleSave = () => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setLicenseFile(file);
+  };
+
+  const handleSave = async () => {
     const errorMsg = validateStep();
     if (errorMsg) {
       setStepError(errorMsg);
       return;
     }
 
-    const driverName = `${form.firstName} ${form.middleName ? form.middleName + ' ' : ''}${form.lastName}`;
-    
-    // Structure driver according to expectations of mock data
-    const newDriver = {
-      name: driverName,
-      email: form.email,
-      phone: form.phone,
-      dob: form.dob,
-      experience: form.experience,
-      licenseClass: form.licenseClass,
-      license: {
-        number: form.licenseNumber,
-        expires: form.licenseExpiry,
-        class: form.licenseClass,
-        photo: form.licensePhoto?.name || 'Uploaded',
-        status: 'valid'
-      },
-      // Unnecessary default attributes for dashboard consistency
-      onDuty: false,
-      status: 'off_duty',
-      rating: 5.0,
-      totalTrips: 0,
-      tripsToday: 0,
-      joinedDate: new Date().toISOString().split('T')[0],
-      pendingDocUpdates: 0
-    };
+    const licenseFile = form.licensePhoto?.file as File | undefined;
+    if (!licenseFile) {
+      setStepError('Please upload a license photo to proceed.');
+      return;
+    }
 
-    onSave(newDriver);
+    setStepError('');
+    try {
+      await onSave({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        middleName: form.middleName?.trim() || undefined,
+        dateOfBirth: form.dob,
+        contact: form.phone.trim(),
+        email: form.email.trim(),
+        password: passwordMode === 'temp' ? form.password : undefined,
+        driverExperience: form.experience,
+        licenseNumber: form.licenseNumber.trim(),
+        licenseClass: form.licenseClass,
+        expirationDate: form.licenseExpiry,
+        licenseImage: licenseFile,
+      });
+    } catch {
+      // Parent shows toast; keep modal open for corrections
+    }
   };
 
   const steps = ['Personal Information', 'Driver\'s License', 'Review & Submit'];
@@ -351,23 +362,44 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
               <div>
                 <label className="block text-xs font-semibold text-ink-3 mb-1.5">License photo *</label>
                 
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,application/pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="driver-license-file"
+                />
+
                 {form.licensePhoto ? (
                   <div className="p-4 bg-accent-light/10 border border-accent/20 rounded-2xl flex items-center justify-between animate-in zoom-in-95 duration-200">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 bg-accent-light rounded-xl flex items-center justify-center text-accent shrink-0">
-                        <FileText size={20} />
-                      </div>
+                      {form.licensePhoto.previewUrl ? (
+                        <img
+                          src={form.licensePhoto.previewUrl}
+                          alt="License preview"
+                          className="w-12 h-12 rounded-xl object-cover border border-line-2 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-accent-light rounded-xl flex items-center justify-center text-accent shrink-0">
+                          <FileText size={20} />
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-ink truncate">{form.licensePhoto.name}</p>
-                        <p className="text-xs text-ink-4">{form.licensePhoto.size}</p>
+                        <p className="text-xs text-ink-4">{form.licensePhoto.size} · sent as licenseImage</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center">
                         <Check size={12} strokeWidth={3} />
                       </div>
-                      <button 
-                        onClick={() => set('licensePhoto', null)} 
+                      <button
+                        type="button"
+                        onClick={() => {
+                          set('licensePhoto', null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
                         className="text-xs font-semibold text-urgent hover:underline pl-2 border-l border-line-2"
                       >
                         Remove
@@ -375,21 +407,15 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     </div>
                   </div>
                 ) : (
-                  <div 
-                    onClick={triggerMockUpload}
-                    className="p-6 bg-bg border-2 border-dashed border-line-2 rounded-2xl text-center cursor-pointer hover:bg-white hover:border-primary transition-all group"
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full p-6 bg-bg border-2 border-dashed border-line-2 rounded-2xl text-center cursor-pointer hover:bg-white hover:border-primary transition-all group"
                   >
                     <UploadCloud size={28} className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-all" />
                     <p className="text-xs font-semibold text-ink">Tap to upload license document</p>
-                    <p className="text-xs text-ink-4 mt-0.5">Portraits, JPEG, PNG, PDF (Max 10MB)</p>
-                    <input 
-                      type="file" 
-                      accept="image/*,application/pdf" 
-                      onChange={handleFileUpload} 
-                      className="hidden" 
-                      id="driver-license-file" 
-                    />
-                  </div>
+                    <p className="text-xs text-ink-4 mt-0.5">JPEG, PNG, WebP, or PDF (max 10MB)</p>
+                  </button>
                 )}
               </div>
             </div>
@@ -538,8 +564,9 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
             )}
             
             {step < 3 ? (
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
+                disabled={saving}
                 onClick={() => {
                   const err = validateStep();
                   if (err) { setStepError(err); return; }
@@ -550,25 +577,14 @@ export const AddDriverModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 Next
               </Button>
             ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    // Draft action
-                    onClose();
-                  }}
-                  className="bg-white"
-                >
-                  Save as Draft
-                </Button>
-                <Button 
-                  variant="primary" 
-                  icon={ShieldCheck} 
-                  onClick={handleSave}
-                >
-                  Submit
-                </Button>
-              </>
+              <Button
+                variant="primary"
+                icon={ShieldCheck}
+                disabled={saving}
+                onClick={() => void handleSave()}
+              >
+                {saving ? 'Submitting…' : 'Submit'}
+              </Button>
             )}
           </div>
         </div>

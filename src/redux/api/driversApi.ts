@@ -1,5 +1,8 @@
 import { baseApi } from '../baseApi'
 import type { IBookingPagination } from './bookingApi'
+import { buildDriverFormData, type ICreateDriverInput } from '@/features/drivers/utils/createDriverForm'
+
+export type { ICreateDriverInput }
 
 export interface IDriverData {
   driverExperience?: string
@@ -55,6 +58,12 @@ export interface IUpdateApplicationStatusPayload {
 }
 
 export interface IUpdateApplicationStatusResponse {
+  success: boolean
+  message?: string
+  data?: IDriverUser
+}
+
+export interface ICreateDriverResponse {
   success: boolean
   message?: string
   data?: IDriverUser
@@ -137,6 +146,17 @@ export const driversApi = baseApi.injectEndpoints({
         { type: 'Drivers', id: 'LIST' },
       ],
     }),
+    createDriver: builder.mutation<ICreateDriverResponse, ICreateDriverInput>({
+      query: (body) => ({
+        url: '/user',
+        method: 'POST',
+        body: buildDriverFormData(body),
+      }),
+      invalidatesTags: [
+        { type: 'Drivers', id: 'LIST' },
+        { type: 'Applications', id: 'LIST' },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -145,4 +165,5 @@ export const {
   useGetDriverApplicationsQuery,
   useGetDriversQuery,
   useUpdateApplicationStatusMutation,
+  useCreateDriverMutation,
 } = driversApi
