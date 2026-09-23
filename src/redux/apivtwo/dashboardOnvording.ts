@@ -40,6 +40,11 @@ export interface IIncidentReport {
   updatedAt?: string;
 }
 
+export interface IReportsQuery {
+  reportStatus?: string;
+  tripType?: string;
+}
+
 const normalizeTripDistribution = (
   response: ITripDistributionMonth[] | { data?: ITripDistributionMonth[] },
 ): ITripDistributionMonth[] => {
@@ -91,8 +96,28 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
       transformResponse: normalizeTripDistribution,
       providesTags: ["trip_distribution"],
     }),
-    getAllReports: builder.query<IIncidentReport[], void>({
-      query: () => "/reports",
+    getAllReports: builder.query<IIncidentReport[], IReportsQuery | void>({
+      query: (params) => {
+        const queryParams: Record<string, string> = {};
+        if (params && typeof params === "object") {
+          const reportStatus = params.reportStatus?.trim();
+          const tripType = params.tripType?.trim();
+          if (reportStatus && reportStatus !== "all") {
+            queryParams.reportStatus = reportStatus;
+          }
+          if (tripType && tripType !== "all") {
+            queryParams.tripType = tripType;
+          }
+        }
+        if (Object.keys(queryParams).length === 0) {
+          return { url: "/reports", method: "GET" as const };
+        }
+        return {
+          url: "/reports",
+          method: "GET" as const,
+          params: queryParams,
+        };
+      },
       transformResponse: normalizeReports,
       providesTags: (result) =>
         result?.length

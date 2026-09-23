@@ -11,19 +11,48 @@ import { Loader } from "@/shared/Lodder";
 import { useGetAllReportsQuery } from "@/redux/apivtwo/dashboardOnvording";
 import { tripTypeLabel } from "@/utils/helpers";
 import { DetailPanel, ReportCard } from "@/features/reports";
-import { reportTrip, statusLabel } from "./utils/helpers";
+import { reportTrip } from "./utils/helpers";
+
+const STATUS_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "approved", label: "Approved" },
+  { id: "pending", label: "Pending" },
+  { id: "rejected", label: "Rejected" },
+] as const;
+
+const TRIP_TYPE_FILTERS = ["one-way", "round-trip"] as const;
 
 const Reports = ({ role: _role }: { role?: string | null }) => {
-  const {
-    data: reports = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetAllReportsQuery();
   const [activeTab, setActiveTab] = useState("all");
   const [tripType, setTripType] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+
+  const statusFilter = activeTab === "all" ? undefined : activeTab;
+  const tripTypeFilter = tripType === "all" ? undefined : tripType;
+  const hasServerFilter = Boolean(statusFilter || tripTypeFilter);
+
+  const {
+    data: allReports = [],
+    isLoading: isAllLoading,
+    isError: isAllError,
+    refetch: refetchAll,
+  } = useGetAllReportsQuery();
+
+  const {
+    data: filteredFromApi = [],
+    isLoading: isFilteredLoading,
+    isError: isFilteredError,
+    refetch: refetchFiltered,
+  } = useGetAllReportsQuery(
+    { reportStatus: statusFilter, tripType: tripTypeFilter },
+    { skip: !hasServerFilter },
+  );
+
+  const reports = hasServerFilter ? filteredFromApi : allReports;
+  const isLoading = hasServerFilter ? isFilteredLoading : isAllLoading;
+  const isError = hasServerFilter ? isFilteredError : isAllError;
+  const refetch = hasServerFilter ? refetchFiltered : refetchAll;
 
   const sorted = useMemo(
     () =>
@@ -35,34 +64,21 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
   );
 
   const statusTabs = useMemo(() => {
-    const counts = new Map<string, number>();
-    sorted.forEach((report) => {
-      const key = report.reportStatus || "unknown";
-      counts.set(key, (counts.get(key) || 0) + 1);
+    const counts = { approved: 0, pending: 0, rejected: 0 };
+    allReports.forEach((report) => {
+      const key = (report.reportStatus || "").toLowerCase();
+      if (key === "approved" || key === "pending" || key === "rejected") {
+        counts[key] += 1;
+      }
     });
-    return [
-      { id: "all", label: "All reports", count: sorted.length },
-      ...Array.from(counts.entries()).map(([id, count]) => ({
-        id,
-        label: statusLabel(id),
-        count,
-      })),
-    ];
-  }, [sorted]);
-
-  const tripTypes = useMemo(() => {
-    const types = new Set<string>();
-    sorted.forEach((report) => {
-      const type = reportTrip(report)?.tripType;
-      if (type) types.add(type);
-    });
-    return Array.from(types);
-  }, [sorted]);
+    return STATUS_FILTERS.map((tab) => ({
+      ...tab,
+      count: tab.id === "all" ? allReports.length : counts[tab.id],
+    }));
+  }, [allReports]);
 
   const filteredReports = sorted.filter((report) => {
     const trip = reportTrip(report);
-    const matchTab = activeTab === "all" || report.reportStatus === activeTab;
-    const matchType = tripType === "all" || trip?.tripType === tripType;
     const q = search.trim().toLowerCase();
     const haystack = [
       report.documents,
@@ -76,7 +92,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    return matchTab && matchType && (!q || haystack.includes(q));
+    return !q || haystack.includes(q);
   });
 
   const selectedReport =
@@ -155,7 +171,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                   className="appearance-none pl-2.5 pr-6 py-1.5 text-xs font-medium bg-bg border border-line-2 rounded-lg text-ink-3 outline-none cursor-pointer"
                 >
                   <option value="all">All types</option>
-                  {tripTypes.map((type) => (
+                  {TRIP_TYPE_FILTERS.map((type) => (
                     <option key={type} value={type}>
                       {tripTypeLabel(type)}
                     </option>
