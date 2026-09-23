@@ -1,21 +1,12 @@
 import React from 'react';
 import { Mail, Smartphone, Phone, Building2, MapPin, Headphones, Globe, Clock, ShieldCheck } from 'lucide-react';
 
-interface OrgSettings {
-  name: string;
-  supportEmail: string;
-  helplinePhone: string;
-  dispatcherPhone: string;
-  emergencyPhone: string;
-  generalPhone: string;
-  address: string;
-  timezone: string;
-  status: string;
-}
+import type { OrgSettings } from '@/features/cms/utils/supportHelpers';
 
 interface OrgSettingsFormProps {
   orgSettings: OrgSettings;
   setOrgSettings: (val: OrgSettings) => void;
+  disabled?: boolean;
 }
 
 const inputClass =
@@ -49,12 +40,12 @@ const Field = ({
   </div>
 );
 
-export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, setOrgSettings }) => {
+export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, setOrgSettings, disabled = false }) => {
   const set = (key: keyof OrgSettings) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setOrgSettings({ ...orgSettings, [key]: e.target.value });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <fieldset disabled={disabled} className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300 disabled:opacity-60">
       {/* Left Column — Contact Channels */}
       <div className="space-y-5">
         <div className="flex items-center gap-2 pb-2.5 border-b border-line-2">
@@ -175,6 +166,6 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
           </div>
         </div>
       </div>
-    </div>
+    </fieldset>
   );
 };
