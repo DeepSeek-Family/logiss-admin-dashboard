@@ -1,6 +1,14 @@
-import React from 'react';
-import { ShieldAlert, Navigation, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
+import React, { useState } from "react";
+import {
+  ShieldAlert,
+  Navigation,
+  Mail,
+  Lock,
+  ArrowRight,
+  Loader2,
+  EyeIcon,
+} from "lucide-react";
+import { Button } from "@/shared/components/ui";
 
 interface LoginFormProps {
   selectedRole: string;
@@ -21,28 +29,46 @@ export const LoginForm = ({
   setPassword,
   onSubmit,
   isLoading = false,
-  onBack
+  onBack,
 }: LoginFormProps) => {
+  const [showPassword, setShowPassword] = useState(false);
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedRole === 'admin' ? 'bg-accent-light text-accent' : 'bg-primary-light text-primary'}`}>
-            {selectedRole === 'admin' ? <ShieldAlert size={20} /> : <Navigation size={20} />}
+          <div
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedRole === "admin" ? "bg-accent-light text-accent" : "bg-primary-light text-primary"}`}
+          >
+            {selectedRole === "admin" ? (
+              <ShieldAlert size={20} />
+            ) : (
+              <Navigation size={20} />
+            )}
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-ink capitalize">{selectedRole} Login</h2>
-            <p className="text-xs text-ink-4">Accessing {selectedRole} Portal</p>
+            <h2 className="text-2xl font-semibold text-ink capitalize">
+              {selectedRole} Login
+            </h2>
+            <p className="text-xs text-ink-4">
+              Accessing {selectedRole} Portal
+            </p>
           </div>
         </div>
-        <p className="text-ink-3 text-sm font-medium">Enter your credentials to continue to the dashboard.</p>
+        <p className="text-ink-3 text-sm font-medium">
+          Enter your credentials to continue to the dashboard.
+        </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs font-medium text-ink-4 mb-2">Email Address</label>
+          <label className="block text-xs font-medium text-ink-4 mb-2">
+            Email Address
+          </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
+            <Mail
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
+              size={18}
+            />
             <input
               type="email"
               required
@@ -54,13 +80,29 @@ export const LoginForm = ({
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-medium text-ink-4">Password</label>
-            <a href="#" className="text-xs font-medium text-primary hover:text-primary-dark">Forgot?</a>
+            <label className="block text-xs font-medium text-ink-4">
+              Password
+            </label>
+            <a
+              href="#"
+              className="text-xs font-medium text-primary hover:text-primary-dark"
+            >
+              Forgot?
+            </a>
           </div>
+          {/* need to add eye icon to show/hide password */}
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
+            <Lock
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
+              size={18}
+            />
+            <EyeIcon
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 cursor-pointer"
+              size={18}
+            />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -69,7 +111,12 @@ export const LoginForm = ({
           </div>
         </div>
 
-        <Button type="submit" disabled={isLoading} variant={selectedRole === 'admin' ? 'accent' : 'primary'} className="w-full h-12 text-sm mt-4 flex items-center justify-center">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant={selectedRole === "admin" ? "accent" : "primary"}
+          className="w-full h-12 text-sm mt-4 flex items-center justify-center"
+        >
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Logging in...

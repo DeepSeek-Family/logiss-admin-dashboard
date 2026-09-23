@@ -44,6 +44,9 @@ export const baseApi = createApi({
     'Riders',
     'Facilities',
     'Mobility',
+    'DashboardOverview',
+    'all_reports',
+    'trip_distribution',
   ],
   endpoints: () => ({}),
 })

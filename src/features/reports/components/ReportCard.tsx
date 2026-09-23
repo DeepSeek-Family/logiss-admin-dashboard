@@ -1,40 +1,41 @@
-import { AlertOctagon, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { timeAgo } from '@/utils/helpers';
-
-export const SEVERITY = {
-  high:   { icon: AlertOctagon,  iconClass: 'text-urgent',  dot: 'bg-urgent',  label: 'High'   },
-  medium: { icon: AlertTriangle, iconClass: 'text-warning', dot: 'bg-warning', label: 'Medium' },
-  low:    { icon: ShieldAlert,   iconClass: 'text-accent',  dot: 'bg-accent',  label: 'Low'    },
-};
+import type { IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
+import { timeAgo, tripTypeLabel } from "@/utils/helpers";
+import { reportStatusClass, reportTrip, statusLabel } from "../utils/helpers";
 
 interface ReportCardProps {
-  report: any;
+  report: IIncidentReport;
   selected: boolean;
   onClick: () => void;
 }
 
 export const ReportCard = ({ report, selected, onClick }: ReportCardProps) => {
-  const sev = SEVERITY[report.severity as keyof typeof SEVERITY] || SEVERITY.low;
+  const tone = reportStatusClass(report.reportStatus);
+  const trip = reportTrip(report);
+  const detail = trip?.tripReason || (trip?.tripType ? tripTypeLabel(trip.tripType) : "");
 
   return (
     <button
       onClick={onClick}
       className={`w-full text-left px-4 py-3.5 border-b border-line-2 transition-colors relative ${
-        selected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-bg/60 border-l-2 border-l-transparent'
+        selected
+          ? "bg-primary/5 border-l-2 border-l-primary"
+          : "hover:bg-bg/60 border-l-2 border-l-transparent"
       }`}
     >
-      {/* Severity dot + title + priority */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={`w-2 h-2 rounded-full shrink-0 ${sev.dot}`} />
-          <p className="text-sm font-medium text-ink truncate">{report.type}</p>
+          <span className={`w-2 h-2 rounded-full shrink-0 ${tone.dot}`} />
+          <p className="text-sm font-medium text-ink truncate">
+            {report.documents || "Untitled report"}
+          </p>
         </div>
-        <span className={`text-xs font-semibold shrink-0 ${sev.iconClass}`}>{sev.label}</span>
+        <span className={`text-xs font-semibold shrink-0 ${tone.text}`}>
+          {statusLabel(report.reportStatus)}
+        </span>
       </div>
-      {/* ID + time */}
-      <div className="flex items-center justify-between mt-1 pl-4">
-        <span className="text-xs text-ink-4">{report.id}</span>
-        <span className="text-xs text-ink-4">{timeAgo(report?.submitted)}</span>
+      <div className="flex items-center justify-between mt-1 pl-4 gap-3">
+        <span className="text-xs text-ink-4 truncate">{detail || "No linked trip"}</span>
+        <span className="text-xs text-ink-4 shrink-0">{timeAgo(report.createdAt)}</span>
       </div>
     </button>
   );
