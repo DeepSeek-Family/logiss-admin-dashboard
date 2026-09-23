@@ -15,6 +15,17 @@ export interface LoginResponse {
   }
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface ChangePasswordResponse {
+  success: boolean
+  message?: string
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
@@ -25,8 +36,15 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Auth', 'Profile', 'User'],
     }),
+    changePassword: builder.mutation<ChangePasswordResponse, ChangePasswordRequest>({
+      query: (body) => ({
+        url: '/auth/change-password',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
   overrideExisting: false,
 })
 
-export const { useLoginMutation } = authApi
+export const { useLoginMutation, useChangePasswordMutation } = authApi
