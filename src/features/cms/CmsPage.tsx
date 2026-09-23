@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -104,6 +104,8 @@ const CMS = ({ role }: { role?: string | null }) => {
 
     isLoading: supportLoading,
 
+    isUninitialized: supportUninitialized,
+
     isError: supportError,
 
     error: supportLoadError,
@@ -116,7 +118,8 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const supportRecord = supportResponse?.data;
 
-
+  /** Only block UI on first fetch — not on background refetch after save. */
+  const supportBootLoading = supportUninitialized || (supportLoading && !supportResponse);
 
   const pages = [
 
@@ -166,44 +169,29 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const [orgSettings, setOrgSettings] = useState<OrgSettings>(defaultOrgSettings());
 
-  const [orgHydrated, setOrgHydrated] = useState(false);
+  const hasHydratedOrgFromApi = useRef(false);
 
-
+  const applySupportToOrgForm = (record: NonNullable<typeof supportRecord>) => {
+    setOrgSettings(prev => ({
+      ...mapApiCompanySupportToOrg(record),
+      timezone: prev.timezone,
+      status: prev.status,
+    }));
+  };
 
   useEffect(() => {
-
-    if (!supportRecord?._id || orgHydrated) return;
-
-    setOrgSettings(prev => ({
-
-      ...mapApiCompanySupportToOrg(supportRecord),
-
-      timezone: prev.timezone,
-
-      status: prev.status,
-
-    }));
-
-    setOrgHydrated(true);
-
-  }, [supportRecord, orgHydrated]);
+    if (supportBootLoading || !supportRecord?._id) return;
+    if (hasHydratedOrgFromApi.current) return;
+    applySupportToOrgForm(supportRecord);
+    hasHydratedOrgFromApi.current = true;
+  }, [supportBootLoading, supportRecord]);
 
 
 
   const handleResetOrg = () => {
 
     if (supportRecord?._id) {
-
-      setOrgSettings(prev => ({
-
-        ...mapApiCompanySupportToOrg(supportRecord),
-
-        timezone: prev.timezone,
-
-        status: prev.status,
-
-      }));
-
+      applySupportToOrgForm(supportRecord);
     } else {
 
       setOrgSettings(defaultOrgSettings());
@@ -228,12 +216,11 @@ const CMS = ({ role }: { role?: string | null }) => {
 
 
 
-    await saveCompanySupport(body).unwrap();
-
-    setOrgHydrated(false);
-
-    await refetchSupport();
-
+    const result = await saveCompanySupport(body).unwrap();
+    if (result?.data) {
+      applySupportToOrgForm(result.data);
+      hasHydratedOrgFromApi.current = true;
+    }
   };
 
 
@@ -338,7 +325,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
             }}
 
-            disabled={activePage !== 'org' || supportLoading || isSaving}
+            disabled={activePage !== 'org' || supportBootLoading || isSaving}
 
           >
 
@@ -354,7 +341,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
             onClick={handleSave}
 
-            disabled={isSaving || (activePage === 'org' && supportLoading)}
+            disabled={isSaving || (activePage === 'org' && supportBootLoading)}
 
           >
 
@@ -368,7 +355,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
 
 
-      {showSuccess && (
+      {/* {showSuccess && (
 
         <div className="bg-accent text-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
 
@@ -378,7 +365,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
         </div>
 
-      )}
+      )} */}
 
 
 
@@ -400,25 +387,21 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                 onClick={() => handleTabChange(page.id)}
 
-                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${
-
-                  isActive
+                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${isActive
 
                     ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
 
                     : 'border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50'
 
-                }`}
+                  }`}
 
               >
 
                 <div className="flex items-center gap-3 min-w-0">
 
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-primary text-white shadow-xs' : 'bg-bg text-ink-3 group-hover:text-primary group-hover:bg-primary/10'
 
-                    isActive ? 'bg-primary text-white shadow-xs' : 'bg-bg text-ink-3 group-hover:text-primary group-hover:bg-primary/10'
-
-                  }`}>
+                    }`}>
 
                     <page.icon size={17} />
 
@@ -426,11 +409,9 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                   <div className="min-w-0">
 
-                    <p className={`text-sm font-semibold truncate transition-colors ${
+                    <p className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-primary' : 'text-ink group-hover:text-primary'
 
-                      isActive ? 'text-primary' : 'text-ink group-hover:text-primary'
-
-                    }`}>
+                      }`}>
 
                       {page.label}
 
@@ -500,7 +481,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                 <FaqPanel />
 
-              ) : supportLoading ? (
+              ) : supportBootLoading ? (
 
                 <div className="py-16 flex flex-col items-center gap-2 text-ink-4">
 
