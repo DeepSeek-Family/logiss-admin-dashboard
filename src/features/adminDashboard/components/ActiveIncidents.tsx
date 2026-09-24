@@ -49,7 +49,7 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
     .slice(0, PREVIEW_LIMIT);
 
   return (
-    <Card className="p-6 border-line-2 shadow-sm">
+    <Card className="p-6 border-line-2 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
           <Flag size={16} className="text-urgent" /> Active Incident Reports
@@ -76,7 +76,7 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
           <p className="text-sm text-ink-4">No incident reports.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
           {preview.map((report) => {
             const tone = statusTone(report.reportStatus);
             const detail = tripDetail(report);
