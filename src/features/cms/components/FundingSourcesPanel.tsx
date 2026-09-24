@@ -20,6 +20,7 @@ import {
   useGetCountiesQuery,
   useGetCountiesByPayerQuery,
   useSaveCountyMutation,
+  useUpdateCountyMutation,
 } from '@/redux/api/coverageApi';
 import {
   PAYER_TYPE_OPTIONS,
@@ -180,7 +181,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   const { data: countiesResponse } = useGetCountiesQuery();
   const [createPayer, { isLoading: isCreating }] = useCreatePayerMutation();
   const [updatePayer, { isLoading: isSavingPayer }] = useUpdatePayerMutation();
-  const [saveCounty, { isLoading: isSavingCounty }] = useSaveCountyMutation();
+  const [saveCounty, { isLoading: isCreatingCounty }] = useSaveCountyMutation();
+  const [updateCounty, { isLoading: isUpdatingCounty }] = useUpdateCountyMutation();
 
   const payers = payersResponse?.data || [];
   const counties = countiesResponse?.data || [];
@@ -294,12 +296,18 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
         id: selected._id,
         body: { name: draft.name.trim(), type: typeValue, isActive: draft.active },
       }).unwrap();
-      await saveCounty(mapDraftToCountyInput(selected._id, draft)).unwrap();
+      const countyId = draft.countyId || selectedCounty?._id;
+      const payload = mapDraftToCountyInput(selected._id, draft);
+      if (countyId) {
+        await updateCounty({ id: countyId, body: payload }).unwrap();
+      } else {
+        await saveCounty(payload).unwrap();
+      }
       patchDraft({
         geofenceFile: undefined,
         geofenceFileName: draft.geofenceFile?.name || draft.geofenceFileName,
       });
-      toast.success('Payer saved');
+      toast.success(countyId ? 'Payer updated' : 'Payer saved');
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Failed to save payer'));
     }
@@ -365,7 +373,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   };
 
   const currentMethod = toUiPriceMethod(draft?.pricingMethod);
-  const saving = isSavingPayer || isSavingCounty || isCreating;
+  const hasExistingCounty = Boolean(draft?.countyId || selectedCounty?._id);
+  const saving = isSavingPayer || isCreatingCounty || isUpdatingCounty || isCreating;
 
   if (isLoading) {
     return (
@@ -767,7 +776,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     disabled={saving}
                   >
                     <CheckCircle2 size={16} />
-                    {saving ? 'Saving…' : 'Save'}
+                    {saving ? 'Saving…' : hasExistingCounty ? 'Update' : 'Save'}
                   </Button>
                 </div>
               )}

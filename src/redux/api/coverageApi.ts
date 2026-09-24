@@ -128,6 +128,22 @@ const unwrapCounty = (response: any): ICounty | undefined => {
   return undefined
 }
 
+const mergeCountyCaches = (
+  dispatch: (action: unknown) => void,
+  payersId: string,
+  saved: ICounty,
+) => {
+  const mergeCounty = (draft: ICountiesResponse) => {
+    const idx = draft.data.findIndex(
+      (c) => c._id === saved._id || countyPayerId(c) === payersId,
+    )
+    if (idx >= 0) draft.data[idx] = { ...draft.data[idx], ...saved }
+    else draft.data.push(saved)
+  }
+  dispatch(coverageApi.util.updateQueryData('getCounties', undefined, mergeCounty))
+  dispatch(coverageApi.util.updateQueryData('getCountiesByPayer', payersId, mergeCounty))
+}
+
 export interface IPayersResponse {
   success: boolean
   message?: string
@@ -257,15 +273,29 @@ export const coverageApi = baseApi.injectEndpoints({
           const { data } = await queryFulfilled
           const saved = unwrapCounty(data)
           if (!saved) return
-          const mergeCounty = (draft: ICountiesResponse) => {
-            const idx = draft.data.findIndex(
-              (c) => c._id === saved._id || countyPayerId(c) === input.payersId,
-            )
-            if (idx >= 0) draft.data[idx] = { ...draft.data[idx], ...saved }
-            else draft.data.push(saved)
-          }
-          dispatch(coverageApi.util.updateQueryData('getCounties', undefined, mergeCounty))
-          dispatch(coverageApi.util.updateQueryData('getCountiesByPayer', input.payersId, mergeCounty))
+          mergeCountyCaches(dispatch, input.payersId, saved)
+        } catch {
+          /* cache stays until invalidation refetch */
+        }
+      },
+    }),
+    updateCounty: builder.mutation<ICountyMutationResponse, { id: string; body: ISaveCountyInput }>({
+      query: ({ id, body }) => ({
+        url: `/counties/${id}`,
+        method: 'PATCH',
+        body: buildCountyFormData(body),
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: 'Counties', id: arg.id },
+        { type: 'Counties', id: 'LIST' },
+        { type: 'Counties', id: `PAYER_${arg.body.payersId}` },
+      ],
+      async onQueryStarted({ body }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          const saved = unwrapCounty(data)
+          if (!saved) return
+          mergeCountyCaches(dispatch, body.payersId, saved)
         } catch {
           /* cache stays until invalidation refetch */
         }
@@ -316,6 +346,7 @@ export const {
   useGetCountiesQuery,
   useGetCountiesByPayerQuery,
   useSaveCountyMutation,
+  useUpdateCountyMutation,
   useGetFacilitiesQuery,
   useCreateFacilityMutation,
   useUpdateFacilityMutation,
