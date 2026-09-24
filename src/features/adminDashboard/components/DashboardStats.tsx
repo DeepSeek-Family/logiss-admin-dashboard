@@ -12,7 +12,7 @@ interface DashboardStatsProps {
 export const DashboardStats = ({ onNavigate }: DashboardStatsProps) => {
   const { data: dashboardOverview, isLoading } = useGetDashboardOverviewQuery();
   if (isLoading) {
-    return <Loader message="Loading dashboard data..." fullScreen={true} />;
+    return <Loader message="Loading dashboard data..." />;
   }
   const dashboardData = dashboardOverview?.data;
   return (

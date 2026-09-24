@@ -20,7 +20,7 @@ export const TripDistributionChart = () => {
   const scale = peak > 0 ? peak : 4;
 
   return (
-    <Card className="p-6 border-line-2 h-full shadow-sm hover:shadow-md transition-shadow">
+    <Card className="p-6 border-line-2 h-full flex flex-col shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-ink">Trip Distribution</h3>
@@ -52,7 +52,7 @@ export const TripDistributionChart = () => {
           <p className="text-sm text-ink-4">No trip distribution data.</p>
         </div>
       ) : (
-        <div className="relative h-[250px] w-full flex items-end justify-between pt-6 mt-4 border-b border-line-2 pb-2">
+        <div className="relative flex-1 min-h-[220px] w-full flex items-end justify-between pt-6 mt-4 mb-8 border-b border-line-2 pb-2">
           <div className="absolute inset-0 flex flex-col justify-between pb-8 z-0">
             {[4, 3, 2, 1, 0].map((line) => (
               <div key={line} className="flex items-center w-full gap-4">
