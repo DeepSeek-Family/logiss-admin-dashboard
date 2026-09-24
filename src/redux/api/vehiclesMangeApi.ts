@@ -37,6 +37,17 @@ export interface SingleVehicleResponse {
   data: Vehicle;
 }
 
+export interface IVehicleAssignPayload {
+  driverId: string;
+  vehicleId: string;
+}
+
+export interface IVehicleAssignResponse {
+  success: boolean;
+  message?: string;
+  data?: Vehicle & { driverId?: string; assignedDriverId?: string };
+}
+
 const vehicleManageApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     addNewVehicles: builder.mutation<SingleVehicleResponse, CreateVehicleRequest>({
@@ -77,6 +88,14 @@ const vehicleManageApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Vehicles"],
     }),
+    assignVehicleDriver: builder.mutation<IVehicleAssignResponse, IVehicleAssignPayload>({
+      query: (body) => ({
+        url: '/vehicle-assign',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Vehicles'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -87,4 +106,5 @@ export const {
   useGetVehicleByIdQuery,
   useUpdateVehicleMutation,
   useDeleteVehicleMutation,
+  useAssignVehicleDriverMutation,
 } = vehicleManageApi;

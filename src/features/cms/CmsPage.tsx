@@ -389,9 +389,9 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${isActive
 
-                    ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                  ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
 
-                    : 'border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50'
+                  : 'border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50'
 
                   }`}
 
@@ -416,47 +416,26 @@ const CMS = ({ role }: { role?: string | null }) => {
                       {page.label}
 
                     </p>
-
                     <p className="text-xs font-normal text-ink-4 mt-0.5">
-
                       Updated {page.lastUpdate}
-
                     </p>
-
                   </div>
-
                 </div>
-
                 <ChevronRight size={15} className={`shrink-0 transition-colors ${isActive ? 'text-primary' : 'text-ink-4 group-hover:text-ink-3'}`} />
-
               </button>
-
             );
-
           })}
-
         </aside>
 
-
-
         <div className="lg:col-span-9 space-y-6">
-
           <Card className="p-0 overflow-hidden border-line-2 shadow-sm">
-
             <div className="p-6 border-b border-line-2 bg-bg/30 flex items-center justify-between">
-
               <div className="flex items-center gap-3">
-
                 <div className="p-2 bg-white rounded-lg border border-line-2 shadow-sm">
-
                   <Edit3 size={18} className="text-primary" />
-
                 </div>
-
                 <h3 className="text-lg font-semibold text-ink">Editor: {activePageData?.label}</h3>
-
               </div>
-
               <Badge variant="accent" dot>Global Live Settings</Badge>
 
             </div>

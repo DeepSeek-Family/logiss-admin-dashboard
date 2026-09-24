@@ -6,5 +6,6 @@ import './api/coverageApi'
 import './api/mobilityApi'
 import './apivtwo/dashboardOnvording'
 import './api/supportApi'
+import './api/vehiclesMangeApi'
 
 export const apis = [baseApi]

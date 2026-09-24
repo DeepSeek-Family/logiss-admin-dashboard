@@ -12,6 +12,7 @@ export const ROUTES = {
   trips: '/trips',
   schedule: '/schedule',
   coverage: '/coverage',
+  coveragePayer: (id: string) => `/coverage?payer=${encodeURIComponent(id)}`,
   settings: '/settings',
   profile: '/profile',
   fleet: '/fleet',

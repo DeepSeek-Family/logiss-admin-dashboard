@@ -41,6 +41,7 @@ export const baseApi = createApi({
     'rules',
     'bookings',
     'Payers',
+    'Counties',
     'Riders',
     'Facilities',
     'Mobility',

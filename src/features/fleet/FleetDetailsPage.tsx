@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Truck, AlertTriangle, Wrench, ShieldCheck,
@@ -21,8 +21,11 @@ import {
   FleetAssignmentPanel
 } from '@/features/fleet';
 import { useFleet } from '@/hooks/useFleet';
-import { useDrivers } from '@/hooks/useDrivers';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
+import { apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { useTrips } from '@/hooks/useTrips';
+import toast from 'react-hot-toast';
 import { formatTime, formatShortDate, formatDateTime, tripTypeLabel, money } from '@/utils/helpers';
 
 const FleetDetails = ({ role }: { role?: string | null }) => {
@@ -33,7 +36,11 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
     window.scrollTo(0, 0);
   }, []);
   const { vehicles, loading: fleetLoading, handleAssign, updateStatus } = useFleet();
-  const { drivers, loading: driversLoading } = useDrivers();
+  const { data: driversResponse, isLoading: driversLoading } = useGetDriversQuery({ page: 1, limit: 100 });
+  const drivers = useMemo(
+    () => (driversResponse?.data || []).map(mapApiDriver),
+    [driversResponse],
+  );
   const { trips } = useTrips();
 
   const [vehicle, setVehicle] = useState<any>(null);
@@ -103,19 +110,20 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
     driverOption.id !== vehicle?.assignedDriverId && driverOption.status === 'in_trip'
   );
 
-  const assignOperator = async (driverOption: any) => {
-    if (isDriverUnavailable(driverOption)) return;
+  const confirmAssignDriver = async (driverId: string) => {
+    const driverOption = drivers.find((d: { id: string }) => d.id === driverId);
+    if (!driverOption || isDriverUnavailable(driverOption)) return;
 
+    const vehicleId = vehicle._id || vehicle.id;
     try {
-      setAssigningDriverId(driverOption.id);
-      const updatedVehicle = await handleAssign(vehicle.id, driverOption.id);
+      setAssigningDriverId(driverId);
+      const updatedVehicle = await handleAssign(vehicleId, driverId);
       setVehicle(updatedVehicle);
       setAssigning(false);
       setShowSuccess(`Driver ${driverOption.name} assigned successfully!`);
       setTimeout(() => setShowSuccess(null), 3000);
-    } catch {
-      setShowSuccess('Unable to assign this operator. Please try again.');
-      setTimeout(() => setShowSuccess(null), 3000);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Unable to assign this driver'));
     } finally {
       setAssigningDriverId(null);
     }
@@ -235,8 +243,9 @@ const FleetDetails = ({ role }: { role?: string | null }) => {
             assignmentOptions={assignmentOptions}
             getAssignedVehicle={getAssignedVehicle}
             isDriverUnavailable={isDriverUnavailable}
+            driversLoading={driversLoading}
             assigningDriverId={assigningDriverId}
-            assignOperator={assignOperator}
+            onConfirmAssign={confirmAssignDriver}
           />
         </div>
       </div>

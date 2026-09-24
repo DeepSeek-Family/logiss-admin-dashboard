@@ -4,6 +4,7 @@ import {
   useAddNewVehiclesMutation,
   useUpdateVehicleMutation,
   useDeleteVehicleMutation,
+  useAssignVehicleDriverMutation,
 } from '@/redux/api/vehiclesMangeApi';
 import { fleetService } from '../services/fleetService';
 import toast from 'react-hot-toast';
@@ -48,10 +49,17 @@ export const normalizeVehicle = (v: any) => {
     status: 'valid'
   };
 
+  const assignedDriverId =
+    v.assignedDriverId ||
+    v.driverId ||
+    (typeof v.driver === 'object' && v.driver ? v.driver._id : typeof v.driver === 'string' ? v.driver : null);
+
   return {
     ...v,
     id,
     _id: id,
+    assignedDriverId,
+    driverId: assignedDriverId,
     make,
     manufacturer: make,
     model,
@@ -86,6 +94,7 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
   const [addNewVehicles] = useAddNewVehiclesMutation();
   const [updateVehicleApi] = useUpdateVehicleMutation();
   const [deleteVehicleApi] = useDeleteVehicleMutation();
+  const [assignVehicleDriver] = useAssignVehicleDriverMutation();
 
   const vehicles = useMemo(() => {
     if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
@@ -125,15 +134,15 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
     }
   }, [addNewVehicles, refetch]);
 
-  const handleAssign = useCallback(async (vehicleId: string, driverId: string | null) => {
-    try {
-      const result = await fleetService.assignDriver(vehicleId, driverId);
-      refetch();
-      return result;
-    } catch (err: any) {
-      throw err;
+  const handleAssign = useCallback(async (vehicleId: string, driverId: string) => {
+    await assignVehicleDriver({ vehicleId, driverId }).unwrap();
+    const { data: refetched } = await refetch();
+    const raw = refetched?.data?.find((v: { _id?: string; id?: string }) => (v._id || v.id) === vehicleId);
+    if (raw) {
+      return normalizeVehicle({ ...raw, driverId, assignedDriverId: driverId });
     }
-  }, [refetch]);
+    return normalizeVehicle({ id: vehicleId, _id: vehicleId, driverId, assignedDriverId: driverId });
+  }, [assignVehicleDriver, refetch]);
 
   const updateStatus = useCallback(async (id: string, status: string) => {
     try {

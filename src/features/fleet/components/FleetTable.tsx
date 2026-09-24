@@ -13,7 +13,7 @@ function toSentenceCase(value?: string | null) {
 interface FleetTableProps {
   paginated: any[];
   drivers: any[];
-  handleAssign: (vId: string, dId: string | null) => void;
+  handleAssign: (vId: string, dId: string | null) => void | Promise<void>;
   currentPage: number;
   setCurrentPage: (val: number) => void;
   totalPages: number;
