@@ -47,16 +47,12 @@ export const toYmd = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
-export const toLocationValue = (value: string): number | null => {
-  const trimmed = String(value || '').trim();
-  if (!trimmed) return null;
-  if (/^\d{5}$/.test(trimmed)) return Number(trimmed);
-  const zip = trimmed.match(/\b(\d{5})\b/);
-  if (zip) return Number(zip[1]);
-  const numeric = Number(trimmed);
-  if (!Number.isNaN(numeric) && trimmed !== '') return numeric;
-  return null;
+export const toLocationValue = (value: any): [number, number] | null => {
+  if (value == null || value === '') return null;
+  const loc = to2NumArrayLoc(value);
+  return loc || null;
 };
+
 
 export { imageUrl, resolveMediaUrl } from '@/utils/imageUrl';
 
@@ -92,9 +88,52 @@ const personName = (person?: Pick<IBookingUser, 'firstName' | 'middleName' | 'la
   return [person.firstName, person.middleName, person.lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 };
 
+import { detectCountyFromAddress, extractGpsFromAddress } from '@/utils/geofenceEngine';
+
 const personInitials = (person?: Pick<IBookingUser, 'firstName' | 'lastName'> | null): string => {
   if (!person) return '';
   return `${person.firstName?.[0] || ''}${person.lastName?.[0] || ''}`.toUpperCase();
+};
+
+export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
+  if (val == null || val === '') return undefined;
+
+  if (Array.isArray(val)) {
+    if (val.length >= 2) {
+      const n1 = Number(val[0]);
+      const n2 = Number(val[1]);
+      if (Number.isFinite(n1) && Number.isFinite(n2)) {
+        return [n1, n2];
+      }
+    } else if (val.length === 1) {
+      const n1 = Number(val[0]);
+      if (Number.isFinite(n1)) return [n1, 0];
+    }
+  }
+
+  const strVal = String(val).trim();
+  if (!strVal) return undefined;
+
+  const nums = strVal.match(/-?\d+(?:\.\d+)?/g)?.map(Number);
+  if (nums && nums.length >= 2) {
+    if (Number.isFinite(nums[0]) && Number.isFinite(nums[1])) {
+      return [nums[0], nums[1]];
+    }
+  }
+
+  const extracted = extractGpsFromAddress(strVal);
+  if (extracted) return extracted;
+
+  const detected = detectCountyFromAddress(strVal);
+  if (detected.matchedBy !== 'fallback' && detected.gpsEstimate && detected.gpsEstimate.length === 2) {
+    return detected.gpsEstimate;
+  }
+
+  if (nums && nums.length === 1 && Number.isFinite(nums[0])) {
+    return [nums[0], 0];
+  }
+
+  return [37.5407, -77.4360];
 };
 
 export const mapApiBooking = (b: IBooking) => {
@@ -104,6 +143,7 @@ export const mapApiBooking = (b: IBooking) => {
     typeof b.mobilityRequirements === 'object' && b.mobilityRequirements
       ? (b.mobilityRequirements as IMobilityRequirement)
       : null;
+  const rawMobilityId = mobilityObj?._id || (typeof b.mobilityRequirements === 'string' && isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : undefined);
   const payerObj = typeof b.payerSource === 'object' && b.payerSource ? b.payerSource : null;
 
   const riderName = personName(userObj) || 'Rider';
@@ -128,10 +168,12 @@ export const mapApiBooking = (b: IBooking) => {
       phone: (userObj as any)?.phone,
       email: (userObj as any)?.email,
     },
-    pickup: b.pickupLocation != null ? String(b.pickupLocation) : 'N/A',
-    dropoff: b.dropOffLocation != null ? String(b.dropOffLocation) : 'N/A',
-    stops: b.stopAddress != null && b.stopAddress !== '' ? [String(b.stopAddress)] : [],
-    mobility: mobilityObj?.name || (typeof b.mobilityRequirements === 'string' ? b.mobilityRequirements : 'Ambulatory'),
+    pickup: b.pickupLocation != null ? (Array.isArray(b.pickupLocation) ? String(b.pickupLocation[0]) : String(b.pickupLocation)) : 'N/A',
+    dropoff: b.dropOffLocation != null ? (Array.isArray(b.dropOffLocation) ? String(b.dropOffLocation[0]) : String(b.dropOffLocation)) : 'N/A',
+    stops: b.stopAddress != null && b.stopAddress !== '' ? (Array.isArray(b.stopAddress) ? b.stopAddress.map(String) : [String(b.stopAddress)]) : [],
+    mobility: mobilityObj?.name || (typeof b.mobilityRequirements === 'string' && !isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : 'Ambulatory'),
+    mobilityId: rawMobilityId,
+    mobilityRequirementsId: rawMobilityId,
     mobilityPrice: mobilityObj?.price || 0,
     status: mappedStatus,
     rawStatus: b.bookingStatus,
@@ -207,3 +249,146 @@ export const isVehicleMatch = (driver: any, booking: any) => {
   if (need.includes('wheelchair') || need.includes('stretcher')) return type.includes(need.split(' ')[0]);
   return true; // ambulatory / cane can use any van
 };
+
+/** Convert front-end edit patch objects to the exact backend IBooking schema payload structure. */
+export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string, any> => {
+  const payload: Record<string, any> = {};
+
+  // 1. Service Date (serviceDate) -> "2026-10-16"
+  const dateVal = patch.serviceDate || patch.scheduledDate || patch.scheduledTime;
+  if (dateVal) {
+    payload.serviceDate = String(dateVal).slice(0, 10);
+  }
+
+  // 2. Pickup Time (pickupTime) -> "09:22 AM"
+  const pickupTimeVal = patch.pickupTime || patch.requestedPickup || patch.scheduledTimeOfDay;
+  if (pickupTimeVal) {
+    payload.pickupTime = toApiTime(pickupTimeVal);
+  }
+
+  // 3. Appointment Time (appointmentTime) -> "08:00 AM"
+  if (patch.appointmentTime) {
+    payload.appointmentTime = toApiTime(patch.appointmentTime);
+  }
+
+  // 4. Return Time (returnTime) -> "12:30 PM"
+  const returnTimeVal = patch.returnTime || patch.returnPickup;
+  if (returnTimeVal) {
+    payload.returnTime = toApiTime(returnTimeVal);
+  }
+
+  // 5. Pickup Location (pickupLocation) -> [number, number]
+  const pickupLocVal = patch.pickupLocation !== undefined ? patch.pickupLocation : patch.pickup;
+  if (pickupLocVal !== undefined && pickupLocVal !== null && pickupLocVal !== '') {
+    const locArr = to2NumArrayLoc(pickupLocVal);
+    if (locArr) payload.pickupLocation = locArr;
+  }
+
+  // 6. Dropoff Location (dropOffLocation) -> [number, number]
+  const dropoffLocVal = patch.dropOffLocation !== undefined ? patch.dropOffLocation : patch.dropoff;
+  if (dropoffLocVal !== undefined && dropoffLocVal !== null && dropoffLocVal !== '') {
+    const locArr = to2NumArrayLoc(dropoffLocVal);
+    if (locArr) payload.dropOffLocation = locArr;
+  }
+
+  // 7. Stop Address (stopAddress) -> [number, number]
+  const stopAddressVal = patch.stopAddress !== undefined ? patch.stopAddress : (Array.isArray(patch.stops) ? patch.stops[0] : patch.stop);
+  if (stopAddressVal !== undefined && stopAddressVal !== null && stopAddressVal !== '') {
+    const locArr = to2NumArrayLoc(stopAddressVal);
+    if (locArr) payload.stopAddress = locArr;
+  }
+
+  // 8. Mobility Requirements (mobilityRequirements) -> Mongo ObjectId string
+  let mobVal = patch.mobilityRequirements || patch.mobilityId || patch.mobility;
+  if (typeof mobVal === 'object' && mobVal != null) {
+    mobVal = mobVal._id || mobVal.id;
+  }
+  if (mobVal && isMongoId(String(mobVal))) {
+    payload.mobilityRequirements = String(mobVal);
+  }
+
+  // 9. Trip Note / Driver Instructions (tripNote)
+  const tripNoteVal = patch.tripNote !== undefined ? patch.tripNote : patch.notes;
+  if (tripNoteVal !== undefined) {
+    payload.tripNote = String(tripNoteVal);
+  }
+
+  // 10. Internal Private Note (internalPrivateNote)
+  const privateNoteVal = patch.internalPrivateNote !== undefined ? patch.internalPrivateNote : patch.privateNotes;
+  if (privateNoteVal !== undefined) {
+    payload.internalPrivateNote = String(privateNoteVal);
+  }
+
+  // 11. Trip Type (tripType) -> "round-trip" | "one-way"
+  const tripTypeVal = patch.tripType || patch.type;
+  if (tripTypeVal) {
+    payload.tripType = tripTypeVal === 'round_trip' ? 'round-trip' : String(tripTypeVal);
+  }
+
+  // 12. Trip Reason (tripReason)
+  const reasonVal = patch.tripReason !== undefined ? patch.tripReason : patch.reason;
+  if (reasonVal !== undefined) {
+    payload.tripReason = String(reasonVal);
+  }
+
+  // 13. Passenger Seats (passengerSeats) -> number
+  const seatsVal = patch.passengerSeats !== undefined ? patch.passengerSeats : patch.passengers;
+  if (seatsVal !== undefined) {
+    payload.passengerSeats = Number(seatsVal) || 1;
+  }
+
+  // 14. Payer Source (payerSource) -> Mongo ObjectId string
+  let payerVal = patch.payerSource || patch.fundingSourceId;
+  if (typeof payerVal === 'object' && payerVal != null) {
+    payerVal = payerVal._id || payerVal.id;
+  }
+  if (payerVal && isMongoId(String(payerVal))) {
+    payload.payerSource = String(payerVal);
+  }
+
+  // 15. Program Context (programContext)
+  const progVal = patch.programContext !== undefined ? patch.programContext : patch.source;
+  if (progVal !== undefined) {
+    payload.programContext = String(progVal);
+  }
+
+  // 16. Driver ID (driverId) -> Mongo ObjectId string or null
+  if ('driverId' in patch) {
+    let driverVal = patch.driverId;
+    if (typeof driverVal === 'object' && driverVal != null) {
+      driverVal = driverVal._id || driverVal.id;
+    }
+    payload.driverId = driverVal && isMongoId(String(driverVal)) ? String(driverVal) : null;
+  }
+
+  // 17. Booking Status (bookingStatus) & Approval (isApproved)
+  if ('isApproved' in patch) {
+    payload.isApproved = patch.isApproved;
+  }
+  if ('bookingStatus' in patch) {
+    payload.bookingStatus = patch.bookingStatus;
+  } else if ('status' in patch) {
+    const s = String(patch.status).toLowerCase();
+    if (s === 'approved') {
+      payload.isApproved = 'approved';
+      payload.bookingStatus = 'assigned';
+    } else if (s === 'rejected' || s === 'cancelled') {
+      payload.isApproved = 'rejected';
+      payload.bookingStatus = 'cancelled';
+    } else {
+      payload.bookingStatus = patch.status;
+    }
+  }
+
+  // 18. Price (price) -> number
+  const priceVal = patch.price !== undefined ? patch.price : (patch.fundingSourceCharge !== undefined ? patch.fundingSourceCharge : patch.cost);
+  if (priceVal !== undefined && priceVal !== null && priceVal !== '') {
+    const numPrice = Number(priceVal);
+    if (!Number.isNaN(numPrice)) {
+      payload.price = numPrice;
+    }
+  }
+
+  return payload;
+};
+

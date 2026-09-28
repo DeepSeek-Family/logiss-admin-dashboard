@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Send, Users, User, Clock, CheckCircle2, Trash2, Building2, ShieldCheck, Headset, ShieldAlert } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
 import { drivers, riders, mockUsers } from '@/data/mockData';
 import { pushNotification } from '@/hooks/useNotifications';
+import { useSendNotificationMutation } from '@/redux/api/notificationsApi';
 
 // Audiences a super-admin can broadcast to — rider/driver mobile apps + internal staff.
 const activeStaff = (mockUsers || []).filter((u: any) => u.status === 'active');
@@ -53,10 +55,13 @@ const timeAgo = (iso: string) => {
 };
 
 const PushNotifications = ({ role }: { role?: string | null }) => {
+  const currentUser = useSelector((state: any) => state.auth?.user);
+  const senderId = currentUser?._id || currentUser?.id || '6a71bd6614662c1d7334a9c2';
+
   const [audience, setAudience] = useState<string>('all_drivers');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [sendNotification, { isLoading: isSending }] = useSendNotificationMutation();
   const [logs, setLogs] = useState<SentLog[]>(MOCK_LOGS);
 
   const selected = AUDIENCES.find(a => a.id === audience) || AUDIENCES[0];
@@ -72,14 +77,24 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
     );
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!title.trim() || !message.trim()) {
       toast.error('Please enter a title and message.');
       return;
     }
-    setIsSending(true);
+
     const sentAt = new Date().toISOString();
-    setTimeout(() => {
+    const textContent = `${title.trim()}: ${message.trim()}`;
+
+    try {
+      await sendNotification({
+        sender: senderId,
+        text: textContent,
+        title: title.trim(),
+        message: message.trim(),
+        audience: selected.label,
+      }).unwrap();
+
       setLogs(prev => [{
         id: Date.now(),
         audienceLabel: selected.label,
@@ -88,8 +103,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
         sentAt,
         recipients: selected.count,
       }, ...prev]);
-      // Deliver into the in-app feed for dashboard audiences (drivers/riders get it on
-      // their mobile apps). It shows up under the bell and persists across reloads.
+
       if (['dispatchers', 'facility_users', 'all_staff'].includes(selected.id)) {
         pushNotification({
           type: 'info',
@@ -101,11 +115,13 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
           audience: selected.label,
         });
       }
+
       setTitle('');
       setMessage('');
-      setIsSending(false);
       toast.success(`Push sent to ${selected.label}`);
-    }, 1200);
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.error || 'Failed to send notification');
+    }
   };
 
   return (

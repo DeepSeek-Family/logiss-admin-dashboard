@@ -5,8 +5,9 @@ import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
   MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
-import { Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
+import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
+import { isMongoId } from '../../bookings/utils/helpers';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
 
 interface TripDetailsModalProps {
@@ -60,56 +61,64 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
   );
   const [performNote, setPerformNote] = useState('');
 
-  // Editable working copy — everything except the rider's name.
+  const formatLocField = (loc: any): string => {
+    if (loc == null || loc === '') return '';
+    if (Array.isArray(loc)) return loc.filter((x: any) => x != null && x !== '').join(', ');
+    return String(loc);
+  };
+
+  const initialDriverId = trip?.driverId
+    ? (typeof trip.driverId === 'object' ? trip.driverId._id || trip.driverId.id : String(trip.driverId))
+    : '';
+
+  const initialTime = to24h(trip?.pickupTime || trip?.requestedPickup) ||
+    (trip?.scheduledTime ? String(trip.scheduledTime).slice(11, 16) : '');
+
+  const isRound = String(trip?.tripType || trip?.type || '').toLowerCase().includes('round');
+  const userObj = typeof trip?.userId === 'object' && trip?.userId ? (trip.userId as any) : null;
+  const initialPhone = trip?.rider?.phone || (userObj?.phone || userObj?.contact) || trip?.rider?.contact || trip?.phone || '';
+
   const [form, setForm] = useState({
-    scheduledDate: trip?.scheduledTime ? String(trip.scheduledTime).slice(0, 10) : '',
-    scheduledTimeOfDay: trip?.scheduledTime ? String(trip.scheduledTime).slice(11, 16) : '',
-    requestedPickup: to24h(trip?.requestedPickup),
+    scheduledDate: trip?.serviceDate || (trip?.scheduledTime ? String(trip.scheduledTime).slice(0, 10) : ''),
+    scheduledTimeOfDay: initialTime,
+    requestedPickup: initialTime,
     appointmentTime: to24h(trip?.appointmentTime),
-    type: trip?.type || 'one_way',
-    reason: trip?.reason || '',
-    distance: trip?.miles != null ? String(trip.miles) : numFrom(trip?.distance),
-    duration: numFrom(trip?.duration),
-    returnType: trip?.returnType || '',
-    source: trip?.source || '',
-    pickup: trip?.pickup || '',
-    stops: (Array.isArray(trip?.stops) ? trip.stops.map((s: any) => String(s)) : (trip?.stop ? [String(trip.stop)] : [])) as string[],
-    dropoff: trip?.dropoff || '',
-    phone: trip?.rider?.phone || '',
+    returnTime: to24h(trip?.returnTime || trip?.returnPickup),
+    type: isRound ? 'round-trip' : 'one-way',
+    reason: trip?.tripReason || trip?.reason || '',
+    source: trip?.programContext || trip?.source || '',
+    pickup: formatLocField(trip?.pickupLocation || trip?.pickup),
+    stops: (Array.isArray(trip?.stops) ? trip.stops.map((s: any) => formatLocField(s)) : (trip?.stopAddress ? (Array.isArray(trip.stopAddress) ? trip.stopAddress.map(formatLocField) : [formatLocField(trip.stopAddress)]) : (trip?.stop ? [formatLocField(trip.stop)] : []))) as string[],
+    dropoff: formatLocField(trip?.dropOffLocation || trip?.dropoff),
+    phone: initialPhone,
     age: trip?.rider?.age ?? '',
-    mobility: trip?.mobility || '',
-    passengers: trip?.passengers ?? 1,
+    mobility: trip?.mobility || (typeof trip?.mobilityRequirements === 'string' && !isMongoId(trip?.mobilityRequirements) ? trip?.mobilityRequirements : trip?.mobilityRequirements?.name) || 'Ambulatory',
+    mobilityId: trip?.mobilityRequirementsId || trip?.mobilityId || (typeof trip?.mobilityRequirements === 'object' ? trip?.mobilityRequirements?._id : (isMongoId(trip?.mobilityRequirements) ? trip?.mobilityRequirements : '')),
+    passengers: trip?.passengerSeats ?? trip?.passengers ?? 1,
     escort: trip?.escort || '',
-    notes: trip?.notes || '',
-    privateNotes: trip?.privateNotes || '',
-    cost: trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost ?? '',
-    copay: trip?.passengerCopay ?? trip?.copay ?? '',
-    costToCounty: trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost ?? '',
-    paymentMethod: trip?.paymentMethod || '',
-    paymentStatus: trip?.paymentStatus || '',
-    authorizationId: trip?.authorizationId || trip?.authId || '',
-    driverId: trip?.driverId || '',
+    notes: trip?.tripNote || trip?.notes || '',
+    privateNotes: trip?.internalPrivateNote || trip?.privateNotes || '',
+    cost: trip?.price ?? trip?.fundingSourceCharge ?? trip?.cost ?? 0,
+    driverId: initialDriverId,
   });
 
-  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: any) => setForm(f => {
+    const updated = { ...f, [k]: v };
+    if (k === 'scheduledTimeOfDay') {
+      updated.requestedPickup = v;
+    } else if (k === 'requestedPickup') {
+      updated.scheduledTimeOfDay = v;
+    }
+    return updated;
+  });
   const setStop = (i: number, v: string) => setForm(f => ({ ...f, stops: f.stops.map((s, idx) => (idx === i ? v : s)) }));
   const addStop = () => setForm(f => ({ ...f, stops: [...f.stops, ''] }));
   const removeStop = (i: number) => setForm(f => ({ ...f, stops: f.stops.filter((_, idx) => idx !== i) }));
 
   const driver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
 
-  // Passenger copay and funding charge are independent — never Total − Copay.
   const numF = (v: any) => { const n = parseFloat(String(v ?? '').replace(/[^\d.]/g, '')); return isNaN(n) ? 0 : n; };
-  const AVG_MIN_PER_MILE = 2.5;
-  const milesNow = editMode ? numF(form.distance) : (trip?.miles != null ? Number(trip.miles) : numF(trip?.distance));
-  const estDurationMin = milesNow > 0 ? Math.max(5, Math.round(milesNow * AVG_MIN_PER_MILE)) : 0;
-  const costNow = editMode ? numF(form.cost) : numF(trip?.fundingSourceCharge ?? trip?.cost);
-  const copayNow = editMode ? numF(form.copay) : numF(trip?.passengerCopay ?? trip?.copay);
-  const costToCountyNow = editMode
-    ? (form.costToCounty === '' ? costNow : numF(form.costToCounty))
-    : numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost);
 
-  const snapshot = trip?.pricingSnapshot;
   const auditEvents: any[] = Array.isArray(trip?.auditTrail) && trip.auditTrail.length
     ? trip.auditTrail
     : [
@@ -131,46 +140,21 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
           : []),
       ];
 
-  const isRoundTripLeg = trip?.type === 'round_trip' || trip?.linkedLegId || trip?.legIndex;
+  const isRoundTripLeg = trip?.type === 'round-trip' || trip?.type === 'round_trip' || trip?.linkedLegId || trip?.legIndex;
   const legIndex = trip?.legIndex || 1;
-  const legTotal = trip?.linkedLegId || trip?.type === 'round_trip' ? 2 : 1;
-
-  const fareChanged =
-    numF(form.copay) !== numF(trip?.passengerCopay ?? trip?.copay) ||
-    numF(form.costToCounty === '' ? form.cost : form.costToCounty) !==
-      numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost);
+  const legTotal = trip?.linkedLegId || isRoundTripLeg ? 2 : 1;
 
   const handleSave = () => {
-    if (fareChanged && !overrideReason.trim()) {
-      toast.error('Enter a reason when changing Passenger Copay or Payer Charge');
-      return;
-    }
+    const scheduledTimeOfDayVal = form.scheduledTimeOfDay || form.requestedPickup;
+    const scheduledTime = form.scheduledDate && scheduledTimeOfDayVal
+      ? `${form.scheduledDate}T${scheduledTimeOfDayVal}:00`
+      : trip?.scheduledTime || trip?.serviceDate;
 
-    const scheduledTime = form.scheduledDate && form.scheduledTimeOfDay
-      ? `${form.scheduledDate}T${form.scheduledTimeOfDay}:00`
-      : trip.scheduledTime;
-
-    const nextCopay = form.copay === '' ? 0 : Number(form.copay);
-    const nextCharge = costToCountyNow;
     const nowIso = new Date().toISOString();
-
     const newAudit = [...auditEvents];
-    if (fareChanged) {
-      newAudit.push({
-        id: `evt-${Date.now()}-fare`,
-        at: nowIso,
-        by: 'Admin Console',
-        action: 'fare_override',
-        reason: overrideReason.trim(),
-        before: {
-          passengerCopay: numF(trip?.passengerCopay ?? trip?.copay),
-          fundingSourceCharge: numF(trip?.fundingSourceCharge ?? trip?.costToCounty ?? trip?.cost),
-        },
-        after: { passengerCopay: nextCopay, fundingSourceCharge: nextCharge },
-        summary: `Fare adjusted: ${overrideReason.trim()}`,
-      });
-    }
-    if (form.driverId && form.driverId !== trip.driverId) {
+
+    const driverChanged = String(form.driverId || '') !== String(initialDriverId || '');
+    if (driverChanged && form.driverId) {
       const newDriver = (drivers || []).find(d => String(d?.id) === String(form.driverId));
       newAudit.push({
         id: `evt-${Date.now()}-assign`,
@@ -181,45 +165,58 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
       });
     }
 
+    const priceNum = numF(form.cost);
+
     const patch: Record<string, any> = {
+      scheduledDate: form.scheduledDate,
+      serviceDate: form.scheduledDate,
       scheduledTime,
-      requestedPickup: to12h(form.requestedPickup),
+      requestedPickup: to12h(scheduledTimeOfDayVal),
+      pickupTime: to12h(scheduledTimeOfDayVal),
       appointmentTime: to12h(form.appointmentTime),
+      returnTime: form.returnTime ? to12h(form.returnTime) : undefined,
       type: form.type,
+      tripType: form.type === 'round-trip' ? 'round-trip' : 'one-way',
       reason: form.reason,
-      distance: form.distance ? `${form.distance} mi` : '',
-      miles: form.distance === '' ? undefined : Number(form.distance),
-      duration: estDurationMin ? `${estDurationMin} min` : '',
-      returnType: form.returnType,
+      tripReason: form.reason,
       source: form.source,
+      programContext: form.source,
       pickup: form.pickup,
+      pickupLocation: form.pickup,
       stops: form.stops.map(s => s.trim()).filter(Boolean),
-      stop: form.stops.map(s => s.trim()).filter(Boolean)[0] || '',
+      stopAddress: form.stops.map(s => s.trim()).filter(Boolean),
       dropoff: form.dropoff,
+      dropOffLocation: form.dropoff,
       mobility: form.mobility,
+      mobilityId: form.mobilityId,
+      mobilityRequirements: form.mobilityId || form.mobility,
       passengers: Number(form.passengers) || 1,
+      passengerSeats: Number(form.passengers) || 1,
       escort: form.escort,
       notes: form.notes,
+      tripNote: form.notes,
       privateNotes: form.privateNotes,
-      cost: nextCharge,
-      copay: nextCopay,
-      passengerCopay: nextCopay,
-      costToCounty: nextCharge,
-      fundingSourceCharge: nextCharge,
-      paymentMethod: form.paymentMethod,
-      paymentStatus: form.paymentStatus,
-      authorizationId: form.authorizationId,
-      driverId: form.driverId,
+      internalPrivateNote: form.privateNotes,
+      price: priceNum,
+      cost: priceNum,
+      phone: form.phone,
       auditTrail: newAudit,
-      rider: { ...(trip.rider || {}), phone: form.phone, age: form.age === '' ? undefined : Number(form.age) },
+      rider: { ...(trip?.rider || {}), phone: form.phone, age: form.age === '' ? undefined : Number(form.age) },
     };
-    if (form.driverId && (trip.status === 'pending_review' || !trip.status)) patch.status = 'assigned';
 
-    onUpdate?.(trip.id, patch);
+    if (driverChanged) {
+      patch.driverId = form.driverId;
+      if (form.driverId && (trip.status === 'pending_review' || !trip.status || trip.status === 'pending')) {
+        patch.status = 'assigned';
+        patch.bookingStatus = 'assigned';
+        patch.isApproved = 'approved';
+      }
+    }
+
+    onUpdate?.(trip.id || trip._id, patch);
     setEditMode(false);
-    setOverrideReason('');
-    toast.success('Trip updated');
   };
+
 
   // Called as a function (not <Field/>) so inputs keep focus across re-renders.
   const Field = ({ label, k, type = 'text', accent = false, options, fmt, step }: { label: string; k: keyof typeof form; type?: string; accent?: boolean; options?: { value: string; label: string }[]; fmt?: (v: string) => string; step?: string }) => {
@@ -458,20 +455,12 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {Field({ label: 'Source / County', k: 'source' })}
                   {Field({ label: 'Pickup Time', k: 'requestedPickup', type: 'time', fmt: to12h })}
-                  {Field({ label: 'Appointment', k: 'appointmentTime', type: 'time', accent: true, fmt: to12h })}
-                  {Field({ label: 'Trip Type', k: 'type', options: [{ value: 'one_way', label: 'One Way' }, { value: 'round_trip', label: 'Round Trip' }] })}
-                  {Field({ label: 'Reason', k: 'reason' })}
-                  {Field({ label: 'Est. Distance (mi)', k: 'distance', type: 'number', step: '0.1', fmt: (v) => `${v} mi` })}
-                  <div>
-                    <p className="text-xs text-ink-4 mb-1">Est. Duration (min)</p>
-                    <p className="text-sm font-medium text-ink">
-                      {estDurationMin ? `${estDurationMin} min` : <span className="text-ink-4">N/A</span>}
-                      {editMode && estDurationMin > 0 && <span className="text-xs text-ink-4 font-normal ml-1">· auto from distance</span>}
-                    </p>
-                  </div>
-                  {Field({ label: 'Return Type', k: 'returnType', options: [{ value: '', label: 'N/A' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'will_call', label: 'Will Call' }] })}
+                  {Field({ label: 'Appointment Time', k: 'appointmentTime', type: 'time', accent: true, fmt: to12h })}
+                  {form.type === 'round-trip' && Field({ label: 'Return Time', k: 'returnTime', type: 'time', fmt: to12h })}
+                  {Field({ label: 'Trip Type', k: 'type', options: [{ value: 'one-way', label: 'One Way' }, { value: 'round-trip', label: 'Round Trip' }] })}
+                  {Field({ label: 'Trip Reason', k: 'reason' })}
+                  {Field({ label: 'Program Context', k: 'source' })}
                 </div>
                 {!editMode && <p className="sr-only">{tripTypeLabel(trip.type)}</p>}
               </section>
@@ -482,8 +471,8 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 {editMode ? (
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Pickup Location</p>
-                      <input value={form.pickup} onChange={(e) => set('pickup', e.target.value)} className={INPUT} />
+                      <p className="text-xs text-ink-4 mb-1">Pickup Location (Google Maps)</p>
+                      <GoogleAddressInput value={form.pickup} onChange={(address) => set('pickup', address)} className={INPUT} placeholder="Search address or Google Maps..." />
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -495,15 +484,15 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                         {form.stops.map((s, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-ink-4 w-10 shrink-0">Stop {i + 1}</span>
-                            <input value={s} onChange={(e) => setStop(i, e.target.value)} className={INPUT} placeholder="Stop address…" />
+                            <GoogleAddressInput value={s} onChange={(val) => setStop(i, val)} className={INPUT} placeholder="Search stop address..." />
                             <button type="button" onClick={() => removeStop(i)} className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Drop-off Location</p>
-                      <input value={form.dropoff} onChange={(e) => set('dropoff', e.target.value)} className={INPUT} />
+                      <p className="text-xs text-ink-4 mb-1">Drop-off Location (Google Maps)</p>
+                      <GoogleAddressInput value={form.dropoff} onChange={(address) => set('dropoff', address)} className={INPUT} placeholder="Search address or Google Maps..." />
                     </div>
                   </div>
                 ) : (
@@ -622,82 +611,21 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
 
               {/* Billing */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><CreditCard size={14} /> Billing & Payment</h3>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><CreditCard size={14} /> Billing & Price</h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-bg p-4 rounded-xl border border-line-2">
-                      <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide mb-1">Passenger Copay</p>
-                      {editMode ? (
-                        <input type="number" step="0.01" value={String(form.copay)} onChange={(e) => set('copay', e.target.value)} className={INPUT} />
-                      ) : (
-                        <p className="text-xl font-semibold text-ink">{money(copayNow)}</p>
-                      )}
-                      <p className="text-xs text-ink-4 mt-1">Rider-facing · never mixed with payer charge</p>
-                    </div>
-                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/15">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Payer Charge</p>
-                        {editMode ? (
-                          <select value={form.paymentStatus} onChange={(e) => set('paymentStatus', e.target.value)} className={`${INPUT} w-28 cursor-pointer`}>
-                            {['Pending', 'Approved', 'Paid', 'charged', 'Denied'].map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                        ) : (
-                          <Badge variant={['Paid', 'Approved', 'charged'].includes(trip.paymentStatus) ? 'accent' : 'warning'}>{trip.paymentStatus || 'Pending'}</Badge>
-                        )}
-                      </div>
-                      {editMode ? (
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={String(form.costToCounty === '' ? form.cost : form.costToCounty)}
-                          onChange={(e) => {
-                            set('costToCounty', e.target.value);
-                            set('cost', e.target.value);
-                          }}
-                          className={INPUT}
-                        />
-                      ) : (
-                        <p className="text-xl font-semibold text-primary">{money(costToCountyNow)}</p>
-                      )}
-                      <p className="text-xs text-ink-4 mt-1">{trip.fundingSource || 'Payer'} · admin bill</p>
-                    </div>
-                  </div>
-
-                  {editMode && fareChanged && (
-                    <div>
-                      <label className="text-xs font-semibold text-ink-4 mb-1 block">Override reason (required)</label>
+                  <div className="bg-primary/5 p-4 rounded-xl border border-primary/15">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Trip Price ($)</p>
+                    {editMode ? (
                       <input
+                        type="number"
+                        step="0.01"
+                        value={String(form.cost)}
+                        onChange={(e) => set('cost', e.target.value)}
                         className={INPUT}
-                        placeholder="Why are you changing copay or payer charge?"
-                        value={overrideReason}
-                        onChange={e => setOverrideReason(e.target.value)}
                       />
-                    </div>
-                  )}
-
-                  {snapshot && (
-                    <div className="rounded-xl border border-line-2 bg-bg/50 p-3 space-y-2">
-                      <p className="text-xs font-bold text-ink-3 uppercase tracking-wider flex items-center gap-1.5">
-                        <Camera size={12} /> Pricing snapshot at quote
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <p className="text-ink-4">Payer <span className="font-semibold text-ink">{snapshot.fundingSourceName}</span></p>
-                        <p className="text-ink-4">Method <span className="font-semibold text-ink">{snapshot.methodLabel || PRICING_METHOD_LABELS[snapshot.pricingMethod as PricingMethod]}</span></p>
-                        <p className="text-ink-4">Miles <span className="font-semibold text-ink">{snapshot.miles}</span></p>
-                        {snapshot.billingClassName && (
-                          <p className="text-ink-4">Class <span className="font-semibold text-ink">{snapshot.billingClassName}</span></p>
-                        )}
-                        <p className="text-ink-4">Boundary <span className="font-semibold text-ink">{snapshot.insideCounty ? 'Inside' : 'Outside'}</span></p>
-                        <p className="text-ink-4">Effective <span className="font-semibold text-ink">{snapshot.effectiveFrom || '—'}{snapshot.effectiveTo ? ` → ${snapshot.effectiveTo}` : ''}</span></p>
-                        <p className="text-ink-4">Quoted <span className="font-semibold text-ink">{snapshot.quotedAt ? formatDateTime(snapshot.quotedAt) : '—'}</span></p>
-                      </div>
-                      <p className="text-xs text-ink-4">Completed trips keep this snapshot even if admin rates change later.</p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {Field({ label: 'Payment Method', k: 'paymentMethod' })}
-                    {Field({ label: 'Auth ID', k: 'authorizationId' })}
+                    ) : (
+                      <p className="text-2xl font-bold text-primary">{money(Number(form.cost) || 0)}</p>
+                    )}
                   </div>
                 </div>
               </section>

@@ -10,3 +10,6 @@ export * from './SectionHeader';
 export * from './MultiCalendar';
 export * from './MultiDatePicker';
 export * from './SearchInput';
+export * from './ConfirmationModal';
+export * from './GoogleAddressInput';
+

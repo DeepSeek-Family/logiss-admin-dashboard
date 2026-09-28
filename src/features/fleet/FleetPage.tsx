@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
@@ -21,6 +22,19 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
   const { vehicles, loading: fleetLoading, addVehicle, handleAssign } = useFleet({ searchTerm: search });
   const { drivers, loading: driversLoading } = useDrivers();
+
+  const assignDriverToVehicle = useCallback(async (vId: string, dId: string | null) => {
+    if (!dId) {
+      toast.error('Driver unassign is not available for this endpoint.');
+      return;
+    }
+    try {
+      await handleAssign(vId, dId);
+      toast.success('Driver assigned to vehicle');
+    } catch {
+      toast.error('Failed to assign driver');
+    }
+  }, [handleAssign]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -93,7 +107,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
       <FleetTable
         paginated={paginated}
         drivers={drivers}
-        handleAssign={handleAssign}
+        handleAssign={assignDriverToVehicle}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         totalPages={totalPages}

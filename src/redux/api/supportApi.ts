@@ -64,7 +64,20 @@ export const supportApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: normalizeCompanySupportResponse,
-      invalidatesTags: [{ type: 'CompanySupport', id: 'DETAIL' }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data: response } = await queryFulfilled
+          dispatch(
+            supportApi.util.updateQueryData('getCompanySupport', undefined, (draft) => {
+              draft.success = response.success
+              draft.message = response.message
+              draft.data = response.data
+            }),
+          )
+        } catch {
+          /* mutation error — cache unchanged */
+        }
+      },
     }),
   }),
   overrideExisting: false,

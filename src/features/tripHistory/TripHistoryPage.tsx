@@ -1,17 +1,131 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
-import { Card, Button } from '@/shared/components/ui';
+import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useFleet } from '@/hooks/useFleet';
+import { toast } from 'react-hot-toast';
+import { useGetAllTripHistoryQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
+import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
 
 const TripHistory = ({ role }: { role?: string | null }) => {
-  const { trips, loading: tripsLoading, updateTrip } = useTrips();
+  const { data: historyResponse, isLoading: historyLoading, refetch: refetchHistory } = useGetAllTripHistoryQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [updateBookingMutation] = useUpdateBookingMutation();
+  const { trips: fallbackTrips, loading: tripsLoading, updateTrip: fallbackUpdateTrip } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const openConfirm = (params: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModal({
+      isOpen: true,
+      title: params.title,
+      message: params.message,
+      confirmText: params.confirmText || 'Confirm',
+      variant: params.variant || 'primary',
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+        try {
+          await params.onConfirm();
+        } finally {
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      },
+    });
+  };
+
+  const apiTrips = useMemo(
+    () => (historyResponse?.data || []).map(mapApiBooking),
+    [historyResponse]
+  );
+
+  const trips = historyResponse?.data ? apiTrips : fallbackTrips;
+  const loading = (historyLoading || tripsLoading) && trips.length === 0;
+
+  const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
+    const existingTrip = (trips || []).find((t: any) => String(t.id) === String(id) || String(t._id) === String(id));
+    const driverObj = existingTrip?.driverId as any;
+    const existingDriverId = driverObj
+      ? (typeof driverObj === 'object' ? driverObj._id || driverObj.id : String(driverObj))
+      : '';
+    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
+    const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+
+    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
+    const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
+    const isStatusUpdate = patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
+
+    const executeUpdate = async () => {
+      const payload = mapPatchToApiPayload(patch);
+      try {
+        await updateBookingMutation({ id, payload }).unwrap();
+        toast.success('Trip updated successfully');
+        refetchHistory();
+      } catch (e: any) {
+        toast.error(apiErrorMessage(e, 'Failed to update trip'));
+        fallbackUpdateTrip(id, patch);
+      }
+    };
+
+    if (skipConfirm || (!isDriverAssign && !isStatusUpdate)) {
+      await executeUpdate();
+      return;
+    }
+
+    if (isDriverAssign) {
+      const driver = (drivers || []).find(d => String(d.id) === String(patch.driverId));
+      const driverName = driver?.name || (patch.driverId ? 'Selected Driver' : 'Unassigned');
+      openConfirm({
+        title: 'Confirm Driver Assignment',
+        message: patch.driverId
+          ? `Are you sure you want to assign driver "${driverName}" to Trip #${id}?`
+          : `Are you sure you want to unassign driver from Trip #${id}?`,
+        confirmText: 'Assign Driver',
+        variant: 'primary',
+        onConfirm: executeUpdate,
+      });
+      return;
+    }
+
+    if (isStatusUpdate) {
+      const statusVal = patch.status || patch.bookingStatus || patch.isApproved;
+      const isUrgent = ['cancelled', 'rejected', 'no_show'].includes(String(statusVal).toLowerCase());
+      openConfirm({
+        title: 'Confirm Status Change',
+        message: `Are you sure you want to change status of Trip #${id} to "${statusVal}"?`,
+        confirmText: 'Update Status',
+        variant: isUrgent ? 'urgent' : 'warning',
+        onConfirm: executeUpdate,
+      });
+      return;
+    }
+  };
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -27,8 +141,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
-
-  const loading = tripsLoading || driversLoading || fleetLoading;
 
   const selectedTrip = selectedTripId ? (trips || []).find((t: any) => t?.id === selectedTripId) : null;
 
@@ -59,7 +171,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
-          onUpdate={updateTrip}
+          onUpdate={handleUpdateTrip}
         />
       )}
 
@@ -170,7 +282,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               setSelectedTripId={setSelectedTripId}
               selectedIds={selectedIds}
               setSelectedIds={setSelectedIds}
-              updateTrip={updateTrip}
+              updateTrip={handleUpdateTrip}
               onRowSelect={setMapTripId}
               selectedMapId={mapTripId}
               timeFilter={timeFilter}
@@ -203,9 +315,20 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           drivers={drivers}
           trips={trips}
           onTripClick={setSelectedTripId}
-          updateTrip={updateTrip}
+          updateTrip={handleUpdateTrip}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        isLoading={confirmModal.isLoading}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

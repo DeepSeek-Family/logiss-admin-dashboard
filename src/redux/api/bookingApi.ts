@@ -50,7 +50,7 @@ export interface IBooking {
   endDate?: string
   driverId?: IBookingDriver | string
   vehicleId?: string
-  bookingStatus?: 'pending' | 'confirmed' | 'cancelled' | string
+  bookingStatus?: 'pending' | 'assigned' | 'in-progress'|  'confirmed' | 'completed' | 'cancelled' | string
   recurringBatchId?: string
   price?: number
   createdAt?: string
@@ -95,9 +95,9 @@ export interface IPayersListResponse {
 
 export interface ICreateBookingPayload {
   userId: string
-  pickupLocation: number
-  dropOffLocation: number
-  stopAddress?: number
+  pickupLocation: number[] | number
+  dropOffLocation: number[] | number
+  stopAddress?: number[] | number
   mobilityRequirements?: string
   tripNote?: string
   internalPrivateNote?: string
@@ -168,6 +168,54 @@ export const bookingApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'bookings', id: 'LIST' }],
     }),
+    getAllAssignedBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {}
+        if (params && typeof params === 'object') {
+          if (params.page != null) queryParams.page = params.page
+          if (params.limit != null) queryParams.limit = params.limit
+          if (params.search) queryParams.search = params.search
+        }
+        return {
+          url: '/booking/approved',
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeBookingsResponse,
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
+              { type: 'bookings', id: 'LIST' },
+            ]
+          : [{ type: 'bookings', id: 'LIST' }],
+    }),
+
+    getAllTripHistory: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {}
+        if (params && typeof params === 'object') {
+          if (params.page != null) queryParams.page = params.page
+          if (params.limit != null) queryParams.limit = params.limit
+          if (params.search) queryParams.search = params.search
+        }
+        return {
+          url: '/booking/history',
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeBookingsResponse,
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
+              { type: 'bookings', id: 'LIST' },
+            ]
+          : [{ type: 'bookings', id: 'LIST' }],
+    }),
+
     getAllPayers: builder.query<IPayersListResponse, void>({
       query: () => ({
         url: '/payers',
@@ -201,6 +249,18 @@ export const bookingApi = baseApi.injectEndpoints({
         { type: 'Riders', id: 'LIST' },
       ],
     }),
+
+    updateBooking: builder.mutation<ISingleBookingResponse, { id: string; payload: Partial<ICreateBookingPayload> | Record<string, any> }>({
+      query: ({ id, payload }) => ({
+        url: `/booking/${id}`,
+        method: 'PATCH',
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: 'bookings', id: 'LIST' },
+        { type: 'Riders', id: 'LIST' },
+      ],
+    }),
  
   }),
   overrideExisting: false,
@@ -210,4 +270,7 @@ export const {
   useGetAllBookingsQuery,
   useGetAllPayersQuery,
   useManualCreateBookingMutation,
+  useUpdateBookingMutation,
+  useGetAllAssignedBookingsQuery,
+  useGetAllTripHistoryQuery,
 } = bookingApi
