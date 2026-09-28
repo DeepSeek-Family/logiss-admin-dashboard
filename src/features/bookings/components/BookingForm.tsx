@@ -358,7 +358,7 @@ export const BookingForm = () => {
     const pickupLocation = toLocationValue(form.pickup);
     const dropOffLocation = toLocationValue(form.dropoff);
     if (pickupLocation == null || dropOffLocation == null) {
-      toast.error('Pickup and dropoff must be ZIP codes, e.g. 23224');
+      toast.error('Please enter valid pickup and dropoff locations');
       return;
     }
     if (!form.mobilityId && !form.mobility) {
@@ -404,7 +404,7 @@ export const BookingForm = () => {
     const stopValue = form.stops.map((s) => s.trim()).find(Boolean);
     const stopAddress = stopValue ? toLocationValue(stopValue) : undefined;
     if (stopValue && stopAddress == null) {
-      toast.error('Stop address must be a ZIP code, e.g. 23230');
+      toast.error('Please enter a valid stop address location');
       return;
     }
     const mobilityId = form.mobilityId || availableMobility.find((m: any) => m.name === form.mobility)?.id;

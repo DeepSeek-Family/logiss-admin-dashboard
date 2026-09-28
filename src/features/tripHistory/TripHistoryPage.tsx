@@ -69,8 +69,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const loading = (historyLoading || tripsLoading) && trips.length === 0;
 
   const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
-    const isDriverAssign = 'driverId' in patch;
-    const isStatusUpdate = 'status' in patch || 'bookingStatus' in patch || 'isApproved' in patch;
+    const existingTrip = (trips || []).find((t: any) => String(t.id) === String(id) || String(t._id) === String(id));
+    const driverObj = existingTrip?.driverId as any;
+    const existingDriverId = driverObj
+      ? (typeof driverObj === 'object' ? driverObj._id || driverObj.id : String(driverObj))
+      : '';
+    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
+    const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+
+    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
+    const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
+    const isStatusUpdate = patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
 
     const executeUpdate = async () => {
       const payload = mapPatchToApiPayload(patch);

@@ -95,9 +95,9 @@ export interface IPayersListResponse {
 
 export interface ICreateBookingPayload {
   userId: string
-  pickupLocation: number
-  dropOffLocation: number
-  stopAddress?: number
+  pickupLocation: number[] | number
+  dropOffLocation: number[] | number
+  stopAddress?: number[] | number
   mobilityRequirements?: string
   tripNote?: string
   internalPrivateNote?: string

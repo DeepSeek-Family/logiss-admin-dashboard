@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { X, Send, Users, User, BellRing, Smartphone, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
+import { useSendNotificationMutation } from '@/redux/api/notificationsApi';
 
 interface SendBroadcastModalProps {
   isOpen: boolean;
@@ -9,33 +11,44 @@ interface SendBroadcastModalProps {
 }
 
 export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps) => {
+  const currentUser = useSelector((state: any) => state.auth?.user);
+  const senderId = currentUser?._id || currentUser?.id || '6a71bd6614662c1d7334a9c2';
+
   const [audience, setAudience] = useState('all_drivers');
   const [priority, setPriority] = useState('standard');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [sendNotification, { isLoading: isSending }] = useSendNotificationMutation();
 
   if (!isOpen) return null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!title.trim() || !message.trim()) {
       toast.error('Please enter both a title and a message.');
       return;
     }
 
-    setIsSending(true);
+    const textContent = `${title.trim()}: ${message.trim()}`;
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSending(false);
+    try {
+      await sendNotification({
+        sender: senderId,
+        text: textContent,
+        title: title.trim(),
+        message: message.trim(),
+        audience,
+        priority,
+      }).unwrap();
+
       toast.success('Push notification sent successfully!');
       onClose();
-      // Reset form
       setTitle('');
       setMessage('');
       setAudience('all_drivers');
       setPriority('standard');
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.error || 'Failed to send notification');
+    }
   };
 
   return (

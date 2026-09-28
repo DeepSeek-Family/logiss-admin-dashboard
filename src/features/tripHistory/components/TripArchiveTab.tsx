@@ -188,7 +188,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const [driverFilter, setDriverFilter] = useState('all');
   const [fundingFilter, setFundingFilter] = useState('all');
   const [countyFilter, setCountyFilter] = useState('all'); // 'all' | 'inside' | 'outside'
-  
+
   // Advanced filters state
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [daysFilter, setDaysFilter] = useState<string[]>([]);
@@ -307,11 +307,11 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     if (sortBy === 'newest') return new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime();
     if (sortBy === 'oldest') return new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime();
     if (sortBy === 'rider') return (a?.rider?.name || '').localeCompare(b?.rider?.name || '');
-    
+
     // Chronological date decompositions
     const dateA = new Date(a.scheduledTime);
     const dateB = new Date(b.scheduledTime);
-    
+
     if (sortBy === 'day') {
       return dateA.getDate() - dateB.getDate();
     }
@@ -326,7 +326,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     if (sortBy === 'year') {
       return dateA.getFullYear() - dateB.getFullYear();
     }
-    
+
     return 0;
   });
 
@@ -365,27 +365,27 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       const pickup = trip.pickupTime || to24h(trip.requestedPickup) || times.departure;
       const driver = drivers.find((d: any) => String(d.id) === String(trip.driverId));
       return [
-      trip.id,
-      `"${trip?.rider?.name || 'Unknown'}"`,
-      `"${trip.passengerId || trip.rider?.passengerId || 'N/A'}"`,
-      formatShortDate(trip.scheduledTime),
-      `"${trip.pickup}"`,
-      `"${trip.dropoff}"`,
-      `"${to12h(pickup) || 'N/A'}"`,
-      `"${to12h(times.arrival) || 'N/A'}"`,
-      `"${to12h(String(trip.dropoffTime || '').slice(11, 16) || times.arrival) || 'N/A'}"`,
-      `"${trip.distance || (trip.miles ? `${trip.miles} mi` : 'N/A')}"`,
-      `"${trip.reason || 'N/A'}"`,
-      `"${driver?.vehicle?.type || trip.vehicle?.type || trip.mobility || 'N/A'}"`,
-      `"${trip.mobility || 'N/A'}"`,
-      trip.status === 'no_show' ? 'Yes' : 'No',
-      trip.status === 'cancelled' ? 'Yes' : 'No',
-      `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
-      trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
-      trip.passengerCopay ?? trip.copay ?? 0,
-      trip.fundingSourceCharge ?? (trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0)),
-      trip.type,
-      trip.legIndex ? `Leg ${trip.legIndex}` : (trip.type === 'round_trip' ? 'Round' : 'One-way')
+        trip.id,
+        `"${trip?.rider?.name || 'Unknown'}"`,
+        `"${trip.passengerId || trip.rider?.passengerId || 'N/A'}"`,
+        formatShortDate(trip.scheduledTime),
+        `"${trip.pickup}"`,
+        `"${trip.dropoff}"`,
+        `"${to12h(pickup) || 'N/A'}"`,
+        `"${to12h(times.arrival) || 'N/A'}"`,
+        `"${to12h(String(trip.dropoffTime || '').slice(11, 16) || times.arrival) || 'N/A'}"`,
+        `"${trip.distance || (trip.miles ? `${trip.miles} mi` : 'N/A')}"`,
+        `"${trip.reason || 'N/A'}"`,
+        `"${driver?.vehicle?.type || trip.vehicle?.type || trip.mobility || 'N/A'}"`,
+        `"${trip.mobility || 'N/A'}"`,
+        trip.status === 'no_show' ? 'Yes' : 'No',
+        trip.status === 'cancelled' ? 'Yes' : 'No',
+        `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
+        trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
+        trip.passengerCopay ?? trip.copay ?? 0,
+        trip.fundingSourceCharge ?? (trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0)),
+        trip.type,
+        trip.legIndex ? `Leg ${trip.legIndex}` : (trip.type === 'round_trip' ? 'Round' : 'One-way')
       ];
     });
 
@@ -550,11 +550,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 title={showAdvanced ? 'Hide advanced filters' : 'Advanced filters'}
                 aria-label="Advanced filters"
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${
-                  showAdvanced
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${showAdvanced
                     ? 'bg-primary text-white border-primary shadow-md'
                     : 'bg-white text-ink border-line-2 hover:bg-bg'
-                }`}
+                  }`}
               >
                 <SlidersHorizontal size={15} />
               </button>
@@ -586,9 +585,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           setDaysFilter(prev => prev.includes(d.key) ? prev.filter(k => k !== d.key) : [...prev, d.key]);
                           setCurrentPage(1);
                         }}
-                        className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg transition-all border ${
-                          isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
-                        }`}
+                        className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg transition-all border ${isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
+                          }`}
                       >
                         {d.label}
                       </button>
@@ -602,9 +600,9 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Hour of Day</label>
                 <div className="flex flex-nowrap gap-1.5">
                   {[
-                    { key: 'morning',   label: 'Morning'   },
+                    { key: 'morning', label: 'Morning' },
                     { key: 'afternoon', label: 'Afternoon' },
-                    { key: 'evening',   label: 'Evening'   }
+                    { key: 'evening', label: 'Evening' }
                   ].map(h => {
                     const isSel = hoursFilter.includes(h.key);
                     return (
@@ -615,9 +613,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                           setHoursFilter(prev => prev.includes(h.key) ? prev.filter(k => k !== h.key) : [...prev, h.key]);
                           setCurrentPage(1);
                         }}
-                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border whitespace-nowrap ${
-                          isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
-                        }`}
+                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border whitespace-nowrap ${isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
+                          }`}
                       >
                         {h.label}
                       </button>
@@ -983,10 +980,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                         const isFacility = fs.toLowerCase().includes('facility');
                         const colorClass = isMedicaid ? 'bg-green-50 text-green-700 border-green-200'
                           : isMedicare ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
-                          : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
-                          : 'bg-bg text-ink-3 border-line-2';
+                            : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : 'bg-bg text-ink-3 border-line-2';
                         return (
                           <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
                             <DollarSign size={9} />{fs}

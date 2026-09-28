@@ -121,7 +121,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
   totalItems,
-  setSelectedTrips, handleBulkAction, updateTrip,   onEditTrip, onRowSelect, selectedMapId
+  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
 }) => {
   const { pricing } = usePricing();
   const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
@@ -506,10 +506,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                             const isFacility = fs.toLowerCase().includes('facility');
                             const colorClass = isMedicaid ? 'bg-green-50 text-green-700 border-green-200'
                               : isMedicare ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-bg text-ink-3 border-line-2';
+                                : isDSS ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                  : isSelfPay ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : isFacility ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                      : 'bg-bg text-ink-3 border-line-2';
                             return (
                               <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}>
                                 <DollarSign size={9} />{fs}
