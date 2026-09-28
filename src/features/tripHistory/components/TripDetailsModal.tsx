@@ -5,7 +5,7 @@ import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
   MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
-import { Badge, Avatar, TripStatusBadge, Button } from '@/shared/components/ui';
+import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
 import { isMongoId } from '../../bookings/utils/helpers';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
@@ -471,8 +471,8 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 {editMode ? (
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Pickup Location</p>
-                      <input value={form.pickup} onChange={(e) => set('pickup', e.target.value)} className={INPUT} />
+                      <p className="text-xs text-ink-4 mb-1">Pickup Location (Google Maps)</p>
+                      <GoogleAddressInput value={form.pickup} onChange={(address) => set('pickup', address)} className={INPUT} placeholder="Search address or Google Maps..." />
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -484,15 +484,15 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                         {form.stops.map((s, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-ink-4 w-10 shrink-0">Stop {i + 1}</span>
-                            <input value={s} onChange={(e) => setStop(i, e.target.value)} className={INPUT} placeholder="Stop address…" />
+                            <GoogleAddressInput value={s} onChange={(val) => setStop(i, val)} className={INPUT} placeholder="Search stop address..." />
                             <button type="button" onClick={() => removeStop(i)} className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-ink-4 mb-1">Drop-off Location</p>
-                      <input value={form.dropoff} onChange={(e) => set('dropoff', e.target.value)} className={INPUT} />
+                      <p className="text-xs text-ink-4 mb-1">Drop-off Location (Google Maps)</p>
+                      <GoogleAddressInput value={form.dropoff} onChange={(address) => set('dropoff', address)} className={INPUT} placeholder="Search address or Google Maps..." />
                     </div>
                   </div>
                 ) : (

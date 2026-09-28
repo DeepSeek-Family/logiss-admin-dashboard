@@ -7,7 +7,7 @@ import {
   Accessibility, Bed, User, Disc, Zap, FileText,
   DollarSign, Activity, Mail, Tag, Lock, HeartPulse
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button, MultiDatePicker } from '@/shared/components/ui';
+import { Card, Badge, Avatar, Button, MultiDatePicker, GoogleAddressInput } from '@/shared/components/ui';
 import { money } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 import {
@@ -135,6 +135,7 @@ export const BookingForm = () => {
     actualMiles: 0,
   });
   const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
+  const [stopsGps, setStopsGps] = useState<([number, number] | undefined)[]>([]);
 
   const fundingPolicies = (pricing.fundingPolicies || []).filter(p => p.active);
   const selectedPolicy =
@@ -248,12 +249,14 @@ export const BookingForm = () => {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const pickupGps = form.pickup.trim() ? await geocodeAddress(form.pickup) : null;
-      const dropoffGps = form.dropoff.trim() ? await geocodeAddress(form.dropoff) : null;
+      const pickupGps = !tripGps.pickup && form.pickup.trim() ? await geocodeAddress(form.pickup) : tripGps.pickup;
+      const dropoffGps = !tripGps.dropoff && form.dropoff.trim() ? await geocodeAddress(form.dropoff) : tripGps.dropoff;
       if (!alive) return;
-      setTripGps({
-        pickup: pickupGps || undefined,
-        dropoff: dropoffGps || undefined,
+      setTripGps(prev => {
+        const nextPickup = prev.pickup || pickupGps || undefined;
+        const nextDropoff = prev.dropoff || dropoffGps || undefined;
+        if (nextPickup === prev.pickup && nextDropoff === prev.dropoff) return prev;
+        return { pickup: nextPickup, dropoff: nextDropoff };
       });
     })();
     return () => {
@@ -355,10 +358,10 @@ export const BookingForm = () => {
       toast.error('Please select an existing passenger');
       return;
     }
-    const pickupLocation = toLocationValue(form.pickup);
-    const dropOffLocation = toLocationValue(form.dropoff);
+    const pickupLocation = tripGps.pickup || toLocationValue(form.pickup);
+    const dropOffLocation = tripGps.dropoff || toLocationValue(form.dropoff);
     if (pickupLocation == null || dropOffLocation == null) {
-      toast.error('Please enter valid pickup and dropoff locations');
+      toast.error('Please enter or select valid pickup and dropoff locations from Google Maps');
       return;
     }
     if (!form.mobilityId && !form.mobility) {
@@ -401,8 +404,9 @@ export const BookingForm = () => {
     }
 
     const isRound = form.tripType === 'round-trip';
-    const stopValue = form.stops.map((s) => s.trim()).find(Boolean);
-    const stopAddress = stopValue ? toLocationValue(stopValue) : undefined;
+    const stopIdx = form.stops.findIndex((s) => s.trim());
+    const stopValue = stopIdx >= 0 ? form.stops[stopIdx].trim() : '';
+    const stopAddress = (stopIdx >= 0 && stopsGps[stopIdx]) || (stopValue ? toLocationValue(stopValue) : undefined);
     if (stopValue && stopAddress == null) {
       toast.error('Please enter a valid stop address location');
       return;
@@ -613,8 +617,15 @@ export const BookingForm = () => {
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-primary bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary" /></div>
                 <div className="absolute left-1.5 top-8 bottom-[-32px] w-0.5 border-l border-dashed border-line-2" />
-                <label className="text-xs font-medium text-ink-2 mb-1 block">Pickup ZIP</label>
-                <input required type="number" inputMode="numeric" className={inputClass} value={form.pickup} onChange={e => setForm({ ...form, pickup: e.target.value })} placeholder="23224" />
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Pickup Location (Google Maps Search)</label>
+                <GoogleAddressInput
+                  required
+                  value={form.pickup}
+                  onChange={address => setForm(prev => ({ ...prev, pickup: address }))}
+                  onSelectCoords={coords => setTripGps(prev => ({ ...prev, pickup: coords }))}
+                  placeholder="Search address, landmark or Google Maps..."
+                  className={inputClass}
+                />
               </div>
               {form.stops.map((stop, idx) => (
                 <div key={idx} className="relative pl-9">
@@ -622,15 +633,43 @@ export const BookingForm = () => {
                   <div className="absolute left-1.5 top-8 bottom-[-32px] w-0.5 border-l border-dashed border-line-2" />
                   <div className="flex justify-between items-center mb-1">
                     <label className="text-xs font-medium text-ink-3">Stop {idx + 1}</label>
-                    <button type="button" onClick={() => setForm({ ...form, stops: form.stops.filter((_, i) => i !== idx) })} className="text-xs font-medium text-urgent">Remove</button>
+                    <button type="button" onClick={() => {
+                      setForm(prev => ({ ...prev, stops: prev.stops.filter((_, i) => i !== idx) }));
+                      setStopsGps(prev => prev.filter((_, i) => i !== idx));
+                    }} className="text-xs font-medium text-urgent">Remove</button>
                   </div>
-                  <input type="number" inputMode="numeric" className={inputClass} value={stop} onChange={e => { const s = [...form.stops]; s[idx] = e.target.value; setForm({ ...form, stops: s }); }} placeholder="23230" />
+                  <GoogleAddressInput
+                    value={stop}
+                    onChange={val => {
+                      setForm(prev => {
+                        const s = [...prev.stops];
+                        s[idx] = val;
+                        return { ...prev, stops: s };
+                      });
+                    }}
+                    onSelectCoords={coords => {
+                      setStopsGps(prev => {
+                        const g = [...prev];
+                        g[idx] = coords;
+                        return g;
+                      });
+                    }}
+                    placeholder="Search stop address or Google Maps..."
+                    className={inputClass}
+                  />
                 </div>
               ))}
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-urgent bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-urgent" /></div>
-                <label className="text-xs font-medium text-ink-2 mb-1 block">Dropoff ZIP</label>
-                <input required type="number" inputMode="numeric" className={inputClass} value={form.dropoff} onChange={e => setForm({ ...form, dropoff: e.target.value })} placeholder="23294" />
+                <label className="text-xs font-medium text-ink-2 mb-1 block">Dropoff Location (Google Maps Search)</label>
+                <GoogleAddressInput
+                  required
+                  value={form.dropoff}
+                  onChange={address => setForm(prev => ({ ...prev, dropoff: address }))}
+                  onSelectCoords={coords => setTripGps(prev => ({ ...prev, dropoff: coords }))}
+                  placeholder="Search address, landmark or Google Maps..."
+                  className={inputClass}
+                />
               </div>
               <button type="button" onClick={() => setForm({ ...form, stops: [...form.stops, ''] })} className="ml-9 text-xs font-medium text-primary hover:underline">+ Add Stop</button>
 
