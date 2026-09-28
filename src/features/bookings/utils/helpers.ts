@@ -207,3 +207,93 @@ export const isVehicleMatch = (driver: any, booking: any) => {
   if (need.includes('wheelchair') || need.includes('stretcher')) return type.includes(need.split(' ')[0]);
   return true; // ambulatory / cane can use any van
 };
+
+/** Convert front-end edit patch objects to the backend IUpdateBooking payload structure. */
+export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string, any> => {
+  const payload: Record<string, any> = { ...patch };
+
+  // Approval and Status mapping
+  if ('isApproved' in patch) {
+    payload.isApproved = patch.isApproved;
+    if (patch.isApproved === 'approved' && !payload.bookingStatus) {
+      payload.bookingStatus = 'confirmed';
+    } else if (patch.isApproved === 'rejected' && !payload.bookingStatus) {
+      payload.bookingStatus = 'cancelled';
+    }
+  }
+
+  if ('status' in patch) {
+    const s = String(patch.status).toLowerCase();
+    if (s === 'approved' || s === 'confirmed') {
+      payload.isApproved = 'approved';
+      payload.bookingStatus = 'confirmed';
+    } else if (s === 'rejected' || s === 'cancelled') {
+      payload.isApproved = 'rejected';
+      payload.bookingStatus = 'cancelled';
+    } else {
+      payload.bookingStatus = patch.status;
+    }
+    delete payload.status;
+  }
+
+  // Time mappings (convert to 12h format e.g. "05:45 PM" if needed)
+  if ('requestedPickup' in patch) {
+    payload.pickupTime = toApiTime(patch.requestedPickup);
+    delete payload.requestedPickup;
+  } else if ('pickupTime' in patch && patch.pickupTime) {
+    payload.pickupTime = toApiTime(patch.pickupTime);
+  }
+
+  if ('appointmentTime' in patch && patch.appointmentTime) {
+    payload.appointmentTime = toApiTime(patch.appointmentTime);
+  }
+
+  if ('returnPickup' in patch) {
+    payload.returnTime = toApiTime(patch.returnPickup);
+    delete payload.returnPickup;
+  } else if ('returnTime' in patch && patch.returnTime) {
+    payload.returnTime = toApiTime(patch.returnTime);
+  }
+
+  // Location mappings
+  if ('pickup' in patch) {
+    const loc = toLocationValue(patch.pickup);
+    if (loc != null) payload.pickupLocation = loc;
+    delete payload.pickup;
+  } else if ('pickupLocation' in patch && typeof patch.pickupLocation === 'string') {
+    const loc = toLocationValue(patch.pickupLocation);
+    if (loc != null) payload.pickupLocation = loc;
+  }
+
+  if ('dropoff' in patch) {
+    const loc = toLocationValue(patch.dropoff);
+    if (loc != null) payload.dropOffLocation = loc;
+    delete payload.dropoff;
+  } else if ('dropOffLocation' in patch && typeof patch.dropOffLocation === 'string') {
+    const loc = toLocationValue(patch.dropOffLocation);
+    if (loc != null) payload.dropOffLocation = loc;
+  }
+
+  if ('stop' in patch || 'stops' in patch) {
+    const stopVal = Array.isArray(patch.stops) ? patch.stops[0] : patch.stop;
+    if (stopVal) {
+      const loc = toLocationValue(stopVal);
+      if (loc != null) payload.stopAddress = loc;
+    }
+    delete payload.stop;
+    delete payload.stops;
+  }
+
+  // Notes mappings
+  if ('notes' in patch) {
+    payload.tripNote = patch.notes;
+    delete payload.notes;
+  }
+  if ('privateNotes' in patch) {
+    payload.internalPrivateNote = patch.privateNotes;
+    delete payload.privateNotes;
+  }
+
+  return payload;
+};
+

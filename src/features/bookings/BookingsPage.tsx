@@ -15,9 +15,9 @@ import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } fro
 import { CancelTripModal } from '@/features/reports';
 import { toast } from 'react-hot-toast';
 import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } from '@/features/bookings';
-import { mapApiBooking } from '@/features/bookings/utils/helpers';
+import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
-import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
+import { useGetAllBookingsQuery, useGetAllAssignedBookingsQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -41,9 +41,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
     ...(bookingSearch.trim() ? { search: bookingSearch.trim() } : {}),
   }), [currentPage, itemsPerPage, bookingSearch]);
 
-  const { data: apiResponse, isLoading: apiLoading, isError, refetch: refetchApiBookings } = useGetAllBookingsQuery(listParams, {
+  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
+
+  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(listParams, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const [updateBookingMutation] = useUpdateBookingMutation();
   const [showMap, setShowMap] = useState(false);
   const [mapTripId, setMapTripId] = useState<string | null>(null);
   const [editTripId, setEditTripId] = useState<string | null>(null);
@@ -51,26 +57,45 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const { drivers } = useDrivers();
 
   const refresh = () => {
-    refetchApiBookings();
+    refetchPendingBookings();
+    refetchAssignedBookings();
   };
 
-  const bookingsList = useMemo(
-    () => (apiResponse?.data || []).map(mapApiBooking),
-    [apiResponse]
+  const handleUpdateBooking = async (id: string, patch: Record<string, any>) => {
+    const payload = mapPatchToApiPayload(patch);
+    try {
+      await updateBookingMutation({ id, payload }).unwrap();
+      toast.success('Booking updated successfully');
+      refresh();
+    } catch (e: any) {
+      toast.error(apiErrorMessage(e, 'Failed to update booking'));
+    }
+  };
+
+  const pendingBookings = useMemo(
+    () => (pendingResponse?.data || []).map(mapApiBooking),
+    [pendingResponse]
   );
 
-  const pagination = apiResponse?.pagination;
-  const pendingCount = bookingsList.filter((t: any) => {
-    const status = String(t?.status || t?.rawStatus || '').toLowerCase();
-    return status === 'pending_review' || status === 'pending';
-  }).length;
-  const confirmedCount = bookingsList.filter((t: any) => {
-    const status = String(t?.status || t?.rawStatus || '').toLowerCase();
-    return status === 'confirmed' || status === 'assigned';
-  }).length;
+  const assignedBookings = useMemo(
+    () => (assignedResponse?.data || []).map(mapApiBooking),
+    [assignedResponse]
+  );
+
+  const bookingsList = useMemo(
+    () => [...pendingBookings, ...assignedBookings],
+    [pendingBookings, assignedBookings]
+  );
+
+  const pendingCount = pendingResponse?.pagination?.total ?? pendingBookings.length;
+  const confirmedCount = assignedResponse?.pagination?.total ?? assignedBookings.length;
+
+  const currentTabBookings = activeTab === 'pending' ? pendingBookings : assignedBookings;
+  const currentPagination = activeTab === 'pending' ? pendingResponse?.pagination : assignedResponse?.pagination;
+  const loading = activeTab === 'pending' ? pendingLoading : assignedLoading;
+  const isError = activeTab === 'pending' ? pendingError : assignedError;
 
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
-  const loading = apiLoading;
 
   const mergedDrivers = useMemo(() => {
     const extra = bookingsList
@@ -89,14 +114,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return merged;
   }, [drivers, bookingsList]);
 
-  const filteredTrips = bookingsList.filter((t: any) => {
-    const status = (t?.status || '').toLowerCase();
-    const matchesTab = activeTab === 'pending'
-      ? (status === 'pending_review' || status === 'pending')
-      : activeTab === 'confirmed'
-        ? (status === 'confirmed' || status === 'assigned')
-        : status === activeTab;
-
+  const filteredTrips = currentTabBookings.filter((t: any) => {
     const search = bookingSearch.toLowerCase().trim();
     const matchesSearch = !search ||
       (t?.rider?.name || '').toLowerCase().includes(search) ||
@@ -111,10 +129,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
     const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
     const matchesCounty = countyFilter === 'all' || (t?.source || t?.county || '') === countyFilter;
 
-    return matchesTab && matchesSearch && matchesFunding && matchesCounty;
+    return matchesSearch && matchesFunding && matchesCounty;
   });
 
-  const totalPages = pagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
+  const totalPages = currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
   const paginatedBookings = filteredTrips;
 
   const handleBulkAction = async (action: string) => {
@@ -122,12 +140,19 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
     if (action === 'approve') {
       try {
-        await Promise.all(selectedTrips.map(id => tripService.updateTripStatus(id, 'confirmed')));
+        await Promise.all(
+          selectedTrips.map(id =>
+            updateBookingMutation({
+              id,
+              payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+            }).unwrap()
+          )
+        );
         toast.success(`${selectedTrips.length} bookings approved successfully`);
         setSelectedTrips([]);
         refresh();
-      } catch (e) {
-        toast.error('Failed to approve bookings');
+      } catch (e: any) {
+        toast.error(apiErrorMessage(e, 'Failed to approve bookings'));
       }
     } else if (action === 'dispatch') {
       const tripsToDispatch = selectedTrips.filter(id => {
@@ -139,12 +164,19 @@ const Bookings = ({ role }: { role?: string | null }) => {
         return;
       }
       try {
-        await Promise.all(tripsToDispatch.map(id => tripService.updateTripStatus(id, 'en_route')));
+        await Promise.all(
+          tripsToDispatch.map(id =>
+            updateBookingMutation({
+              id,
+              payload: { bookingStatus: 'en_route' },
+            }).unwrap()
+          )
+        );
         toast.success(`${tripsToDispatch.length} trips dispatched to Live Trips`);
         setSelectedTrips([]);
         refresh();
-      } catch (e) {
-        toast.error('Failed to dispatch trips');
+      } catch (e: any) {
+        toast.error(apiErrorMessage(e, 'Failed to dispatch trips'));
       }
     } else if (action === 'cancel') {
       setShowBulkCancelModal(true);
@@ -168,13 +200,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const handleAssign = async (driverId: string) => {
     if (!selectedBookingId) return;
     try {
-      await tripService.assignDriver(selectedBookingId, driverId);
-      await tripService.updateTripStatus(selectedBookingId, 'confirmed');
+      await updateBookingMutation({
+        id: selectedBookingId,
+        payload: { driverId, bookingStatus: 'assigned', isApproved: 'approved' },
+      }).unwrap();
       toast.success('Driver assigned — ready to dispatch');
       setIsAssigning(false);
       refresh();
-    } catch (e) {
-      toast.error('Failed to assign driver');
+    } catch (e: any) {
+      toast.error(apiErrorMessage(e, 'Failed to assign driver'));
     }
   };
 
@@ -197,12 +231,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
       return;
     }
     try {
-      await tripService.updateTripStatus(targetId, 'en_route');
+      await updateBookingMutation({
+        id: targetId,
+        payload: { bookingStatus: 'en_route' },
+      }).unwrap();
       toast.success('Trip dispatched to Live Trips');
       if (targetId === selectedBookingId) closeBooking();
       refresh();
-    } catch (e) {
-      toast.error('Failed to dispatch trip');
+    } catch (e: any) {
+      toast.error(apiErrorMessage(e, 'Failed to dispatch trip'));
     }
   };
 
@@ -214,12 +251,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
     const targetId = typeof id === 'string' ? id : selectedBookingId;
     if (!targetId) return;
     try {
-      await tripService.updateTripStatus(targetId, 'confirmed');
+      await updateBookingMutation({
+        id: targetId,
+        payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+      }).unwrap();
       toast.success('Booking approved — moved to Ready to Assign');
       refresh();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error('Failed to approve booking');
+      toast.error(apiErrorMessage(e, 'Failed to approve booking'));
     }
   };
 
@@ -267,7 +307,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     .map((driver: any) => {
       const activeTrips = bookingsList.filter((t: any) =>
         t?.driverId === driver?.id &&
-        ['assigned', 'confirmed', 'in_trip', 'en_route'].includes(t?.status) &&
+        ['assigned', 'confirmed', 'in-progress', 'en_route'].includes(t?.status) &&
         t?.id !== selectedBookingId
       );
       const hasConflict = activeTrips.some((t: any) => hasTimeConflict(t, selectedBooking?.scheduledTime || null));
@@ -291,7 +331,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm font-medium text-ink">Could not load bookings</p>
           <p className="text-xs text-ink-4">Check your connection and try again.</p>
-          <Button variant="primary" onClick={() => refetchApiBookings()}>Retry</Button>
+          <Button variant="primary" onClick={() => refresh()}>Retry</Button>
         </div>
       </div>
     );
@@ -319,12 +359,20 @@ const Bookings = ({ role }: { role?: string | null }) => {
           noShowCharge={selectedCancelPolicy?.noShowCharge}
           onConfirm={async (reason) => {
             try {
+              await Promise.all(
+                selectedTrips.map(id =>
+                  updateBookingMutation({
+                    id,
+                    payload: { isApproved: 'rejected', bookingStatus: 'cancelled' },
+                  }).unwrap()
+                )
+              );
               toast.success(`${selectedTrips.length} bookings cancelled`);
               setSelectedTrips([]);
               setShowBulkCancelModal(false);
               refresh();
-            } catch (e) {
-              toast.error('Failed to cancel bookings');
+            } catch (e: any) {
+              toast.error(apiErrorMessage(e, 'Failed to cancel bookings'));
             }
           }}
         />
@@ -339,11 +387,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
           onConfirm={async (reason) => {
             if (selectedBookingId && selectedBooking) {
               try {
+                await updateBookingMutation({
+                  id: selectedBookingId,
+                  payload: { isApproved: 'rejected', bookingStatus: 'cancelled' },
+                }).unwrap();
                 toast.success('Booking declined');
                 closeBooking();
                 refresh();
-              } catch (e) {
-                toast.error('Failed to decline booking');
+              } catch (e: any) {
+                toast.error(apiErrorMessage(e, 'Failed to decline booking'));
               }
             }
             setShowCancelModal(false);
@@ -398,10 +450,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setCurrentPage={setCurrentPage}
             trips={bookingsList}
             drivers={mergedDrivers}
-            totalItems={pagination?.total ?? filteredTrips.length}
+            totalItems={currentPagination?.total ?? filteredTrips.length}
             setSelectedTrips={setSelectedTrips}
             handleBulkAction={handleBulkAction}
-            updateTrip={() => { refetchApiBookings(); }}
+            updateTrip={handleUpdateBooking}
             onEditTrip={(id) => setEditTripId(id)}
             onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
             selectedMapId={mapTripId}
@@ -444,6 +496,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
           trip={editTrip}
           drivers={mergedDrivers}
           onClose={() => setEditTripId(null)}
+          onUpdate={handleUpdateBooking}
           startInEdit
         />
       )}

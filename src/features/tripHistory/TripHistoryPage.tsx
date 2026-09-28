@@ -1,17 +1,44 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
 import { Card, Button } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useFleet } from '@/hooks/useFleet';
+import { toast } from 'react-hot-toast';
+import { useGetAllTripHistoryQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
+import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
 
 const TripHistory = ({ role }: { role?: string | null }) => {
-  const { trips, loading: tripsLoading, updateTrip } = useTrips();
+  const { data: historyResponse, isLoading: historyLoading, refetch: refetchHistory } = useGetAllTripHistoryQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [updateBookingMutation] = useUpdateBookingMutation();
+  const { trips: fallbackTrips, loading: tripsLoading, updateTrip: fallbackUpdateTrip } = useTrips();
   const { drivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
+
+  const apiTrips = useMemo(
+    () => (historyResponse?.data || []).map(mapApiBooking),
+    [historyResponse]
+  );
+
+  const trips = historyResponse?.data ? apiTrips : fallbackTrips;
+  const loading = (historyLoading || tripsLoading) && trips.length === 0;
+
+  const handleUpdateTrip = async (id: string, patch: Record<string, any>) => {
+    const payload = mapPatchToApiPayload(patch);
+    try {
+      await updateBookingMutation({ id, payload }).unwrap();
+      toast.success('Trip updated successfully');
+      refetchHistory();
+    } catch (e: any) {
+      toast.error(apiErrorMessage(e, 'Failed to update trip'));
+      fallbackUpdateTrip(id, patch);
+    }
+  };
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -27,8 +54,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
-
-  const loading = tripsLoading || driversLoading || fleetLoading;
 
   const selectedTrip = selectedTripId ? (trips || []).find((t: any) => t?.id === selectedTripId) : null;
 
@@ -59,7 +84,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
-          onUpdate={updateTrip}
+          onUpdate={handleUpdateTrip}
         />
       )}
 
@@ -170,7 +195,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               setSelectedTripId={setSelectedTripId}
               selectedIds={selectedIds}
               setSelectedIds={setSelectedIds}
-              updateTrip={updateTrip}
+              updateTrip={handleUpdateTrip}
               onRowSelect={setMapTripId}
               selectedMapId={mapTripId}
               timeFilter={timeFilter}
@@ -203,7 +228,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           drivers={drivers}
           trips={trips}
           onTripClick={setSelectedTripId}
-          updateTrip={updateTrip}
+          updateTrip={handleUpdateTrip}
         />
       )}
     </div>
