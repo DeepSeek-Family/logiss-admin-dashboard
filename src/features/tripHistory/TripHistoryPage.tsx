@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
-import { Card, Button } from '@/shared/components/ui';
+import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useFleet } from '@/hooks/useFleet';
@@ -20,6 +20,46 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const { drivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const openConfirm = (params: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModal({
+      isOpen: true,
+      title: params.title,
+      message: params.message,
+      confirmText: params.confirmText || 'Confirm',
+      variant: params.variant || 'primary',
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+        try {
+          await params.onConfirm();
+        } finally {
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      },
+    });
+  };
+
   const apiTrips = useMemo(
     () => (historyResponse?.data || []).map(mapApiBooking),
     [historyResponse]
@@ -28,15 +68,53 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const trips = historyResponse?.data ? apiTrips : fallbackTrips;
   const loading = (historyLoading || tripsLoading) && trips.length === 0;
 
-  const handleUpdateTrip = async (id: string, patch: Record<string, any>) => {
-    const payload = mapPatchToApiPayload(patch);
-    try {
-      await updateBookingMutation({ id, payload }).unwrap();
-      toast.success('Trip updated successfully');
-      refetchHistory();
-    } catch (e: any) {
-      toast.error(apiErrorMessage(e, 'Failed to update trip'));
-      fallbackUpdateTrip(id, patch);
+  const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
+    const isDriverAssign = 'driverId' in patch;
+    const isStatusUpdate = 'status' in patch || 'bookingStatus' in patch || 'isApproved' in patch;
+
+    const executeUpdate = async () => {
+      const payload = mapPatchToApiPayload(patch);
+      try {
+        await updateBookingMutation({ id, payload }).unwrap();
+        toast.success('Trip updated successfully');
+        refetchHistory();
+      } catch (e: any) {
+        toast.error(apiErrorMessage(e, 'Failed to update trip'));
+        fallbackUpdateTrip(id, patch);
+      }
+    };
+
+    if (skipConfirm || (!isDriverAssign && !isStatusUpdate)) {
+      await executeUpdate();
+      return;
+    }
+
+    if (isDriverAssign) {
+      const driver = (drivers || []).find(d => String(d.id) === String(patch.driverId));
+      const driverName = driver?.name || (patch.driverId ? 'Selected Driver' : 'Unassigned');
+      openConfirm({
+        title: 'Confirm Driver Assignment',
+        message: patch.driverId
+          ? `Are you sure you want to assign driver "${driverName}" to Trip #${id}?`
+          : `Are you sure you want to unassign driver from Trip #${id}?`,
+        confirmText: 'Assign Driver',
+        variant: 'primary',
+        onConfirm: executeUpdate,
+      });
+      return;
+    }
+
+    if (isStatusUpdate) {
+      const statusVal = patch.status || patch.bookingStatus || patch.isApproved;
+      const isUrgent = ['cancelled', 'rejected', 'no_show'].includes(String(statusVal).toLowerCase());
+      openConfirm({
+        title: 'Confirm Status Change',
+        message: `Are you sure you want to change status of Trip #${id} to "${statusVal}"?`,
+        confirmText: 'Update Status',
+        variant: isUrgent ? 'urgent' : 'warning',
+        onConfirm: executeUpdate,
+      });
+      return;
     }
   };
 
@@ -231,6 +309,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           updateTrip={handleUpdateTrip}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        isLoading={confirmModal.isLoading}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

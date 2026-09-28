@@ -6,7 +6,7 @@ import {
   AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
   Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List, Map as MapIcon
 } from 'lucide-react';
-import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination } from '@/shared/components/ui';
+import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination, ConfirmationModal } from '@/shared/components/ui';
 import { ManualTripModal } from '@/components/ManualTripModal';
 import { tripService } from '@/services/tripService';
 import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
@@ -54,6 +54,46 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [mapTripId, setMapTripId] = useState<string | null>(null);
   const [editTripId, setEditTripId] = useState<string | null>(null);
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const openConfirm = (params: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModal({
+      isOpen: true,
+      title: params.title,
+      message: params.message,
+      confirmText: params.confirmText || 'Confirm',
+      variant: params.variant || 'primary',
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+        try {
+          await params.onConfirm();
+        } finally {
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      },
+    });
+  };
+
   const { drivers } = useDrivers();
 
   const refresh = () => {
@@ -61,14 +101,52 @@ const Bookings = ({ role }: { role?: string | null }) => {
     refetchAssignedBookings();
   };
 
-  const handleUpdateBooking = async (id: string, patch: Record<string, any>) => {
-    const payload = mapPatchToApiPayload(patch);
-    try {
-      await updateBookingMutation({ id, payload }).unwrap();
-      toast.success('Booking updated successfully');
-      refresh();
-    } catch (e: any) {
-      toast.error(apiErrorMessage(e, 'Failed to update booking'));
+  const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
+    const isDriverAssign = 'driverId' in patch;
+    const isStatusUpdate = 'status' in patch || 'bookingStatus' in patch || 'isApproved' in patch;
+
+    const executeUpdate = async () => {
+      const payload = mapPatchToApiPayload(patch);
+      try {
+        await updateBookingMutation({ id, payload }).unwrap();
+        toast.success('Booking updated successfully');
+        refresh();
+      } catch (e: any) {
+        toast.error(apiErrorMessage(e, 'Failed to update booking'));
+      }
+    };
+
+    if (skipConfirm || (!isDriverAssign && !isStatusUpdate)) {
+      await executeUpdate();
+      return;
+    }
+
+    if (isDriverAssign) {
+      const driver = mergedDrivers.find(d => String(d.id) === String(patch.driverId));
+      const driverName = driver?.name || (patch.driverId ? 'Selected Driver' : 'Unassigned');
+      openConfirm({
+        title: 'Confirm Driver Assignment',
+        message: patch.driverId
+          ? `Are you sure you want to assign driver "${driverName}" to Booking #${id}?`
+          : `Are you sure you want to unassign driver from Booking #${id}?`,
+        confirmText: 'Assign Driver',
+        variant: 'primary',
+        onConfirm: executeUpdate,
+      });
+      return;
+    }
+
+    if (isStatusUpdate) {
+      const statusVal = patch.status || patch.bookingStatus || patch.isApproved;
+      const isUrgent = ['cancelled', 'rejected', 'no_show'].includes(String(statusVal).toLowerCase());
+      openConfirm({
+        title: 'Confirm Status Change',
+        message: `Are you sure you want to change status of Booking #${id} to "${statusVal}"?`,
+        confirmText: 'Update Status',
+        variant: isUrgent ? 'urgent' : 'warning',
+        onConfirm: executeUpdate,
+      });
+      return;
     }
   };
 
@@ -139,21 +217,29 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (selectedTrips.length === 0) return;
 
     if (action === 'approve') {
-      try {
-        await Promise.all(
-          selectedTrips.map(id =>
-            updateBookingMutation({
-              id,
-              payload: { isApproved: 'approved', bookingStatus: 'assigned' },
-            }).unwrap()
-          )
-        );
-        toast.success(`${selectedTrips.length} bookings approved successfully`);
-        setSelectedTrips([]);
-        refresh();
-      } catch (e: any) {
-        toast.error(apiErrorMessage(e, 'Failed to approve bookings'));
-      }
+      openConfirm({
+        title: 'Approve Selected Bookings',
+        message: `Are you sure you want to approve ${selectedTrips.length} selected bookings?`,
+        confirmText: 'Approve All',
+        variant: 'accent',
+        onConfirm: async () => {
+          try {
+            await Promise.all(
+              selectedTrips.map(id =>
+                updateBookingMutation({
+                  id,
+                  payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+                }).unwrap()
+              )
+            );
+            toast.success(`${selectedTrips.length} bookings approved successfully`);
+            setSelectedTrips([]);
+            refresh();
+          } catch (e: any) {
+            toast.error(apiErrorMessage(e, 'Failed to approve bookings'));
+          }
+        },
+      });
     } else if (action === 'dispatch') {
       const tripsToDispatch = selectedTrips.filter(id => {
         const t = bookingsList.find((trip: any) => trip.id === id);
@@ -163,21 +249,29 @@ const Bookings = ({ role }: { role?: string | null }) => {
         toast.error('No selected trips have a driver assigned.');
         return;
       }
-      try {
-        await Promise.all(
-          tripsToDispatch.map(id =>
-            updateBookingMutation({
-              id,
-              payload: { bookingStatus: 'en_route' },
-            }).unwrap()
-          )
-        );
-        toast.success(`${tripsToDispatch.length} trips dispatched to Live Trips`);
-        setSelectedTrips([]);
-        refresh();
-      } catch (e: any) {
-        toast.error(apiErrorMessage(e, 'Failed to dispatch trips'));
-      }
+      openConfirm({
+        title: 'Dispatch Selected Trips',
+        message: `Are you sure you want to dispatch ${tripsToDispatch.length} selected trips to Live Trips?`,
+        confirmText: 'Dispatch All',
+        variant: 'accent',
+        onConfirm: async () => {
+          try {
+            await Promise.all(
+              tripsToDispatch.map(id =>
+                updateBookingMutation({
+                  id,
+                  payload: { bookingStatus: 'en_route' },
+                }).unwrap()
+              )
+            );
+            toast.success(`${tripsToDispatch.length} trips dispatched to Live Trips`);
+            setSelectedTrips([]);
+            refresh();
+          } catch (e: any) {
+            toast.error(apiErrorMessage(e, 'Failed to dispatch trips'));
+          }
+        },
+      });
     } else if (action === 'cancel') {
       setShowBulkCancelModal(true);
     }
@@ -199,17 +293,27 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const handleAssign = async (driverId: string) => {
     if (!selectedBookingId) return;
-    try {
-      await updateBookingMutation({
-        id: selectedBookingId,
-        payload: { driverId, bookingStatus: 'assigned', isApproved: 'approved' },
-      }).unwrap();
-      toast.success('Driver assigned — ready to dispatch');
-      setIsAssigning(false);
-      refresh();
-    } catch (e: any) {
-      toast.error(apiErrorMessage(e, 'Failed to assign driver'));
-    }
+    const driver = mergedDrivers.find(d => String(d.id) === String(driverId));
+    const driverName = driver?.name || 'Selected Driver';
+    openConfirm({
+      title: 'Assign Driver',
+      message: `Are you sure you want to assign ${driverName} to Booking #${selectedBookingId}?`,
+      confirmText: 'Assign Driver',
+      variant: 'primary',
+      onConfirm: async () => {
+        try {
+          await updateBookingMutation({
+            id: selectedBookingId,
+            payload: { driverId, bookingStatus: 'assigned', isApproved: 'approved' },
+          }).unwrap();
+          toast.success('Driver assigned — ready to dispatch');
+          setIsAssigning(false);
+          refresh();
+        } catch (e: any) {
+          toast.error(apiErrorMessage(e, 'Failed to assign driver'));
+        }
+      },
+    });
   };
 
   const openBooking = (id: string) => {
@@ -230,17 +334,25 @@ const Bookings = ({ role }: { role?: string | null }) => {
       toast.error('Cannot dispatch: No driver assigned');
       return;
     }
-    try {
-      await updateBookingMutation({
-        id: targetId,
-        payload: { bookingStatus: 'en_route' },
-      }).unwrap();
-      toast.success('Trip dispatched to Live Trips');
-      if (targetId === selectedBookingId) closeBooking();
-      refresh();
-    } catch (e: any) {
-      toast.error(apiErrorMessage(e, 'Failed to dispatch trip'));
-    }
+    openConfirm({
+      title: 'Dispatch Trip',
+      message: `Are you sure you want to dispatch Booking #${targetId} to Live Trips?`,
+      confirmText: 'Dispatch Trip',
+      variant: 'accent',
+      onConfirm: async () => {
+        try {
+          await updateBookingMutation({
+            id: targetId,
+            payload: { bookingStatus: 'en_route' },
+          }).unwrap();
+          toast.success('Trip dispatched to Live Trips');
+          if (targetId === selectedBookingId) closeBooking();
+          refresh();
+        } catch (e: any) {
+          toast.error(apiErrorMessage(e, 'Failed to dispatch trip'));
+        }
+      },
+    });
   };
 
   const handleReject = () => {
@@ -250,17 +362,25 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const handleApprove = async (id?: any) => {
     const targetId = typeof id === 'string' ? id : selectedBookingId;
     if (!targetId) return;
-    try {
-      await updateBookingMutation({
-        id: targetId,
-        payload: { isApproved: 'approved', bookingStatus: 'assigned' },
-      }).unwrap();
-      toast.success('Booking approved — moved to Ready to Assign');
-      refresh();
-    } catch (e: any) {
-      console.error(e);
-      toast.error(apiErrorMessage(e, 'Failed to approve booking'));
-    }
+    openConfirm({
+      title: 'Approve Booking',
+      message: `Are you sure you want to approve Booking #${targetId}?`,
+      confirmText: 'Approve Booking',
+      variant: 'accent',
+      onConfirm: async () => {
+        try {
+          await updateBookingMutation({
+            id: targetId,
+            payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+          }).unwrap();
+          toast.success('Booking approved — moved to Ready to Assign');
+          refresh();
+        } catch (e: any) {
+          console.error(e);
+          toast.error(apiErrorMessage(e, 'Failed to approve booking'));
+        }
+      },
+    });
   };
 
   const hoursUntilPickup = (iso?: string) => {
@@ -500,6 +620,17 @@ const Bookings = ({ role }: { role?: string | null }) => {
           startInEdit
         />
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        isLoading={confirmModal.isLoading}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };
