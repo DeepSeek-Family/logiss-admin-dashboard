@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { trips as mockTrips } from '@/data/mockData'
 
 export interface Trip {
   id: string
@@ -17,7 +16,7 @@ interface TripsState {
 }
 
 const initialState: TripsState = {
-  items: mockTrips as Trip[],
+  items: [],
   filters: {},
   selectedTripId: null,
   loading: false,

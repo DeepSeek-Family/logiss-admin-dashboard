@@ -1,4 +1,3 @@
-import { mockUsers } from '../data/mockData';
 import { env } from '@/config/env';
 import { api } from '@/services/api';
 import { API } from '@/constants/api';
@@ -16,7 +15,7 @@ export interface User {
 export const userService = {
   getUsers: (): Promise<User[]> => {
     if (!env.useMock) return api.get<User[]>(API.users);
-    return Promise.resolve([...mockUsers]);
+    return Promise.resolve([]);
   },
 
   updateUserStatus: (id: string, status: string): Promise<{ success: boolean }> => {

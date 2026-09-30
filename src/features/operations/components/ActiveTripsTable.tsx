@@ -1,7 +1,6 @@
 import { ChevronRight, Truck } from 'lucide-react';
 import { Card, Avatar, TripStatusBadge, Pagination } from '@/shared/components/ui';
 import { formatTime, formatShortDate } from '@/utils/helpers';
-import { drivers } from '@/data/mockData';
 
 interface ActiveTripsTableProps {
   paginatedActiveTrips: any[];
@@ -50,7 +49,13 @@ export const ActiveTripsTable = ({
               </tr>
             ) : (
               paginatedActiveTrips.map((trip: any) => {
-                const driver = (drivers || []).find((d: any) => d.id === trip?.driverId);
+                const driverName =
+                  trip?.driverName ||
+                  trip?.driver?.name ||
+                  (typeof trip?.driverId === 'object' && trip?.driverId
+                    ? [trip.driverId.firstName, trip.driverId.lastName].filter(Boolean).join(' ')
+                    : null) ||
+                  'Unassigned';
                 return (
                   <tr key={trip.id} className="hover:bg-bg/40 transition-colors group cursor-pointer" onClick={onRowClick}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -72,7 +77,7 @@ export const ActiveTripsTable = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Truck size={14} className="text-ink-4" />
-                        <span className="text-sm font-medium text-ink-3">{driver?.name || 'Unassigned'}</span>
+                        <span className="text-sm font-medium text-ink-3">{driverName}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">

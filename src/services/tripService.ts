@@ -1,4 +1,3 @@
-import { trips as mockTrips } from '../data/mockData';
 import { env } from '@/config/env';
 import { api } from '@/services/api';
 import { API } from '@/constants/api';
@@ -10,7 +9,7 @@ export interface Trip {
   [key: string]: any;
 }
 
-let tripsDB: Trip[] = [...mockTrips];
+let tripsDB: Trip[] = [];
 
 export const tripService = {
   getTrips: (filters: { status?: string } = {}): Promise<Trip[]> => {

@@ -1,4 +1,3 @@
-import { vehicles as mockVehicles } from '../data/mockData';
 import { env } from '@/config/env';
 import { api } from '@/services/api';
 import { API } from '@/constants/api';
@@ -13,7 +12,7 @@ export interface Vehicle {
   [key: string]: any;
 }
 
-let fleetDB: Vehicle[] = [...mockVehicles];
+let fleetDB: Vehicle[] = [];
 
 export const fleetService = {
   getVehicles: (): Promise<Vehicle[]> => {

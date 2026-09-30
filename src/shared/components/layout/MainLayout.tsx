@@ -28,11 +28,10 @@ import {
 } from 'lucide-react';
 import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { trips, drivers } from '@/data/mockData';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ROUTES } from '@/constants/routes';
 import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
-import { useGetDriverApplicationsQuery } from '@/redux/api/driversApi';
+import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -139,8 +138,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
   const { unreadCount } = useNotifications();
-  const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 1 });
+  const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 10 });
   const { data: applicationsMeta } = useGetDriverApplicationsQuery({ page: 1, limit: 1 });
+  const { data: driversResponse } = useGetDriversQuery();
   const bookingsBadge = bookingsMeta?.pagination?.total != null
     ? String(bookingsMeta.pagination.total)
     : undefined;
@@ -148,29 +148,35 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
     ? String(applicationsMeta.pagination.total)
     : undefined;
 
-  const liveTripsCount = (trips || []).filter((t: any) => ['in_trip', 'en_route', 'arrived'].includes(t?.status)).length;
-  const activeDriversCount = (drivers || []).filter((d: any) => d?.onDuty).length;
+  const trips = bookingsMeta?.data || [];
+  const drivers = driversResponse?.data || [];
+
+  const liveTripsCount = (trips || []).filter((t: any) => ['in_trip', 'en_route', 'arrived', 'in-progress'].includes(t?.status || t?.bookingStatus)).length;
+  const activeDriversCount = (drivers || []).filter((d: any) => d?.onDuty || d?.status === 'available').length;
 
   const searchResults = searchQuery.length >= 2 ? [
     ...(trips || []).filter((t: any) =>
-      (t?.rider?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t?.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t?.pickup || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t?.dropoff || '').toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 5).map((t: any) => ({
-      type: 'trip',
-      label: t?.rider?.name || 'Unknown Rider',
-      sub: `#${t?.id || '---'} · ${(t?.status || '').replace(/_/g, ' ')} · ${t?.pickup?.split(',')[0]}`,
-      dest: ['pending_review', 'confirmed'].includes(t?.status) ? ROUTES.bookings :
-        ['in_trip', 'en_route', 'arrived', 'assigned'].includes(t?.status) ? ROUTES.live : ROUTES.trips,
-    })),
+      (t?.rider?.name || t?.userId?.firstName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t?.id || t?._id || '').toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5).map((t: any) => {
+      const riderName = t?.rider?.name || [t?.userId?.firstName, t?.userId?.lastName].filter(Boolean).join(' ') || 'Unknown Rider';
+      const tripId = t?.id || t?._id || '---';
+      const status = t?.status || t?.bookingStatus || '';
+      return {
+        type: 'trip',
+        label: riderName,
+        sub: `#${String(tripId).slice(-6)} · ${status.replace(/_/g, ' ')}`,
+        dest: ['pending_review', 'confirmed', 'pending'].includes(status) ? ROUTES.bookings :
+          ['in_trip', 'en_route', 'arrived', 'assigned', 'in-progress'].includes(status) ? ROUTES.live : ROUTES.trips,
+      };
+    }),
     ...(drivers || []).filter((d: any) =>
-      (d?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (d?.name || [d?.firstName, d?.lastName].filter(Boolean).join(' ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (d?.vehicle?.plate || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (d?.id || '').toLowerCase().includes(searchQuery.toLowerCase())
+      (d?.id || d?._id || '').toLowerCase().includes(searchQuery.toLowerCase())
     ).slice(0, 3).map((d: any) => ({
       type: 'driver',
-      label: d?.name || 'Unknown Driver',
+      label: d?.name || [d?.firstName, d?.lastName].filter(Boolean).join(' ') || 'Unknown Driver',
       sub: `${d?.vehicle?.plate || '---'} · ${(d?.status || '').replace(/_/g, ' ')}`,
       dest: ROUTES.drivers,
     })),
