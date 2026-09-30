@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
 import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
@@ -18,11 +18,30 @@ import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
 
+const formatYmd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const TripHistory = ({ role }: { role?: string | null }) => {
+  const [scheduleQueryParams, setScheduleQueryParams] = useState<{
+    serviceDate?: string;
+    bookingStatus?: string;
+  }>({
+    serviceDate: formatYmd(new Date()),
+  });
+
+  const handleScheduleFilterChange = useCallback((params: { serviceDate?: string; bookingStatus?: string }) => {
+    setScheduleQueryParams((prev) => {
+      if (prev.serviceDate === params.serviceDate && prev.bookingStatus === params.bookingStatus) {
+        return prev;
+      }
+      return params;
+    });
+  }, []);
+
   const { data: historyResponse, isLoading: historyLoading, refetch: refetchHistory } = useGetAllTripHistoryQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-  const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(undefined, {
+  const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(scheduleQueryParams, {
     refetchOnMountOrArgChange: true,
   });
   const { data: onboardingResponse } = useGetScheduleOnboardingQuery(undefined, {
@@ -380,6 +399,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           updateTrip={handleUpdateTrip}
           onboardingData={onboardingResponse?.data}
           isLoading={scheduleLoading}
+          onFilterChange={handleScheduleFilterChange}
         />
       )}
 

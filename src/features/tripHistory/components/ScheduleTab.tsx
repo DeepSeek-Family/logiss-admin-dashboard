@@ -23,6 +23,7 @@ interface ScheduleTabProps {
     todayCancelledStatusTrips: number;
   };
   isLoading?: boolean;
+  onFilterChange?: (params: { serviceDate?: string; bookingStatus?: string }) => void;
 }
 
 // Timeline window: 6 AM → 10 PM (covers virtually all NEMT operating hours).
@@ -31,10 +32,13 @@ const END_HOUR = 22;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 const TOTAL_MIN = TOTAL_HOURS * 60;
 
-const IN_PROGRESS = ['dispatched', 'en_route', 'arrived', 'in_trip'];
+const IN_PROGRESS = ['dispatched', 'en_route', 'arrived', 'in_trip', 'in-progress'];
 
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const formatYmd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // Estimated trip length in minutes (duration string → miles → sensible default).
 const estDurationMin = (trip: any): number => {
@@ -96,7 +100,7 @@ const statusAccent = (status: string) => {
   return 'bg-primary';
 };
 
-export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading }) => {
+export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading, onFilterChange }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -106,79 +110,25 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
   const [view, setView] = useState<'timeline' | 'runs'>('timeline');
   const initialized = useRef(false);
 
-  // Auto-select date when trips data arrives or updates
   useEffect(() => {
-    if (!trips || trips.length === 0) return;
-
-    // 1. Check if today has any trips
-    const ymdToday = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
-    const todayTripsCount = trips.filter((t: any) => {
-      if (t.status === 'cancelled') return false;
-      return t?.serviceDate === ymdToday || (t?.scheduledTime && sameDay(new Date(t.scheduledTime), new Date()));
-    }).length;
-
-    if (todayTripsCount > 0) {
-      setSelectedDate(new Date());
-      return;
-    }
-
-    // 2. Check if currently selectedDate has any trips
-    const currentSelectedYmd = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-    const currentSelectedCount = trips.filter((t: any) => {
-      if (t.status === 'cancelled') return false;
-      return t?.serviceDate === currentSelectedYmd || (t?.scheduledTime && sameDay(new Date(t.scheduledTime), selectedDate));
-    }).length;
-
-    if (currentSelectedCount > 0 && initialized.current) return;
-
-    // 3. Fallback to the date with the most trips
-    initialized.current = true;
-    const counts: Record<string, number> = {};
-    trips.forEach((t: any) => {
-      if (t.status === 'cancelled') return;
-      let key = t.serviceDate;
-      if (!key && t?.scheduledTime) {
-        const d = new Date(t.scheduledTime);
-        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      }
-      if (key) counts[key] = (counts[key] || 0) + 1;
-    });
-
-    const busiest = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    if (busiest) {
-      const parts = busiest[0].split('-').map(Number);
-      if (parts.length === 3 && !isNaN(parts[0])) {
-        setSelectedDate(new Date(parts[0], parts[1] - 1, parts[2]));
-      } else {
-        const parsed = new Date(busiest[0]);
-        if (!isNaN(parsed.getTime())) setSelectedDate(parsed);
-      }
-    }
-  }, [trips]);
+    const serviceDate = formatYmd(selectedDate);
+    const bookingStatus = statusFilter !== 'all' ? statusFilter : undefined;
+    onFilterChange?.({ serviceDate, bookingStatus });
+  }, [selectedDate, statusFilter, onFilterChange]);
 
   const q = search.trim().toLowerCase();
   const isToday = sameDay(selectedDate, new Date());
 
-  // All non-cancelled trips on the selected day (used for KPIs — stable, pre-filter).
-  const dayTrips = useMemo(() => {
-    return (trips || []).filter((t: any) => {
-      if (t.status === 'cancelled') return false;
-      const targetYmd = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-      if (t?.serviceDate && t.serviceDate === targetYmd) return true;
-      if (!t?.scheduledTime) return false;
-      return sameDay(new Date(t.scheduledTime), selectedDate);
-    });
-  }, [trips, selectedDate]);
+  // Trips supplied directly from backend (backend handles serviceDate and bookingStatus filtering).
+  const dayTrips = useMemo(() => trips || [], [trips]);
 
-  // Apply the search + status filters used by the board/lane (not the KPIs).
+  // Search filter applied locally if user types in search box.
   const matchesFilters = (t: any) => {
-    const statusOk = statusFilter === 'all' || t.status === statusFilter;
-    const searchOk = !q ||
+    return !q ||
       (t?.rider?.name || '').toLowerCase().includes(q) ||
       (t?.id || '').toLowerCase().includes(q) ||
       (t?.pickup || '').toLowerCase().includes(q) ||
       (t?.dropoff || '').toLowerCase().includes(q);
-    return statusOk && searchOk;
   };
 
   const driverById = useMemo(() => {
@@ -295,6 +245,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
   const nowPct = pctFromMinutes(minutesFromDate(new Date()));
 
   const shiftDay = (delta: number) => {
+    initialized.current = true;
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + delta);
     setSelectedDate(d);
@@ -302,13 +253,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
   const STATUS_OPTIONS = [
     { value: 'all', label: 'All statuses' },
+    { value: 'pending', label: 'Pending' },
     { value: 'assigned', label: 'Assigned' },
+    { value: 'in-progress', label: 'In Progress' },
     { value: 'confirmed', label: 'Confirmed' },
-    { value: 'en_route', label: 'En Route' },
-    { value: 'in_trip', label: 'In Trip' },
-    { value: 'arrived', label: 'Arrived' },
     { value: 'completed', label: 'Completed' },
-    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   return (
@@ -330,7 +280,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
               <ChevronRight size={16} />
             </button>
             {!isToday && (
-              <button onClick={() => setSelectedDate(new Date())} className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all">
+              <button onClick={() => { initialized.current = true; setSelectedDate(new Date()); }} className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all">
                 Today
               </button>
             )}
@@ -338,8 +288,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
           <input
             type="date"
-            value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
-            onChange={(e) => { if (e.target.value) { const [y, m, d] = e.target.value.split('-').map(Number); setSelectedDate(new Date(y, m - 1, d)); } }}
+            value={formatYmd(selectedDate)}
+            onChange={(e) => { if (e.target.value) { const [y, m, d] = e.target.value.split('-').map(Number); initialized.current = true; setSelectedDate(new Date(y, m - 1, d)); } }}
             onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }}
             className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer transition-all"
             title="Jump to date"

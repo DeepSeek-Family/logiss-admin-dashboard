@@ -284,6 +284,9 @@ export const bookingApi = baseApi.injectEndpoints({
           if (params.page != null) queryParams.page = params.page
           if (params.limit != null) queryParams.limit = params.limit
           if (params.search) queryParams.search = params.search
+          if (params.serviceDate) queryParams.serviceDate = params.serviceDate
+          if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
+          if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
         }
         return {
           url: `/bookings/schedule`,
