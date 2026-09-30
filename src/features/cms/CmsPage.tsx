@@ -355,17 +355,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
 
 
-      {/* {showSuccess && (
-
-        <div className="bg-accent text-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-
-          <CheckCircle size={20} />
-
-          <span className="text-sm font-medium">Settings updated and synchronized across all modules!</span>
-
-        </div>
-
-      )} */}
+   
 
 
 
@@ -510,13 +500,13 @@ const CMS = ({ role }: { role?: string | null }) => {
 
 
 
-              <div className="mt-8 flex items-center justify-between p-4 bg-bg rounded-2xl border border-line-2">
+              <div className="mt-8 flex items-center justify-between p-4 bg-bg rounded-lg border border-line-2">
 
                 <div className="flex items-center gap-3">
 
                   <Clock size={16} className="text-ink-3" />
 
-                  <p className="text-xs text-ink-4 italic">Changes made here affect all dispatch terminals globally.</p>
+                  <p className="text-sm text-ink-4 italic">Changes made here affect all dispatch terminals globally.</p>
 
                 </div>
 
