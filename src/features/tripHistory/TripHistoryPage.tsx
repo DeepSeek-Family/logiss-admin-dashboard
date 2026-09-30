@@ -17,6 +17,7 @@ import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
+import { env } from '@/config/env';
 
 const formatYmd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -145,8 +146,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     [scheduleResponse]
   );
 
-  const trips = historyResponse?.data ? apiTrips : fallbackTrips;
-  const scheduleTrips = scheduleResponse?.data ? apiScheduleTrips : trips;
+  const trips = historyResponse?.data ? apiTrips : (env.useMock ? fallbackTrips : []);
+  const scheduleTrips = scheduleResponse?.data ? apiScheduleTrips : (env.useMock ? trips : []);
   const loading = (historyLoading || tripsLoading) && trips.length === 0;
 
   const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {

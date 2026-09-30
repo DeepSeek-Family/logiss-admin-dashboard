@@ -294,6 +294,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
             className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer transition-all"
             title="Jump to date"
           />
+
+          {isLoading && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-xl">
+              <Loader2 size={13} className="animate-spin text-primary" />
+              <span>Updating...</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
