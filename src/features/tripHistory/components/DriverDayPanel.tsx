@@ -42,7 +42,11 @@ const sameDay = (a: Date, b: Date) =>
 export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({ driver, trips, date, onClose, onTripClick, drivers, updateTrip }) => {
   const dayTrips = useMemo(() => {
     return (trips || [])
-      .filter((t: any) => String(t?.driverId) === String(driver?.id) && t?.scheduledTime && t.status !== 'cancelled' && sameDay(new Date(t.scheduledTime), date))
+      .filter((t: any) => {
+        if (String(t?.driverId) !== String(driver?.id) || t.status === 'cancelled') return false;
+        const targetYmd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        return t?.serviceDate ? t.serviceDate === targetYmd : (t?.scheduledTime && sameDay(new Date(t.scheduledTime), date));
+      })
       .sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
   }, [trips, driver, date]);
 

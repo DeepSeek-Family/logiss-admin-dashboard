@@ -136,6 +136,30 @@ export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
   return [37.5407, -77.4360];
 };
 
+export const formatLocationString = (val: any): string => {
+  if (val == null || val === '') return 'N/A';
+  if (Array.isArray(val)) {
+    const clean = val.filter((x) => x != null && x !== '');
+    if (clean.length === 2 && !isNaN(Number(clean[0])) && !isNaN(Number(clean[1]))) {
+      return `${clean[0]}, ${clean[1]}`;
+    }
+    return clean.join(', ');
+  }
+  return String(val);
+};
+
+export const parseStopsArray = (stopAddressVal: any): string[] => {
+  if (stopAddressVal == null || stopAddressVal === '') return [];
+  if (Array.isArray(stopAddressVal)) {
+    const clean = stopAddressVal.filter((x) => x != null && x !== '');
+    if (clean.length === 2 && !isNaN(Number(clean[0])) && !isNaN(Number(clean[1]))) {
+      return [`${clean[0]}, ${clean[1]}`];
+    }
+    return clean.map((s) => (Array.isArray(s) ? formatLocationString(s) : String(s)));
+  }
+  return [String(stopAddressVal)];
+};
+
 export const mapApiBooking = (b: IBooking) => {
   const userObj = typeof b.userId === 'object' && b.userId ? (b.userId as IBookingUser) : null;
   const driverObj = typeof b.driverId === 'object' && b.driverId ? (b.driverId as IBookingDriver) : null;
@@ -168,9 +192,12 @@ export const mapApiBooking = (b: IBooking) => {
       phone: (userObj as any)?.phone,
       email: (userObj as any)?.email,
     },
-    pickup: b.pickupLocation != null ? (Array.isArray(b.pickupLocation) ? String(b.pickupLocation[0]) : String(b.pickupLocation)) : 'N/A',
-    dropoff: b.dropOffLocation != null ? (Array.isArray(b.dropOffLocation) ? String(b.dropOffLocation[0]) : String(b.dropOffLocation)) : 'N/A',
-    stops: b.stopAddress != null && b.stopAddress !== '' ? (Array.isArray(b.stopAddress) ? b.stopAddress.map(String) : [String(b.stopAddress)]) : [],
+    pickup: formatLocationString(b.pickupLocation),
+    pickupLocationRaw: b.pickupLocation,
+    dropoff: formatLocationString(b.dropOffLocation),
+    dropOffLocationRaw: b.dropOffLocation,
+    stops: parseStopsArray(b.stopAddress),
+    stopAddressRaw: b.stopAddress,
     mobility: mobilityObj?.name || (typeof b.mobilityRequirements === 'string' && !isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : 'Ambulatory'),
     mobilityId: rawMobilityId,
     mobilityRequirementsId: rawMobilityId,

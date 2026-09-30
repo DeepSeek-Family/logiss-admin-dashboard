@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ChevronLeft, ChevronRight, Truck, Clock, MapPin, Users, Calendar,
-  Search, AlertTriangle, UserPlus, Activity, CheckCircle2, CircleDot, Layers
+  Search, AlertTriangle, UserPlus, Activity, CheckCircle2, CircleDot, Layers, Loader2
 } from 'lucide-react';
 import { Card, Avatar, Badge } from '@/shared/components/ui';
 import { formatTime } from '@/utils/helpers';
@@ -15,6 +15,14 @@ interface ScheduleTabProps {
   onTripClick?: (id: string) => void;
   /** Persist reassign/unassign from the run sheet (id, patch). */
   updateTrip?: (id: string, patch: Record<string, any>) => void;
+  onboardingData?: {
+    todayTotalTrips: number;
+    todayAssignedStatusTrips: number;
+    todayInProgressStatusTrips: number;
+    todayCompletedStatusTrips: number;
+    todayCancelledStatusTrips: number;
+  };
+  isLoading?: boolean;
 }
 
 // Timeline window: 6 AM → 10 PM (covers virtually all NEMT operating hours).
@@ -38,6 +46,40 @@ const estDurationMin = (trip: any): number => {
   return 45;
 };
 
+const parseTimeToMin = (s?: string): number | null => {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ap = m[3]?.toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+};
+
+const getTripMinutes = (trip: any): number => {
+  const pTime = trip.requestedPickup || trip.pickupTime;
+  if (pTime) {
+    const parsed = parseTimeToMin(pTime);
+    if (parsed != null) return Math.max(0, parsed - START_HOUR * 60);
+  }
+  if (trip.scheduledTime) {
+    const str = String(trip.scheduledTime);
+    const timeMatch = str.match(/T(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      const h = parseInt(timeMatch[1], 10);
+      const m = parseInt(timeMatch[2], 10);
+      return Math.max(0, (h - START_HOUR) * 60 + m);
+    }
+    const d = new Date(trip.scheduledTime);
+    if (!isNaN(d.getTime())) {
+      return Math.max(0, (d.getHours() - START_HOUR) * 60 + d.getMinutes());
+    }
+  }
+  return (8 - START_HOUR) * 60;
+};
+
 const minutesFromDate = (d: Date) => (d.getHours() - START_HOUR) * 60 + d.getMinutes();
 
 const pctFromMinutes = (mins: number) => {
@@ -54,7 +96,7 @@ const statusAccent = (status: string) => {
   return 'bg-primary';
 };
 
-export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip }) => {
+export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -64,21 +106,54 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
   const [view, setView] = useState<'timeline' | 'runs'>('timeline');
   const initialized = useRef(false);
 
-  // Mock trips are dated in the past relative to "today"; on first load land the
-  // dispatcher on the busiest day so the board is immediately meaningful.
+  // Auto-select date when trips data arrives or updates
   useEffect(() => {
-    if (initialized.current || !trips || trips.length === 0) return;
+    if (!trips || trips.length === 0) return;
+
+    // 1. Check if today has any trips
+    const ymdToday = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+    const todayTripsCount = trips.filter((t: any) => {
+      if (t.status === 'cancelled') return false;
+      return t?.serviceDate === ymdToday || (t?.scheduledTime && sameDay(new Date(t.scheduledTime), new Date()));
+    }).length;
+
+    if (todayTripsCount > 0) {
+      setSelectedDate(new Date());
+      return;
+    }
+
+    // 2. Check if currently selectedDate has any trips
+    const currentSelectedYmd = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+    const currentSelectedCount = trips.filter((t: any) => {
+      if (t.status === 'cancelled') return false;
+      return t?.serviceDate === currentSelectedYmd || (t?.scheduledTime && sameDay(new Date(t.scheduledTime), selectedDate));
+    }).length;
+
+    if (currentSelectedCount > 0 && initialized.current) return;
+
+    // 3. Fallback to the date with the most trips
     initialized.current = true;
-    const todayCount = trips.filter((t: any) => t?.scheduledTime && sameDay(new Date(t.scheduledTime), new Date())).length;
-    if (todayCount > 0) return;
     const counts: Record<string, number> = {};
     trips.forEach((t: any) => {
-      if (!t?.scheduledTime || t.status === 'cancelled') return;
-      const key = new Date(t.scheduledTime).toDateString();
-      counts[key] = (counts[key] || 0) + 1;
+      if (t.status === 'cancelled') return;
+      let key = t.serviceDate;
+      if (!key && t?.scheduledTime) {
+        const d = new Date(t.scheduledTime);
+        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+      if (key) counts[key] = (counts[key] || 0) + 1;
     });
+
     const busiest = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    if (busiest) setSelectedDate(new Date(busiest[0]));
+    if (busiest) {
+      const parts = busiest[0].split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0])) {
+        setSelectedDate(new Date(parts[0], parts[1] - 1, parts[2]));
+      } else {
+        const parsed = new Date(busiest[0]);
+        if (!isNaN(parsed.getTime())) setSelectedDate(parsed);
+      }
+    }
   }, [trips]);
 
   const q = search.trim().toLowerCase();
@@ -87,7 +162,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
   // All non-cancelled trips on the selected day (used for KPIs — stable, pre-filter).
   const dayTrips = useMemo(() => {
     return (trips || []).filter((t: any) => {
-      if (!t?.scheduledTime || t.status === 'cancelled') return false;
+      if (t.status === 'cancelled') return false;
+      const targetYmd = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+      if (t?.serviceDate && t.serviceDate === targetYmd) return true;
+      if (!t?.scheduledTime) return false;
       return sameDay(new Date(t.scheduledTime), selectedDate);
     });
   }, [trips, selectedDate]);
@@ -109,14 +187,27 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
     return m;
   }, [drivers]);
 
+  // Separate unassigned trips
+  const unassignedTrips = useMemo(() => {
+    return dayTrips.filter((t: any) => !t.driverId || String(t.driverId) === 'null' || t.status === 'unassigned' || t.status === 'pending_review');
+  }, [dayTrips]);
+
   // Per-driver sorted trips + conflict detection (overlap with previous trip's est. end).
   const { tripsByDriver, conflictIds } = useMemo(() => {
-    const byDriver: Record<string, any[]> = {};
+    const byDriver: Record<string, any[]> = {
+      __UNASSIGNED__: unassignedTrips,
+    };
     const conflicts = new Set<string>();
     (drivers || []).forEach(d => { byDriver[String(d.id)] = []; });
+
     dayTrips.forEach((t: any) => {
-      if (t.driverId && byDriver[String(t.driverId)]) byDriver[String(t.driverId)].push(t);
+      if (t.driverId && String(t.driverId) !== 'null') {
+        const dId = String(t.driverId);
+        if (!byDriver[dId]) byDriver[dId] = [];
+        byDriver[dId].push(t);
+      }
     });
+
     Object.values(byDriver).forEach(list => {
       list.sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
       for (let i = 1; i < list.length; i++) {
@@ -126,31 +217,79 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
       }
     });
     return { tripsByDriver: byDriver, conflictIds: conflicts };
-  }, [dayTrips, drivers]);
+  }, [dayTrips, drivers, unassignedTrips]);
 
   // KPI metrics for the day.
   const kpis = useMemo(() => {
-    const assigned = dayTrips.filter((t: any) => t.driverId).length;
+    const assigned = dayTrips.filter((t: any) => t.driverId && String(t.driverId) !== 'null' && t.status !== 'unassigned').length;
     const unassigned = dayTrips.length - assigned;
     const inProgress = dayTrips.filter((t: any) => IN_PROGRESS.includes(t.status)).length;
     const completed = dayTrips.filter((t: any) => t.status === 'completed').length;
     const onDuty = (drivers || []).filter((d: any) => d?.onDuty).length;
+
+    if (isToday && onboardingData) {
+      return {
+        total: onboardingData.todayTotalTrips ?? dayTrips.length,
+        assigned: onboardingData.todayAssignedStatusTrips ?? assigned,
+        unassigned,
+        inProgress: onboardingData.todayInProgressStatusTrips ?? inProgress,
+        completed: onboardingData.todayCompletedStatusTrips ?? completed,
+        conflicts: conflictIds.size,
+        onDuty,
+      };
+    }
+
     return { total: dayTrips.length, assigned, unassigned, inProgress, completed, conflicts: conflictIds.size, onDuty };
-  }, [dayTrips, conflictIds, drivers]);
+  }, [dayTrips, conflictIds, drivers, isToday, onboardingData]);
 
   // Drivers shown on the board.
   const visibleDrivers = useMemo(() => {
-    let list = (drivers || []).filter(d => {
+    const knownIds = new Set((drivers || []).map(d => String(d.id)));
+    let list: any[] = [...(drivers || [])];
+
+    // Include dynamically synthesized drivers for trips that have a driverId not in the drivers list
+    Object.keys(tripsByDriver).forEach(dId => {
+      if (dId !== '__UNASSIGNED__' && !knownIds.has(dId) && tripsByDriver[dId].length > 0) {
+        const sampleTrip = tripsByDriver[dId][0];
+        const synthName = sampleTrip.driverName || 'Assigned Driver';
+        list.push({
+          id: dId,
+          _id: dId,
+          name: synthName,
+          initials: `${synthName[0] || 'D'}`,
+          onDuty: true,
+          status: 'available',
+          vehicle: { plate: 'VA-4KL-8392', type: 'Ambulatory Van' },
+        });
+      }
+    });
+
+    list = list.filter(d => {
       const hasTrips = (tripsByDriver[String(d.id)] || []).length > 0;
       if (hideOffDuty && !d.onDuty && !hasTrips) return false;
       if (q && !(d.name || '').toLowerCase().includes(q) && !hasTrips) return false;
       return true;
     });
+
+    if (unassignedTrips.length > 0) {
+      list = [
+        {
+          id: '__UNASSIGNED__',
+          name: 'Unassigned Trips',
+          initials: 'UT',
+          onDuty: true,
+          isVirtualUnassigned: true,
+          vehicle: { plate: 'Pending Assign', type: 'Queue' },
+        },
+        ...list,
+      ];
+    }
+
     if (focus === 'conflicts') {
       list = list.filter(d => (tripsByDriver[String(d.id)] || []).some((t: any) => conflictIds.has(t.id)));
     }
     return list;
-  }, [drivers, tripsByDriver, hideOffDuty, q, focus, conflictIds]);
+  }, [drivers, tripsByDriver, hideOffDuty, q, focus, conflictIds, unassignedTrips]);
 
   const timelineHours = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i);
   const nowPct = pctFromMinutes(minutesFromDate(new Date()));
@@ -287,6 +426,57 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         ))}
       </div>
 
+      {/* ───────── Unassigned Trips Banner ───────── */}
+      {unassignedTrips.length > 0 && (
+        <div className="flex flex-col gap-3 p-4 rounded-2xl border border-warning/40 bg-amber-50/50 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserPlus size={18} className="text-warning-dark shrink-0" />
+              <p className="text-sm font-bold text-ink">
+                {unassignedTrips.length} Unassigned {unassignedTrips.length === 1 ? 'Trip' : 'Trips'} for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+            <span className="text-xs text-ink-4">Select a driver below to assign immediately</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {unassignedTrips.map((trip: any) => (
+              <div key={trip.id} className="p-3 bg-white rounded-xl border border-line-2 shadow-sm flex flex-col justify-between gap-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-primary">#{String(trip.id).slice(-6)}</span>
+                    <p className="text-sm font-semibold text-ink">{trip.rider?.name || 'Rider'}</p>
+                    <p className="text-xs text-ink-4">{trip.reason || trip.tripReason || 'Medical'} · {trip.type === 'round-trip' || trip.type === 'round_trip' ? 'Round Trip' : 'One Way'}</p>
+                  </div>
+                  <Badge variant="warning" className="text-xs capitalize">{String(trip.status || 'pending').replace(/_/g, ' ')}</Badge>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-ink-3 bg-bg px-2.5 py-1 rounded-lg flex-wrap">
+                  <Clock size={12} className="text-primary shrink-0" />
+                  <span>Pickup {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
+                  {trip.appointmentTime && <span className="text-ink-4">· Appt {trip.appointmentTime}</span>}
+                  {trip.returnTime && <span className="text-primary font-semibold">· Return {trip.returnTime}</span>}
+                </div>
+                {updateTrip && (
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        updateTrip(trip.id, { driverId: e.target.value, status: 'assigned' });
+                      }
+                    }}
+                    className="w-full bg-bg border border-line-2 rounded-lg py-1.5 px-2.5 text-xs font-semibold text-ink outline-none cursor-pointer focus:border-primary transition-all"
+                  >
+                    <option value="" disabled>Assign Driver...</option>
+                    {(drivers || []).map((d: any) => (
+                      <option key={d.id} value={d.id}>{d.name} {d.onDuty ? '(On Duty)' : ''}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ───────── Conflict banner (only when action is needed) ───────── */}
       {kpis.conflicts > 0 && focus === 'all' && (
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl border border-urgent/20 bg-urgent-light/30">
@@ -330,12 +520,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
             {/* Rows */}
             <div className="divide-y divide-line-2/40 relative bg-bg/20">
-              {/* Current time line (today only) */}
-              {isToday && nowPct > 0 && nowPct < 100 && (
-                <div className="absolute top-0 bottom-0 w-[2px] bg-urgent z-40 pointer-events-none" style={{ left: `calc(260px + (100% - 260px) * ${nowPct / 100})` }}>
-                  <div className="absolute top-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-urgent shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse" />
-                </div>
-              )}
 
               {visibleDrivers.map(driver => {
                 const driverTrips = tripsByDriver[String(driver.id)] || [];
@@ -384,11 +568,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                       ))}
 
                       {shownTrips.map((trip: any, idx: number) => {
-                        const start = new Date(trip.scheduledTime);
-                        const startMin = minutesFromDate(start);
+                        const startMin = getTripMinutes(trip);
                         const startPct = pctFromMinutes(startMin);
                         const endPct = pctFromMinutes(startMin + estDurationMin(trip));
-                        const width = Math.max(endPct - startPct, 3.5);
+                        const width = Math.max(endPct - startPct, 12);
                         const conflict = conflictIds.has(trip.id);
                         const inProgress = IN_PROGRESS.includes(trip.status);
                         const isLast = idx === shownTrips.length - 1;
@@ -396,25 +579,24 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                         // Pull-out marker on the first trip of the day.
                         const pullOut = idx === 0 && startPct > 1 ? (
                           <div className="absolute top-1/2 -translate-y-1/2 -translate-x-[calc(100%+6px)] flex items-center gap-1 z-10" style={{ left: `${startPct}%` }}>
-                            <span className="text-xs font-black text-primary/60 uppercase tracking-wide bg-primary/5 px-1.5 py-0.5 rounded-full border border-primary/20 whitespace-nowrap">Pull-Out</span>
+                            <span className="text-xs font-black text-primary/70 uppercase tracking-wide bg-primary/5 px-2 py-0.5 rounded-full border border-primary/20 whitespace-nowrap shadow-sm">PULL-OUT</span>
                           </div>
                         ) : null;
 
-                        // Standby gap between the previous trip and this one.
+                        // Standby connecting line between previous trip and this trip
                         let gap = null;
                         if (idx > 0) {
                           const prev = shownTrips[idx - 1];
-                          const prevEndPct = pctFromMinutes(minutesFromDate(new Date(prev.scheduledTime)) + estDurationMin(prev));
+                          const prevStartMin = getTripMinutes(prev);
+                          const prevEndPct = pctFromMinutes(prevStartMin + estDurationMin(prev));
                           const gapW = startPct - prevEndPct;
-                          if (gapW > 2 && !conflict) {
+                          if (gapW > 0.5 && !conflict) {
                             gap = (
                               <div
-                                className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-line-2/70 group/gap z-10"
+                                className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-line-2 border-t border-line-2 z-10"
                                 style={{ left: `${prevEndPct}%`, width: `${gapW}%` }}
-                                title="Standby"
-                              >
-                                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-semibold text-ink-4 opacity-0 group-hover/gap:opacity-100 transition-opacity whitespace-nowrap">Standby</span>
-                              </div>
+                                title="Standby / Driving"
+                              />
                             );
                           }
                         }
@@ -422,9 +604,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                         // Pull-in marker after the last trip of the day.
                         const pullIn = isLast && endPct < 99 ? (
                           <div className="absolute top-1/2 -translate-y-1/2 translate-x-2 flex items-center gap-1 z-10" style={{ left: `${endPct}%` }}>
-                            <span className="text-xs font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-1.5 py-0.5 rounded-full border border-line-2 whitespace-nowrap">Pull-In</span>
+                            <span className="text-xs font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-2 py-0.5 rounded-full border border-line-2 whitespace-nowrap shadow-sm">PULL-IN</span>
                           </div>
                         ) : null;
+
+                        const displayTime = trip.requestedPickup || trip.pickupTime || formatTime(trip.scheduledTime);
 
                         return (
                           <React.Fragment key={trip.id}>
@@ -433,14 +617,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                             {pullIn}
                             <button
                               onClick={() => onTripClick?.(trip.id)}
-                              title={`#${trip.id} · ${trip.rider?.name || ''}\n${formatTime(trip.scheduledTime)} · ${trip.type === 'round_trip' ? 'Round Trip' : 'One Way'}\nPickup: ${trip.pickup || '—'}\nDrop-off: ${trip.dropoff || '—'}\nStatus: ${String(trip.status).replace(/_/g, ' ')}${conflict ? ' · ⚠ TIME CONFLICT' : ''}`}
-                              className={`absolute top-2 bottom-2 min-w-[120px] rounded-xl shadow-sm border bg-white transition-all cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? 'border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg' : 'border-line-2 hover:border-primary/50 hover:shadow-lg'}`}
+                              title={`#${trip.id} · ${trip.rider?.name || ''}\nTime: ${displayTime}\nType: ${trip.type === 'round_trip' || trip.type === 'round-trip' ? 'Round Trip' : 'One Way'}\nPickup: ${trip.pickup || '—'}\nDrop-off: ${trip.dropoff || '—'}\nStatus: ${String(trip.status).replace(/_/g, ' ')}${conflict ? ' · ⚠ TIME CONFLICT' : ''}`}
+                              className={`absolute top-1 bottom-1 min-w-[130px] rounded-xl shadow-sm border bg-white transition-all cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? 'border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg' : 'border-line-2 hover:border-primary/50 hover:shadow-lg'}`}
                               style={{ left: `${startPct}%`, width: `${width}%` }}
                             >
                               <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${statusAccent(trip.status)}`} />
-                              <div className="flex-1 p-1.5 pl-2.5 flex flex-col overflow-hidden">
-                                <div className="flex items-center justify-between mb-0.5">
-                                  <span className="text-xs font-bold text-primary truncate">#{String(trip.id).split('-')[1] || trip.id}</span>
+                              <div className="flex-1 p-2 pl-3 flex flex-col justify-between overflow-hidden">
+                                <div className="flex items-center justify-between gap-1 mb-0.5">
+                                  <span className="text-xs font-bold text-primary truncate">#{String(trip.id).slice(-6)}</span>
                                   {conflict ? (
                                     <AlertTriangle size={11} className="text-urgent shrink-0" />
                                   ) : inProgress ? (
@@ -450,10 +634,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                                     </span>
                                   ) : null}
                                 </div>
-                                <p className="text-xs font-semibold text-ink truncate mb-1">{trip.rider?.name}</p>
-                                <div className="flex items-center gap-1 mt-auto bg-bg/60 px-1 py-0.5 rounded w-fit">
-                                  <Clock size={9} className="text-ink-4 shrink-0" />
-                                  <span className="text-xs font-medium text-ink-3">{formatTime(trip.scheduledTime)}</span>
+                                <p className="text-xs font-bold text-ink truncate">{trip.rider?.name || 'Rider'}</p>
+                                <div className="flex items-center gap-1 mt-1 bg-bg/80 px-1.5 py-0.5 rounded-md w-fit border border-line-2/50">
+                                  <Clock size={10} className="text-ink-4 shrink-0" />
+                                  <span className="text-xs font-semibold text-ink-3">{displayTime}</span>
                                 </div>
                               </div>
                             </button>

@@ -78,6 +78,20 @@ export interface ISingleBookingResponse {
   data: IBooking
 }
 
+export interface IScheduleOnboardingData {
+  todayTotalTrips: number
+  todayAssignedStatusTrips: number
+  todayInProgressStatusTrips: number
+  todayCompletedStatusTrips: number
+  todayCancelledStatusTrips: number
+}
+
+export interface IScheduleOnboardingResponse {
+  success: boolean
+  message: string
+  data: IScheduleOnboardingData
+}
+
 export interface IPayerSource {
   _id: string
   name?: string
@@ -261,6 +275,38 @@ export const bookingApi = baseApi.injectEndpoints({
         { type: 'Riders', id: 'LIST' },
       ],
     }),
+
+
+    scheduleBooking: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {}
+        if (params && typeof params === 'object') {
+          if (params.page != null) queryParams.page = params.page
+          if (params.limit != null) queryParams.limit = params.limit
+          if (params.search) queryParams.search = params.search
+        }
+        return {
+          url: `/bookings/schedule`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeBookingsResponse,
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
+              { type: 'bookings', id: 'LIST' },
+            ]
+          : [{ type: 'bookings', id: 'LIST' }],
+    }),
+    getScheduleOnboarding: builder.query<IScheduleOnboardingResponse, void>({
+      query: () => ({
+        url: `/bookings/schedule/onboarding`,
+        method: 'GET',
+      }),
+      providesTags: [{ type: 'bookings', id: 'LIST' }],
+    }),
  
   }),
   overrideExisting: false,
@@ -273,4 +319,6 @@ export const {
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
   useGetAllTripHistoryQuery,
+  useScheduleBookingQuery,
+  useGetScheduleOnboardingQuery,
 } = bookingApi
