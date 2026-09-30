@@ -44,7 +44,7 @@ export const DetailPanel = ({ reportId }: DetailPanelProps) => {
   if (isLoading) {
     return <Loader message="Loading report..." />;
   }
-  console.log("report", report);
+
   if (isError || !report) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-12">

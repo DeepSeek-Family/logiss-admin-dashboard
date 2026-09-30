@@ -1,4 +1,3 @@
-import { drivers as mockDrivers } from '../data/mockData';
 import { env } from '@/config/env';
 import { api } from '@/services/api';
 import { API } from '@/constants/api';
@@ -15,7 +14,7 @@ export interface Driver {
   [key: string]: any;
 }
 
-let driversDB: Driver[] = [...mockDrivers];
+let driversDB: Driver[] = [];
 
 export const driverService = {
   getDrivers: (filters: { status?: string } = {}): Promise<Driver[]> => {

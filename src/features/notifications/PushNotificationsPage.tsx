@@ -1,21 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Send, Users, User, Clock, CheckCircle2, Trash2, Building2, ShieldCheck, Headset, ShieldAlert } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
-import { drivers, riders, mockUsers } from '@/data/mockData';
 import { pushNotification } from '@/hooks/useNotifications';
 import { useSendNotificationMutation } from '@/redux/api/notificationsApi';
-
-// Audiences a super-admin can broadcast to — rider/driver mobile apps + internal staff.
-const activeStaff = (mockUsers || []).filter((u: any) => u.status === 'active');
-const AUDIENCES = [
-  { id: 'all_drivers', label: 'All Drivers', icon: Users, channel: 'Driver app', count: (drivers || []).length },
-  { id: 'all_riders', label: 'All Riders', icon: User, channel: 'Rider app', count: (riders || []).length },
-  { id: 'dispatchers', label: 'Dispatchers', icon: Headset, channel: 'Dashboard', count: activeStaff.filter((u: any) => u.role === 'dispatcher').length },
-  { id: 'facility_users', label: 'Facility Users', icon: Building2, channel: 'Dashboard', count: activeStaff.filter((u: any) => u.role === 'facility').length },
-  { id: 'all_staff', label: 'All Staff', icon: ShieldCheck, channel: 'Dashboard', count: activeStaff.length },
-];
+import { useGetRidersQuery } from '@/redux/api/ridersApi';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
 
 interface SentLog {
   id: number;
@@ -57,6 +48,20 @@ const timeAgo = (iso: string) => {
 const PushNotifications = ({ role }: { role?: string | null }) => {
   const currentUser = useSelector((state: any) => state.auth?.user);
   const senderId = currentUser?._id || currentUser?.id || '6a71bd6614662c1d7334a9c2';
+
+  const { data: driversResponse } = useGetDriversQuery();
+  const { data: ridersResponse } = useGetRidersQuery();
+
+  const driversCount = driversResponse?.data?.length || 0;
+  const ridersCount = ridersResponse?.data?.length || 0;
+
+  const AUDIENCES = useMemo(() => [
+    { id: 'all_drivers', label: 'All Drivers', icon: Users, channel: 'Driver app', count: driversCount },
+    { id: 'all_riders', label: 'All Riders', icon: User, channel: 'Rider app', count: ridersCount },
+    { id: 'dispatchers', label: 'Dispatchers', icon: Headset, channel: 'Dashboard', count: 1 },
+    { id: 'facility_users', label: 'Facility Users', icon: Building2, channel: 'Dashboard', count: 1 },
+    { id: 'all_staff', label: 'All Staff', icon: ShieldCheck, channel: 'Dashboard', count: 2 },
+  ], [driversCount, ridersCount]);
 
   const [audience, setAudience] = useState<string>('all_drivers');
   const [title, setTitle] = useState('');

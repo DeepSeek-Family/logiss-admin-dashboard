@@ -1,3 +1,5 @@
+import { AUTH_TOKEN_KEY } from '@/constants/auth-storage';
+
 /** Swap mock → live API without touching pages. Set in `.env`. */
 export const env = {
   apiBaseUrl: (import.meta.env.VITE_API_BASE_URL as string | undefined) || '',
@@ -7,7 +9,7 @@ export const env = {
 
 export const getAuthToken = (): string | null => {
   try {
-    return window.localStorage.getItem('logiss-token');
+    return window.localStorage.getItem(AUTH_TOKEN_KEY) || window.localStorage.getItem('logiss-token');
   } catch {
     return null;
   }

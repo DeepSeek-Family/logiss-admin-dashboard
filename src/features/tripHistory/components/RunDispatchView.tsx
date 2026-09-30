@@ -90,8 +90,10 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
   const runs = useMemo(() => {
     const byDriver: Record<string, any[]> = {};
     (trips || []).forEach((t: any) => {
-      if (!t?.scheduledTime || t.status === 'cancelled' || !t.driverId) return;
-      if (!sameDay(new Date(t.scheduledTime), date)) return;
+      if (t.status === 'cancelled' || !t.driverId) return;
+      const targetYmd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const isDayMatch = t?.serviceDate ? t.serviceDate === targetYmd : (t?.scheduledTime && sameDay(new Date(t.scheduledTime), date));
+      if (!isDayMatch) return;
       (byDriver[String(t.driverId)] ||= []).push(t);
     });
     return Object.entries(byDriver).map(([driverId, list]) => ({

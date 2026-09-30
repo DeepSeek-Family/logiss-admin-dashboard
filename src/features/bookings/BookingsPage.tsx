@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination, ConfirmationModal } from '@/shared/components/ui';
 import { ManualTripModal } from '@/components/ManualTripModal';
-import { tripService } from '@/services/tripService';
 import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
 import { useDrivers } from '@/hooks/useDrivers';
 import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from '@/utils/helpers';

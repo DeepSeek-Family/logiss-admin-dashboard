@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
 import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
@@ -6,18 +6,55 @@ import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useFleet } from '@/hooks/useFleet';
 import { toast } from 'react-hot-toast';
-import { useGetAllTripHistoryQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
+import {
+  useGetAllTripHistoryQuery,
+  useUpdateBookingMutation,
+  useScheduleBookingQuery,
+  useGetScheduleOnboardingQuery,
+} from '@/redux/api/bookingApi';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
+import { env } from '@/config/env';
+
+const formatYmd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const TripHistory = ({ role }: { role?: string | null }) => {
+  const [scheduleQueryParams, setScheduleQueryParams] = useState<{
+    serviceDate?: string;
+    bookingStatus?: string;
+  }>({
+    serviceDate: formatYmd(new Date()),
+  });
+
+  const handleScheduleFilterChange = useCallback((params: { serviceDate?: string; bookingStatus?: string }) => {
+    setScheduleQueryParams((prev) => {
+      if (prev.serviceDate === params.serviceDate && prev.bookingStatus === params.bookingStatus) {
+        return prev;
+      }
+      return params;
+    });
+  }, []);
+
   const { data: historyResponse, isLoading: historyLoading, refetch: refetchHistory } = useGetAllTripHistoryQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+  const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(scheduleQueryParams, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: onboardingResponse } = useGetScheduleOnboardingQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: apiDriversResponse } = useGetDriversQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
   const [updateBookingMutation] = useUpdateBookingMutation();
   const { trips: fallbackTrips, loading: tripsLoading, updateTrip: fallbackUpdateTrip } = useTrips();
-  const { drivers, loading: driversLoading } = useDrivers();
+  const { drivers: fallbackDrivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -60,12 +97,57 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     });
   };
 
+  const fetchedApiDrivers = useMemo(
+    () => (apiDriversResponse?.data || []).map(mapApiDriver),
+    [apiDriversResponse]
+  );
+
+  const drivers = useMemo(() => {
+    const list = [...(apiDriversResponse?.data ? fetchedApiDrivers : fallbackDrivers)];
+    const driverMap = new Map<string, any>();
+
+    list.forEach((d) => {
+      if (d?.id || d?._id) {
+        driverMap.set(String(d.id || d._id), d);
+      }
+    });
+
+    const bookings = [...(scheduleResponse?.data || []), ...(historyResponse?.data || [])];
+    bookings.forEach((b: any) => {
+      if (typeof b.driverId === 'object' && b.driverId?._id) {
+        const id = String(b.driverId._id);
+        if (!driverMap.has(id)) {
+          const dName = [b.driverId.firstName, b.driverId.lastName].filter(Boolean).join(' ') || 'Driver';
+          const initials = `${b.driverId.firstName?.[0] || ''}${b.driverId.lastName?.[0] || ''}`.toUpperCase() || 'D';
+          driverMap.set(id, {
+            id,
+            _id: id,
+            name: dName,
+            initials,
+            onDuty: true,
+            status: 'available',
+            profile: b.driverId.profile,
+            vehicle: { plate: 'VA-4KL-8392', type: 'Ambulatory Van' },
+          });
+        }
+      }
+    });
+
+    return Array.from(driverMap.values());
+  }, [apiDriversResponse, fetchedApiDrivers, fallbackDrivers, scheduleResponse, historyResponse]);
+
   const apiTrips = useMemo(
     () => (historyResponse?.data || []).map(mapApiBooking),
     [historyResponse]
   );
 
-  const trips = historyResponse?.data ? apiTrips : fallbackTrips;
+  const apiScheduleTrips = useMemo(
+    () => (scheduleResponse?.data || []).map(mapApiBooking),
+    [scheduleResponse]
+  );
+
+  const trips = historyResponse?.data ? apiTrips : (env.useMock ? fallbackTrips : []);
+  const scheduleTrips = scheduleResponse?.data ? apiScheduleTrips : (env.useMock ? trips : []);
   const loading = (historyLoading || tripsLoading) && trips.length === 0;
 
   const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -313,9 +395,12 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       {activeTab === 'schedule' && (
         <ScheduleTab
           drivers={drivers}
-          trips={trips}
+          trips={scheduleTrips}
           onTripClick={setSelectedTripId}
           updateTrip={handleUpdateTrip}
+          onboardingData={onboardingResponse?.data}
+          isLoading={scheduleLoading}
+          onFilterChange={handleScheduleFilterChange}
         />
       )}
 

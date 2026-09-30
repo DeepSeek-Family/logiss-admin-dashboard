@@ -1,14 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
   MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
-import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput } from '@/shared/components/ui';
+import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput, loadGoogleMapsScript } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
 import { isMongoId } from '../../bookings/utils/helpers';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
+
+const parseCoords = (val: any): [number, number] | null => {
+  if (!val) return null;
+  if (Array.isArray(val)) {
+    if (val.length === 2 && !isNaN(Number(val[0])) && !isNaN(Number(val[1]))) {
+      return [Number(val[0]), Number(val[1])];
+    }
+  }
+  if (typeof val === 'string') {
+    const m = val.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    if (m) {
+      return [parseFloat(m[1]), parseFloat(m[2])];
+    }
+  }
+  return null;
+};
+
+const TripRouteGoogleMap: React.FC<{
+  pickupLoc: any;
+  dropoffLoc: any;
+  stopsLoc?: any[];
+}> = ({ pickupLoc, dropoffLoc, stopsLoc = [] }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    loadGoogleMapsScript().then(() => {
+      if (!active || !mapRef.current || !(window as any).google?.maps) return;
+
+      const pCoords = parseCoords(pickupLoc) || [23.7806, 90.4065];
+      const dCoords = parseCoords(dropoffLoc) || [23.7944, 90.4138];
+      const parsedStops = stopsLoc.map(parseCoords).filter(Boolean) as [number, number][];
+
+      const bounds = new (window as any).google.maps.LatLngBounds();
+      const map = new (window as any).google.maps.Map(mapRef.current, {
+        zoom: 13,
+        center: { lat: pCoords[0], lng: pCoords[1] },
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+
+      const routePath: any[] = [];
+
+      // Pickup Marker (Blue)
+      const pLatLng = { lat: pCoords[0], lng: pCoords[1] };
+      bounds.extend(pLatLng);
+      routePath.push(pLatLng);
+      new (window as any).google.maps.Marker({
+        position: pLatLng,
+        map,
+        title: 'Pickup Location',
+        icon: {
+          path: (window as any).google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#2969CD',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2,
+        },
+      });
+
+      // Stops Markers (Green)
+      parsedStops.forEach((sCoord, i) => {
+        const sLatLng = { lat: sCoord[0], lng: sCoord[1] };
+        bounds.extend(sLatLng);
+        routePath.push(sLatLng);
+        new (window as any).google.maps.Marker({
+          position: sLatLng,
+          map,
+          title: `Stop ${i + 1}`,
+          icon: {
+            path: (window as any).google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#10B981',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2,
+          },
+        });
+      });
+
+      // Dropoff Marker (Red)
+      const dLatLng = { lat: dCoords[0], lng: dCoords[1] };
+      bounds.extend(dLatLng);
+      routePath.push(dLatLng);
+      new (window as any).google.maps.Marker({
+        position: dLatLng,
+        map,
+        title: 'Drop-off Location',
+        icon: {
+          path: (window as any).google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#EF4444',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2,
+        },
+      });
+
+      // Polyline route path
+      new (window as any).google.maps.Polyline({
+        path: routePath,
+        geodesic: true,
+        strokeColor: '#2969CD',
+        strokeOpacity: 0.85,
+        strokeWeight: 4,
+        map,
+      });
+
+      map.fitBounds(bounds);
+    }).catch(err => console.warn('Google Maps load failed', err));
+
+    return () => { active = false; };
+  }, [pickupLoc, dropoffLoc, stopsLoc]);
+
+  return <div ref={mapRef} className="w-full h-52 rounded-xl border border-line-2 shadow-sm my-4 overflow-hidden" />;
+};
 
 interface TripDetailsModalProps {
   trip: any;
@@ -496,21 +614,29 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                     </div>
                   </div>
                 ) : (
-                  <div className="relative pl-4 space-y-6">
-                    <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-line-2" />
-                    <div className="relative z-10 flex gap-4">
-                      <div className="w-5 h-5 rounded-full bg-white border-2 border-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-2 h-2 rounded-full bg-primary" /></div>
-                      <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Pickup Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.pickup}</p></div>
-                    </div>
-                    {((Array.isArray(trip.stops) && trip.stops.length ? trip.stops : (trip.stop ? [trip.stop] : [])) as string[]).map((s, i) => (
-                      <div key={i} className="relative z-10 flex gap-4">
-                        <div className="w-5 h-5 rounded-full bg-white border-2 border-accent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-1.5 h-1.5 bg-accent" /></div>
-                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Stop {i + 1}</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{s}</p></div>
+                  <div>
+                    <TripRouteGoogleMap
+                      pickupLoc={trip.pickupLocationRaw || trip.pickupLocation || trip.pickup}
+                      dropoffLoc={trip.dropOffLocationRaw || trip.dropOffLocation || trip.dropoff}
+                      stopsLoc={trip.stopAddressRaw ? (Array.isArray(trip.stopAddressRaw) && typeof trip.stopAddressRaw[0] === 'number' ? [trip.stopAddressRaw] : trip.stopAddressRaw) : (trip.stops || [])}
+                    />
+
+                    <div className="relative pl-4 space-y-6">
+                      <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-line-2" />
+                      <div className="relative z-10 flex gap-4">
+                        <div className="w-5 h-5 rounded-full bg-white border-2 border-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-2 h-2 rounded-full bg-primary" /></div>
+                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Pickup Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.pickup}</p></div>
                       </div>
-                    ))}
-                    <div className="relative z-10 flex gap-4">
-                      <div className="w-5 h-5 rounded-full bg-white border-2 border-urgent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><MapPin size={10} className="text-urgent" /></div>
-                      <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Drop-off Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.dropoff}</p></div>
+                      {((Array.isArray(trip.stops) && trip.stops.length ? trip.stops : (trip.stop ? [trip.stop] : [])) as string[]).map((s, i) => (
+                        <div key={i} className="relative z-10 flex gap-4">
+                          <div className="w-5 h-5 rounded-full bg-white border-2 border-accent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><div className="w-1.5 h-1.5 bg-accent" /></div>
+                          <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Stop {i + 1}</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{s}</p></div>
+                        </div>
+                      ))}
+                      <div className="relative z-10 flex gap-4">
+                        <div className="w-5 h-5 rounded-full bg-white border-2 border-urgent flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><MapPin size={10} className="text-urgent" /></div>
+                        <div className="flex-1"><p className="text-xs text-ink-4 mb-0.5">Drop-off Location</p><p className="text-sm font-medium text-ink leading-snug max-w-lg">{trip.dropoff}</p></div>
+                      </div>
                     </div>
                   </div>
                 )}

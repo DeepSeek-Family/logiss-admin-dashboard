@@ -10,7 +10,7 @@ interface OrgSettingsFormProps {
 }
 
 const inputClass =
-  'w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-xl text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-ink-4 shadow-2xs';
+  'w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-ink-4 shadow-2xs';
 
 const Field = ({
   label,
@@ -25,7 +25,7 @@ const Field = ({
 }) => (
   <div className="space-y-1">
     <div className="flex items-center justify-between">
-      <label className="block text-xs font-semibold text-ink">
+      <label className="text-sm">
         {label}
       </label>
       {helper && <span className="text-xs text-ink-4">{helper}</span>}
@@ -147,7 +147,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-ink">
+            <label className="block text-sm text-ink">
               Headquarters Address & Hub Location
             </label>
             <div className="relative group">
@@ -157,7 +157,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               />
               <textarea
                 rows={3}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-xl text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none placeholder:text-ink-4 shadow-2xs"
+                className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none placeholder:text-ink-4 shadow-2xs"
                 value={orgSettings.address}
                 onChange={set('address')}
                 placeholder="2200 Broad St, Suite 400, Richmond VA 23230"

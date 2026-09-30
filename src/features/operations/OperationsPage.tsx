@@ -7,7 +7,7 @@ import {
 import { StatCard } from '@/shared/components/ui';
 import { opsStats } from '@/data/mockData';
 import { useTrips } from '@/hooks/useTrips';
-import { useReports } from '@/hooks/useReports';
+import { useGetAllReportsQuery } from '@/redux/apivtwo/dashboardOnvording';
 
 import {
   ActiveTripsTable,
@@ -21,7 +21,8 @@ const Operations = ({ role }: { role?: string | null }) => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading } = useTrips();
-  const { reports, loading: reportsLoading } = useReports();
+  const { data: reportsData, isLoading: reportsLoading } = useGetAllReportsQuery();
+  const reports = reportsData || [];
 
   const loading = tripsLoading || reportsLoading;
 
