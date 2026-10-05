@@ -314,8 +314,8 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <DateField label="From" value={startDate} onChange={setStartDate} max={endDate} />
-          <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} />
+          {/* <DateField label="From" value={startDate} onChange={setStartDate} max={endDate} />
+          <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} /> */}
           <Can role={role} perm="finance.export">
             <Button variant="outline" size="sm" icon={Download} onClick={exportLedger} disabled={isExporting}>
               {isExporting ? 'Exporting...' : 'Export Excel / CSV'}
