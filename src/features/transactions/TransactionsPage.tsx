@@ -13,6 +13,7 @@ import {
   TransactionsTable
 } from '@/features/transactions';
 import { Can } from '@/features/userAccess';
+import { useGetPaymentsQuery, useLazyExportPaymentsQuery } from '@/redux/api/transitionApi';
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -100,9 +101,50 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     setDateRange(from, to);
   };
 
-  // Generate transactions based on trips
+  const { data: paymentsResponse, isLoading: paymentsLoading } = useGetPaymentsQuery({
+    search: search || undefined,
+    paymentStatus: filter !== 'all' ? filter : undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
+
+  const [triggerExport, { isLoading: isExporting }] = useLazyExportPaymentsQuery();
+
+  const livePayments = useMemo(() => {
+    if (!paymentsResponse?.data) return [];
+    return paymentsResponse.data.map((p: any) => {
+      const user = p.userId;
+      const userName = typeof user === 'object' && user
+        ? [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ')
+        : 'Unknown Rider';
+      const booking = p.bookingId;
+      const bId = typeof booking === 'object' && booking ? (booking.id || booking._id) : (booking || '');
+
+      return {
+        id: `TXN-${p._id.slice(-6).toUpperCase()}`,
+        rawId: p._id,
+        tripId: bId || p._id,
+        date: p.createdAt || p.updatedAt,
+        rider: {
+          name: userName,
+          initials: userName.split(' ').map((n: string) => n[0] || '').join('').toUpperCase() || 'R',
+          email: typeof user === 'object' ? user?.email : '',
+          contact: typeof user === 'object' ? user?.contact : '',
+        },
+        amount: p.price || 0,
+        copay: 0,
+        countyShare: p.price || 0,
+        status: (p.paymentStatus || 'paid').toLowerCase(),
+        method: 'Online Payment',
+        fundingSource: 'Self-Pay',
+        createdAt: p.createdAt,
+      };
+    });
+  }, [paymentsResponse]);
+
+  // Generate transactions based on trips & backend payments
   const transactions = useMemo(() => {
-    return (trips || []).map((t: any) => {
+    const tripTxns = (trips || []).map((t: any) => {
       const copay = t.passengerCopay != null ? t.passengerCopay : (t.copay || 0);
       const countyShare = t.fundingSourceCharge != null
         ? t.fundingSourceCharge
@@ -132,8 +174,16 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         dropoff: t.dropoff,
         paymentStatus: t.paymentStatus,
       };
-    }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [trips]);
+    });
+
+    if (livePayments.length > 0) {
+      const existingTripIds = new Set(livePayments.map((lp: any) => lp.tripId));
+      const filteredTripTxns = tripTxns.filter((tt: any) => !existingTripIds.has(tt.tripId));
+      return [...livePayments, ...filteredTripTxns].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    return tripTxns.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [trips, livePayments]);
 
   const filteredData = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -250,7 +300,28 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     downloadCSV(`Invoice_${source.replace(/[^a-z0-9]+/gi, '-')}_${today}.csv`, lines);
   };
 
-  const exportLedger = () => {
+  const exportLedger = async () => {
+    try {
+      const result = await triggerExport({
+        search: search || undefined,
+        paymentStatus: filter !== 'all' ? filter : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      }).unwrap();
+
+      if (result) {
+        const today = new Date().toISOString().split('T')[0];
+        const range = startDate || endDate
+          ? `${startDate || 'start'}_to_${endDate || 'end'}`
+          : today;
+        downloadCSV(`LOGISS_Finance_Ledger_${range}.csv`, result);
+        toast.success('Payment export downloaded successfully.');
+        return;
+      }
+    } catch {
+      // Fallback to client-side CSV generation if backend export API is unavailable or errors
+    }
+
     if (filteredData.length === 0) {
       toast.error('No transactions in this date range to export.');
       return;
@@ -295,8 +366,8 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           <DateField label="From" value={startDate} onChange={setStartDate} max={endDate} />
           <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} />
           <Can role={role} perm="finance.export">
-            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger}>
-              Export CSV
+            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger} disabled={isExporting}>
+              {isExporting ? 'Exporting...' : 'Export CSV'}
             </Button>
           </Can>
         </div>
