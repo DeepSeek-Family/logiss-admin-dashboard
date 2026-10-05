@@ -1,14 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Download, Clock, RotateCcw, Loader2, DollarSign, Receipt, FileText } from 'lucide-react';
-import { Button, StatCard } from '@/shared/components/ui';
+import { Download, Loader2 } from 'lucide-react';
+import { Button } from '@/shared/components/ui';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTrips } from '@/hooks/useTrips';
-import { money } from '@/utils/helpers';
 import { usePricing, findFundingPolicy } from '@/hooks/usePricing';
 
 import {
-  FundingAllocation,
   RefundModal,
   TransactionsTable
 } from '@/features/transactions';
@@ -70,7 +68,6 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   const { trips, loading } = useTrips();
   const { pricing } = usePricing();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState<'transactions' | 'invoices'>('transactions');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [showRefundModal, setShowRefundModal] = useState<any>(null);
@@ -200,30 +197,6 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     });
   }, [transactions, search, filter, startDate, endDate]);
 
-  // Calculate totals
-  const totalRevenue = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-  const totalRefunds = filteredData.filter((t: any) => t.status === 'refunded').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-  const totalPending = filteredData.filter((t: any) => t.status === 'pending').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-  const copayTotal = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.copay, 0);
-  const countyTotal = filteredData.filter((t: any) => t.status === 'paid').reduce((acc: number, curr: any) => acc + curr.countyShare, 0);
-
-  // Per funding-source roll-up for invoicing
-  const bySource = useMemo(() => {
-    const m: Record<string, any> = {};
-    filteredData.forEach((t: any) => {
-      const s = t.fundingSource || 'Self-Pay';
-      if (!m[s]) m[s] = { source: s, count: 0, billed: 0, copay: 0, county: 0, paid: 0, pending: 0 };
-      m[s].count++;
-      m[s].billed += t.amount;
-      m[s].copay += t.copay;
-      m[s].county += t.countyShare;
-      if (t.status === 'paid') m[s].paid += t.amount;
-      if (t.status === 'pending') m[s].pending += t.amount;
-    });
-    return Object.values(m).sort((a: any, b: any) => b.billed - a.billed);
-  }, [filteredData]);
-
   const downloadCSV = (filename: string, content: string) => {
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -278,28 +251,6 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     return [headers.join(','), ...body].join('\n');
   };
 
-  const generateInvoice = (source: string) => {
-    const rows = filteredData.filter((t: any) => (t.fundingSource || 'Self-Pay') === source);
-    if (rows.length === 0) return;
-    const billed = rows.reduce((s: number, t: any) => s + (t.amount || 0), 0);
-    const copay = rows.reduce((s: number, t: any) => s + (t.copay || 0), 0);
-    const county = rows.reduce((s: number, t: any) => s + (t.countyShare || 0), 0);
-    const today = new Date().toISOString().split('T')[0];
-    const lines = [
-      `Invoice — ${source}`,
-      `Generated,${today}`,
-      `Trips,${rows.length}`,
-      `Note,Passenger Copay and Payer Charge are separate streams`,
-      '',
-      rowsToCsv(rows, source),
-      '',
-      `TOTALS — Payer Charge,${county.toFixed(2)}`,
-      `TOTALS — Passenger Copay,${copay.toFixed(2)}`,
-      `TOTALS — Payer Charge (invoice),${billed.toFixed(2)}`,
-    ].join('\n');
-    downloadCSV(`Invoice_${source.replace(/[^a-z0-9]+/gi, '-')}_${today}.csv`, lines);
-  };
-
   const exportLedger = async () => {
     try {
       const result = await triggerExport({
@@ -314,7 +265,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         const range = startDate || endDate
           ? `${startDate || 'start'}_to_${endDate || 'end'}`
           : today;
-        downloadCSV(`LOGISS_Finance_Ledger_${range}.csv`, result);
+        downloadCSV(`LOGISS_Transactions_${range}.csv`, result);
         toast.success('Payment export downloaded successfully.');
         return;
       }
@@ -330,7 +281,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     const range = startDate || endDate
       ? `${startDate || 'start'}_to_${endDate || 'end'}`
       : today;
-    downloadCSV(`LOGISS_Finance_Ledger_${range}.csv`, rowsToCsv(filteredData));
+    downloadCSV(`LOGISS_Transactions_${range}.csv`, rowsToCsv(filteredData));
   };
 
   const handleRefund = () => {
@@ -340,12 +291,12 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     setShowRefundModal(null);
   };
 
-  if (loading && trips.length === 0) {
+  if ((loading || paymentsLoading) && transactions.length === 0) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-ink-4">Compiling Finance Data...</p>
+          <p className="text-sm text-ink-4">Loading Transactions...</p>
         </div>
       </div>
     );
@@ -356,9 +307,9 @@ export const Transactions = ({ role }: { role?: string | null }) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="type-page-title">Finance &amp; Billing</h1>
+          <h1 className="type-page-title">Transactions</h1>
           <p className="text-xs text-ink-3 font-semibold mt-1">
-            Revenue reconciliation, claims processing, and payer invoicing
+            Payment transactions data and status tracking
           </p>
         </div>
 
@@ -367,165 +318,24 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} />
           <Can role={role} perm="finance.export">
             <Button variant="outline" size="sm" icon={Download} onClick={exportLedger} disabled={isExporting}>
-              {isExporting ? 'Exporting...' : 'Export CSV'}
+              {isExporting ? 'Exporting...' : 'Export Excel / CSV'}
             </Button>
           </Can>
         </div>
       </div>
 
-      {/* Sub-View Switcher */}
-      <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-line-2 shadow-sm w-fit">
-        <button
-          type="button"
-          onClick={() => setView('transactions')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            view === 'transactions'
-              ? 'bg-primary text-white shadow-xs'
-              : 'text-ink-3 hover:text-ink hover:bg-bg'
-          }`}
-        >
-          <Receipt size={14} />
-          <span>Transactions &amp; Ledger</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setView('invoices')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            view === 'invoices'
-              ? 'bg-primary text-white shadow-xs'
-              : 'text-ink-3 hover:text-ink hover:bg-bg'
-          }`}
-        >
-          <FileText size={14} />
-          <span>Payer Invoices ({bySource.length})</span>
-        </button>
-      </div>
-
-      {/* VIEW 1: TRANSACTIONS & GENERAL LEDGER */}
-      {view === 'transactions' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Top 3 KPI StatCards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              label="Settled Revenue"
-              value={money(totalRevenue)}
-              icon={DollarSign}
-              accent="primary"
-              trend="+12.4%"
-              sub="net collections"
-            />
-            <StatCard
-              label="Pending Claims"
-              value={money(totalPending)}
-              icon={Clock}
-              accent="warning"
-              sub="awaiting review"
-            />
-            <StatCard
-              label="Processed Refunds"
-              value={money(totalRefunds)}
-              icon={RotateCcw}
-              accent="urgent"
-              sub="returned to payer"
-            />
-          </div>
-
-          {/* Primary Transaction Table */}
-          <TransactionsTable
-            search={search}
-            setSearch={setSearch}
-            filter={filter}
-            setFilter={setFilter}
-            filteredData={filteredData}
-            onRefundClick={(item: any) => setShowRefundModal(item)}
-            onExportClick={(item: any) => {
-              downloadCSV(`LOGISS_${item.id}_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv([item]));
-            }}
-          />
-        </div>
-      )}
-
-      {/* VIEW 2: PAYER INVOICES & SETTLEMENTS */}
-      {view === 'invoices' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Funding Stream Breakdown */}
-          <FundingAllocation
-            countyTotal={countyTotal}
-            copayTotal={copayTotal}
-            totalRevenue={totalRevenue}
-          />
-
-          {/* Payer Invoicing Matrix */}
-          <div className="bg-white border border-line-2 rounded-2xl shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
-              <div>
-                <h3 className="text-sm font-bold text-ink">Invoices by Payer</h3>
-                <p className="text-xs text-ink-4 mt-0.5">Generate and download itemized billing statement per payer</p>
-              </div>
-              <span className="text-xs font-semibold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
-                {bySource.length} active payers
-              </span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-bg/40 border-b border-line-2">
-                  <tr>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3">Payer</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Trips</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Total Billed</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Passenger Copay</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Payer Charge</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Paid</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Pending</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line-2">
-                  {bySource.map((s: any) => (
-                    <tr key={s.source} className="hover:bg-bg/30 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <span className="text-xs font-bold text-ink">{s.source}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-center text-ink-3">
-                        <span className="px-2 py-0.5 rounded-md bg-bg border border-line-2 font-medium">
-                          {s.count} rides
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs font-bold text-ink text-right whitespace-nowrap">
-                        {money(s.billed)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-ink-3 text-right whitespace-nowrap">
-                        {money(s.copay)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs font-semibold text-primary text-right whitespace-nowrap">
-                        {money(s.county)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-accent font-semibold text-right whitespace-nowrap">
-                        {money(s.paid)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-warning font-semibold text-right whitespace-nowrap">
-                        {money(s.pending)}
-                      </td>
-                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => generateInvoice(s.source)}
-                          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-primary bg-primary/5 hover:bg-primary hover:text-white transition-all shadow-2xs"
-                        >
-                          <Download size={13} />
-                          <span>Invoice CSV</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Primary Transaction Table with Status Filtering */}
+      <TransactionsTable
+        search={search}
+        setSearch={setSearch}
+        filter={filter}
+        setFilter={setFilter}
+        filteredData={filteredData}
+        onRefundClick={(item: any) => setShowRefundModal(item)}
+        onExportClick={(item: any) => {
+          downloadCSV(`LOGISS_${item.id}_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv([item]));
+        }}
+      />
 
       {/* Refund Modal */}
       {showRefundModal && (
