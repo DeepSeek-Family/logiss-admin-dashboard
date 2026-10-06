@@ -43,7 +43,7 @@ const UserAccess = ({ role }: { role?: string | null }) => {
           <h1 className="type-page-title">User Management</h1>
           <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage Admin, Driver &amp; Customer access</p>
         </div>
-        <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>Invite User</Button>
+        <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>Add Dispatcher</Button>
       </div>
 
       <UsersTable

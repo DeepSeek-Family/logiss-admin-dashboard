@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, Shield, Building2, Check } from 'lucide-react';
+import { Users, Check, Eye, EyeOff } from 'lucide-react';
 import { Button, Badge } from '@/shared/components/ui';
-import { PERMISSION_GROUPS, ALL_PERMISSIONS, DEFAULT_DISPATCH_PERMISSIONS } from '../permissions';
-import { useFacilities } from '@/hooks/useFacilities';
+import { PERMISSION_GROUPS, ALL_PERMISSIONS } from '../permissions';
 
 interface InviteData {
   name: string;
@@ -22,25 +21,9 @@ interface InviteUserModalProps {
   onClose: () => void;
 }
 
-const ROLES = [
-  { id: 'admin', label: 'Admin', icon: Shield, desc: 'Full system access — no restrictions.' },
-  { id: 'dispatcher', label: 'Dispatch', icon: Users, desc: 'Permission-based — pick exactly what they can do.' },
-  { id: 'facility', label: 'Facility User', icon: Building2, desc: 'Client-side — only their assigned facility’s data.' },
-];
-
 export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }: InviteUserModalProps) => {
+  const [showPassword, setShowPassword] = useState(false);
   const perms = inviteData.permissions || [];
-  const { activeFacilityNames: FACILITIES } = useFacilities();
-
-  const selectRole = (role: string) => {
-    setInviteData({
-      ...inviteData,
-      role,
-      // Seed dispatch with a sensible starter set; clear for others.
-      permissions: role === 'dispatcher' ? (perms.length ? perms : [...DEFAULT_DISPATCH_PERMISSIONS]) : [],
-      facility: role === 'facility' ? (inviteData.facility || FACILITIES[0]) : undefined,
-    });
-  };
 
   const togglePerm = (key: string) => {
     setInviteData({
@@ -63,9 +46,14 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
     <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
-        <div className="px-6 py-5 border-b border-line-2 shrink-0">
-          <h3 className="text-xl font-semibold text-ink">Invite New User</h3>
-          <p className="text-sm text-ink-3 mt-0.5">Pick a role and (for Dispatch) assign exactly what they can access.</p>
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-line-2 shrink-0 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-ink flex items-center gap-2">
+              <Users className="text-primary" size={22} /> Add New Dispatcher
+            </h3>
+            <p className="text-sm text-ink-3 mt-0.5">Fill in dispatcher details and select assigned page permissions.</p>
+          </div>
         </div>
 
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
@@ -73,7 +61,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
             {/* Name + Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-ink-4 mb-1.5">Full Name</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Full Name</label>
                 <input
                   type="text" required value={inviteData.name}
                   onChange={e => setInviteData({ ...inviteData, name: e.target.value })}
@@ -82,7 +70,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                 />
               </div>
               <div>
-                <label className="block text-xs text-ink-4 mb-1.5">Email Address</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Email Address</label>
                 <input
                   type="email" required value={inviteData.email}
                   onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
@@ -95,122 +83,93 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
             {/* Contact + Password */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-ink-4 mb-1.5">Contact Number</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Contact Number</label>
                 <input
-                  type="tel" value={inviteData.contact || ''}
+                  type="tel" required value={inviteData.contact || ''}
                   onChange={e => setInviteData({ ...inviteData, contact: e.target.value })}
                   className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
                   placeholder="+8801609502136"
                 />
               </div>
               <div>
-                <label className="block text-xs text-ink-4 mb-1.5">Password</label>
-                <input
-                  type="password" value={inviteData.password || ''}
-                  onChange={e => setInviteData({ ...inviteData, password: e.target.value })}
-                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                  placeholder="Set initial password"
-                />
-              </div>
-            </div>
-
-            {/* Role selection */}
-            <div>
-              <label className="block text-xs text-ink-4 mb-1.5">Role</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {ROLES.map(r => (
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={inviteData.password || ''}
+                    onChange={e => setInviteData({ ...inviteData, password: e.target.value })}
+                    className="w-full bg-bg border border-line rounded-xl pl-4 pr-10 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                    placeholder="Set password"
+                  />
                   <button
-                    type="button" key={r.id} onClick={() => selectRole(r.id)}
-                    className={`text-left p-3 rounded-xl border-2 transition-all ${inviteData.role === r.id ? 'border-primary bg-primary-tint/20' : 'border-line-2 bg-bg hover:border-primary/40'}`}
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink transition-colors p-1"
+                    title={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    <r.icon size={18} className={inviteData.role === r.id ? 'text-primary' : 'text-ink-4'} />
-                    <p className={`text-xs font-semibold mt-2 ${inviteData.role === r.id ? 'text-primary' : 'text-ink'}`}>{r.label}</p>
-                    <p className="text-xs text-ink-4 mt-0.5 leading-snug">{r.desc}</p>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
-                ))}
+                </div>
               </div>
             </div>
-
-            {/* Admin note */}
-            {inviteData.role === 'admin' && (
-              <div className="flex items-center gap-2 text-xs font-medium text-ink-3 bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
-                <Shield size={14} className="text-primary" /> Admins have full, unrestricted access to every module.
-              </div>
-            )}
-
-            {/* Facility assignment */}
-            {inviteData.role === 'facility' && (
-              <div>
-                <label className="block text-xs text-ink-4 mb-1.5">Assigned Facility / Program</label>
-                <select
-                  value={inviteData.facility || ''}
-                  onChange={e => setInviteData({ ...inviteData, facility: e.target.value })}
-                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none cursor-pointer"
-                >
-                  {FACILITIES.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <p className="text-xs text-ink-4 mt-1.5">This user will only see rides &amp; data for the selected facility.</p>
-              </div>
-            )}
 
             {/* Dispatch permission matrix */}
-            {inviteData.role === 'dispatcher' && (
-              <div className="border border-line-2 rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-line-2 bg-bg/40">
-                  <div>
-                    <p className="text-sm font-semibold text-ink">Permissions</p>
-                    <p className="text-xs text-ink-4">{perms.length} of {ALL_PERMISSIONS.length} enabled</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setAll(true)} className="text-xs font-semibold text-primary hover:underline">Select all</button>
-                    <button type="button" onClick={() => setAll(false)} className="text-xs font-semibold text-ink-4 hover:underline">Clear</button>
-                  </div>
+            <div className="border border-line-2 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line-2 bg-bg/40">
+                <div>
+                  <p className="text-sm font-semibold text-ink">Page Permissions</p>
+                  <p className="text-xs text-ink-4">{perms.length} of {ALL_PERMISSIONS.length} pages enabled</p>
                 </div>
-                <div className="max-h-[40vh] overflow-y-auto divide-y divide-line-2">
-                  {PERMISSION_GROUPS.map(g => {
-                    const groupKeys = g.perms.map(p => p.key);
-                    const allOn = groupKeys.every(k => perms.includes(k));
-                    const someOn = groupKeys.some(k => perms.includes(k));
-                    return (
-                      <div key={g.group} className="p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">{g.group}</span>
-                          <button
-                            type="button" onClick={() => toggleGroup(groupKeys)}
-                            className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-all ${allOn ? 'bg-primary text-white border-primary' : someOn ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-ink-4 border-line-2 hover:bg-bg'}`}
-                          >
-                            {allOn ? 'All on' : 'Select group'}
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                          {g.perms.map(p => {
-                            const on = perms.includes(p.key);
-                            return (
-                              <button
-                                type="button" key={p.key} onClick={() => togglePerm(p.key)}
-                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all ${on ? 'border-primary/30 bg-primary-tint/20' : 'border-line-2 bg-white hover:bg-bg'}`}
-                              >
-                                <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${on ? 'bg-primary border-primary text-white' : 'border-line-2 bg-white'}`}>
-                                  {on && <Check size={11} strokeWidth={3} />}
-                                </span>
-                                <span className={`text-xs font-medium ${on ? 'text-ink' : 'text-ink-3'}`}>{p.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setAll(true)} className="text-xs font-semibold text-primary hover:underline">Select all</button>
+                  <button type="button" onClick={() => setAll(false)} className="text-xs font-semibold text-ink-4 hover:underline">Clear</button>
                 </div>
               </div>
-            )}
+              <div className="max-h-[40vh] overflow-y-auto divide-y divide-line-2">
+                {PERMISSION_GROUPS.map(g => {
+                  const groupKeys = g.perms.map(p => p.key);
+                  const allOn = groupKeys.every(k => perms.includes(k));
+                  const someOn = groupKeys.some(k => perms.includes(k));
+                  return (
+                    <div key={g.group} className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">{g.group}</span>
+                        <button
+                          type="button" onClick={() => toggleGroup(groupKeys)}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-all ${allOn ? 'bg-primary text-white border-primary' : someOn ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-ink-4 border-line-2 hover:bg-bg'}`}
+                        >
+                          {allOn ? 'All on' : 'Select group'}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {g.perms.map(p => {
+                          const on = perms.includes(p.key);
+                          return (
+                            <button
+                              type="button" key={p.key} onClick={() => togglePerm(p.key)}
+                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all ${on ? 'border-primary/30 bg-primary-tint/20' : 'border-line-2 bg-white hover:bg-bg'}`}
+                            >
+                              <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${on ? 'bg-primary border-primary text-white' : 'border-line-2 bg-white'}`}>
+                                {on && <Check size={11} strokeWidth={3} />}
+                              </span>
+                              <span className={`text-xs font-medium ${on ? 'text-ink font-semibold' : 'text-ink-3'}`}>{p.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 px-6 py-4 border-t border-line-2 shrink-0">
-            {inviteData.role === 'dispatcher' && <Badge variant="primary" className="text-xs">{perms.length} permissions</Badge>}
+            <Badge variant="primary" className="text-xs">{perms.length} page permissions selected</Badge>
             <div className="flex gap-3 ml-auto">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit" variant="primary">Send Invite</Button>
+              <Button type="submit" variant="primary">Add Dispatcher</Button>
             </div>
           </div>
         </form>

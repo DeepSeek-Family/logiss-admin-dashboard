@@ -24,7 +24,7 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
           </thead>
           <tbody className="divide-y divide-line-2">
             {users.map((user: any) => (
-              <tr key={user.id} className={`hover:bg-bg/50 transition-colors group ${user.status === 'inactive' ? 'opacity-50 grayscale' : ''}`}>
+              <tr key={user.id} className={`hover:bg-bg/50 transition-colors group ${user.status === 'inactive' ? 'bg-bg/40' : ''}`}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
                     <Avatar initials={user.name.split(' ').map((n: string) => n[0]).join('')} size="sm" />
@@ -64,7 +64,7 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant={user.status === 'active' ? 'accent' : 'neutral'} className="uppercase">
+                  <Badge variant={user.status === 'active' ? 'accent' : 'neutral'} className="uppercase font-semibold">
                     {user.status}
                   </Badge>
                 </td>
@@ -74,11 +74,12 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                 <td className="px-6 py-4 text-right">
                   {user.id !== 'LOGISS-882' && (
                     <button
+                      type="button"
                       onClick={() => onToggleStatus(user.id)}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all border opacity-0 group-hover:opacity-100 ${
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border shadow-2xs ${
                         user.status === 'active'
-                          ? 'text-urgent border-urgent hover:bg-urgent hover:text-white'
-                          : 'text-accent border-accent hover:bg-accent hover:text-white'
+                          ? 'bg-urgent/10 text-urgent border-urgent/30 hover:bg-urgent hover:text-white'
+                          : 'bg-accent/10 text-accent border-accent/30 hover:bg-accent hover:text-white'
                       }`}
                     >
                       {user.status === 'active' ? 'Revoke Access' : 'Restore Access'}
