@@ -22,9 +22,10 @@
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.6.0",
-    "react-redux": "^9.3.0",
     "react-leaflet": "^5.0.0",
-    "react-router-dom": "^7.14.2"
+    "react-redux": "^9.3.0",
+    "react-router-dom": "^7.14.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

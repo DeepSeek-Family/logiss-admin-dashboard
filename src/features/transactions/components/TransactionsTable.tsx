@@ -112,7 +112,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   <div className="inline-flex items-center justify-end gap-1">
                     <button
                       type="button"
-                      title="Export CSV"
+                      title="Export Excel"
                       onClick={() => onExportClick(txn)}
                       className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     >

@@ -3,6 +3,7 @@ import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 import { useTrips } from '@/hooks/useTrips';
 import { usePricing, findFundingPolicy } from '@/hooks/usePricing';
 
@@ -197,61 +198,61 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     });
   }, [transactions, search, filter, startDate, endDate]);
 
-  const downloadCSV = (filename: string, content: string) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+  const exportToExcel = (rows: any[], filename: string, sourceName?: string) => {
+    const policy = sourceName ? findFundingPolicy(sourceName, pricing) : null;
+    const headers = policy?.reportColumns?.length ? policy.reportColumns : LEDGER_COLUMNS;
 
-  const cellForColumn = (col: string, t: any): string => {
-    switch (col) {
-      case 'Trip ID': return t.tripId;
-      case 'Date': return new Date(t.date).toLocaleDateString();
-      case 'Rider': return `"${t.rider?.name || 'Unknown'}"`;
-      case 'Miles': return String(t.miles ?? '');
-      case 'Calculated Miles': return String(t.calculatedMiles ?? t.miles ?? '');
-      case 'Actual Miles': return String(t.actualMiles ?? '');
-      case 'Inside/Outside': return t.insideCounty === false ? 'Outside' : 'Inside';
-      case 'Billing Class': return t.billingClassName || t.billingClassId || '';
-      case 'Driver': return `"${t.driverName || t.driver?.name || ''}"`;
-      case 'Pickup': return `"${t.pickup || ''}"`;
-      case 'Dropoff': return `"${t.dropoff || ''}"`;
-      case 'Route': return `"${t.pickup || ''} → ${t.dropoff || ''}"`;
-      case 'Passenger Copay': return (t.copay || 0).toFixed(2);
-      case 'Payer Charge':
-      case 'Funding Source Charge': return (t.countyShare || 0).toFixed(2);
-      case 'Auth ID': return `"${t.authId || 'N/A'}"`;
-      case 'Status': return t.status;
-      default: return '';
-    }
-  };
+    const excelData = rows.map((t: any) => {
+      const row: Record<string, any> = {};
+      headers.forEach(h => {
+        if (h === 'Invoice #') row[h] = t.id || '';
+        else if (h === 'Trip ID') row[h] = t.tripId || '';
+        else if (h === 'Date') row[h] = t.date ? new Date(t.date).toLocaleDateString() : '';
+        else if (h === 'Rider') row[h] = t.rider?.name || 'Unknown';
+        else if (h === 'Pickup') row[h] = t.pickup || '';
+        else if (h === 'Dropoff') row[h] = t.dropoff || '';
+        else if (h === 'Route') row[h] = `${t.pickup || ''} → ${t.dropoff || ''}`;
+        else if (h === 'Payer' || h === 'Funding Source') row[h] = t.fundingSource || '';
+        else if (h === 'Auth ID') row[h] = t.authId || 'N/A';
+        else if (h === 'Payer Charge' || h === 'Funding Source Charge') row[h] = Number((t.countyShare || 0).toFixed(2));
+        else if (h === 'Passenger Copay') row[h] = Number((t.copay || 0).toFixed(2));
+        else if (h === 'Status') row[h] = t.status || '';
+        else if (h === 'Method') row[h] = t.method || '';
+        else if (h === 'Miles') row[h] = t.miles ?? '';
+        else if (h === 'Calculated Miles') row[h] = t.calculatedMiles ?? t.miles ?? '';
+        else if (h === 'Actual Miles') row[h] = t.actualMiles ?? '';
+        else if (h === 'Inside/Outside') row[h] = t.insideCounty === false ? 'Outside' : 'Inside';
+        else if (h === 'Billing Class') row[h] = t.billingClassName || t.billingClassId || '';
+        else if (h === 'Driver') row[h] = t.driverName || t.driver?.name || '';
+        else row[h] = '';
+      });
+      return row;
+    });
 
-  const rowsToCsv = (rows: any[], sourceName?: string) => {
-    const policy = sourceName
-      ? findFundingPolicy(sourceName, pricing)
-      : null;
-    const headers = policy?.reportColumns?.length
-      ? policy.reportColumns
-      : LEDGER_COLUMNS;
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
 
-    const body = rows.map((t: any) =>
-      headers.map(h => {
-        if (h === 'Invoice #') return t.id;
-        if (h === 'Payer' || h === 'Funding Source') return `"${t.fundingSource || ''}"`;
-        if (h === 'Method') return `"${t.method || ''}"`;
-        return cellForColumn(h, t) || '';
-      }).join(',')
-    );
-    return [headers.join(','), ...body].join('\n');
+    const colWidths = headers.map(h => {
+      let maxLen = h.length;
+      excelData.forEach(r => {
+        const valStr = String(r[h] ?? '');
+        if (valStr.length > maxLen) maxLen = valStr.length;
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 12), 45) };
+    });
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+    XLSX.writeFile(workbook, filename);
   };
 
   const exportLedger = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const range = startDate || endDate
+      ? `${startDate || 'start'}_to_${endDate || 'end'}`
+      : today;
+    const filename = `LOGISS_Transactions_${range}.xlsx`;
+
     try {
       const result = await triggerExport({
         search: search || undefined,
@@ -260,28 +261,38 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         endDate: endDate || undefined,
       }).unwrap();
 
-      if (result) {
-        const today = new Date().toISOString().split('T')[0];
-        const range = startDate || endDate
-          ? `${startDate || 'start'}_to_${endDate || 'end'}`
-          : today;
-        downloadCSV(`LOGISS_Transactions_${range}.csv`, result);
-        toast.success('Payment export downloaded successfully.');
-        return;
+      if (result && typeof result === 'string') {
+        const clean = result.trim();
+        let wb: XLSX.WorkBook | null = null;
+
+        try {
+          if (clean.startsWith('UEsDB') || clean.startsWith('PK')) {
+            // Base64 encoded XLSX binary file from backend
+            wb = XLSX.read(clean, { type: 'base64' });
+          } else if (clean.includes(',') || clean.includes('\n')) {
+            // Plain text CSV string from backend
+            wb = XLSX.read(clean, { type: 'string' });
+          }
+        } catch {
+          wb = null;
+        }
+
+        if (wb && wb.SheetNames && wb.SheetNames.length > 0) {
+          XLSX.writeFile(wb, filename);
+          toast.success('Payment export downloaded as Excel successfully.');
+          return;
+        }
       }
     } catch {
-      // Fallback to client-side CSV generation if backend export API is unavailable or errors
+      // Fallback to client-side formatted Excel generation
     }
 
     if (filteredData.length === 0) {
       toast.error('No transactions in this date range to export.');
       return;
     }
-    const today = new Date().toISOString().split('T')[0];
-    const range = startDate || endDate
-      ? `${startDate || 'start'}_to_${endDate || 'end'}`
-      : today;
-    downloadCSV(`LOGISS_Transactions_${range}.csv`, rowsToCsv(filteredData));
+    exportToExcel(filteredData, filename);
+    toast.success('Payment export downloaded as Excel successfully.');
   };
 
   const handleRefund = () => {
@@ -318,7 +329,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           <DateField label="To" value={endDate} onChange={setEndDate} min={startDate} /> */}
           <Can role={role} perm="finance.export">
             <Button variant="outline" size="sm" icon={Download} onClick={exportLedger} disabled={isExporting}>
-              {isExporting ? 'Exporting...' : 'Export Excel / CSV'}
+              {isExporting ? 'Exporting...' : 'Export Excel'}
             </Button>
           </Can>
         </div>
@@ -333,7 +344,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         filteredData={filteredData}
         onRefundClick={(item: any) => setShowRefundModal(item)}
         onExportClick={(item: any) => {
-          downloadCSV(`LOGISS_${item.id}_${new Date().toISOString().split('T')[0]}.csv`, rowsToCsv([item]));
+          exportToExcel([item], `LOGISS_${item.id}_${new Date().toISOString().split('T')[0]}.xlsx`);
         }}
       />
 
