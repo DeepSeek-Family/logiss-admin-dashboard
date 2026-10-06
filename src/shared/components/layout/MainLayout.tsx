@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   LayoutDashboard,
   Inbox,
@@ -134,6 +135,17 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const location = useLocation();
   const page = location.pathname;
 
+  const currentUser = useSelector((state: any) => state.auth?.user) || (() => {
+    try {
+      const u = typeof localStorage !== 'undefined' ? localStorage.getItem('logiss-user') : null;
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const accessScope: string[] = currentUser?.accessScope || currentUser?.permissions || [];
+
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -188,6 +200,31 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
     return () => window.removeEventListener('click', close);
   }, [profileOpen]);
 
+  const isNavItemVisible = React.useCallback((item: NavConfigItem) => {
+    if (!role) return false;
+    if (role === 'admin') return item.roles.includes('admin');
+
+    if (!item.roles.includes(role) && !item.roles.includes('dispatcher')) {
+      return false;
+    }
+
+    if (accessScope && Array.isArray(accessScope) && accessScope.length > 0) {
+      const cleanId = item.id.startsWith('/') ? item.id : `/${item.id}`;
+      const rawId = item.id.replace(/^\//, '');
+
+      return accessScope.some(s => {
+        const cleanS = s.startsWith('/') ? s : `/${s}`;
+        const rawS = s.replace(/^\//, '');
+        if (cleanS === cleanId || rawS === rawId) return true;
+        if (cleanId === '/finance' && (cleanS === '/transactions' || rawS === 'transactions')) return true;
+        if (cleanId === '/transactions' && (cleanS === '/finance' || rawS === 'finance')) return true;
+        return false;
+      });
+    }
+
+    return true;
+  }, [role, accessScope]);
+
   return (
     <div className="flex h-screen bg-bg overflow-hidden font-sans text-ink">
       {/* Sidebar */}
@@ -199,7 +236,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
         <nav className="flex-1 px-4 py-2 overflow-y-auto scrollbar-hide space-y-6">
           <div className="space-y-1.5">
             {NAV_CONFIG.flatMap(group => group.items)
-              .filter(item => item.roles.includes(role || ''))
+              .filter(isNavItemVisible)
               .map(item => {
                 const liveBadge = item.isLive ? (
                   <div className="flex items-center gap-1.5">
@@ -233,9 +270,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               })}
           </div>
 
-          <div className="pt-4 border-t border-line-2">
-            <NavItem icon={Settings} label="System Settings" active={page === ROUTES.settings} onClick={() => navigate(ROUTES.settings)} />
-          </div>
+          {isNavItemVisible({ id: ROUTES.settings, label: 'Settings', icon: Settings, roles: ['admin', 'dispatcher'] }) && (
+            <div className="pt-4 border-t border-line-2">
+              <NavItem icon={Settings} label="System Settings" active={page === ROUTES.settings} onClick={() => navigate(ROUTES.settings)} />
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-line">
