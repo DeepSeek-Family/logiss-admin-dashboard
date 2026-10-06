@@ -11,6 +11,8 @@ interface InviteData {
   role: string;
   permissions: string[];
   facility?: string;
+  password?: string;
+  contact?: string;
 }
 
 interface InviteUserModalProps {
@@ -86,6 +88,28 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
                   onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
                   className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
                   placeholder="jane@logiss.com"
+                />
+              </div>
+            </div>
+
+            {/* Contact + Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-ink-4 mb-1.5">Contact Number</label>
+                <input
+                  type="tel" value={inviteData.contact || ''}
+                  onChange={e => setInviteData({ ...inviteData, contact: e.target.value })}
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                  placeholder="+8801609502136"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-ink-4 mb-1.5">Password</label>
+                <input
+                  type="password" value={inviteData.password || ''}
+                  onChange={e => setInviteData({ ...inviteData, password: e.target.value })}
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                  placeholder="Set initial password"
                 />
               </div>
             </div>
