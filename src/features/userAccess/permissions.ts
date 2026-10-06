@@ -9,7 +9,6 @@ export const PERMISSION_GROUPS: PermGroup[] = [
       { key: '/dashboard', label: 'Dashboard', path: '/dashboard' },
       { key: '/operations', label: 'Operations', path: '/operations' },
       { key: '/bookings', label: 'Bookings', path: '/bookings' },
-      { key: '/create-booking', label: 'Create Booking', path: '/create-booking' },
       { key: '/live', label: 'Live Trips', path: '/live' },
     ],
   },
@@ -44,7 +43,6 @@ export const PERMISSION_GROUPS: PermGroup[] = [
     perms: [
       { key: '/staff', label: 'Staff Management', path: '/staff' },
       { key: '/cms', label: 'CMS', path: '/cms' },
-      { key: '/support', label: 'Support', path: '/support' },
       { key: '/push', label: 'Push Notifications', path: '/push' },
       { key: '/notifications', label: 'Notifications', path: '/notifications' },
       { key: '/settings', label: 'Settings', path: '/settings' },
@@ -59,7 +57,6 @@ export const DEFAULT_DISPATCH_PERMISSIONS = [
   '/dashboard',
   '/operations',
   '/bookings',
-  '/create-booking',
   '/live',
   '/drivers',
   '/riders',
