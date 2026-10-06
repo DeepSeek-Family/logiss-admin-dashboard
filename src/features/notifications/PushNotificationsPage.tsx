@@ -4,7 +4,7 @@ import { Send, Users, User, Clock, CheckCircle2, Trash2, Building2, ShieldCheck,
 import { Card, Button, Badge } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
 import { pushNotification } from '@/hooks/useNotifications';
-import { useSendNotificationMutation } from '@/redux/api/notificationsApi';
+import { useSendPushNotificationMutation } from '@/redux/api/pushNotificationsApi';
 import { useGetRidersQuery } from '@/redux/api/ridersApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
 
@@ -56,17 +56,17 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
   const ridersCount = ridersResponse?.data?.length || 0;
 
   const AUDIENCES = useMemo(() => [
-    { id: 'all_drivers', label: 'All Drivers', icon: Users, channel: 'Driver app', count: driversCount },
-    { id: 'all_riders', label: 'All Riders', icon: User, channel: 'Rider app', count: ridersCount },
-    { id: 'dispatchers', label: 'Dispatchers', icon: Headset, channel: 'Dashboard', count: 1 },
-    { id: 'facility_users', label: 'Facility Users', icon: Building2, channel: 'Dashboard', count: 1 },
-    { id: 'all_staff', label: 'All Staff', icon: ShieldCheck, channel: 'Dashboard', count: 2 },
+    { id: 'all_riders', apiAudience: 'USER', label: 'All Riders', icon: User, channel: 'Rider app', count: ridersCount },
+    { id: 'all_drivers', apiAudience: 'DRIVER', label: 'All Drivers', icon: Users, channel: 'Driver app', count: driversCount },
+    { id: 'all', apiAudience: 'ALL', label: 'All (Riders & Drivers)', icon: ShieldCheck, channel: 'All Apps', count: driversCount + ridersCount },
+    { id: 'dispatchers', apiAudience: 'USER', label: 'Dispatchers', icon: Headset, channel: 'Dashboard', count: 1 },
+    { id: 'facility_users', apiAudience: 'USER', label: 'Facility Users', icon: Building2, channel: 'Dashboard', count: 1 },
   ], [driversCount, ridersCount]);
 
-  const [audience, setAudience] = useState<string>('all_drivers');
+  const [audience, setAudience] = useState<string>('all_riders');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [sendNotification, { isLoading: isSending }] = useSendNotificationMutation();
+  const [sendPushNotification, { isLoading: isSending }] = useSendPushNotificationMutation();
   const [logs, setLogs] = useState<SentLog[]>(MOCK_LOGS);
 
   const selected = AUDIENCES.find(a => a.id === audience) || AUDIENCES[0];
@@ -89,15 +89,12 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
     }
 
     const sentAt = new Date().toISOString();
-    const textContent = `${title.trim()}: ${message.trim()}`;
 
     try {
-      await sendNotification({
-        sender: senderId,
-        text: textContent,
+      await sendPushNotification({
         title: title.trim(),
-        message: message.trim(),
-        audience: selected.label,
+        description: message.trim(),
+        audience: selected.apiAudience || 'ALL',
       }).unwrap();
 
       setLogs(prev => [{
@@ -109,7 +106,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
         recipients: selected.count,
       }, ...prev]);
 
-      if (['dispatchers', 'facility_users', 'all_staff'].includes(selected.id)) {
+      if (['dispatchers', 'facility_users'].includes(selected.id)) {
         pushNotification({
           type: 'info',
           category: 'Broadcast',
