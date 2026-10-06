@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useLoginMutation } from '@/redux/api/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { setCredentials } from '@/redux/slice/authSlice';
+import { getFcmToken } from '@/config/firebase';
 import {
   RoleSelector,
   LoginForm
@@ -25,7 +26,8 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await login({ email, password }).unwrap();
+      const fcmToken = await getFcmToken();
+      const response = await login({ email, password, fcmToken, deviceToken: fcmToken }).unwrap();
       if (response.success && response.data) {
         const { accessToken, refreshToken, user } = response.data;
         const loggedInRole = (user?.role || selectedRole || 'admin').toLowerCase();
