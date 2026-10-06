@@ -1,79 +1,73 @@
-// Dispatch permission matrix — Admin assigns these individually per Dispatch user.
-export interface PermItem { key: string; label: string }
+// Page-level permission matrix — Admin assigns allowed route paths per Dispatch user.
+export interface PermItem { key: string; label: string; path: string }
 export interface PermGroup { group: string; perms: PermItem[] }
 
 export const PERMISSION_GROUPS: PermGroup[] = [
   {
-    group: 'Trip Management',
+    group: 'Core Operations',
     perms: [
-      { key: 'trips.view', label: 'View Trips' },
-      { key: 'trips.create', label: 'Create Trips' },
-      { key: 'trips.edit', label: 'Edit Trips' },
-      { key: 'trips.cancel', label: 'Cancel Trips' },
-      { key: 'trips.delete', label: 'Delete Trips' },
+      { key: '/dashboard', label: 'Dashboard', path: '/dashboard' },
+      { key: '/operations', label: 'Operations', path: '/operations' },
+      { key: '/bookings', label: 'Bookings', path: '/bookings' },
+      { key: '/create-booking', label: 'Create Booking', path: '/create-booking' },
+      { key: '/live', label: 'Live Trips', path: '/live' },
     ],
   },
   {
-    group: 'Dispatch Operations',
+    group: 'Fleet & Users',
     perms: [
-      { key: 'dispatch.assign', label: 'Assign Rider' },
-      { key: 'dispatch.reassign', label: 'Reassign Rider' },
-      { key: 'dispatch.status', label: 'Update Trip Status' },
-      { key: 'dispatch.schedules', label: 'Manage Schedules' },
+      { key: '/drivers', label: 'Drivers', path: '/drivers' },
+      { key: '/riders', label: 'Riders', path: '/riders' },
+      { key: '/applications', label: 'Driver Applications', path: '/applications' },
+      { key: '/fleet', label: 'Fleet', path: '/fleet' },
+      { key: '/fleet/:id', label: 'Fleet Details', path: '/fleet/:id' },
     ],
   },
   {
-    group: 'Client Management',
+    group: 'Trips & Coverage',
     perms: [
-      { key: 'clients.view', label: 'View Clients' },
-      { key: 'clients.create', label: 'Create Clients' },
-      { key: 'clients.edit', label: 'Edit Clients' },
+      { key: '/trips', label: 'Trip History', path: '/trips' },
+      { key: '/schedule', label: 'Scheduled Trips', path: '/schedule' },
+      { key: '/coverage', label: 'Service Coverage', path: '/coverage' },
     ],
   },
   {
-    group: 'Facility Access',
+    group: 'Reports & Finance',
     perms: [
-      { key: 'facilities.view', label: 'View Facilities' },
-      { key: 'facilities.manage', label: 'Manage Facilities' },
+      { key: '/reports', label: 'Reports', path: '/reports' },
+      { key: '/finance', label: 'Finance', path: '/finance' },
+      { key: '/transactions', label: 'Transactions', path: '/transactions' },
     ],
   },
   {
-    group: 'Financial Access',
+    group: 'System & Management',
     perms: [
-      { key: 'finance.billing', label: 'View Billing' },
-      { key: 'finance.invoices', label: 'View Invoices' },
-      { key: 'finance.export', label: 'Export Financial Reports' },
-    ],
-  },
-  {
-    group: 'Reports & Analytics',
-    perms: [
-      { key: 'reports.view', label: 'View Reports' },
-      { key: 'reports.export', label: 'Export Reports' },
-    ],
-  },
-  {
-    group: 'User Management',
-    perms: [
-      { key: 'users.view', label: 'View Users' },
-      { key: 'users.create', label: 'Create Users' },
-      { key: 'users.edit', label: 'Edit Users' },
-      { key: 'users.delete', label: 'Delete Users' },
+      { key: '/staff', label: 'Staff Management', path: '/staff' },
+      { key: '/cms', label: 'CMS', path: '/cms' },
+      { key: '/support', label: 'Support', path: '/support' },
+      { key: '/push', label: 'Push Notifications', path: '/push' },
+      { key: '/notifications', label: 'Notifications', path: '/notifications' },
+      { key: '/settings', label: 'Settings', path: '/settings' },
+      { key: '/profile', label: 'Profile', path: '/profile' },
     ],
   },
 ];
 
 export const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap(g => g.perms.map(p => p.key));
 
-// A sensible starter set for a new dispatcher (read + core ops, no destructive/admin).
 export const DEFAULT_DISPATCH_PERMISSIONS = [
-  'trips.view', 'trips.create',
-  'dispatch.assign', 'dispatch.reassign', 'dispatch.status', 'dispatch.schedules',
-  'clients.view', 'facilities.view',
+  '/dashboard',
+  '/operations',
+  '/bookings',
+  '/create-booking',
+  '/live',
+  '/drivers',
+  '/riders',
+  '/trips',
+  '/schedule',
+  '/reports',
 ];
 
-// Assignable facilities/programs for Facility Users — sourced from the CMS-managed
-// registry (FACILITY_PROGRAMS) so it's a single source of truth, active ones only.
 import { FACILITY_PROGRAMS } from '@/data/mockData';
 export const FACILITIES = FACILITY_PROGRAMS.filter(f => f.active).map(f => f.name);
 
@@ -83,28 +77,20 @@ export const ROLE_LABEL: Record<string, string> = {
   facility: 'Facility User',
 };
 
-// ── Runtime capability sets per role ──────────────────────────────────────────
-// These reflect how the product is actually used (not the aspirational matrix):
-// admin can do everything; a dispatcher runs day-to-day operations but not
-// destructive/admin tasks (hard-delete, user mgmt, financial export); a facility
-// user only books and views their own trips.
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: ALL_PERMISSIONS,
-  dispatcher: [
-    'trips.view', 'trips.create', 'trips.edit', 'trips.cancel',
-    'dispatch.assign', 'dispatch.reassign', 'dispatch.status', 'dispatch.schedules',
-    'clients.view', 'clients.create', 'clients.edit',
-    'facilities.view',
-    'finance.billing', 'finance.invoices',
-    'reports.view',
-  ],
-  facility: [
-    'trips.view', 'trips.create',
-    'clients.view',
-    'facilities.view',
-  ],
+  dispatcher: DEFAULT_DISPATCH_PERMISSIONS,
+  facility: ['/bookings', '/create-booking', '/trips'],
 };
 
-/** True when the given role is allowed the capability key. */
-export const can = (role: string | null | undefined, key: string): boolean =>
-  !!role && (ROLE_PERMISSIONS[role]?.includes(key) ?? false);
+/** True when the given role or user accessScope is allowed the page route. */
+export const can = (role: string | null | undefined, key: string, accessScope?: string[]): boolean => {
+  if (!role) return false;
+  if (role === 'admin') return true;
+  if (accessScope && Array.isArray(accessScope)) {
+    const cleanKey = key.startsWith('/') ? key : `/${key}`;
+    const rawKey = key.replace(/^\//, '');
+    return accessScope.includes(cleanKey) || accessScope.includes(rawKey);
+  }
+  return ROLE_PERMISSIONS[role]?.includes(key) ?? false;
+};

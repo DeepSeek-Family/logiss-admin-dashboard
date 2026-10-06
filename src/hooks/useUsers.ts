@@ -74,13 +74,19 @@ export const useUsers = () => {
         const firstName = nameParts[0] || 'User';
         const lastName = nameParts.slice(1).join(' ') || firstName;
 
+        const rawPermissions: string[] = userData.permissions?.length
+          ? userData.permissions
+          : ['/dashboard', '/operations', '/bookings', '/drivers', '/riders'];
+
+        const accessScope = rawPermissions.map((p: string) => (p.startsWith('/') ? p : `/${p}`));
+
         const payload = {
           firstName,
           lastName,
           email: userData.email,
           password: userData.password || 'Password@123',
           contact: userData.contact || '+8801609502136',
-          accessScope: userData.permissions || ['dashboard', 'operations', 'bookings', 'drivers', 'riders'],
+          accessScope,
         };
 
         const result = await createDispatcher(payload).unwrap();

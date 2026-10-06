@@ -69,23 +69,6 @@ const normalizeDispatchersResponse = (response: any): IGetDispatchersResponse =>
   }
 }
 
-const buildDispatcherFormData = (input: ICreateDispatcherInput | FormData): FormData => {
-  if (input instanceof FormData) return input
-  const formData = new FormData()
-  if (input.firstName) formData.append('firstName', input.firstName)
-  if (input.lastName) formData.append('lastName', input.lastName)
-  if (input.email) formData.append('email', input.email)
-  if (input.password) formData.append('password', input.password)
-  if (input.contact) formData.append('contact', input.contact)
-
-  if (Array.isArray(input.accessScope)) {
-    input.accessScope.forEach((scope) => {
-      formData.append('accessScope', scope)
-    })
-  }
-  return formData
-}
-
 export const dispatcherManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getDispatchers: builder.query<IGetDispatchersResponse, IGetDispatchersQueryParams | void>({
@@ -111,22 +94,22 @@ export const dispatcherManagementApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Dispatchers', id: 'LIST' }],
     }),
-    createDispatcher: builder.mutation<ICreateDispatcherResponse, ICreateDispatcherInput | FormData>({
+    createDispatcher: builder.mutation<ICreateDispatcherResponse, ICreateDispatcherInput>({
       query: (body) => ({
         url: '/user/dispatcher',
         method: 'POST',
-        body: buildDispatcherFormData(body),
+        body,
       }),
       invalidatesTags: [{ type: 'Dispatchers', id: 'LIST' }],
     }),
     updateDispatcher: builder.mutation<
       ICreateDispatcherResponse,
-      { id: string; body: Partial<ICreateDispatcherInput> | FormData }
+      { id: string; body: Partial<ICreateDispatcherInput> }
     >({
       query: ({ id, body }) => ({
         url: `/user/dispatcher/${id}`,
         method: 'PATCH',
-        body: body instanceof FormData ? body : buildDispatcherFormData(body as ICreateDispatcherInput),
+        body,
       }),
       invalidatesTags: (_r, _e, arg) => [
         { type: 'Dispatchers', id: arg.id },
