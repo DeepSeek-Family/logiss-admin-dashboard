@@ -1,6 +1,6 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Loader2, Download, Map as MapIcon, Calendar, Printer } from 'lucide-react';
+import { Loader2, Download, Map as MapIcon, Printer } from 'lucide-react';
 import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
@@ -11,12 +11,13 @@ import {
   useUpdateBookingMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
+  type IGetBookingsQueryParams,
 } from '@/redux/api/bookingApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 
-import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap } from '@/features/tripHistory';
+import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap, ServiceDateFilter } from '@/features/tripHistory';
 import { env } from '@/config/env';
 
 const formatYmd = (d: Date) =>
@@ -39,7 +40,27 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     });
   }, []);
 
-  const { data: historyResponse, isLoading: historyLoading, refetch: refetchHistory } = useGetAllTripHistoryQuery(undefined, {
+  const [historySearch, setHistorySearch] = useState('');
+  const [debouncedHistorySearch, setDebouncedHistorySearch] = useState('');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [payerFilter, setPayerFilter] = useState('all');
+  const [serviceDate, setServiceDate] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedHistorySearch(historySearch.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [historySearch]);
+
+  const historyQueryParams = useMemo(() => {
+    const params: IGetBookingsQueryParams = {};
+    if (debouncedHistorySearch) params.searchTerm = debouncedHistorySearch;
+    if (serviceDate) params.serviceDate = serviceDate;
+    if (driverFilter !== 'all') params.driverId = driverFilter;
+    if (payerFilter !== 'all') params.payerSource = payerFilter;
+    return params;
+  }, [debouncedHistorySearch, serviceDate, driverFilter, payerFilter]);
+
+  const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
     refetchOnMountOrArgChange: true,
   });
   const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(scheduleQueryParams, {
@@ -216,11 +237,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [mapTripId, setMapTripId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
-  // Time & Sort live here so they can render in the page header (beside the actions).
-  const [timeFilter, setTimeFilter] = useState('all');
+  // Date & Sort live here so they can render in the page header (beside the actions).
   const [sortBy, setSortBy] = useState('newest');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
 
@@ -273,35 +291,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
         {activeTab === 'trips' && (
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            {/* Time + Sort move up here only when the map is shown (filter bar gets narrow) */}
+            {/* Date + Sort move up here only when the map is shown (filter bar gets narrow) */}
             {showMap && (
               <>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
-                  <div className="relative flex items-center">
-                    <select
-                      value={timeFilter}
-                      onChange={(e) => setTimeFilter(e.target.value)}
-                      className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
-                    >
-                      <option value="all">All Time</option>
-                      <option value="today">Today</option>
-                      <option value="tomorrow">Tomorrow</option>
-                      <option value="week">This Week</option>
-                      <option value="month">This Month</option>
-                      <option value="custom">Custom Range</option>
-                    </select>
-                    <button type="button" onClick={() => setTimeFilter('custom')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary" title="Custom range"><Calendar size={14} /></button>
-                  </div>
-                </div>
-
-                {timeFilter === 'custom' && (
-                  <div className="flex items-center gap-1.5">
-                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="Start date" />
-                    <span className="text-xs text-ink-4">to</span>
-                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="End date" />
-                  </div>
-                )}
+                <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />
 
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
@@ -367,14 +360,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               updateTrip={handleUpdateTrip}
               onRowSelect={setMapTripId}
               selectedMapId={mapTripId}
-              timeFilter={timeFilter}
-              setTimeFilter={setTimeFilter}
+              search={historySearch}
+              setSearch={setHistorySearch}
+              driverFilter={driverFilter}
+              setDriverFilter={setDriverFilter}
+              payerFilter={payerFilter}
+              setPayerFilter={setPayerFilter}
+              serviceDate={serviceDate}
+              setServiceDate={setServiceDate}
+              isFetching={historyFetching}
               sortBy={sortBy}
               setSortBy={setSortBy}
-              startDate={startDate}
-              setStartDate={setStartDate}
-              endDate={endDate}
-              setEndDate={setEndDate}
               inlineTimeSort={!showMap}
             />
           </div>

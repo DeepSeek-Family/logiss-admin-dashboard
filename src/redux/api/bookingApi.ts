@@ -142,6 +142,7 @@ export interface IGetBookingsQueryParams {
   status?: string
   bookingStatus?: string
   serviceDate?: string
+  driverId?: string
   [key: string]: any
 }
 
@@ -162,6 +163,7 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
     }
 
     if (params.serviceDate) queryParams.serviceDate = params.serviceDate
+    if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
     if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
     if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
   }
