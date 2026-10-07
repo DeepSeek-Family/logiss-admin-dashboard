@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
@@ -22,7 +22,15 @@ import { mapApiDriver } from '@/features/drivers/utils/helpers';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('pending');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'confirmed' ? 'confirmed' : 'pending';
+  const setActiveTab = (tab: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      return next;
+    });
+  };
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedTrips, setSelectedTrips] = useState<string[]>([]);
@@ -57,13 +65,18 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return params;
   }, [currentPage, itemsPerPage, debouncedBookingSearch, fundingFilter]);
 
-  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
+  const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
 
-  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(listParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
+    activeTab === 'pending' ? listParams : countOnlyParams,
+    { refetchOnMountOrArgChange: true }
+  );
+
+  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
+    activeTab === 'confirmed' ? listParams : countOnlyParams,
+    { refetchOnMountOrArgChange: true }
+  );
 
   const [updateBookingMutation] = useUpdateBookingMutation();
   const [showMap, setShowMap] = useState(false);
