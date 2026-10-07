@@ -139,7 +139,6 @@ export interface IGetBookingsQueryParams {
   searchTerm?: string
   payerSource?: string
   payers?: string
-  county?: string
   status?: string
   bookingStatus?: string
   serviceDate?: string
@@ -161,10 +160,6 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
     const payerVal = params.payerSource || params.payers
     if (payerVal && payerVal !== 'all') {
       queryParams.payerSource = payerVal
-    }
-
-    if (params.county && params.county !== 'all') {
-      queryParams.county = params.county
     }
 
     if (params.serviceDate) queryParams.serviceDate = params.serviceDate

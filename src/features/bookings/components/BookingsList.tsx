@@ -86,8 +86,6 @@ interface BookingsListProps {
   setBookingSearch: (val: string) => void;
   fundingFilter: string;
   setFundingFilter: (val: string) => void;
-  countyFilter: string;
-  setCountyFilter: (val: string) => void;
   pendingCount?: number;
   confirmedCount?: number;
   filteredTrips: any[];
@@ -118,7 +116,8 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
-  countyFilter, setCountyFilter, pendingCount, confirmedCount,
+  pendingCount, confirmedCount,
+
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
@@ -172,22 +171,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-2">
-          <MapPin size={12} className="text-ink-4" />
-          <span className="text-xs text-ink-4">County</span>
-          <select
-            value={countyFilter}
-            onChange={e => setCountyFilter(e.target.value)}
-            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
-          >
-            <option value="all">All Counties</option>
-            <option value="Richmond City">Richmond City</option>
-            <option value="Chesterfield County">Chesterfield County</option>
-            <option value="Henrico County">Henrico County</option>
-            <option value="Hanover County">Hanover County</option>
-          </select>
-        </div>
       </div>
+
 
       <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         {/* Bulk-action bar — consistent with Trip History; appears on selection */}

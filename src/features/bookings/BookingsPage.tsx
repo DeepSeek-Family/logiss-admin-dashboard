@@ -31,7 +31,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
   const [fundingFilter, setFundingFilter] = useState('all');
-  const [countyFilter, setCountyFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -49,11 +48,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
-    if (countyFilter && countyFilter !== 'all') {
-      params.county = countyFilter;
-    }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, countyFilter]);
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
 
   const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
     refetchOnMountOrArgChange: true,
@@ -238,9 +234,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
       (t?.dropoff || '').toLowerCase().includes(search);
 
     const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
-    const matchesCounty = countyFilter === 'all' || (t?.source || t?.county || '') === countyFilter;
 
-    return matchesSearch && matchesFunding && matchesCounty;
+    return matchesSearch && matchesFunding;
   });
 
   const totalPages = currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
@@ -583,8 +578,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setBookingSearch={setBookingSearch}
             fundingFilter={fundingFilter}
             setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
-            countyFilter={countyFilter}
-            setCountyFilter={(v: string) => { setCountyFilter(v); setCurrentPage(1); }}
             pendingCount={pendingCount}
             confirmedCount={confirmedCount}
             filteredTrips={filteredTrips}
