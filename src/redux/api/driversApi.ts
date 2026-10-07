@@ -9,7 +9,7 @@ export interface IDriverData {
   licenseNumber?: string
   licenseClass?: string
   expirationDate?: string
-  licenseImage?: string
+  licenseImage?: string | string[]
 }
 
 export interface IDriverUser {

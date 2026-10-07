@@ -36,6 +36,8 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
       },
+      host: true,
+      port: 3000,
     },
   }
 })
