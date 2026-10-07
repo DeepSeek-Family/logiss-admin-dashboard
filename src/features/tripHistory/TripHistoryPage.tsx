@@ -237,8 +237,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [mapTripId, setMapTripId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
-  // Date & Sort live here so they can render in the page header (beside the actions).
-  const [sortBy, setSortBy] = useState('newest');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
 
@@ -291,29 +289,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
         {activeTab === 'trips' && (
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            {/* Date + Sort move up here only when the map is shown (filter bar gets narrow) */}
-            {showMap && (
-              <>
-                <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />
-
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
-                  >
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="rider">Rider Name (A-Z)</option>
-                    <option value="day">Scheduled Day</option>
-                    <option value="hour">Scheduled Hour</option>
-                    <option value="month">Scheduled Month</option>
-                    <option value="year">Scheduled Year</option>
-                  </select>
-                </div>
-              </>
-            )}
+            {/* Date moves up here only when the map is shown (filter bar gets narrow) */}
+            {showMap && <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />}
 
             <button
               onClick={() => setShowMap(v => !v)}
@@ -369,9 +346,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               serviceDate={serviceDate}
               setServiceDate={setServiceDate}
               isFetching={historyFetching}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              inlineTimeSort={!showMap}
+              inlineDateFilter={!showMap}
             />
           </div>
           {showMap && (
