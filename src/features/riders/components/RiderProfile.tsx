@@ -3,13 +3,18 @@ import {
   Phone, Mail, MapPin, Activity, Star,
   ShieldCheck, Copy, User, Repeat, ChevronLeft, Loader2
 } from 'lucide-react';
-import { Badge, Button } from '@/shared/components/ui';
+import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
 
 interface RiderProfileProps {
   selectedRider: any;
   trips: any[];
   tripsLoading?: boolean;
+  tripsTotal?: number;
+  tripsPage?: number;
+  tripsTotalPages?: number;
+  tripsPerPage?: number;
+  onTripsPageChange?: (page: number) => void;
   role?: string | null;
   onBack: () => void;
   profileTab: 'overview' | 'trips';
@@ -20,7 +25,8 @@ interface RiderProfileProps {
 }
 
 export const RiderProfile: React.FC<RiderProfileProps> = ({
-  selectedRider, trips, tripsLoading, role, onBack,
+  selectedRider, trips, tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10,
+  onTripsPageChange, role, onBack,
   profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider
 }) => {
   const TABS = [
@@ -98,7 +104,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
         <div className="flex items-center gap-6 shrink-0">
           <div className="flex items-center gap-6 text-center">
             <div>
-              <p className="text-2xl font-bold text-ink">{tripsLoading ? (selectedRider?.totalTrips || 0) : (trips.length || selectedRider?.totalTrips || 0)}</p>
+              <p className="text-2xl font-bold text-ink">{tripsTotal ?? (trips.length || selectedRider?.totalTrips || 0)}</p>
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
             {selectedRider?.mobility && (
@@ -283,14 +289,26 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                     <p className="text-xs text-primary truncate">→ {trip.dropoff || '—'}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <Badge variant={String(trip.rawStatus || trip.status).toLowerCase() === 'completed' ? 'accent' : 'neutral'}>
-                      {trip.rawStatus || trip.status}
+                    <Badge
+                      variant={['completed', 'trip-completed'].includes(String(trip.rawStatus || trip.status).toLowerCase()) ? 'accent' : 'neutral'}
+                      className="capitalize"
+                    >
+                      {String(trip.rawStatus || trip.status || '').replace(/[-_]/g, ' ')}
                     </Badge>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {onTripsPageChange && (tripsTotal ?? 0) > 0 && (
+            <Pagination
+              currentPage={tripsPage}
+              totalPages={tripsTotalPages}
+              totalItems={tripsTotal ?? trips.length}
+              itemsPerPage={tripsPerPage}
+              onPageChange={onTripsPageChange}
+            />
+          )}
         </div>
       )}
     </div>

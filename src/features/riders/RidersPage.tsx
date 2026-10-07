@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Check } from 'lucide-react';
-import { useGetRidersQuery, useGetRiderHistoryQuery } from '@/redux/api/ridersApi';
+import { AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from '@/redux/api/ridersApi';
 import { mapApiBooking } from '@/features/bookings/utils/helpers';
 import { mapApiRider } from '@/features/riders/utils/helpers';
 
@@ -13,9 +13,20 @@ import {
 } from '@/features/riders';
 
 const Riders = ({ role }: { role?: string | null }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
-  const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null);
+  const selectedRiderId = searchParams.get('riderId');
+  const setSelectedRiderId = (riderId: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (riderId) next.set('riderId', riderId);
+      else next.delete('riderId');
+      return next;
+    });
+    setHistoryPage(1);
+  };
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyLimit = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [profileTab, setProfileTab] = useState<'overview' | 'trips'>('overview');
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -35,8 +46,8 @@ const Riders = ({ role }: { role?: string | null }) => {
     refetchOnMountOrArgChange: true,
   });
 
-  const { data: historyResponse, isLoading: historyLoading } = useGetRiderHistoryQuery(
-    { id: selectedRiderId || '' },
+  const { data: historyResponse, isFetching: historyLoading } = useGetRiderHistoryQuery(
+    { id: selectedRiderId || '', page: historyPage, limit: historyLimit },
     { skip: !selectedRiderId, refetchOnMountOrArgChange: true },
   );
 
@@ -52,6 +63,7 @@ const Riders = ({ role }: { role?: string | null }) => {
     () => (historyResponse?.data || []).map(mapApiBooking),
     [historyResponse],
   );
+  const historyPagination = historyResponse?.pagination;
 
   const handleCopyPhone = (phone: string) => {
     navigator.clipboard.writeText(phone);
@@ -104,7 +116,24 @@ const Riders = ({ role }: { role?: string | null }) => {
   const totalItems = pagination?.total ?? riders.length;
   const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
   const paginatedRiders = riders;
-  const selectedRider = riders.find((r: any) => r.id === selectedRiderId);
+  // When opened from a URL, the rider may not be on the current list page; fall back to the
+  // rider embedded in their trip history (`userId`).
+  const historyUser = historyResponse?.data?.[0]?.userId;
+  const selectedRider = selectedRiderId
+    ? riders.find((r: any) => r.id === selectedRiderId) ||
+      (historyUser && typeof historyUser === 'object' && historyUser._id === selectedRiderId
+        ? { ...mapApiRider(historyUser as IRider), ...(overrides[selectedRiderId] || {}) }
+        : null)
+    : null;
+
+  if (selectedRiderId && !selectedRider && historyLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Loader2 size={28} className="text-primary animate-spin" />
+        <p className="text-sm text-ink-4">Loading rider...</p>
+      </div>
+    );
+  }
 
   if (selectedRider) {
     return (
@@ -132,6 +161,11 @@ const Riders = ({ role }: { role?: string | null }) => {
           selectedRider={selectedRider}
           trips={riderTrips}
           tripsLoading={historyLoading}
+          tripsTotal={historyPagination?.total ?? riderTrips.length}
+          tripsPage={historyPage}
+          tripsTotalPages={historyPagination?.totalPage || 1}
+          tripsPerPage={historyLimit}
+          onTripsPageChange={setHistoryPage}
           role={role}
           onBack={() => {
             setSelectedRiderId(null);
