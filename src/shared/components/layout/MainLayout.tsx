@@ -291,48 +291,12 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       {/* Main Content Area */}
       <main className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50">
         {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-line flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+        <header className="h-16 bg-white border-b border-line flex items-center justify-end px-8 sticky top-0 z-10 shrink-0">
 
-          {/* Global Search */}
-          <div className="flex-1 max-w-xl relative">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 group-focus-within:text-primary transition-colors" size={20} />
-              <input
-                type="text"
-                placeholder="Search trips, riders, drivers, plates..."
-                value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
-                onFocus={() => setSearchOpen(true)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
-                className="w-full bg-bg border-2 border-transparent focus:border-primary/10 rounded-2xl py-2.5 pl-12 pr-4 text-sm focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-ink-4 text-ink shadow-inner font-medium"
-              />
-            </div>
-            {searchOpen && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-line-2 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                {searchResults.map((r, i) => (
-                  <button
-                    key={i}
-                    onMouseDown={() => { navigate(r.dest); setSearchQuery(''); setSearchOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors text-left border-b border-line-2 last:border-0"
-                  >
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${r.type === 'trip' ? 'bg-primary-light text-primary' : 'bg-accent-light text-accent'}`}>
-                      {r.type === 'trip' ? <Truck size={12} /> : <Users size={12} />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-ink truncate">{r.label}</p>
-                      <p className="text-xs text-ink-4">{r.sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+       
 
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-light rounded-full border border-accent/10">
-              <span className="w-2 h-2 rounded-full bg-accent pulse-dot"></span>
-              <span className="text-xs font-medium text-accent">{liveTripsCount} Live · {activeDriversCount} Drivers Active</span>
-            </div>
+          <div className="flex items-center gap-2">
+           
 
             <button
               onClick={() => navigate(ROUTES.notifications)}
@@ -346,11 +310,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               )}
             </button>
 
-            <Button variant="primary-light" size="sm" icon={Phone} className="">
-              (804) 555-LOGI
-            </Button>
+           
 
-            <div className="w-px h-6 bg-line-2 mx-1"></div>
+        
 
             <div className="relative">
               <button
