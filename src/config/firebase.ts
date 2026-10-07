@@ -1,21 +1,21 @@
 import { initializeApp, getApps } from 'firebase/app'
 import { getMessaging, getToken } from 'firebase/messaging'
 
+const env = import.meta.env
+
 export const firebaseConfig = {
-  apiKey: 'AIzaSyCb13U7XvM-BjdB3Z6xA29pR9PKY5PLCkw',
-  authDomain: 'logiss-83e40.firebaseapp.com',
-  projectId: 'logiss-83e40',
-  storageBucket: 'logiss-83e40.firebasestorage.app',
-  messagingSenderId: '636904621127',
-  appId: '1:636904621127:web:322aa52bf84844597bdd62',
-  measurementId: 'G-B1XY8HHCTN',
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
-export const VAPID_KEY =
-  'BAJmEOc3SplO_0ZUV3eMAcWhD6H66ADu77XCAi3JAXDSse7aCOH3u_J10RLulryiARJegzv6IKBVMXC-pU87PRA'
+export const VAPID_KEY = env.VITE_FIREBASE_VAPID_KEY || ''
 
-export const DEFAULT_FCM_TOKEN =
-  'ffA9WFvHQ3KKxcyidNXfhc:APA91bGaebreHJXfjzfDqsoguiTGzfuf63KADszqOHpbrvlS2Q0ybBsipqayF6ytcAJmFQ2PrQUwlmDVp3SElZQywU30P7GY7LC6c4DPHp5S8DAWXEjFbRk'
+export const DEFAULT_FCM_TOKEN = env.VITE_FIREBASE_DEFAULT_FCM_TOKEN || ''
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0]
 
