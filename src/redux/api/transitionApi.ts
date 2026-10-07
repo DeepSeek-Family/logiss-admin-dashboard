@@ -29,6 +29,7 @@ export interface IPayment {
   price: number
   paymentStatus: 'paid' | 'pending' | 'refunded' | string
   userId?: IPaymentUser | string
+  txnNumber?: string
   createdAt?: string
   updatedAt?: string
   __v?: number
@@ -38,6 +39,7 @@ export interface IGetPaymentsQueryParams {
   page?: number
   limit?: number
   search?: string
+  searchTerm?: string
   paymentStatus?: string
   startDate?: string
   endDate?: string
@@ -76,7 +78,8 @@ export const transitionApi = baseApi.injectEndpoints({
         if (params && typeof params === 'object') {
           if (params.page != null) queryParams.page = params.page
           if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
+          const searchTerm = params.searchTerm || params.search
+          if (searchTerm) queryParams.searchTerm = searchTerm
           if (params.paymentStatus && params.paymentStatus !== 'all') {
             queryParams.paymentStatus = params.paymentStatus
           }
@@ -102,7 +105,8 @@ export const transitionApi = baseApi.injectEndpoints({
       query: (params) => {
         const queryParams: Record<string, string | number> = {}
         if (params && typeof params === 'object') {
-          if (params.search) queryParams.search = params.search
+          const searchTerm = params.searchTerm || params.search
+          if (searchTerm) queryParams.searchTerm = searchTerm
           if (params.paymentStatus && params.paymentStatus !== 'all') {
             queryParams.paymentStatus = params.paymentStatus
           }
@@ -121,7 +125,8 @@ export const transitionApi = baseApi.injectEndpoints({
       query: (params) => {
         const queryParams: Record<string, string | number> = {}
         if (params && typeof params === 'object') {
-          if (params.search) queryParams.search = params.search
+          const searchTerm = params.searchTerm || params.search
+          if (searchTerm) queryParams.searchTerm = searchTerm
           if (params.paymentStatus && params.paymentStatus !== 'all') {
             queryParams.paymentStatus = params.paymentStatus
           }
