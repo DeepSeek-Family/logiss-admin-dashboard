@@ -159,7 +159,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             onDuty: true,
             status: 'available',
             profile: b.driverId.profile,
-            vehicle: { plate: 'VA-4KL-8392', type: 'Ambulatory Van' },
           });
         }
       }

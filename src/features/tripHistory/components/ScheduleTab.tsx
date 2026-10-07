@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ChevronLeft, ChevronRight, Truck, Clock, MapPin, Users, Calendar,
-  Search, AlertTriangle, UserPlus, Activity, CheckCircle2, CircleDot, Layers, Loader2
+  AlertTriangle, UserPlus, Activity, CheckCircle2, CircleDot, Layers, Loader2
 } from 'lucide-react';
 import { Card, Avatar, Badge } from '@/shared/components/ui';
 import { formatTime } from '@/utils/helpers';
 import { DriverDayPanel } from './DriverDayPanel';
-import { RunDispatchView } from './RunDispatchView';
 
 interface ScheduleTabProps {
   drivers: any[];
@@ -33,6 +32,7 @@ const TOTAL_HOURS = END_HOUR - START_HOUR;
 const TOTAL_MIN = TOTAL_HOURS * 60;
 
 const IN_PROGRESS = ['dispatched', 'en_route', 'arrived', 'in_trip', 'in-progress'];
+const COMPLETED = ['completed', 'trip-completed'];
 
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -94,7 +94,7 @@ const pctFromMinutes = (mins: number) => {
 // Status → left-accent + dot color, aligned with TripStatusBadge semantics.
 const statusAccent = (status: string) => {
   if (IN_PROGRESS.includes(status)) return 'bg-urgent';
-  if (status === 'completed') return 'bg-accent';
+  if (COMPLETED.includes(status)) return 'bg-accent';
   if (status === 'no_show' || status === 'cancelled') return 'bg-ink-4';
   if (status === 'arrived') return 'bg-warning';
   return 'bg-primary';
@@ -102,12 +102,8 @@ const statusAccent = (status: string) => {
 
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading, onFilterChange }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [focus, setFocus] = useState<'all' | 'conflicts'>('all');
-  const [hideOffDuty, setHideOffDuty] = useState(true);
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
-  const [view, setView] = useState<'timeline' | 'runs'>('timeline');
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -116,20 +112,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
     onFilterChange?.({ serviceDate, bookingStatus });
   }, [selectedDate, statusFilter, onFilterChange]);
 
-  const q = search.trim().toLowerCase();
   const isToday = sameDay(selectedDate, new Date());
 
   // Trips supplied directly from backend (backend handles serviceDate and bookingStatus filtering).
   const dayTrips = useMemo(() => trips || [], [trips]);
-
-  // Search filter applied locally if user types in search box.
-  const matchesFilters = (t: any) => {
-    return !q ||
-      (t?.rider?.name || '').toLowerCase().includes(q) ||
-      (t?.id || '').toLowerCase().includes(q) ||
-      (t?.pickup || '').toLowerCase().includes(q) ||
-      (t?.dropoff || '').toLowerCase().includes(q);
-  };
 
   const driverById = useMemo(() => {
     const m: Record<string, any> = {};
@@ -174,7 +160,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
     const assigned = dayTrips.filter((t: any) => t.driverId && String(t.driverId) !== 'null' && t.status !== 'unassigned').length;
     const unassigned = dayTrips.length - assigned;
     const inProgress = dayTrips.filter((t: any) => IN_PROGRESS.includes(t.status)).length;
-    const completed = dayTrips.filter((t: any) => t.status === 'completed').length;
+    const completed = dayTrips.filter((t: any) => COMPLETED.includes(t.status)).length;
     const onDuty = (drivers || []).filter((d: any) => d?.onDuty).length;
 
     if (isToday && onboardingData) {
@@ -209,17 +195,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           initials: `${synthName[0] || 'D'}`,
           onDuty: true,
           status: 'available',
-          vehicle: { plate: 'VA-4KL-8392', type: 'Ambulatory Van' },
         });
       }
     });
 
-    list = list.filter(d => {
-      const hasTrips = (tripsByDriver[String(d.id)] || []).length > 0;
-      if (hideOffDuty && !d.onDuty && !hasTrips) return false;
-      if (q && !(d.name || '').toLowerCase().includes(q) && !hasTrips) return false;
-      return true;
-    });
+    list = list.filter(d => d.onDuty || (tripsByDriver[String(d.id)] || []).length > 0);
 
     if (unassignedTrips.length > 0) {
       list = [
@@ -234,12 +214,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         ...list,
       ];
     }
-
-    if (focus === 'conflicts') {
-      list = list.filter(d => (tripsByDriver[String(d.id)] || []).some((t: any) => conflictIds.has(t.id)));
-    }
     return list;
-  }, [drivers, tripsByDriver, hideOffDuty, q, focus, conflictIds, unassignedTrips]);
+  }, [drivers, tripsByDriver, unassignedTrips]);
 
   const timelineHours = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i);
   const nowPct = pctFromMinutes(minutesFromDate(new Date()));
@@ -257,7 +233,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
     { value: 'assigned', label: 'Assigned' },
     { value: 'in-progress', label: 'In Progress' },
     { value: 'confirmed', label: 'Confirmed' },
-    { value: 'completed', label: 'Completed' },
+    { value: 'trip-completed', label: 'Completed' },
     { value: 'cancelled', label: 'Cancelled' },
   ];
 
@@ -303,63 +279,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           )}
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* View toggle: Timeline (Gantt) ↔ Runs (dispatch manifest) */}
-          <div className="flex items-center gap-0.5 bg-bg p-1 rounded-xl border border-line-2">
-            {([{ id: 'timeline', label: 'Timeline' }, { id: 'runs', label: 'Runs' }] as const).map(v => (
-              <button
-                key={v.id}
-                onClick={() => setView(v.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${view === v.id ? 'bg-white shadow-sm text-primary' : 'text-ink-4 hover:text-ink'}`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-60">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={15} />
-            <input
-              type="text"
-              placeholder="Search driver, rider, trip…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white border border-line-2 hover:border-primary/40 rounded-xl text-xs font-medium text-ink placeholder:text-ink-4/80 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 transition-all"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
-          >
-            {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-
-          {/* Focus quick-filter */}
-          <div className="flex items-center gap-0.5 bg-bg p-1 rounded-xl border border-line-2">
-            {([
-              { id: 'all', label: 'All' },
-              { id: 'conflicts', label: `Conflicts${kpis.conflicts ? ` (${kpis.conflicts})` : ''}` },
-            ] as const).map(f => (
-              <button
-                key={f.id}
-                onClick={() => setFocus(f.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${focus === f.id ? 'bg-white shadow-sm text-primary' : 'text-ink-4 hover:text-ink'}`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setHideOffDuty(v => !v)}
-            className={`px-3 h-9 rounded-xl text-xs font-medium border transition-all whitespace-nowrap ${hideOffDuty ? 'bg-white text-ink-3 border-line-2 hover:bg-bg' : 'bg-primary/10 text-primary border-primary/20'}`}
-            title="Toggle off-duty drivers"
-          >
-            {hideOffDuty ? 'Hide off-duty' : 'Showing all'}
-          </button>
-        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
+        >
+          {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
       </div>
 
       {/* ───────── KPI strip ───────── */}
@@ -435,23 +361,17 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
       )}
 
       {/* ───────── Conflict banner (only when action is needed) ───────── */}
-      {kpis.conflicts > 0 && focus === 'all' && (
+      {kpis.conflicts > 0 && (
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl border border-urgent/20 bg-urgent-light/30">
           <AlertTriangle size={16} className="text-urgent shrink-0" />
           <p className="text-xs font-medium text-ink">
             <span className="font-bold text-urgent">{kpis.conflicts}</span> scheduling {kpis.conflicts === 1 ? 'conflict' : 'conflicts'} detected
           </p>
-          <button onClick={() => setFocus('conflicts')} className="ml-auto text-xs font-semibold text-urgent hover:underline">View conflicts →</button>
         </div>
       )}
 
       {/* ───────── Driver timeline (Gantt) ───────── */}
-      {view === 'runs' && (
-        <RunDispatchView drivers={drivers} trips={trips} date={selectedDate} onTripClick={onTripClick} updateTrip={updateTrip} />
-      )}
-
-      {view === 'timeline' && (
-        <Card className="overflow-x-auto relative p-0">
+      <Card className="overflow-x-auto relative p-0">
           <div className="min-w-[1100px]">
             {/* Header / hour ruler */}
             <div className="sticky top-0 z-30 flex bg-bg border-b border-line-2">
@@ -480,7 +400,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
               {visibleDrivers.map(driver => {
                 const driverTrips = tripsByDriver[String(driver.id)] || [];
-                const shownTrips = driverTrips.filter(matchesFilters);
+                const shownTrips = driverTrips;
                 const totalMiles = driverTrips.reduce((s: number, t: any) => s + (Number(t.miles) || 0), 0);
                 const hasConflict = driverTrips.some((t: any) => conflictIds.has(t.id));
 
@@ -502,7 +422,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                           </div>
                           <div className="flex items-center gap-1 mt-0.5">
                             <Truck size={10} className="text-ink-4 shrink-0" />
-                            <span className="text-xs text-ink-4 truncate">{driver.vehicle?.plate || '—'} · {driver.vehicle?.type}</span>
+                            <span className="text-xs text-ink-4 truncate">
+                              {[driver.vehicle?.plate, driver.vehicle?.type].filter(Boolean).join(' · ') || 'No vehicle'}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -618,18 +540,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
                   <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-line-2 flex items-center justify-center mb-3">
                     <Users size={20} className="text-ink-4" />
                   </div>
-                  <p className="text-sm font-semibold text-ink">{focus === 'conflicts' ? 'No conflicts 🎉' : 'No drivers match'}</p>
-                  <p className="text-xs text-ink-4 mt-0.5 max-w-xs">
-                    {focus === 'conflicts'
-                      ? 'Every assigned trip has a clear time slot for this day.'
-                      : q ? 'Try a different search, or show off-duty drivers.' : 'No operators are on duty for this date.'}
-                  </p>
+                  <p className="text-sm font-semibold text-ink">No drivers</p>
+                  <p className="text-xs text-ink-4 mt-0.5 max-w-xs">No operators are on duty for this date.</p>
                 </div>
               )}
             </div>
           </div>
-        </Card>
-      )}
+      </Card>
 
       {/* Day-level empty state */}
       {dayTrips.length === 0 && (
