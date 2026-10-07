@@ -187,20 +187,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
   // Reset to page 1 when the header-controlled Date changes.
   React.useEffect(() => { setCurrentPage(1); }, [serviceDate]);
-  const [countyFilter, setCountyFilter] = useState('all'); // 'all' | 'inside' | 'outside'
-
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Process filter logic for Trips Archive
   // Anything past the booking stage belongs here — i.e. not pending_review, OR already
   // has a driver assigned (so a driver-assigned trip always shows in Trip History).
-  const historyTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
   // Search, date, driver and payer are filtered server-side.
-  const filteredTrips = historyTrips.filter((trip: any) =>
-    countyFilter === 'all' ||
-    (countyFilter === 'inside' && trip.insideCounty === true) ||
-    (countyFilter === 'outside' && trip.insideCounty === false)
-  );
+  const filteredTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
 
   const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
   const paginatedTrips = filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -278,16 +270,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     setSelectedIds([]);
   };
 
-  React.useEffect(() => {
-    const handleExportEvent = () => {
-      handleExport();
-    };
-    window.addEventListener('export-trips-csv', handleExportEvent);
-    return () => {
-      window.removeEventListener('export-trips-csv', handleExportEvent);
-    };
-  }, [filteredTrips, selectedIds, trips, drivers]);
-
   return (
     <>
       <Card className="overflow-hidden border-line-2 shadow-sm">
@@ -338,20 +320,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     {payer.name || payer.title || payer.payerName || payer._id}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            {/* Inside/Outside County Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-4">County</span>
-              <select
-                value={countyFilter}
-                onChange={(e) => { setCountyFilter(e.target.value); setCurrentPage(1); }}
-                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
-              >
-                <option value="all">All</option>
-                <option value="inside">Inside</option>
-                <option value="outside">Outside</option>
               </select>
             </div>
 

@@ -8,6 +8,7 @@ import { useFleet } from '@/hooks/useFleet';
 import { toast } from 'react-hot-toast';
 import {
   useGetAllTripHistoryQuery,
+  useExportTripHistoryExcelMutation,
   useUpdateBookingMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
@@ -74,6 +75,16 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   });
 
   const [updateBookingMutation] = useUpdateBookingMutation();
+  const [exportTripHistoryExcel, { isLoading: isExporting }] = useExportTripHistoryExcelMutation();
+
+  const handleExportExcel = async () => {
+    try {
+      await exportTripHistoryExcel(historyQueryParams).unwrap();
+      toast.success('Trip history exported');
+    } catch (e: any) {
+      toast.error(apiErrorMessage(e, 'Failed to export trip history'));
+    }
+  };
   const { trips: fallbackTrips, loading: tripsLoading, updateTrip: fallbackUpdateTrip } = useTrips();
   const { drivers: fallbackDrivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
@@ -305,21 +316,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             <Button
               variant="outline"
               size="sm"
-              icon={Download}
-              onClick={() => window.dispatchEvent(new CustomEvent('export-trips-csv'))}
-              className="shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9"
+              icon={isExporting ? Loader2 : Download}
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              className={`shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9 ${isExporting ? '[&_svg]:animate-spin opacity-70 cursor-wait' : ''}`}
             >
-              Export CSV
+              {isExporting ? 'Exporting...' : 'Export Excel'}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              icon={Printer}
-              onClick={() => window.print()}
-              className="shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9"
-            >
-              Print
-            </Button>
+      
           </div>
         )}
       </div>

@@ -171,6 +171,17 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
 }
 
 
+const downloadBlob = (blob: Blob, fileName: string) => {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
   const list = Array.isArray(response)
     ? response
@@ -235,6 +246,27 @@ export const bookingApi = baseApi.injectEndpoints({
               { type: 'bookings', id: 'LIST' },
             ]
           : [{ type: 'bookings', id: 'LIST' }],
+    }),
+
+    exportTripHistoryExcel: builder.mutation<null, IGetBookingsQueryParams | void>({
+      // Blob is downloaded here instead of being returned, since Redux state must stay serializable.
+      queryFn: async (params, _api, _extraOptions, baseQuery) => {
+        const result = await baseQuery({
+          url: '/booking/history/excel',
+          method: 'GET',
+          params: buildQueryParams(params),
+          responseHandler: (response) => response.blob(),
+          cache: 'no-cache',
+        })
+        if (result.error) return { error: result.error }
+
+        const disposition = result.meta?.response?.headers.get('content-disposition') || ''
+        const fileName =
+          /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] ||
+          `Trip_History_${new Date().toISOString().split('T')[0]}.xlsx`
+        downloadBlob(result.data as Blob, decodeURIComponent(fileName))
+        return { data: null }
+      },
     }),
 
     getAllPayers: builder.query<IPayersListResponse, void>({
@@ -319,6 +351,7 @@ export const {
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
   useGetAllTripHistoryQuery,
+  useExportTripHistoryExcelMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
 } = bookingApi
