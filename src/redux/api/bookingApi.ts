@@ -154,7 +154,6 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
     const searchVal = params.searchTerm || params.search
     if (searchVal) {
       queryParams.searchTerm = searchVal
-      queryParams.search = searchVal
     }
 
     const payerVal = params.payerSource || params.payers

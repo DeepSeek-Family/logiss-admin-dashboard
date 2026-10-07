@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Clock, MapPin, Phone, ChevronRight,
@@ -30,26 +30,32 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [debouncedBookingSearch, setDebouncedBookingSearch] = useState('');
   const [fundingFilter, setFundingFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedBookingSearch(bookingSearch.trim());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [bookingSearch]);
 
   const listParams = useMemo(() => {
     const params: Record<string, any> = {
       page: currentPage,
       limit: itemsPerPage,
     };
-    const searchVal = bookingSearch.trim();
-    if (searchVal) {
-      params.searchTerm = searchVal;
-      params.search = searchVal;
+    if (debouncedBookingSearch) {
+      params.searchTerm = debouncedBookingSearch;
     }
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
+  }, [currentPage, itemsPerPage, debouncedBookingSearch, fundingFilter]);
 
   const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
     refetchOnMountOrArgChange: true,
@@ -222,7 +228,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   }, [apiDrivers, drivers, bookingsList]);
 
   const filteredTrips = currentTabBookings.filter((t: any) => {
-    const search = bookingSearch.toLowerCase().trim();
+    const search = debouncedBookingSearch.toLowerCase();
     const matchesSearch = !search ||
       (t?.rider?.name || '').toLowerCase().includes(search) ||
       (t?.id || '').toLowerCase().includes(search) ||
