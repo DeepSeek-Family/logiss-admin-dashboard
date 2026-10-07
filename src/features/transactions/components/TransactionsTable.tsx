@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { AlertCircle, AlertTriangle, Check, Copy, FileDown, Loader2, Mail, Phone } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Check, Copy, Loader2, Mail, Phone } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
 import { SearchInput } from '@/shared/components/ui/SearchInput';
 import { formatShortDate, money } from '@/utils/helpers';
 import type { MappedPayment } from '../utils/helpers';
 
-const STATUS_FILTERS = ['all', 'paid', 'pending', 'refunded'];
+const STATUS_FILTERS = ['all', 'paid', 'pending'];
 
 const STATUS_VARIANT: Record<string, string> = {
   paid: 'accent',
@@ -33,8 +33,6 @@ interface TransactionsTableProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
-  onRefundClick: (txn: MappedPayment) => void;
-  onExportClick: (txn: MappedPayment) => void;
 }
 
 export const TransactionsTable: React.FC<TransactionsTableProps> = ({
@@ -52,8 +50,6 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
-  onRefundClick,
-  onExportClick,
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -120,7 +116,6 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 <th className="px-5 py-3 text-xs font-semibold text-ink-3">Contact</th>
                 <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Amount</th>
                 <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Status</th>
-                <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className={`divide-y divide-line-2 transition-opacity ${loading ? 'opacity-60' : ''}`}>
@@ -181,27 +176,6 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                     <Badge dot variant={STATUS_VARIANT[txn.status] ?? 'neutral'} className="capitalize">
                       {txn.status}
                     </Badge>
-                  </td>
-                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                    <div className="inline-flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        title="Export Excel"
-                        onClick={() => onExportClick(txn)}
-                        className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      >
-                        <FileDown size={14} />
-                      </button>
-                      {txn.status === 'paid' && (
-                        <button
-                          type="button"
-                          onClick={() => onRefundClick(txn)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-urgent hover:bg-urgent/10 transition-colors"
-                        >
-                          Refund
-                        </button>
-                      )}
-                    </div>
                   </td>
                 </tr>
               ))}

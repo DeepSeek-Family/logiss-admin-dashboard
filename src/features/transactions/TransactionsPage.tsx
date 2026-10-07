@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 
 import {
-  RefundModal,
   TransactionsTable,
   mapApiPayment,
   type MappedPayment,
@@ -48,9 +47,6 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [showRefundModal, setShowRefundModal] = useState<MappedPayment | null>(null);
-  const [refundedIds, setRefundedIds] = useState<Set<string>>(new Set());
-
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
   const startDate = fromParam && YMD.test(fromParam) ? fromParam : '';
@@ -71,11 +67,8 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   const [triggerExport, { isLoading: isExporting }] = useLazyExportPaymentsQuery();
 
   const payments = useMemo(
-    () => (paymentsResponse?.data || []).map((p) => {
-      const mapped = mapApiPayment(p);
-      return refundedIds.has(mapped.id) ? { ...mapped, status: 'refunded' } : mapped;
-    }),
-    [paymentsResponse, refundedIds],
+    () => (paymentsResponse?.data || []).map(mapApiPayment),
+    [paymentsResponse],
   );
 
   const pagination = paymentsResponse?.pagination;
@@ -124,14 +117,6 @@ export const Transactions = ({ role }: { role?: string | null }) => {
     toast.success('Payment export downloaded as Excel successfully.');
   };
 
-  const handleRefund = () => {
-    if (showRefundModal) {
-      const id = showRefundModal.id;
-      setRefundedIds((prev) => new Set(prev).add(id));
-    }
-    setShowRefundModal(null);
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -175,19 +160,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
           setItemsPerPage(size);
           setCurrentPage(1);
         }}
-        onRefundClick={(item) => setShowRefundModal(item)}
-        onExportClick={(item) => {
-          exportToExcel([item], `LOGISS_${item.shortId}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        }}
       />
-
-      {showRefundModal && (
-        <RefundModal
-          showRefundModal={showRefundModal}
-          onClose={() => setShowRefundModal(null)}
-          onConfirm={handleRefund}
-        />
-      )}
     </div>
   );
 };
