@@ -240,22 +240,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return merged;
   }, [apiDrivers, drivers, bookingsList]);
 
-  const filteredTrips = currentTabBookings.filter((t: any) => {
-    const search = debouncedBookingSearch.toLowerCase();
-    const matchesSearch = !search ||
-      (t?.rider?.name || '').toLowerCase().includes(search) ||
-      (t?.id || '').toLowerCase().includes(search) ||
-      (t?.mobility || '').toLowerCase().includes(search) ||
-      (t?.passengerId || '').toLowerCase().includes(search) ||
-      (t?.authorizationId || t?.authId || '').toLowerCase().includes(search) ||
-      (t?.source || t?.fundingSource || '').toLowerCase().includes(search) ||
-      (t?.pickup || '').toLowerCase().includes(search) ||
-      (t?.dropoff || '').toLowerCase().includes(search);
-
-    const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
-
-    return matchesSearch && matchesFunding;
-  });
+  // Search and payer filtering are applied server-side via listParams.
+  const filteredTrips = currentTabBookings;
 
   const totalPages = currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
   const paginatedBookings = filteredTrips;
