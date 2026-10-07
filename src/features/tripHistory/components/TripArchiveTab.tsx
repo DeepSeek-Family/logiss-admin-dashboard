@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X, Accessibility, Bed, Disc, Info, User } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
-import { formatTime, formatShortDate, money } from '@/utils/helpers';
+import { formatTime, formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { usePricing } from '@/hooks/usePricing';
 import { DriverAssignSelect } from '@/features/bookings';
 
@@ -769,7 +769,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
                   <td className="px-3.5 py-3 min-w-[120px]">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
+                      <span className="text-xs text-ink-3 whitespace-nowrap">{formatTripId(trip.id || trip._id)}</span>
                       {trip.source && <span className="text-xs text-ink-4 whitespace-nowrap">{trip.source}</span>}
                     </div>
                   </td>

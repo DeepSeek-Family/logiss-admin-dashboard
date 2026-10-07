@@ -58,3 +58,16 @@ export const tripTypeLabel = (type: string): string => {
 export const money = (n: number): string => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 };
+
+export const formatTripId = (id?: string | number | null): string => {
+  if (!id) return '#LOGISS-000000';
+  const str = String(id).trim();
+  if (str.toUpperCase().startsWith('#LOGISS-')) {
+    return str;
+  }
+  const cleanId = str.replace(/^#/, '');
+  const stripped = cleanId.replace(/^LOGISS-?/i, '');
+  const last6 = (stripped.slice(-6) || '000000').toUpperCase();
+  return `#LOGISS-${last6}`;
+};
+

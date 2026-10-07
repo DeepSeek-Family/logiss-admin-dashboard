@@ -3,7 +3,7 @@ import {
   XCircle, Navigation, Users, Edit2, Search, MapPin 
 } from 'lucide-react';
 import { Avatar, Badge, Button, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
-import { tripTypeLabel, formatTime, formatShortDate } from '@/utils/helpers';
+import { tripTypeLabel, formatTime, formatShortDate, formatTripId } from '@/utils/helpers';
 import { isRoundTrip, resolveMediaUrl, parseLatLng, extractBookingStopsCoords } from '../utils/helpers';
 
 const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
@@ -151,7 +151,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
           <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs text-ink-4">#{selectedBooking.id}</span>
+                <span className="text-xs text-ink-4">{formatTripId(selectedBooking?.id || selectedBooking?._id)}</span>
                 <TripStatusBadge status={selectedBooking.status} />
               </div>
               <h2 className="text-base font-semibold text-ink">Booking Details</h2>

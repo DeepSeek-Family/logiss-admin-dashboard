@@ -5,7 +5,7 @@ import {
   Accessibility, Bed, Disc, Info, User
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
-import { formatShortDate, money } from '@/utils/helpers';
+import { formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
@@ -291,7 +291,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Trip ID */}
                       <td className="px-3.5 py-3 min-w-[120px]">
                         <div className="flex flex-col gap-1.5 items-start">
-                          <span className="text-xs text-ink-3 whitespace-nowrap">#{booking?.id || '---'}</span>
+                          <span className="text-xs text-ink-3 whitespace-nowrap">{formatTripId(booking?.id || booking?._id)}</span>
                           {booking.isUrgent && <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase shadow-sm shadow-urgent/30">URGENT</span>}
                         </div>
                       </td>

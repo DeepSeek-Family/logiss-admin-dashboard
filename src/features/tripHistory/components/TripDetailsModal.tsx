@@ -6,7 +6,7 @@ import {
   MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
 import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput, loadGoogleMapsScript } from '@/shared/components/ui';
-import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
+import { formatTime, formatDateTime, tripTypeLabel, money, formatTripId } from '../../../utils/helpers';
 import { isMongoId, parseLatLng, extractBookingStopsCoords } from '../../bookings/utils/helpers';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
 
@@ -350,7 +350,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
             <TripStatusBadge status={trip.status} />
             <div>
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
-                Trip #{trip.id}
+                Trip {formatTripId(trip?.id || trip?._id)}
                 {trip.rating && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"><TrendingUp size={12} /> ★ {trip.rating}</span>}
               </h2>
               <p className="text-xs text-ink-4 mt-1">Submitted: {trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p>

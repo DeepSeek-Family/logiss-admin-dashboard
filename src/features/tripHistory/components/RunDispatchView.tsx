@@ -3,7 +3,7 @@ import {
   Truck, Clock, MapPin, AlertTriangle, LogOut, LogIn, Coffee, Users, ArrowRight, ExternalLink, ChevronDown,
 } from 'lucide-react';
 import { Card, Avatar, TripStatusBadge } from '@/shared/components/ui';
-import { formatTime } from '@/utils/helpers';
+import { formatTime, formatTripId } from '@/utils/helpers';
 
 interface RunDispatchViewProps {
   drivers: any[];
@@ -270,7 +270,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({ drivers, trips
                             <span className="text-xs font-bold uppercase tracking-wide text-warning-dark bg-warning/15 border border-warning/30 rounded-full px-1.5 py-0.5">Will-Call</span>
                           )}
                         </p>
-                        <p className="text-xs text-ink-4">{isPickup ? 'Pickup' : isStop ? 'Stop' : 'Drop-off'} · #{t.id}</p>
+                        <p className="text-xs text-ink-4">{isPickup ? 'Pickup' : isStop ? 'Stop' : 'Drop-off'} · {formatTripId(t?.id || t?._id)}</p>
                       </div>
                     </div>
                   </td>
