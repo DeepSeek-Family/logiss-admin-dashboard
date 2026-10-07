@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Check } from 'lucide-react';
 import { useGetRidersQuery, useGetRiderHistoryQuery } from '@/redux/api/ridersApi';
 import { mapApiBooking } from '@/features/bookings/utils/helpers';
@@ -12,8 +13,8 @@ import {
 } from '@/features/riders';
 
 const Riders = ({ role }: { role?: string | null }) => {
-  const [activeTab, setActiveTab] = useState('all');
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [profileTab, setProfileTab] = useState<'overview' | 'trips'>('overview');
@@ -27,7 +28,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const listParams = useMemo(() => ({
     page: currentPage,
     limit: itemsPerPage,
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(search.trim() ? { searchTerm: search.trim() } : {}),
   }), [currentPage, itemsPerPage, search]);
 
   const { data: ridersResponse, isLoading, isError, error, refetch } = useGetRidersQuery(listParams, {
@@ -99,22 +100,10 @@ const Riders = ({ role }: { role?: string | null }) => {
     );
   }
 
-  const filteredRiders = riders.filter((r: any) => {
-    const q = (search || '').toLowerCase();
-    const nameMatch = (r?.name || '').toLowerCase().includes(q);
-    const idMatch = (r?.id || '').toLowerCase().includes(q);
-    const emailMatch = (r?.email || '').toLowerCase().includes(q);
-    const phoneMatch = (r?.phone || '').toLowerCase().includes(q);
-    const authMatch = (r?.authorizationId || r?.authId || '').toLowerCase().includes(q);
-    let matchesTab = true;
-    if (activeTab === 'active') matchesTab = r?.status === 'active';
-    if (activeTab === 'inactive') matchesTab = r?.status !== 'active';
-    return (nameMatch || idMatch || emailMatch || phoneMatch || authMatch || !q) && matchesTab;
-  });
-
-  const totalItems = activeTab === 'all' ? (pagination?.total ?? filteredRiders.length) : filteredRiders.length;
+  // `searchTerm` is applied server-side.
+  const totalItems = pagination?.total ?? riders.length;
   const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
-  const paginatedRiders = filteredRiders;
+  const paginatedRiders = riders;
   const selectedRider = riders.find((r: any) => r.id === selectedRiderId);
 
   if (selectedRider) {
@@ -170,8 +159,6 @@ const Riders = ({ role }: { role?: string | null }) => {
       <RiderKpiStrip riders={riders} total={pagination?.total} />
 
       <RidersTable
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         search={search}
         setSearch={setSearch}
         currentPage={currentPage}

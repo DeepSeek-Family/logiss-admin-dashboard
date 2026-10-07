@@ -1,10 +1,8 @@
 import { Search, ChevronRight, ChevronDown, UserCheck, UserX, Ban } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Card, Avatar, Badge, Pagination } from '@/shared/components/ui';
+import { Card, Avatar, Badge, Pagination, SearchInput } from '@/shared/components/ui';
 
 interface RidersTableProps {
-  activeTab: string;
-  setActiveTab: (val: string) => void;
   search: string;
   setSearch: (val: string) => void;
   currentPage: number;
@@ -21,8 +19,6 @@ interface RidersTableProps {
 }
 
 export const RidersTable = ({
-  activeTab,
-  setActiveTab,
   search,
   setSearch,
   currentPage,
@@ -39,36 +35,17 @@ export const RidersTable = ({
 }: RidersTableProps) => {
   return (
     <Card className="overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-line-2/50 bg-bg/20">
-        <div className="flex items-center gap-1 bg-bg/60 p-0.5 rounded-xl">
-          {[
-            { id: 'all', label: 'All Riders' },
-            { id: 'active', label: 'Active' },
-            { id: 'inactive', label: 'Inactive' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-primary'
-                  : 'text-ink-4 hover:text-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="relative w-full sm:w-56">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
-          <input
-            type="text"
-            placeholder="Search name, ID..."
-            className="w-full pl-8 pr-3 py-2 bg-bg/60 focus:bg-white rounded-xl text-xs font-medium focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          />
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 px-6 py-4 border-b border-line-2/50 bg-bg/20">
+        <SearchInput
+          className="w-full sm:w-72"
+          placeholder="Search name, ID, phone..."
+          paramName="searchTerm"
+          defaultValue={search}
+          onSearchChange={(debouncedVal) => {
+            setSearch(debouncedVal);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       <div className="overflow-x-auto">

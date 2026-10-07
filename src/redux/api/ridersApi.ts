@@ -39,6 +39,7 @@ export interface IGetRidersQueryParams {
   page?: number
   limit?: number
   search?: string
+  searchTerm?: string
   [key: string]: any
 }
 
@@ -104,7 +105,8 @@ export const ridersApi = baseApi.injectEndpoints({
         if (params && typeof params === 'object') {
           if (params.page != null) queryParams.page = params.page
           if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
+          const searchVal = (params.searchTerm || params.search || '').trim()
+          if (searchVal) queryParams.searchTerm = searchVal
         }
         return {
           url: '/user/riders',

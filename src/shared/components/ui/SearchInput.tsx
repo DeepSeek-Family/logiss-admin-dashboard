@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 
@@ -29,6 +29,18 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const [text, setText] = useState<string>(
     controlledValue !== undefined ? controlledValue : (defaultValue !== undefined ? defaultValue : urlValue)
   );
+
+  // Callbacks are read via ref and only fired when the value changes, so parents passing
+  // inline handlers (e.g. ones that reset pagination) aren't re-triggered on every render.
+  const callbacksRef = useRef({ onSearchChange, onChange });
+  callbacksRef.current = { onSearchChange, onChange };
+  const lastEmittedRef = useRef<string | null>(null);
+  const emit = (value: string) => {
+    if (lastEmittedRef.current === value) return;
+    lastEmittedRef.current = value;
+    callbacksRef.current.onSearchChange?.(value);
+    callbacksRef.current.onChange?.(value);
+  };
 
   // Sync internal text if URL parameter changes externally
   useEffect(() => {
@@ -64,16 +76,11 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         );
       }
 
-      if (onSearchChange) {
-        onSearchChange(trimmed);
-      }
-      if (onChange) {
-        onChange(trimmed);
-      }
+      emit(trimmed);
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [text, debounceMs, paramName, setSearchParams, onSearchChange, onChange]);
+  }, [text, debounceMs, paramName, setSearchParams]);
 
   const handleClear = () => {
     setText('');
@@ -87,12 +94,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       },
       { replace: true }
     );
-    if (onSearchChange) {
-      onSearchChange('');
-    }
-    if (onChange) {
-      onChange('');
-    }
+    emit('');
   };
 
   return (
