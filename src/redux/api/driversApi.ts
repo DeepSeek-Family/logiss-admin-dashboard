@@ -1,5 +1,5 @@
 import { baseApi } from '../baseApi'
-import type { IBookingPagination } from './bookingApi'
+import type { IBooking, IBookingPagination } from './bookingApi'
 import { buildDriverFormData, type ICreateDriverInput } from '@/features/drivers/utils/createDriverForm'
 
 export type { ICreateDriverInput }
@@ -86,6 +86,33 @@ const normalizeDriverListResponse = (response: any): IDriverListResponse => {
   }
 }
 
+export interface IDriverTripHistoryQueryParams {
+  id: string
+  page?: number
+  limit?: number
+}
+
+export interface IDriverTripHistoryResponse {
+  success: boolean
+  message: string
+  pagination?: IBookingPagination
+  data: IBooking[]
+}
+
+const normalizeDriverTripHistoryResponse = (response: any): IDriverTripHistoryResponse => {
+  const list = Array.isArray(response?.data)
+    ? response.data
+    : Array.isArray(response?.data?.data)
+      ? response.data.data
+      : []
+  return {
+    success: response?.success !== false,
+    message: response?.message || '',
+    pagination: response?.pagination || response?.data?.pagination,
+    data: list,
+  }
+}
+
 export const driversApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getDriverApplications: builder.query<IDriverListResponse, IListQueryParams | void>({
@@ -117,7 +144,8 @@ export const driversApi = baseApi.injectEndpoints({
         if (params && typeof params === 'object') {
           if (params.page != null) queryParams.page = params.page
           if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
+          const searchTerm = params.searchTerm || params.search
+          if (searchTerm) queryParams.searchTerm = searchTerm
         }
         return {
           url: '/applications/drivers',
@@ -133,6 +161,23 @@ export const driversApi = baseApi.injectEndpoints({
               { type: 'Drivers', id: 'LIST' },
             ]
           : [{ type: 'Drivers', id: 'LIST' }],
+    }),
+    getDriverTripHistory: builder.query<IDriverTripHistoryResponse, IDriverTripHistoryQueryParams>({
+      query: ({ id, page, limit }) => {
+        const queryParams: Record<string, string | number> = {}
+        if (page != null) queryParams.page = page
+        if (limit != null) queryParams.limit = limit
+        return {
+          url: `/dashboard/rider/trip-history/${id}`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeDriverTripHistoryResponse,
+      providesTags: (_result, _error, arg) => [
+        { type: 'Drivers', id: `HISTORY-${arg.id}` },
+        { type: 'bookings', id: 'LIST' },
+      ],
     }),
     updateApplicationStatus: builder.mutation<IUpdateApplicationStatusResponse, IUpdateApplicationStatusPayload>({
       query: ({ id, applicationStatus }) => ({
@@ -164,6 +209,7 @@ export const driversApi = baseApi.injectEndpoints({
 export const {
   useGetDriverApplicationsQuery,
   useGetDriversQuery,
+  useGetDriverTripHistoryQuery,
   useUpdateApplicationStatusMutation,
   useCreateDriverMutation,
 } = driversApi

@@ -62,3 +62,44 @@ export const mapApiRider = (rider: IRider) => {
 }
 
 export type MappedRider = ReturnType<typeof mapApiRider>
+
+/** Booking locations are GeoJSON-ordered `[longitude, latitude]`. */
+export const toLatLng = (raw: unknown): { lat: number; lng: number } | null => {
+  const parts = Array.isArray(raw)
+    ? raw.map(Number)
+    : typeof raw === 'string'
+      ? raw.split(',').map((s) => Number(s.trim()))
+      : null
+  if (!parts || parts.length !== 2 || !parts.every(Number.isFinite)) return null
+  const [lng, lat] = parts
+  return { lat, lng }
+}
+
+export const formatLatLng = (raw: unknown): string => {
+  const point = toLatLng(raw)
+  return point ? `${point.lat}, ${point.lng}` : ''
+}
+
+export const googleMapsUrl = (raw: unknown): string | null => {
+  const point = toLatLng(raw)
+  return point ? `https://www.google.com/maps/search/?api=1&query=${point.lat},${point.lng}` : null
+}
+
+export const googleMapsDirectionsUrl = (origin: unknown, destination: unknown, stops: unknown[] = []): string | null => {
+  const from = toLatLng(origin)
+  const to = toLatLng(destination)
+  if (!from || !to) return null
+  const waypoints = stops
+    .map(toLatLng)
+    .filter((p): p is { lat: number; lng: number } => p !== null)
+    .map((p) => `${p.lat},${p.lng}`)
+    .join('|')
+  const params = new URLSearchParams({
+    api: '1',
+    origin: `${from.lat},${from.lng}`,
+    destination: `${to.lat},${to.lng}`,
+    travelmode: 'driving',
+  })
+  if (waypoints) params.set('waypoints', waypoints)
+  return `https://www.google.com/maps/dir/?${params.toString()}`
+}
