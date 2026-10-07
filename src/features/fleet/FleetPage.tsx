@@ -53,11 +53,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
   const loading = fleetLoading || driversLoading;
 
-  const filtered = (vehicles || []).filter((v: any) => {
-    const q = (search || '').toLowerCase();
-    return !q || (v?.make || '').toLowerCase().includes(q) || (v?.model || '').toLowerCase().includes(q)
-      || (v?.plate || '').toLowerCase().includes(q) || (v?.id || '').toLowerCase().includes(q);
-  });
+  // `searchTerm` is applied server-side by useFleet.
+  const filtered = vehicles || [];
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
