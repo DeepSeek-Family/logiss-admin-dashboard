@@ -17,6 +17,8 @@ import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } 
 import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
 import { useGetAllBookingsQuery, useGetAllAssignedBookingsQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -106,11 +108,21 @@ const Bookings = ({ role }: { role?: string | null }) => {
     });
   };
 
+  const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const apiDrivers = useMemo(
+    () => (apiDriversResponse?.data || []).map(mapApiDriver),
+    [apiDriversResponse]
+  );
+
   const { drivers } = useDrivers();
 
   const refresh = () => {
     refetchPendingBookings();
     refetchAssignedBookings();
+    refetchDrivers();
   };
 
   const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -197,6 +209,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
 
   const mergedDrivers = useMemo(() => {
+    const merged = [...apiDrivers, ...(drivers || [])];
     const extra = bookingsList
       .filter((b: any) => b.driverId && b.driverName)
       .map((b: any) => ({
@@ -206,12 +219,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
         onDuty: true,
         vehicle: { type: 'Van', plate: '' },
       }));
-    const merged = [...(drivers || [])];
     extra.forEach((d: any) => {
       if (!merged.some((x: any) => String(x.id) === String(d.id))) merged.push(d);
     });
     return merged;
-  }, [drivers, bookingsList]);
+  }, [apiDrivers, drivers, bookingsList]);
 
   const filteredTrips = currentTabBookings.filter((t: any) => {
     const search = bookingSearch.toLowerCase().trim();
@@ -443,7 +455,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       if (driverQuery) {
         return (d?.name || '').toLowerCase().includes(driverQuery) || (d?.id || '').toLowerCase().includes(driverQuery);
       }
-      return d?.onDuty && isVehicleMatch(d, selectedBooking);
+      return isVehicleMatch(d, selectedBooking);
     })
     .map((driver: any) => {
       const activeTrips = bookingsList.filter((t: any) =>

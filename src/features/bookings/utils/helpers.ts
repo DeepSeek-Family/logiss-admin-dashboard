@@ -412,14 +412,15 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     payload.programContext = String(progVal);
   }
 
-  // 16. Driver ID (driverId) -> Mongo ObjectId string or null
+  // 16. Driver ID (driverId) -> Mongo ObjectId string, string ID or null
   if ('driverId' in patch) {
     let driverVal = patch.driverId;
     if (typeof driverVal === 'object' && driverVal != null) {
       driverVal = driverVal._id || driverVal.id;
     }
-    payload.driverId = driverVal && isMongoId(String(driverVal)) ? String(driverVal) : null;
+    payload.driverId = driverVal ? String(driverVal) : null;
   }
+
 
   // 17. Booking Status (bookingStatus) & Approval (isApproved)
   if ('isApproved' in patch) {
