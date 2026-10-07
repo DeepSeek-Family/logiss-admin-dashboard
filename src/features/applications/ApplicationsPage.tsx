@@ -14,7 +14,7 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-  const [localStatusOverrides, setLocalStatusOverrides] = useState<Record<string, { status?: string; stage?: number; _status?: ApplicationUiStatus }>>({});
+  const [localStatusOverrides, setLocalStatusOverrides] = useState<Record<string, { status?: string; stage?: number; _status?: ApplicationUiStatus; isAdminVerified?: boolean }>>({});
 
   const listParams = useMemo(() => ({
     page: currentPage,
@@ -47,15 +47,21 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const patchStatus = async (app: MappedDriverApplication, applicationStatus: string, successMsg: string) => {
+  const patchStatus = async (app: MappedDriverApplication, applicationStatus: 'approved' | 'rejected', successMsg: string) => {
+    const isAdminVerifiedDriver = applicationStatus === 'approved';
     try {
-      await updateApplicationStatus({ id: app.id, applicationStatus }).unwrap();
-      const uiStatus: ApplicationUiStatus = applicationStatus === 'approved' ? 'approved' : 'rejected';
+      await updateApplicationStatus({ id: app.id, applicationStatus, isAdminVerifiedDriver }).unwrap();
+      const uiStatus: ApplicationUiStatus = isAdminVerifiedDriver ? 'approved' : 'rejected';
       setLocalStatusOverrides((prev) => ({
         ...prev,
-        [app.id]: { status: applicationStatus, stage: applicationStatus === 'approved' ? 4 : 2, _status: uiStatus },
+        [app.id]: {
+          status: applicationStatus,
+          stage: isAdminVerifiedDriver ? 4 : 2,
+          _status: uiStatus,
+          isAdminVerified: isAdminVerifiedDriver,
+        },
       }));
-      showToast(successMsg, applicationStatus === 'rejected' ? 'error' : 'success');
+      showToast(successMsg, isAdminVerifiedDriver ? 'success' : 'error');
     } catch (err) {
       showToast(apiErrorMessage(err, 'Failed to update application'), 'error');
     }

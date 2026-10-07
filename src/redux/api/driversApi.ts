@@ -52,9 +52,12 @@ export interface IDriverListResponse {
   data: IDriverUser[]
 }
 
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
+
 export interface IUpdateApplicationStatusPayload {
   id: string
-  applicationStatus: string
+  applicationStatus: ApplicationStatus
+  isAdminVerifiedDriver: boolean
 }
 
 export interface IUpdateApplicationStatusResponse {
@@ -180,10 +183,10 @@ export const driversApi = baseApi.injectEndpoints({
       ],
     }),
     updateApplicationStatus: builder.mutation<IUpdateApplicationStatusResponse, IUpdateApplicationStatusPayload>({
-      query: ({ id, applicationStatus }) => ({
+      query: ({ id, applicationStatus, isAdminVerifiedDriver }) => ({
         url: `/applications/${id}`,
         method: 'PATCH',
-        body: { applicationStatus },
+        body: { applicationStatus, isAdminVerifiedDriver },
       }),
       invalidatesTags: (_result, _error, arg) => [
         { type: 'Applications', id: arg.id },
