@@ -37,7 +37,6 @@ const Fleet = ({ role }: { role?: string | null }) => {
   }, [handleAssign]);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -56,13 +55,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
   const filtered = (vehicles || []).filter((v: any) => {
     const q = (search || '').toLowerCase();
-    const matchSearch = !q || (v?.make || '').toLowerCase().includes(q) || (v?.model || '').toLowerCase().includes(q)
+    return !q || (v?.make || '').toLowerCase().includes(q) || (v?.model || '').toLowerCase().includes(q)
       || (v?.plate || '').toLowerCase().includes(q) || (v?.id || '').toLowerCase().includes(q);
-    const matchTab =
-      filter === 'available' ? v?.status === 'available' :
-        filter === 'in_trip' ? v?.status === 'in_trip' :
-          filter === 'issues' ? (v?.insurance?.status !== 'valid' || v?.status === 'maintenance') : true;
-    return matchSearch && matchTab;
   });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -114,11 +108,8 @@ const Fleet = ({ role }: { role?: string | null }) => {
         filteredCount={filtered.length}
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}
-        filter={filter}
-        setFilter={setFilter}
         search={search}
         setSearch={setSearch}
-        stats={stats}
         statusConfig={statusConfig}
         insuranceBadge={insuranceBadge}
         onNavigate={navigate}
