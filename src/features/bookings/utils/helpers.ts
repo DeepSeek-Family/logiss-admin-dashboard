@@ -136,6 +136,39 @@ export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
   return [37.5407, -77.4360];
 };
 
+export const parseLatLng = (val: any): { lat: number; lng: number } | null => {
+  if (val == null || val === '') return null;
+  const loc = to2NumArrayLoc(val);
+  if (!loc || !Number.isFinite(loc[0]) || !Number.isFinite(loc[1])) return null;
+  let [n1, n2] = loc;
+  if (Math.abs(n1) > 90 && Math.abs(n2) <= 90) {
+    return { lat: n2, lng: n1 };
+  }
+  return { lat: n1, lng: n2 };
+};
+
+export const extractBookingStopsCoords = (b: any): { lat: number; lng: number }[] => {
+  if (!b) return [];
+  const rawStops = b.stopAddressRaw ?? b.stops ?? b.stopAddress ?? b.stop;
+  if (!rawStops) return [];
+
+  if (Array.isArray(rawStops)) {
+    if (rawStops.length === 2 && typeof rawStops[0] === 'number' && typeof rawStops[1] === 'number') {
+      const parsed = parseLatLng(rawStops);
+      return parsed ? [parsed] : [];
+    }
+    const results: { lat: number; lng: number }[] = [];
+    rawStops.forEach((item: any) => {
+      const parsed = parseLatLng(item);
+      if (parsed) results.push(parsed);
+    });
+    return results;
+  }
+
+  const parsed = parseLatLng(rawStops);
+  return parsed ? [parsed] : [];
+};
+
 export const formatLocationString = (val: any): string => {
   if (val == null || val === '') return 'N/A';
   if (Array.isArray(val)) {
