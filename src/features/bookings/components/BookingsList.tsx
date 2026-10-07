@@ -8,8 +8,10 @@ import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, money } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
+import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { DriverAssignSelect } from './DriverAssignSelect';
 import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
+
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
 const INLINE_INPUT =
@@ -123,8 +125,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   totalItems,
   setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
 }) => {
-  const { pricing } = usePricing();
-  const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
+  const { data: payersResponse } = useGetAllPayersQuery();
+  const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
 
   return (
     <div className="flex flex-col gap-4 flex-1 min-h-0">
@@ -163,7 +165,11 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
           >
             <option value="all">All Payers</option>
-            {fundingOptions.map(fs => <option key={fs.id} value={fs.name}>{fs.name}</option>)}
+            {payersList.map((payer) => (
+              <option key={payer._id} value={payer._id}>
+                {payer.name || payer.title || payer.payerName || payer._id}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2">

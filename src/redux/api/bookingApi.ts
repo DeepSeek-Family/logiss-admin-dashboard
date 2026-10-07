@@ -136,9 +136,44 @@ export interface IGetBookingsQueryParams {
   page?: number
   limit?: number
   search?: string
+  searchTerm?: string
+  payerSource?: string
+  payers?: string
+  county?: string
   status?: string
+  bookingStatus?: string
+  serviceDate?: string
   [key: string]: any
 }
+
+const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
+  const queryParams: Record<string, string | number> = {}
+  if (params && typeof params === 'object') {
+    if (params.page != null) queryParams.page = params.page
+    if (params.limit != null) queryParams.limit = params.limit
+
+    const searchVal = params.searchTerm || params.search
+    if (searchVal) {
+      queryParams.searchTerm = searchVal
+      queryParams.search = searchVal
+    }
+
+    const payerVal = params.payerSource || params.payers
+    if (payerVal && payerVal !== 'all') {
+      queryParams.payerSource = payerVal
+    }
+
+    if (params.county && params.county !== 'all') {
+      queryParams.county = params.county
+    }
+
+    if (params.serviceDate) queryParams.serviceDate = params.serviceDate
+    if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
+    if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
+  }
+  return queryParams
+}
+
 
 const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
   const list = Array.isArray(response)
@@ -160,19 +195,11 @@ const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
 export const bookingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -183,19 +210,11 @@ export const bookingApi = baseApi.injectEndpoints({
           : [{ type: 'bookings', id: 'LIST' }],
     }),
     getAllAssignedBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking/approved',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking/approved',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -207,19 +226,11 @@ export const bookingApi = baseApi.injectEndpoints({
     }),
 
     getAllTripHistory: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking/history',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking/history',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -278,22 +289,11 @@ export const bookingApi = baseApi.injectEndpoints({
 
 
     scheduleBooking: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-          if (params.serviceDate) queryParams.serviceDate = params.serviceDate
-          if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
-          if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
-        }
-        return {
-          url: `/bookings/schedule`,
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: `/bookings/schedule`,
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -303,6 +303,7 @@ export const bookingApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'bookings', id: 'LIST' }],
     }),
+
     getScheduleOnboarding: builder.query<IScheduleOnboardingResponse, void>({
       query: () => ({
         url: `/bookings/schedule/onboarding`,

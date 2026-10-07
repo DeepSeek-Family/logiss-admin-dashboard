@@ -34,11 +34,24 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const listParams = useMemo(() => ({
-    page: currentPage,
-    limit: itemsPerPage,
-    ...(bookingSearch.trim() ? { search: bookingSearch.trim() } : {}),
-  }), [currentPage, itemsPerPage, bookingSearch]);
+  const listParams = useMemo(() => {
+    const params: Record<string, any> = {
+      page: currentPage,
+      limit: itemsPerPage,
+    };
+    const searchVal = bookingSearch.trim();
+    if (searchVal) {
+      params.searchTerm = searchVal;
+      params.search = searchVal;
+    }
+    if (fundingFilter && fundingFilter !== 'all') {
+      params.payerSource = fundingFilter;
+    }
+    if (countyFilter && countyFilter !== 'all') {
+      params.county = countyFilter;
+    }
+    return params;
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, countyFilter]);
 
   const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
     refetchOnMountOrArgChange: true,
