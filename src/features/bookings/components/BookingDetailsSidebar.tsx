@@ -1,10 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   XCircle, Navigation, Users, Edit2, Search, MapPin 
 } from 'lucide-react';
-import { Avatar, Badge, Button, TripStatusBadge } from '@/shared/components/ui';
-import { tripTypeLabel, formatTime, formatShortDate } from '@/utils/helpers';
-import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
+import { Avatar, Badge, Button, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
+import { tripTypeLabel, formatTime, formatShortDate, formatTripId } from '@/utils/helpers';
+import { isRoundTrip, resolveMediaUrl, parseLatLng, extractBookingStopsCoords } from '../utils/helpers';
+
+const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    loadGoogleMapsScript()
+      .then(() => {
+        if (!active || !mapRef.current || !(window as any).google?.maps) return;
+        const google = (window as any).google;
+
+        const pCoord = parseLatLng(booking.pickupLocationRaw || booking.pickupLocation || booking.pickup);
+        const dCoord = parseLatLng(booking.dropOffLocationRaw || booking.dropOffLocation || booking.dropoff);
+        const stopsCoords = extractBookingStopsCoords(booking);
+
+        const bounds = new google.maps.LatLngBounds();
+        const path: any[] = [];
+
+        const map = new google.maps.Map(mapRef.current, {
+          zoom: 12,
+          center: pCoord || { lat: 37.5407, lng: -77.4360 },
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: true,
+        });
+
+        if (pCoord) {
+          bounds.extend(pCoord);
+          path.push(pCoord);
+          new google.maps.Marker({
+            position: pCoord,
+            map,
+            title: `Pickup: ${booking.pickup || ''}`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: '#2969CD',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+            },
+          });
+        }
+
+        stopsCoords.forEach((sCoord, i) => {
+          bounds.extend(sCoord);
+          path.push(sCoord);
+          new google.maps.Marker({
+            position: sCoord,
+            map,
+            title: `Stop ${i + 1}`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 7,
+              fillColor: '#F59E0B',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+            },
+          });
+        });
+
+        if (dCoord) {
+          bounds.extend(dCoord);
+          path.push(dCoord);
+          new google.maps.Marker({
+            position: dCoord,
+            map,
+            title: `Drop-off: ${booking.dropoff || ''}`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: '#EF4444',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+            },
+          });
+        }
+
+        if (path.length > 1) {
+          new google.maps.Polyline({
+            path,
+            geodesic: true,
+            strokeColor: '#2969CD',
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+            map,
+          });
+        }
+
+        if (path.length > 0) {
+          map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
+        }
+      })
+      .catch((err) => console.warn('Sidebar Google Maps load error', err));
+
+    return () => {
+      active = false;
+    };
+  }, [booking]);
+
+  return <div ref={mapRef} className="w-full h-44 rounded-xl border border-line-2 overflow-hidden shadow-sm my-2" />;
+};
 
 interface BookingDetailsSidebarProps {
   selectedBooking: any;
@@ -46,7 +151,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
           <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs text-ink-4">#{selectedBooking.id}</span>
+                <span className="text-xs text-ink-4">{formatTripId(selectedBooking?.id || selectedBooking?._id)}</span>
                 <TripStatusBadge status={selectedBooking.status} />
               </div>
               <h2 className="text-base font-semibold text-ink">Booking Details</h2>
@@ -121,6 +226,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
               <p className="text-xs text-ink-4 flex items-center gap-1.5 mb-2">
                 <Navigation size={11} className="text-primary" /> Trip Route
               </p>
+              <SidebarBookingGoogleMap booking={selectedBooking} />
               <div className="bg-bg rounded-xl p-3 border border-line-2 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
@@ -156,6 +262,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                 </div>
               </div>
             </section>
+
 
             {/* Driver Assignment */}
             <div className="pt-4 border-t border-line-2">

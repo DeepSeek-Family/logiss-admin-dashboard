@@ -3,6 +3,8 @@ import { baseApi } from '../baseApi'
 export interface LoginRequest {
   email: string
   password: string
+  fcmToken?: string
+  deviceToken?: string
 }
 
 export interface LoginResponse {
@@ -32,7 +34,11 @@ export const authApi = baseApi.injectEndpoints({
       query: (credentials) => ({
         url: '/auth/login',
         method: 'POST',
-        body: credentials,
+        body: {
+          ...credentials,
+          fcmToken: credentials.fcmToken || credentials.deviceToken,
+          deviceToken: credentials.deviceToken || credentials.fcmToken,
+        },
       }),
       invalidatesTags: ['Auth', 'Profile', 'User'],
     }),

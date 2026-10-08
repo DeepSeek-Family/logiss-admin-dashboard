@@ -5,11 +5,13 @@ import {
   Accessibility, Bed, Disc, Info, User
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
-import { formatShortDate, money } from '@/utils/helpers';
+import { formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
+import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { DriverAssignSelect } from './DriverAssignSelect';
 import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
+
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
 const INLINE_INPUT =
@@ -84,8 +86,6 @@ interface BookingsListProps {
   setBookingSearch: (val: string) => void;
   fundingFilter: string;
   setFundingFilter: (val: string) => void;
-  countyFilter: string;
-  setCountyFilter: (val: string) => void;
   pendingCount?: number;
   confirmedCount?: number;
   filteredTrips: any[];
@@ -116,15 +116,16 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
-  countyFilter, setCountyFilter, pendingCount, confirmedCount,
+  pendingCount, confirmedCount,
+
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
   totalItems,
   setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
 }) => {
-  const { pricing } = usePricing();
-  const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
+  const { data: payersResponse } = useGetAllPayersQuery();
+  const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
 
   return (
     <div className="flex flex-col gap-4 flex-1 min-h-0">
@@ -163,25 +164,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
           >
             <option value="all">All Payers</option>
-            {fundingOptions.map(fs => <option key={fs.id} value={fs.name}>{fs.name}</option>)}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <MapPin size={12} className="text-ink-4" />
-          <span className="text-xs text-ink-4">County</span>
-          <select
-            value={countyFilter}
-            onChange={e => setCountyFilter(e.target.value)}
-            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
-          >
-            <option value="all">All Counties</option>
-            <option value="Richmond City">Richmond City</option>
-            <option value="Chesterfield County">Chesterfield County</option>
-            <option value="Henrico County">Henrico County</option>
-            <option value="Hanover County">Hanover County</option>
+            {payersList.map((payer) => (
+              <option key={payer._id} value={payer._id}>
+                {payer.name || payer.title || payer.payerName || payer._id}
+              </option>
+            ))}
           </select>
         </div>
       </div>
+
 
       <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         {/* Bulk-action bar — consistent with Trip History; appears on selection */}
@@ -300,7 +291,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       {/* Trip ID */}
                       <td className="px-3.5 py-3 min-w-[120px]">
                         <div className="flex flex-col gap-1.5 items-start">
-                          <span className="text-xs text-ink-3 whitespace-nowrap">#{booking?.id || '---'}</span>
+                          <span className="text-xs text-ink-3 whitespace-nowrap">{formatTripId(booking?.id || booking?._id)}</span>
                           {booking.isUrgent && <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase shadow-sm shadow-urgent/30">URGENT</span>}
                         </div>
                       </td>

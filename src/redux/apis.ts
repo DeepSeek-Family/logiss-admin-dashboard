@@ -7,5 +7,6 @@ import './api/mobilityApi'
 import './apivtwo/dashboardOnvording'
 import './api/supportApi'
 import './api/vehiclesMangeApi'
+import './api/transitionApi'
 
 export const apis = [baseApi]

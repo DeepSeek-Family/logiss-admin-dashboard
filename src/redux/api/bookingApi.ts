@@ -53,6 +53,8 @@ export interface IBooking {
   bookingStatus?: 'pending' | 'assigned' | 'in-progress'|  'confirmed' | 'completed' | 'cancelled' | string
   recurringBatchId?: string
   price?: number
+  isApproved?: string
+  paymentStatus?: string
   createdAt?: string
   updatedAt?: string
   __v?: number
@@ -136,8 +138,50 @@ export interface IGetBookingsQueryParams {
   page?: number
   limit?: number
   search?: string
+  searchTerm?: string
+  payerSource?: string
+  payers?: string
   status?: string
+  bookingStatus?: string
+  serviceDate?: string
+  driverId?: string
   [key: string]: any
+}
+
+const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
+  const queryParams: Record<string, string | number> = {}
+  if (params && typeof params === 'object') {
+    if (params.page != null) queryParams.page = params.page
+    if (params.limit != null) queryParams.limit = params.limit
+
+    const searchVal = params.searchTerm || params.search
+    if (searchVal) {
+      queryParams.searchTerm = searchVal
+    }
+
+    const payerVal = params.payerSource || params.payers
+    if (payerVal && payerVal !== 'all') {
+      queryParams.payerSource = payerVal
+    }
+
+    if (params.serviceDate) queryParams.serviceDate = params.serviceDate
+    if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
+    if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
+    if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
+  }
+  return queryParams
+}
+
+
+const downloadBlob = (blob: Blob, fileName: string) => {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
@@ -160,19 +204,11 @@ const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
 export const bookingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -183,19 +219,11 @@ export const bookingApi = baseApi.injectEndpoints({
           : [{ type: 'bookings', id: 'LIST' }],
     }),
     getAllAssignedBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking/approved',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking/approved',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -207,19 +235,11 @@ export const bookingApi = baseApi.injectEndpoints({
     }),
 
     getAllTripHistory: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-        }
-        return {
-          url: '/booking/history',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/booking/history',
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -228,6 +248,27 @@ export const bookingApi = baseApi.injectEndpoints({
               { type: 'bookings', id: 'LIST' },
             ]
           : [{ type: 'bookings', id: 'LIST' }],
+    }),
+
+    exportTripHistoryExcel: builder.mutation<null, IGetBookingsQueryParams | void>({
+      // Blob is downloaded here instead of being returned, since Redux state must stay serializable.
+      queryFn: async (params, _api, _extraOptions, baseQuery) => {
+        const result = await baseQuery({
+          url: '/booking/history/excel',
+          method: 'GET',
+          params: buildQueryParams(params),
+          responseHandler: (response) => response.blob(),
+          cache: 'no-cache',
+        })
+        if (result.error) return { error: result.error }
+
+        const disposition = result.meta?.response?.headers.get('content-disposition') || ''
+        const fileName =
+          /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] ||
+          `Trip_History_${new Date().toISOString().split('T')[0]}.xlsx`
+        downloadBlob(result.data as Blob, decodeURIComponent(fileName))
+        return { data: null }
+      },
     }),
 
     getAllPayers: builder.query<IPayersListResponse, void>({
@@ -278,22 +319,11 @@ export const bookingApi = baseApi.injectEndpoints({
 
 
     scheduleBooking: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          if (params.search) queryParams.search = params.search
-          if (params.serviceDate) queryParams.serviceDate = params.serviceDate
-          if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
-          if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
-        }
-        return {
-          url: `/bookings/schedule`,
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: `/bookings/schedule`,
+        method: 'GET',
+        params: buildQueryParams(params),
+      }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
@@ -303,6 +333,7 @@ export const bookingApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'bookings', id: 'LIST' }],
     }),
+
     getScheduleOnboarding: builder.query<IScheduleOnboardingResponse, void>({
       query: () => ({
         url: `/bookings/schedule/onboarding`,
@@ -322,6 +353,7 @@ export const {
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
   useGetAllTripHistoryQuery,
+  useExportTripHistoryExcelMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
 } = bookingApi

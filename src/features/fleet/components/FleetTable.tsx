@@ -20,11 +20,8 @@ interface FleetTableProps {
   filteredCount: number;
   itemsPerPage: number;
   setItemsPerPage: (val: number) => void;
-  filter: string;
-  setFilter: (val: string) => void;
   search: string;
   setSearch: (val: string) => void;
-  stats: any;
   statusConfig: any;
   insuranceBadge: any;
   onNavigate: (path: string) => void;
@@ -40,32 +37,15 @@ export const FleetTable = ({
   filteredCount,
   itemsPerPage,
   setItemsPerPage,
-  filter,
-  setFilter,
   search,
   setSearch,
-  stats,
   statusConfig,
   insuranceBadge,
   onNavigate
 }: FleetTableProps) => {
   return (
     <Card className="overflow-hidden border-line-2 shadow-xl shadow-ink/5 ring-1 ring-ink/5 rounded-2xl">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-8 py-6 border-b border-line-2 bg-bg/20">
-        <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl shadow-inner ring-1 ring-ink/5 overflow-x-auto scrollbar-hide">
-          {[
-            { id: 'all', label: 'All Units' },
-            { id: 'available', label: 'Available' },
-            { id: 'in_trip', label: 'In Trip' },
-            { id: 'issues', label: `Maintenance${stats.issues ? ` (${stats.issues})` : ''}` },
-          ].map(tab => (
-            <button key={tab.id} onClick={() => { setFilter(tab.id); setCurrentPage(1); }}
-              className={`px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${filter === tab.id ? 'bg-primary text-white shadow-md' : 'text-ink-4 hover:text-ink hover:bg-bg'}`}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        
+      <div className="flex flex-col lg:flex-row lg:items-center justify-end gap-6 px-8 py-6 border-b border-line-2 bg-bg/20">
         <SearchInput
           className="w-full lg:w-72"
           placeholder="Search Assets, Plates, or IDs..."
@@ -163,8 +143,8 @@ export const FleetTable = ({
                   <div className="w-20 h-20 bg-bg rounded-[32px] flex items-center justify-center text-ink-4 mx-auto mb-6 shadow-inner border-2 border-dashed border-line group">
                     <Truck size={40} className="group-hover:text-primary transition-colors" />
                   </div>
-                  <p className="text-sm font-medium text-ink">No units match your filter</p>
-                  <p className="text-xs text-ink-4 mt-1">Try adjusting your search or filter.</p>
+                  <p className="text-sm font-medium text-ink">No units found</p>
+                  <p className="text-xs text-ink-4 mt-1">Try adjusting your search.</p>
                 </td>
               </tr>
             )}

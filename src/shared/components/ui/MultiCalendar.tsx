@@ -5,10 +5,12 @@ export type MultiCalendarProps = {
   selected?: Date[];
   onSelect?: (days: Date[]) => void;
   className?: string;
+  disablePast?: boolean;
+  initialMonth?: Date;
 };
 
-export function MultiCalendar({ selected = [], onSelect, className }: MultiCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+export function MultiCalendar({ selected = [], onSelect, className, disablePast = true, initialMonth }: MultiCalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState(initialMonth || new Date());
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
@@ -73,7 +75,7 @@ export function MultiCalendar({ selected = [], onSelect, className }: MultiCalen
           
           const isSel = isSelected(date);
           const isTod = isToday(date);
-          const isPast = date < new Date(new Date().setHours(0,0,0,0));
+          const isPast = disablePast && date < new Date(new Date().setHours(0,0,0,0));
 
           return (
             <button

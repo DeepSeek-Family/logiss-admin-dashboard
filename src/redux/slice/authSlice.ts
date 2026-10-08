@@ -11,12 +11,22 @@ interface AuthState {
 const initialToken = typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null
 const initialRefreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null
 const initialRole = typeof localStorage !== 'undefined' ? localStorage.getItem('logiss-role') : null
+const initialUser = typeof localStorage !== 'undefined'
+  ? (() => {
+      try {
+        const raw = localStorage.getItem('logiss-user')
+        return raw ? JSON.parse(raw) : null
+      } catch {
+        return null
+      }
+    })()
+  : null
 
 const initialState: AuthState = {
   token: initialToken,
   refreshToken: initialRefreshToken,
   role: initialRole,
-  user: null,
+  user: initialUser,
 }
 
 export const authSlice = createSlice({
@@ -54,6 +64,13 @@ export const authSlice = createSlice({
       }
       if (action.payload.user !== undefined) {
         state.user = action.payload.user
+        if (action.payload.user) {
+          try {
+            localStorage.setItem('logiss-user', JSON.stringify(action.payload.user))
+          } catch { /* ignore */ }
+        } else {
+          localStorage.removeItem('logiss-user')
+        }
       }
     },
     logout: (state) => {
@@ -64,6 +81,7 @@ export const authSlice = createSlice({
       localStorage.removeItem(AUTH_TOKEN_KEY)
       localStorage.removeItem(REFRESH_TOKEN_KEY)
       localStorage.removeItem('logiss-role')
+      localStorage.removeItem('logiss-user')
     },
   },
 })

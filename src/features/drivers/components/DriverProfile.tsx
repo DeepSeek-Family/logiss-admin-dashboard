@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import {
   Phone, Mail, MapPin, Star, Car, ShieldCheck, Copy,
-  ExternalLink, User, Repeat, ChevronLeft, AlertTriangle
+  ExternalLink, User, Repeat, ChevronLeft, AlertTriangle, Loader2
 } from 'lucide-react';
-import { Avatar, Badge, Button } from '@/shared/components/ui';
+import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
+import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
+import { resolveMediaUrl } from '@/utils/imageUrl';
+import { RouteTimeline, TRIP_STATUS_VARIANT } from '@/features/riders/components/RouteTimeline';
 
 interface DriverProfileProps {
   selectedDriver: any;
   setSelectedDriverId: (id: string | null) => void;
   role?: string | null;
   trips: any[];
+  tripsLoading?: boolean;
+  tripsTotal?: number;
+  tripsPage?: number;
+  tripsTotalPages?: number;
+  tripsPerPage?: number;
+  onTripsPageChange?: (page: number) => void;
   onAssignVehicle?: () => void;
   onViewFleet?: () => void;
   assignedVehicle?: { id: string; name: string; type: string; plate: string } | null;
@@ -17,6 +26,7 @@ interface DriverProfileProps {
 
 export const DriverProfile: React.FC<DriverProfileProps> = ({
   selectedDriver, setSelectedDriverId, role, trips,
+  tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10, onTripsPageChange,
   onAssignVehicle, onViewFleet, assignedVehicle
 }) => {
   const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'docs'>('overview');
@@ -90,7 +100,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
           {/* Stats */}
           <div className="flex items-center gap-8 text-center">
             <div>
-              <p className="text-2xl font-bold text-ink">{selectedDriver?.totalTrips || 0}</p>
+              <p className="text-2xl font-bold text-ink">{tripsTotal ?? selectedDriver?.totalTrips ?? 0}</p>
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
             <div>
@@ -246,65 +256,82 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
       {/* ── TRIP HISTORY TAB ─────────────────────── */}
       {profileTab === 'trips' && (
         <div className="bg-white border border-line-2 rounded-2xl overflow-hidden animate-in fade-in duration-300">
-          {/* Summary stats */}
-          <div className="grid grid-cols-4 divide-x divide-line-2 border-b border-line-2">
-            {[
-              { label: 'Completed Trips', val: selectedDriver?.totalTrips || 0, color: 'text-accent' },
-              { label: "Today's Trips", val: selectedDriver?.tripsToday || 0, color: 'text-primary' },
-              { label: 'Total Miles', val: '1,240', color: 'text-ink' },
-              { label: 'Incidents', val: '0', color: 'text-urgent' },
-            ].map(s => (
-              <div key={s.label} className="px-6 py-4">
-                <p className="text-xs text-ink-4 mb-1">{s.label}</p>
-                <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
-              </div>
-            ))}
-          </div>
-          <table className="w-full text-left">
-            <thead className="bg-bg border-b border-line-2">
-              <tr>
-                {['Trip ID', 'Date & Time', 'Rider', 'Route', 'Status'].map(h => (
-                  <th key={h} className="px-5 py-3 type-th">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line-2">
-              {(() => {
-                const driverTrips = (trips || []).filter((t: any) =>
-                  t.driverId === selectedDriver?.id ||
-                  t.driver?.id === selectedDriver?.id ||
-                  t.driver?.name === selectedDriver?.name
-                );
-                if (driverTrips.length === 0) return (
-                  <tr><td colSpan={5} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
-                );
-                return driverTrips.map((trip: any) => (
-                  <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                    <td className="px-5 py-3 text-xs text-ink-3">#{trip.id.slice(-4)}</td>
-                    <td className="px-5 py-3">
-                      <p className="text-xs font-medium text-ink">{new Date(trip.scheduledTime).toLocaleDateString()}</p>
-                      <p className="text-[10px] text-ink-4">{new Date(trip.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary-light flex items-center justify-center text-[10px] font-bold text-primary">
-                          {trip.rider?.name?.[0] || 'R'}
-                        </div>
-                        <span className="text-xs font-medium text-ink">{trip.rider?.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 max-w-xs">
-                      <p className="text-xs text-ink-4 truncate">{trip.pickup}</p>
-                      <p className="text-xs text-primary truncate">→ {trip.dropoff}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <Badge variant={trip.status === 'completed' ? 'accent' : 'neutral'}>{trip.status}</Badge>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-bg border-b border-line-2">
+                <tr>
+                  {['Trip ID', 'Date & Time', 'Rider', 'Route', 'Status'].map(h => (
+                    <th key={h} className="px-5 py-3 type-th">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line-2">
+                {tripsLoading ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-16 text-sm text-ink-4">
+                      <Loader2 size={20} className="mx-auto mb-2 animate-spin text-primary" />
+                      Loading trip history
                     </td>
                   </tr>
-                ));
-              })()}
-            </tbody>
-          </table>
+                ) : trips.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
+                ) : trips.map((trip: any) => (
+                  <tr key={trip.id} className="align-top hover:bg-bg/50 transition-colors">
+                    <td className="px-5 py-4">
+                      <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
+                        #{String(trip.id || '').slice(-6)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-xs font-medium text-ink">{formatShortDate(trip.serviceDate || trip.scheduledTime) || '—'}</p>
+                      <p className="text-[10px] text-ink-4">{formatTime(trip.pickupTime || trip.scheduledTime) || '—'}</p>
+                      {trip.isRecurring && (
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          <Repeat size={9} /> Recurring
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <Avatar initials={trip.rider?.initials || 'R'} src={resolveMediaUrl(trip.rider?.profile)} size="sm" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-ink truncate">{trip.rider?.name || '—'}</p>
+                          <p className="text-[10px] text-ink-4">{tripTypeLabel(trip.tripType || trip.type || '')}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <RouteTimeline
+                        points={[
+                          { kind: 'pickup', raw: trip.pickupLocationRaw ?? trip.pickup },
+                          { kind: 'stop', raw: trip.stopAddressRaw },
+                          { kind: 'dropoff', raw: trip.dropOffLocationRaw ?? trip.dropoff },
+                        ]}
+                      />
+                    </td>
+                    <td className="px-5 py-4">
+                      <Badge
+                        dot
+                        variant={TRIP_STATUS_VARIANT[String(trip.rawStatus || trip.status || '').toLowerCase()] ?? 'neutral'}
+                        className="capitalize whitespace-nowrap"
+                      >
+                        {String(trip.rawStatus || trip.status || '').replace(/[-_]/g, ' ')}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {onTripsPageChange && (tripsTotal ?? 0) > 0 && (
+            <Pagination
+              currentPage={tripsPage}
+              totalPages={tripsTotalPages}
+              totalItems={tripsTotal ?? trips.length}
+              itemsPerPage={tripsPerPage}
+              onPageChange={onTripsPageChange}
+            />
+          )}
         </div>
       )}
 

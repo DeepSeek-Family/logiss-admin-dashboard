@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
@@ -17,10 +17,20 @@ import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } 
 import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
 import { useGetAllBookingsQuery, useGetAllAssignedBookingsQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('pending');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'confirmed' ? 'confirmed' : 'pending';
+  const setActiveTab = (tab: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      return next;
+    });
+  };
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedTrips, setSelectedTrips] = useState<string[]>([]);
@@ -28,25 +38,45 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [debouncedBookingSearch, setDebouncedBookingSearch] = useState('');
   const [fundingFilter, setFundingFilter] = useState('all');
-  const [countyFilter, setCountyFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const listParams = useMemo(() => ({
-    page: currentPage,
-    limit: itemsPerPage,
-    ...(bookingSearch.trim() ? { search: bookingSearch.trim() } : {}),
-  }), [currentPage, itemsPerPage, bookingSearch]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedBookingSearch(bookingSearch.trim());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [bookingSearch]);
 
-  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(listParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  const listParams = useMemo(() => {
+    const params: Record<string, any> = {
+      page: currentPage,
+      limit: itemsPerPage,
+    };
+    if (debouncedBookingSearch) {
+      params.searchTerm = debouncedBookingSearch;
+    }
+    if (fundingFilter && fundingFilter !== 'all') {
+      params.payerSource = fundingFilter;
+    }
+    return params;
+  }, [currentPage, itemsPerPage, debouncedBookingSearch, fundingFilter]);
 
-  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(listParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
+  const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
+
+  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
+    activeTab === 'pending' ? listParams : countOnlyParams,
+    { refetchOnMountOrArgChange: true }
+  );
+
+  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
+    activeTab === 'confirmed' ? listParams : countOnlyParams,
+    { refetchOnMountOrArgChange: true }
+  );
 
   const [updateBookingMutation] = useUpdateBookingMutation();
   const [showMap, setShowMap] = useState(false);
@@ -93,11 +123,21 @@ const Bookings = ({ role }: { role?: string | null }) => {
     });
   };
 
+  const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const apiDrivers = useMemo(
+    () => (apiDriversResponse?.data || []).map(mapApiDriver),
+    [apiDriversResponse]
+  );
+
   const { drivers } = useDrivers();
 
   const refresh = () => {
     refetchPendingBookings();
     refetchAssignedBookings();
+    refetchDrivers();
   };
 
   const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -184,6 +224,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
 
   const mergedDrivers = useMemo(() => {
+    const merged = [...apiDrivers, ...(drivers || [])];
     const extra = bookingsList
       .filter((b: any) => b.driverId && b.driverName)
       .map((b: any) => ({
@@ -193,30 +234,14 @@ const Bookings = ({ role }: { role?: string | null }) => {
         onDuty: true,
         vehicle: { type: 'Van', plate: '' },
       }));
-    const merged = [...(drivers || [])];
     extra.forEach((d: any) => {
       if (!merged.some((x: any) => String(x.id) === String(d.id))) merged.push(d);
     });
     return merged;
-  }, [drivers, bookingsList]);
+  }, [apiDrivers, drivers, bookingsList]);
 
-  const filteredTrips = currentTabBookings.filter((t: any) => {
-    const search = bookingSearch.toLowerCase().trim();
-    const matchesSearch = !search ||
-      (t?.rider?.name || '').toLowerCase().includes(search) ||
-      (t?.id || '').toLowerCase().includes(search) ||
-      (t?.mobility || '').toLowerCase().includes(search) ||
-      (t?.passengerId || '').toLowerCase().includes(search) ||
-      (t?.authorizationId || t?.authId || '').toLowerCase().includes(search) ||
-      (t?.source || t?.fundingSource || '').toLowerCase().includes(search) ||
-      (t?.pickup || '').toLowerCase().includes(search) ||
-      (t?.dropoff || '').toLowerCase().includes(search);
-
-    const matchesFunding = fundingFilter === 'all' || (t?.fundingSource || t?.paymentMethod || '') === fundingFilter;
-    const matchesCounty = countyFilter === 'all' || (t?.source || t?.county || '') === countyFilter;
-
-    return matchesSearch && matchesFunding && matchesCounty;
-  });
+  // Search and payer filtering are applied server-side via listParams.
+  const filteredTrips = currentTabBookings;
 
   const totalPages = currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
   const paginatedBookings = filteredTrips;
@@ -430,7 +455,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       if (driverQuery) {
         return (d?.name || '').toLowerCase().includes(driverQuery) || (d?.id || '').toLowerCase().includes(driverQuery);
       }
-      return d?.onDuty && isVehicleMatch(d, selectedBooking);
+      return isVehicleMatch(d, selectedBooking);
     })
     .map((driver: any) => {
       const activeTrips = bookingsList.filter((t: any) =>
@@ -558,8 +583,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setBookingSearch={setBookingSearch}
             fundingFilter={fundingFilter}
             setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
-            countyFilter={countyFilter}
-            setCountyFilter={(v: string) => { setCountyFilter(v); setCurrentPage(1); }}
             pendingCount={pendingCount}
             confirmedCount={confirmedCount}
             filteredTrips={filteredTrips}

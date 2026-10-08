@@ -6,25 +6,9 @@ import {
   MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
 import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput, loadGoogleMapsScript } from '@/shared/components/ui';
-import { formatTime, formatDateTime, tripTypeLabel, money } from '../../../utils/helpers';
-import { isMongoId } from '../../bookings/utils/helpers';
+import { formatTime, formatDateTime, tripTypeLabel, money, formatTripId } from '../../../utils/helpers';
+import { isMongoId, parseLatLng, extractBookingStopsCoords } from '../../bookings/utils/helpers';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
-
-const parseCoords = (val: any): [number, number] | null => {
-  if (!val) return null;
-  if (Array.isArray(val)) {
-    if (val.length === 2 && !isNaN(Number(val[0])) && !isNaN(Number(val[1]))) {
-      return [Number(val[0]), Number(val[1])];
-    }
-  }
-  if (typeof val === 'string') {
-    const m = val.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
-    if (m) {
-      return [parseFloat(m[1]), parseFloat(m[2])];
-    }
-  }
-  return null;
-};
 
 const TripRouteGoogleMap: React.FC<{
   pickupLoc: any;
@@ -38,14 +22,14 @@ const TripRouteGoogleMap: React.FC<{
     loadGoogleMapsScript().then(() => {
       if (!active || !mapRef.current || !(window as any).google?.maps) return;
 
-      const pCoords = parseCoords(pickupLoc) || [23.7806, 90.4065];
-      const dCoords = parseCoords(dropoffLoc) || [23.7944, 90.4138];
-      const parsedStops = stopsLoc.map(parseCoords).filter(Boolean) as [number, number][];
+      const pCoord = parseLatLng(pickupLoc) || { lat: 37.5407, lng: -77.4360 };
+      const dCoord = parseLatLng(dropoffLoc) || { lat: 37.5000, lng: -77.4000 };
+      const parsedStops = extractBookingStopsCoords({ stopAddressRaw: stopsLoc });
 
       const bounds = new (window as any).google.maps.LatLngBounds();
       const map = new (window as any).google.maps.Map(mapRef.current, {
         zoom: 13,
-        center: { lat: pCoords[0], lng: pCoords[1] },
+        center: pCoord,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
@@ -54,11 +38,10 @@ const TripRouteGoogleMap: React.FC<{
       const routePath: any[] = [];
 
       // Pickup Marker (Blue)
-      const pLatLng = { lat: pCoords[0], lng: pCoords[1] };
-      bounds.extend(pLatLng);
-      routePath.push(pLatLng);
+      bounds.extend(pCoord);
+      routePath.push(pCoord);
       new (window as any).google.maps.Marker({
-        position: pLatLng,
+        position: pCoord,
         map,
         title: 'Pickup Location',
         icon: {
@@ -71,19 +54,18 @@ const TripRouteGoogleMap: React.FC<{
         },
       });
 
-      // Stops Markers (Green)
+      // Stops Markers (Green/Amber)
       parsedStops.forEach((sCoord, i) => {
-        const sLatLng = { lat: sCoord[0], lng: sCoord[1] };
-        bounds.extend(sLatLng);
-        routePath.push(sLatLng);
+        bounds.extend(sCoord);
+        routePath.push(sCoord);
         new (window as any).google.maps.Marker({
-          position: sLatLng,
+          position: sCoord,
           map,
           title: `Stop ${i + 1}`,
           icon: {
             path: (window as any).google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: '#10B981',
+            fillColor: '#F59E0B',
             fillOpacity: 1,
             strokeColor: '#FFFFFF',
             strokeWeight: 2,
@@ -92,11 +74,10 @@ const TripRouteGoogleMap: React.FC<{
       });
 
       // Dropoff Marker (Red)
-      const dLatLng = { lat: dCoords[0], lng: dCoords[1] };
-      bounds.extend(dLatLng);
-      routePath.push(dLatLng);
+      bounds.extend(dCoord);
+      routePath.push(dCoord);
       new (window as any).google.maps.Marker({
-        position: dLatLng,
+        position: dCoord,
         map,
         title: 'Drop-off Location',
         icon: {
@@ -119,7 +100,7 @@ const TripRouteGoogleMap: React.FC<{
         map,
       });
 
-      map.fitBounds(bounds);
+      map.fitBounds(bounds, { top: 30, bottom: 30, left: 30, right: 30 });
     }).catch(err => console.warn('Google Maps load failed', err));
 
     return () => { active = false; };
@@ -127,6 +108,7 @@ const TripRouteGoogleMap: React.FC<{
 
   return <div ref={mapRef} className="w-full h-52 rounded-xl border border-line-2 shadow-sm my-4 overflow-hidden" />;
 };
+
 
 interface TripDetailsModalProps {
   trip: any;
@@ -368,7 +350,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
             <TripStatusBadge status={trip.status} />
             <div>
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
-                Trip #{trip.id}
+                Trip {formatTripId(trip?.id || trip?._id)}
                 {trip.rating && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"><TrendingUp size={12} /> ★ {trip.rating}</span>}
               </h2>
               <p className="text-xs text-ink-4 mt-1">Submitted: {trip.submittedTime ? formatDateTime(trip.submittedTime) : 'N/A'}</p>

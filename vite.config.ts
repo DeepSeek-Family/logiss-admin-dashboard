@@ -36,7 +36,10 @@ export default defineConfig(({ mode }) => {
           target: mediaTarget,
           changeOrigin: true,
         },
+       
       },
+    
+      
     },
   }
 })

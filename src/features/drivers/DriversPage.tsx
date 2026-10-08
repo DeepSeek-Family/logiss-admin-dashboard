@@ -1,24 +1,40 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { UserPlus, AlertTriangle, Car, X, Check } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { UserPlus, AlertTriangle, Car, X, Check, Loader2 } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
-import { useCreateDriverMutation, useGetDriversQuery } from '@/redux/api/driversApi';
+import {
+  useCreateDriverMutation,
+  useGetDriversQuery,
+  useGetDriverTripHistoryQuery,
+  type IDriverUser,
+} from '@/redux/api/driversApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { apiErrorMessage, mapApiBooking } from '@/features/bookings/utils/helpers';
 import toast from 'react-hot-toast';
 
 import {
   AddDriverModal,
   DriverProfile,
-  DriverKpiStrip,
   DriversTable
 } from '@/features/drivers';
 
+const HISTORY_LIMIT = 10;
+
 const Drivers = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('all');
-  const [search, setSearch] = useState('');
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
+  const selectedDriverId = searchParams.get('driverId');
+  const [historyPage, setHistoryPage] = useState(1);
+  const setSelectedDriverId = (driverId: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (driverId) next.set('driverId', driverId);
+      else next.delete('driverId');
+      return next;
+    });
+    setHistoryPage(1);
+  };
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignSuccess, setAssignSuccess] = useState(false);
@@ -30,12 +46,21 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const listParams = useMemo(() => ({
     page: currentPage,
     limit: itemsPerPage,
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(search.trim() ? { searchTerm: search.trim() } : {}),
   }), [currentPage, itemsPerPage, search]);
 
   const { data: driversResponse, isLoading, isError, error, refetch } = useGetDriversQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
+  const { data: historyResponse, isFetching: historyLoading } = useGetDriverTripHistoryQuery(
+    { id: selectedDriverId || '', page: historyPage, limit: HISTORY_LIMIT },
+    { skip: !selectedDriverId, refetchOnMountOrArgChange: true },
+  );
+  const driverTrips = useMemo(
+    () => (historyResponse?.data || []).map(mapApiBooking),
+    [historyResponse],
+  );
+  const historyPagination = historyResponse?.pagination;
   const [createDriver, { isLoading: isCreatingDriver }] = useCreateDriverMutation();
 
   const drivers = useMemo(
@@ -53,9 +78,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
             <div className="w-48 h-8 bg-line-2 rounded-xl animate-pulse"></div>
             <div className="w-64 h-4 bg-line-2 rounded-lg animate-pulse"></div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-bg rounded-2xl animate-pulse"></div>)}
         </div>
         <div className="h-[400px] bg-bg rounded-2xl animate-pulse"></div>
       </div>
@@ -75,23 +97,28 @@ const Drivers = ({ role }: { role?: string | null }) => {
     );
   }
 
-  const filteredDrivers = drivers.filter((d: any) => {
-    const q = (search || '').toLowerCase();
-    const nameMatch = (d?.name || '').toLowerCase().includes(q);
-    const idMatch = (d?.id || '').toLowerCase().includes(q);
-    const emailMatch = (d?.email || '').toLowerCase().includes(q);
-    let matchesTab = true;
-    if (activeTab === 'on_duty') matchesTab = d?.onDuty;
-    if (activeTab === 'off_duty') matchesTab = !d?.onDuty;
-    if (activeTab === 'attention') matchesTab = (d?.pendingDocUpdates || 0) > 0;
-    return (nameMatch || idMatch || emailMatch || !q) && matchesTab;
-  });
-
-  const totalItems = activeTab === 'all' ? (pagination?.total ?? filteredDrivers.length) : filteredDrivers.length;
+  // `searchTerm` is applied server-side.
+  const totalItems = pagination?.total ?? drivers.length;
   const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
-  const paginatedDrivers = filteredDrivers;
 
-  const selectedDriver = drivers.find((d: any) => d.id === selectedDriverId);
+  // When opened from a URL, the driver may not be on the current list page; fall back to the
+  // driver embedded in their trip history (`driverId`).
+  const historyDriver = historyResponse?.data?.[0]?.driverId;
+  const selectedDriver = selectedDriverId
+    ? drivers.find((d: any) => d.id === selectedDriverId) ||
+      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
+        ? mapApiDriver(historyDriver as IDriverUser)
+        : null)
+    : null;
+
+  if (selectedDriverId && !selectedDriver && historyLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Loader2 size={28} className="text-primary animate-spin" />
+        <p className="text-sm text-ink-4">Loading driver...</p>
+      </div>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const config: { [key: string]: any } = {
@@ -179,7 +206,13 @@ const Drivers = ({ role }: { role?: string | null }) => {
           selectedDriver={selectedDriver}
           setSelectedDriverId={setSelectedDriverId}
           role={role}
-          trips={[]}
+          trips={driverTrips}
+          tripsLoading={historyLoading}
+          tripsTotal={historyPagination?.total ?? driverTrips.length}
+          tripsPage={historyPage}
+          tripsTotalPages={historyPagination?.totalPage || 1}
+          tripsPerPage={HISTORY_LIMIT}
+          onTripsPageChange={setHistoryPage}
           onAssignVehicle={() => { setShowAssignModal(true); setSelectedVehicleId(null); }}
           onViewFleet={() => navigate('/fleet')}
           assignedVehicle={assignedVehicles[selectedDriver.id] || null}
@@ -218,18 +251,13 @@ const Drivers = ({ role }: { role?: string | null }) => {
         )}
       </div>
 
-      <DriverKpiStrip drivers={drivers} total={pagination?.total} />
-
       <DriversTable
-        drivers={drivers}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         search={search}
         setSearch={setSearch}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         totalPages={totalPages}
-        paginatedDrivers={paginatedDrivers}
+        paginatedDrivers={drivers}
         filteredCount={totalItems}
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}

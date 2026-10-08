@@ -13,11 +13,20 @@ export const driverInitials = (driver?: Pick<IDriverUser, 'firstName' | 'lastNam
   return `${driver.firstName?.[0] || ''}${driver.lastName?.[0] || ''}`.toUpperCase() || 'D'
 }
 
+const firstMediaPath = (value: unknown): string | undefined => {
+  if (typeof value === 'string' && value.trim()) return value
+  if (Array.isArray(value)) {
+    const first = value.find((item) => typeof item === 'string' && item.trim())
+    return typeof first === 'string' ? first : undefined
+  }
+  return undefined
+}
+
 const licenseBlock = (driver: IDriverUser) => ({
   number: driver.driverData?.licenseNumber || '—',
   class: driver.driverData?.licenseClass ? `Class ${driver.driverData.licenseClass}` : '—',
   expires: driver.driverData?.expirationDate ? formatShortDate(driver.driverData.expirationDate) : '—',
-  image: resolveMediaUrl(driver.driverData?.licenseImage),
+  image: resolveMediaUrl(firstMediaPath(driver.driverData?.licenseImage)),
 })
 
 export const mapDriverBase = (driver: IDriverUser) => {

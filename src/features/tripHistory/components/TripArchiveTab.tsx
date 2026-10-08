@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRight, Repeat, MoveRight, Calendar, Filter, DollarSign, ClipboardList, SlidersHorizontal, Download, X, Accessibility, Bed, Disc, Info, User } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
 import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
-import { formatTime, formatShortDate, money } from '@/utils/helpers';
-import { usePricing } from '@/hooks/usePricing';
+import { formatTime, formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { DriverAssignSelect } from '@/features/bookings';
+import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
+import { ServiceDateFilter } from './ServiceDateFilter';
 
 interface TripArchiveTabProps {
   trips: any[];
@@ -15,18 +16,20 @@ interface TripArchiveTabProps {
   /** Locate this trip's vehicle on the side map. */
   onRowSelect?: (id: string | null) => void;
   selectedMapId?: string | null;
-  /** Time & Sort are controlled by the page header so they can sit beside the actions. */
-  timeFilter: string;
-  setTimeFilter: (v: string) => void;
-  sortBy: string;
-  setSortBy: (v: string) => void;
-  startDate: string;
-  setStartDate: (v: string) => void;
-  endDate: string;
-  setEndDate: (v: string) => void;
-  /** Render Time/Sort inside the filter bar (true when the map is hidden); the page
+  /** Search, driver, payer and date are sent to `/booking/history` by the page. */
+  search: string;
+  setSearch: (v: string) => void;
+  driverFilter: string;
+  setDriverFilter: (v: string) => void;
+  payerFilter: string;
+  setPayerFilter: (v: string) => void;
+  /** `YYYY-MM-DD`, or '' for all dates. */
+  serviceDate: string;
+  setServiceDate: (v: string) => void;
+  isFetching?: boolean;
+  /** Render Date inside the filter bar (true when the map is hidden); the page
    *  header renders them instead when the map is shown. */
-  inlineTimeSort?: boolean;
+  inlineDateFilter?: boolean;
 }
 
 // Editable status options (mirrors TripStatusBadge config).
@@ -167,171 +170,32 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   updateTrip,
   onRowSelect,
   selectedMapId,
-  timeFilter,
-  setTimeFilter,
-  sortBy,
-  setSortBy,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
-  inlineTimeSort = true,
+  search,
+  setSearch,
+  driverFilter,
+  setDriverFilter,
+  payerFilter,
+  setPayerFilter,
+  serviceDate,
+  setServiceDate,
+  isFetching,
+  inlineDateFilter = true,
 }) => {
-  const { pricing } = usePricing();
-  const fundingOptions = (pricing.fundingPolicies || []).filter(p => p.active);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  const { data: payersResponse } = useGetAllPayersQuery();
+  const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset to page 1 when the header-controlled Time/Sort change.
-  React.useEffect(() => { setCurrentPage(1); }, [timeFilter, sortBy, startDate, endDate]);
-  const [driverFilter, setDriverFilter] = useState('all');
-  const [fundingFilter, setFundingFilter] = useState('all');
-  const [countyFilter, setCountyFilter] = useState('all'); // 'all' | 'inside' | 'outside'
-
-  // Advanced filters state
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [daysFilter, setDaysFilter] = useState<string[]>([]);
-  const [hoursFilter, setHoursFilter] = useState<string[]>([]);
-  const [monthFilter, setMonthFilter] = useState('all');
-  const [yearFilter, setYearFilter] = useState('all');
-
+  // Reset to page 1 when the header-controlled Date changes.
+  React.useEffect(() => { setCurrentPage(1); }, [serviceDate]);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Process filter logic for Trips Archive
   // Anything past the booking stage belongs here — i.e. not pending_review, OR already
   // has a driver assigned (so a driver-assigned trip always shows in Trip History).
-  const historyTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
-  const filteredTrips = historyTrips.filter((trip: any) => {
-    const matchesSearch = !search ||
-      (trip?.id || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.rider?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.mobility || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.passengerId || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.authorizationId || trip?.authId || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.source || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.pickup || '').toLowerCase().includes(search.toLowerCase()) ||
-      (trip?.dropoff || '').toLowerCase().includes(search.toLowerCase());
+  // Search, date, driver and payer are filtered server-side.
+  const filteredTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
 
-    let matchesStatus = true;
-    if (filter !== 'all') {
-      if (filter === 'active') matchesStatus = ['assigned', 'confirmed', 'en_route', 'arrived', 'in_trip'].includes(trip.status);
-      else if (filter === 'completed') matchesStatus = trip.status === 'completed';
-      else if (filter === 'cancelled') matchesStatus = trip.status === 'cancelled';
-    }
-
-    let matchesTime = true;
-    if (timeFilter !== 'all') {
-      const tripDate = new Date(trip.scheduledTime);
-      tripDate.setHours(0, 0, 0, 0);
-
-      if (timeFilter === 'custom') {
-        if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          if (tripDate < start) matchesTime = false;
-        }
-        if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          if (tripDate > end) matchesTime = false;
-        }
-      } else {
-        const now = new Date();
-        const isTodayVal = tripDate.toDateString() === now.toDateString();
-
-        const tomorrow = new Date();
-        tomorrow.setDate(now.getDate() + 1);
-        const isTomorrow = tripDate.toDateString() === tomorrow.toDateString();
-
-        const startOfWeek = new Date(now);
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-        startOfWeek.setDate(diff);
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        const isThisWeek = tripDate >= startOfWeek && tripDate <= endOfWeek;
-        const isThisMonth = tripDate.getMonth() === now.getMonth() && tripDate.getFullYear() === now.getFullYear();
-
-        if (timeFilter === 'today') matchesTime = isTodayVal;
-        else if (timeFilter === 'tomorrow') matchesTime = isTomorrow;
-        else if (timeFilter === 'week') matchesTime = isThisWeek;
-        else if (timeFilter === 'month') matchesTime = isThisMonth;
-      }
-    }
-
-    let matchesDriver = driverFilter === 'all' || String(trip.driverId) === driverFilter;
-    let matchesFunding = fundingFilter === 'all' || (trip.fundingSource || trip.paymentMethod || '') === fundingFilter;
-    let matchesCounty = countyFilter === 'all' ||
-      (countyFilter === 'inside' && trip.insideCounty === true) ||
-      (countyFilter === 'outside' && trip.insideCounty === false);
-
-    // Advanced Filter Checks
-    let matchesDayOfWeek = true;
-    if (daysFilter.length > 0) {
-      const tripDay = new Date(trip.scheduledTime).getDay().toString();
-      matchesDayOfWeek = daysFilter.includes(tripDay);
-    }
-
-    let matchesHourOfDay = true;
-    if (hoursFilter.length > 0) {
-      const tripHour = new Date(trip.scheduledTime).getHours();
-      let category = '';
-      if (tripHour >= 6 && tripHour < 12) category = 'morning';
-      else if (tripHour >= 12 && tripHour < 17) category = 'afternoon';
-      else if (tripHour >= 17 && tripHour < 22) category = 'evening';
-      else category = 'night';
-      matchesHourOfDay = hoursFilter.includes(category);
-    }
-
-    let matchesMonth = true;
-    if (monthFilter !== 'all') {
-      const tripMonth = new Date(trip.scheduledTime).getMonth().toString();
-      matchesMonth = tripMonth === monthFilter;
-    }
-
-    let matchesYear = true;
-    if (yearFilter !== 'all') {
-      const tripYear = new Date(trip.scheduledTime).getFullYear().toString();
-      matchesYear = tripYear === yearFilter;
-    }
-
-    return matchesSearch && matchesStatus && matchesTime && matchesDriver && matchesFunding && matchesCounty && matchesDayOfWeek && matchesHourOfDay && matchesMonth && matchesYear;
-  });
-
-  const sortedTrips = [...filteredTrips].sort((a, b) => {
-    if (sortBy === 'newest') return new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime();
-    if (sortBy === 'oldest') return new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime();
-    if (sortBy === 'rider') return (a?.rider?.name || '').localeCompare(b?.rider?.name || '');
-
-    // Chronological date decompositions
-    const dateA = new Date(a.scheduledTime);
-    const dateB = new Date(b.scheduledTime);
-
-    if (sortBy === 'day') {
-      return dateA.getDate() - dateB.getDate();
-    }
-    if (sortBy === 'hour') {
-      const timeA = dateA.getHours() * 60 + dateA.getMinutes();
-      const timeB = dateB.getHours() * 60 + dateB.getMinutes();
-      return timeA - timeB;
-    }
-    if (sortBy === 'month') {
-      return dateA.getMonth() - dateB.getMonth();
-    }
-    if (sortBy === 'year') {
-      return dateA.getFullYear() - dateB.getFullYear();
-    }
-
-    return 0;
-  });
-
-  const totalPages = Math.ceil(sortedTrips.length / itemsPerPage);
-  const paginatedTrips = sortedTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
+  const paginatedTrips = filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === paginatedTrips.length) setSelectedIds([]);
@@ -346,7 +210,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const handleExport = () => {
     const tripsToExport = selectedIds.length > 0
       ? trips.filter((t: any) => selectedIds.includes(t.id))
-      : sortedTrips;
+      : filteredTrips;
 
     if (tripsToExport.length === 0) return;
 
@@ -406,16 +270,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
     setSelectedIds([]);
   };
 
-  React.useEffect(() => {
-    const handleExportEvent = () => {
-      handleExport();
-    };
-    window.addEventListener('export-trips-csv', handleExportEvent);
-    return () => {
-      window.removeEventListener('export-trips-csv', handleExportEvent);
-    };
-  }, [sortedTrips, selectedIds, trips, drivers]);
-
   return (
     <>
       <Card className="overflow-hidden border-line-2 shadow-sm">
@@ -423,7 +277,9 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
           <div className="flex items-center gap-3 flex-wrap">
             {/* Search */}
             <div className="w-full sm:w-56 relative shadow-sm rounded-xl">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={16} />
+              {isFetching
+                ? <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 text-primary animate-spin" size={16} />
+                : <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={16} />}
               <input
                 type="text"
                 placeholder="Search trips, riders..."
@@ -431,21 +287,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               />
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-4">Status</span>
-              <select
-                value={filter}
-                onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
-                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink capitalize focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
-              >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
             </div>
 
             {/* Driver Filter */}
@@ -469,200 +310,26 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               <DollarSign size={12} className="text-ink-4" />
               <span className="text-xs text-ink-4">Payer</span>
               <select
-                value={fundingFilter}
-                onChange={(e) => { setFundingFilter(e.target.value); setCurrentPage(1); }}
+                value={payerFilter}
+                onChange={(e) => { setPayerFilter(e.target.value); setCurrentPage(1); }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
                 <option value="all">All Payers</option>
-                {fundingOptions.map(fs => <option key={fs.id} value={fs.name}>{fs.name}</option>)}
+                {payersList.map((payer) => (
+                  <option key={payer._id} value={payer._id}>
+                    {payer.name || payer.title || payer.payerName || payer._id}
+                  </option>
+                ))}
               </select>
             </div>
 
-            {/* Inside/Outside County Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-4">County</span>
-              <select
-                value={countyFilter}
-                onChange={(e) => { setCountyFilter(e.target.value); setCurrentPage(1); }}
-                className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
-              >
-                <option value="all">All</option>
-                <option value="inside">Inside</option>
-                <option value="outside">Outside</option>
-              </select>
-            </div>
-
-            {/* Right group: Time / Sort (when map hidden) + Advanced */}
-            <div className="ml-auto flex items-center gap-3 flex-wrap">
-              {inlineTimeSort && (
-                <>
-                  {/* Time Period */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-ink-4 whitespace-nowrap">Time</span>
-                    <div className="relative flex items-center">
-                      <select
-                        value={timeFilter}
-                        onChange={(e) => setTimeFilter(e.target.value)}
-                        className="bg-white border border-line rounded-xl py-2 pl-3 pr-9 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
-                      >
-                        <option value="all">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="tomorrow">Tomorrow</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="custom">Custom Range</option>
-                      </select>
-                      <button type="button" onClick={() => setTimeFilter('custom')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-primary" title="Custom range"><Calendar size={14} /></button>
-                    </div>
-                  </div>
-
-                  {timeFilter === 'custom' && (
-                    <div className="flex items-center gap-2">
-                      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="Start date" />
-                      <span className="text-xs text-ink-4">to</span>
-                      <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }} className="bg-white border border-line rounded-xl py-2 px-2.5 text-xs font-medium text-ink outline-none h-9 cursor-pointer" title="End date" />
-                    </div>
-                  )}
-
-                  {/* Sort */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-ink-4 whitespace-nowrap">Sort</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer h-9 appearance-none"
-                    >
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
-                      <option value="rider">Rider Name (A-Z)</option>
-                      <option value="day">Scheduled Day</option>
-                      <option value="hour">Scheduled Hour</option>
-                      <option value="month">Scheduled Month</option>
-                      <option value="year">Scheduled Year</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* Advanced Filters — icon toggle */}
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                title={showAdvanced ? 'Hide advanced filters' : 'Advanced filters'}
-                aria-label="Advanced filters"
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${showAdvanced
-                    ? 'bg-primary text-white border-primary shadow-md'
-                    : 'bg-white text-ink border-line-2 hover:bg-bg'
-                  }`}
-              >
-                <SlidersHorizontal size={15} />
-              </button>
-            </div>
+            {/* Date (when map hidden) */}
+            {inlineDateFilter && (
+              <div className="ml-auto">
+                <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />
+              </div>
+            )}
           </div>
-
-          {/* Collapsible Advanced Filters Drawer */}
-          {showAdvanced && (
-            <div className="mt-4 p-5 bg-bg/40 border border-line rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-6 animate-in slide-in-from-top-3 duration-300">
-              {/* Days of Week */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Days of Week</label>
-                <div className="flex flex-wrap gap-1">
-                  {[
-                    { key: '1', label: 'M' },
-                    { key: '2', label: 'T' },
-                    { key: '3', label: 'W' },
-                    { key: '4', label: 'T' },
-                    { key: '5', label: 'F' },
-                    { key: '6', label: 'S' },
-                    { key: '0', label: 'S' }
-                  ].map(d => {
-                    const isSel = daysFilter.includes(d.key);
-                    return (
-                      <button
-                        key={d.key}
-                        type="button"
-                        onClick={() => {
-                          setDaysFilter(prev => prev.includes(d.key) ? prev.filter(k => k !== d.key) : [...prev, d.key]);
-                          setCurrentPage(1);
-                        }}
-                        className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg transition-all border ${isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
-                          }`}
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Hour of Day */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Hour of Day</label>
-                <div className="flex flex-nowrap gap-1.5">
-                  {[
-                    { key: 'morning', label: 'Morning' },
-                    { key: 'afternoon', label: 'Afternoon' },
-                    { key: 'evening', label: 'Evening' }
-                  ].map(h => {
-                    const isSel = hoursFilter.includes(h.key);
-                    return (
-                      <button
-                        key={h.key}
-                        type="button"
-                        onClick={() => {
-                          setHoursFilter(prev => prev.includes(h.key) ? prev.filter(k => k !== h.key) : [...prev, h.key]);
-                          setCurrentPage(1);
-                        }}
-                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border whitespace-nowrap ${isSel ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-ink-3 border-line-2 hover:bg-bg'
-                          }`}
-                      >
-                        {h.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Month Filter */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Month</label>
-                <select
-                  value={monthFilter}
-                  onChange={(e) => { setMonthFilter(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-white border border-line-2 rounded-xl py-2 px-3 text-xs font-semibold text-ink outline-none"
-                >
-                  <option value="all">All Months</option>
-                  <option value="0">January</option>
-                  <option value="1">February</option>
-                  <option value="2">March</option>
-                  <option value="3">April</option>
-                  <option value="4">May</option>
-                  <option value="5">June</option>
-                  <option value="6">July</option>
-                  <option value="7">August</option>
-                  <option value="8">September</option>
-                  <option value="9">October</option>
-                  <option value="10">November</option>
-                  <option value="11">December</option>
-                </select>
-              </div>
-
-              {/* Year Filter */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-ink-3 uppercase tracking-wide">Year</label>
-                <select
-                  value={yearFilter}
-                  onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-white border border-line-2 rounded-xl py-2 px-3 text-xs font-semibold text-ink outline-none"
-                >
-                  <option value="all">All Years</option>
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
-                  <option value="2026">2026</option>
-                </select>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Bulk-action bar — appears when one or more rows are selected */}
@@ -769,7 +436,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
                   <td className="px-3.5 py-3 min-w-[120px]">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-ink-3 whitespace-nowrap">#{trip.id}</span>
+                      <span className="text-xs text-ink-3 whitespace-nowrap">{formatTripId(trip.id || trip._id)}</span>
                       {trip.source && <span className="text-xs text-ink-4 whitespace-nowrap">{trip.source}</span>}
                     </div>
                   </td>

@@ -22,6 +22,7 @@ import {
   extractBookingPeople,
   resolveMediaUrl,
   toApiTime,
+  toGeoJsonPosition,
   toLocationValue,
   toYmd,
   weekdayKeysToNames,
@@ -420,8 +421,8 @@ export const BookingForm = () => {
     const buildPayload = (serviceDate: string): ICreateBookingPayload => {
       const payload: ICreateBookingPayload = {
         userId,
-        pickupLocation,
-        dropOffLocation,
+        pickupLocation: toGeoJsonPosition(pickupLocation),
+        dropOffLocation: toGeoJsonPosition(dropOffLocation),
         tripType: form.tripType,
         tripReason: form.tripReason,
         passengerSeats: form.totalSeats,
@@ -432,7 +433,7 @@ export const BookingForm = () => {
         driverId,
         payerSource,
       };
-      if (stopAddress != null) payload.stopAddress = stopAddress;
+      if (stopAddress != null) payload.stopAddress = toGeoJsonPosition(stopAddress);
       if (mobilityId) payload.mobilityRequirements = mobilityId;
       if (form.additionalNotes.trim()) payload.tripNote = form.additionalNotes.trim();
       if (form.privateNotes.trim()) payload.internalPrivateNote = form.privateNotes.trim();

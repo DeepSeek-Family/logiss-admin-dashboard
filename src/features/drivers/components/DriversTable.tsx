@@ -1,10 +1,8 @@
 import { Search, Star, AlertTriangle, ShieldCheck, ChevronRight } from 'lucide-react';
-import { Card, Avatar, Badge, Pagination } from '@/shared/components/ui';
+import { Card, Avatar, Pagination } from '@/shared/components/ui';
+import { SearchInput } from '@/shared/components/ui/SearchInput';
 
 interface DriversTableProps {
-  drivers: any[];
-  activeTab: string;
-  setActiveTab: (val: string) => void;
   search: string;
   setSearch: (val: string) => void;
   currentPage: number;
@@ -19,9 +17,6 @@ interface DriversTableProps {
 }
 
 export const DriversTable = ({
-  drivers,
-  activeTab,
-  setActiveTab,
   search,
   setSearch,
   currentPage,
@@ -37,36 +32,20 @@ export const DriversTable = ({
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3 border-b border-line bg-white">
-        <div className="flex items-center gap-1">
-          {[
-            { id: 'all', label: 'All Drivers' },
-            { id: 'on_duty', label: 'On Duty' },
-            { id: 'off_duty', label: 'Off Duty' },
-            { id: 'attention', label: `Needs Attention${(drivers || []).some((d: any) => (d?.pendingDocUpdates || 0) > 0) ? ' (1)' : ''}` },
-          ].map((tab: any) => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                activeTab === tab.id
-                  ? 'bg-primary-light text-primary'
-                  : 'text-ink-3 hover:text-ink hover:bg-bg'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="relative w-full sm:w-56">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" size={16} />
-          <input
-            type="text"
-            placeholder="Search name, ID..."
-            className="w-full pl-9 pr-3 py-2 bg-bg border border-line rounded-lg text-sm font-medium text-ink placeholder:text-ink-3 focus:ring-2 focus:ring-primary/15 outline-none"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          />
-        </div>
+        <p className="text-sm font-semibold text-ink">
+          All Drivers <span className="text-ink-4 font-medium">({filteredCount})</span>
+        </p>
+        <SearchInput
+          paramName="searchTerm"
+          placeholder="Search name, email, phone..."
+          className="w-full sm:w-72"
+          defaultValue={search}
+          onSearchChange={(value) => {
+            if (value === search) return;
+            setSearch(value);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       <div className="overflow-x-auto">
@@ -136,7 +115,7 @@ export const DriversTable = ({
               <tr>
                 <td colSpan={6} className="px-5 py-12 text-center">
                   <Search size={28} className="mx-auto mb-2 text-ink-3" />
-                  <p className="text-sm font-medium text-ink-3">No drivers match your filter</p>
+                  <p className="text-sm font-medium text-ink-3">{search ? `No drivers match "${search}"` : 'No drivers found'}</p>
                 </td>
               </tr>
             )}

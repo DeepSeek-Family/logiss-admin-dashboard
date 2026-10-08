@@ -3,13 +3,19 @@ import {
   Phone, Mail, MapPin, Activity, Star,
   ShieldCheck, Copy, User, Repeat, ChevronLeft, Loader2
 } from 'lucide-react';
-import { Badge, Button } from '@/shared/components/ui';
+import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
+import { RouteTimeline, TRIP_STATUS_VARIANT } from './RouteTimeline';
 
 interface RiderProfileProps {
   selectedRider: any;
   trips: any[];
   tripsLoading?: boolean;
+  tripsTotal?: number;
+  tripsPage?: number;
+  tripsTotalPages?: number;
+  tripsPerPage?: number;
+  onTripsPageChange?: (page: number) => void;
   role?: string | null;
   onBack: () => void;
   profileTab: 'overview' | 'trips';
@@ -20,7 +26,8 @@ interface RiderProfileProps {
 }
 
 export const RiderProfile: React.FC<RiderProfileProps> = ({
-  selectedRider, trips, tripsLoading, role, onBack,
+  selectedRider, trips, tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10,
+  onTripsPageChange, role, onBack,
   profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider
 }) => {
   const TABS = [
@@ -98,7 +105,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
         <div className="flex items-center gap-6 shrink-0">
           <div className="flex items-center gap-6 text-center">
             <div>
-              <p className="text-2xl font-bold text-ink">{tripsLoading ? (selectedRider?.totalTrips || 0) : (trips.length || selectedRider?.totalTrips || 0)}</p>
+              <p className="text-2xl font-bold text-ink">{tripsTotal ?? (trips.length || selectedRider?.totalTrips || 0)}</p>
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
             {selectedRider?.mobility && (
@@ -112,16 +119,20 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             <Button
               variant="outline"
               icon={Phone}
-              className="h-9 text-sm"
-              onClick={() => selectedRider?.phone && window.open(`tel:${selectedRider.phone}`)}
+              className="h-9 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!selectedRider?.phone}
+              title={selectedRider?.phone || 'No phone number'}
+              onClick={() => { if (selectedRider?.phone) window.location.href = `tel:${selectedRider.phone}`; }}
             >
               Call
             </Button>
             <Button
               variant="outline"
               icon={Mail}
-              className="h-9 text-sm"
-              onClick={() => selectedRider?.email && window.open(`mailto:${selectedRider.email}`)}
+              className="h-9 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!selectedRider?.email}
+              title={selectedRider?.email || 'No email'}
+              onClick={() => { if (selectedRider?.email) window.location.href = `mailto:${selectedRider.email}`; }}
             >
               Email
             </Button>
@@ -167,14 +178,36 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             {/* Email full width */}
             <div className="pb-4 border-b border-line-2">
               <p className="text-xs text-ink-4 mb-0.5">Email</p>
-              <p className="text-sm font-medium text-ink">{selectedRider?.email || '—'}</p>
+              {selectedRider?.email ? (
+                <a href={`mailto:${selectedRider.email}`} className="text-sm font-medium text-primary hover:underline break-all">
+                  {selectedRider.email}
+                </a>
+              ) : (
+                <p className="text-sm font-medium text-ink">—</p>
+              )}
             </div>
 
             {/* 2-col */}
             <div className="grid grid-cols-2 gap-x-6 pt-4">
               <div className="pb-4 border-b border-line-2">
                 <p className="text-xs text-ink-4 mb-0.5">Phone</p>
-                <p className="text-sm font-medium text-ink">{selectedRider?.phone || '—'}</p>
+                {selectedRider?.phone ? (
+                  <div className="flex items-center gap-2">
+                    <a href={`tel:${selectedRider.phone}`} className="text-sm font-medium text-primary hover:underline">
+                      {selectedRider.phone}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => onCopyPhone(selectedRider.phone)}
+                      className="text-ink-4 hover:text-primary transition-colors"
+                      title="Copy phone number"
+                    >
+                      {copiedPhone ? <ShieldCheck size={13} className="text-accent" /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium text-ink">—</p>
+                )}
               </div>
               <div className="pb-4 border-b border-line-2">
                 <p className="text-xs text-ink-4 mb-0.5">Date of Birth</p>
@@ -268,29 +301,55 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               ) : trips.length === 0 ? (
                 <tr><td colSpan={5} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
               ) : trips.map((trip: any) => (
-                <tr key={trip.id} className="hover:bg-bg/50 transition-colors">
-                  <td className="px-5 py-3 text-xs text-ink-3">#{String(trip.id || '').slice(-6)}</td>
-                  <td className="px-5 py-3">
+                <tr key={trip.id} className="align-top hover:bg-bg/50 transition-colors">
+                  <td className="px-5 py-4">
+                    <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
+                      #{String(trip.id || '').slice(-6)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
                     <p className="text-xs font-medium text-ink">{formatShortDate(trip.serviceDate || trip.scheduledTime) || '—'}</p>
                     <p className="text-[10px] text-ink-4">{formatTime(trip.pickupTime || trip.scheduledTime) || '—'}</p>
                   </td>
-                  <td className="px-5 py-3">
-                    <p className="text-xs text-ink">{tripTypeLabel(trip.tripType || trip.type || '')}</p>
-                    {trip.isRecurring && <p className="text-[10px] text-primary">Recurring</p>}
+                  <td className="px-5 py-4">
+                    <p className="text-xs font-medium text-ink">{tripTypeLabel(trip.tripType || trip.type || '')}</p>
+                    {trip.isRecurring && (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary">
+                        <Repeat size={9} /> Recurring
+                      </span>
+                    )}
                   </td>
-                  <td className="px-5 py-3 max-w-xs">
-                    <p className="text-xs text-ink-4 truncate">{trip.pickup || '—'}</p>
-                    <p className="text-xs text-primary truncate">→ {trip.dropoff || '—'}</p>
+                  <td className="px-5 py-4">
+                    <RouteTimeline
+                      points={[
+                        { kind: 'pickup', raw: trip.pickupLocationRaw ?? trip.pickup },
+                        { kind: 'stop', raw: trip.stopAddressRaw },
+                        { kind: 'dropoff', raw: trip.dropOffLocationRaw ?? trip.dropoff },
+                      ]}
+                    />
                   </td>
-                  <td className="px-5 py-3">
-                    <Badge variant={String(trip.rawStatus || trip.status).toLowerCase() === 'completed' ? 'accent' : 'neutral'}>
-                      {trip.rawStatus || trip.status}
+                  <td className="px-5 py-4">
+                    <Badge
+                      dot
+                      variant={TRIP_STATUS_VARIANT[String(trip.rawStatus || trip.status || '').toLowerCase()] ?? 'neutral'}
+                      className="capitalize whitespace-nowrap"
+                    >
+                      {String(trip.rawStatus || trip.status || '').replace(/[-_]/g, ' ')}
                     </Badge>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {onTripsPageChange && (tripsTotal ?? 0) > 0 && (
+            <Pagination
+              currentPage={tripsPage}
+              totalPages={tripsTotalPages}
+              totalItems={tripsTotal ?? trips.length}
+              itemsPerPage={tripsPerPage}
+              onPageChange={onTripsPageChange}
+            />
+          )}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useLoginMutation } from '@/redux/api/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { setCredentials } from '@/redux/slice/authSlice';
+import { getFcmToken } from '@/config/firebase';
 import {
   RoleSelector,
   LoginForm
@@ -25,18 +26,21 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await login({ email, password }).unwrap();
+      const fcmToken = await getFcmToken();
+      const response = await login({ email, password, fcmToken, deviceToken: fcmToken }).unwrap();
       if (response.success && response.data) {
-        const { accessToken, refreshToken } = response.data;
+        const { accessToken, refreshToken, user } = response.data;
+        const loggedInRole = (user?.role || selectedRole || 'admin').toLowerCase();
         dispatch(
           setCredentials({
             accessToken,
             refreshToken,
-            role: selectedRole || 'admin',
+            role: loggedInRole,
+            user: user || response.data,
           })
         );
         toast.success(response.message || 'Login successful!');
-        setRole(selectedRole || 'admin');
+        setRole(loggedInRole);
         return;
       }
     } catch (err: any) {
@@ -47,15 +51,23 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         toast.error(errorMsg);
       } else {
         // Fallback session for demo environment
+        const fallbackRole = (selectedRole || 'admin').toLowerCase();
+        const fallbackUser = {
+          role: fallbackRole.toUpperCase(),
+          accessScope: fallbackRole === 'admin'
+            ? ['/dashboard', '/operations', '/bookings', '/live', '/drivers', '/riders', '/applications', '/reports', '/trips', '/schedule', '/coverage', '/fleet', '/notifications', '/settings', '/profile', '/finance', '/transactions', '/staff', '/cms', '/support', '/push']
+            : ['/dashboard', '/operations', '/bookings', '/live', '/drivers', '/riders', '/trips', '/schedule', '/reports'],
+        };
         dispatch(
           setCredentials({
             accessToken: 'mock_access_token',
             refreshToken: 'mock_refresh_token',
-            role: selectedRole || 'admin',
+            role: fallbackRole,
+            user: fallbackUser,
           })
         );
         toast.success('Logged in successfully');
-        setRole(selectedRole || 'admin');
+        setRole(fallbackRole);
       }
     }
   };

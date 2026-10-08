@@ -53,6 +53,18 @@ export const toLocationValue = (value: any): [number, number] | null => {
   return loc || null;
 };
 
+/**
+ * Picker and geocode points are [latitude, longitude].
+ * MongoDB GeoJSON expects [longitude, latitude].
+ * A first value outside ±90 is already longitude, so it is left as-is.
+ */
+export const toGeoJsonPosition = (pair: [number, number]): [number, number] => {
+  const [a, b] = pair;
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return pair;
+  if (Math.abs(a) > 90 && Math.abs(b) <= 90) return [a, b];
+  return [b, a];
+};
+
 
 export { imageUrl, resolveMediaUrl } from '@/utils/imageUrl';
 
@@ -134,6 +146,39 @@ export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
   }
 
   return [37.5407, -77.4360];
+};
+
+export const parseLatLng = (val: any): { lat: number; lng: number } | null => {
+  if (val == null || val === '') return null;
+  const loc = to2NumArrayLoc(val);
+  if (!loc || !Number.isFinite(loc[0]) || !Number.isFinite(loc[1])) return null;
+  let [n1, n2] = loc;
+  if (Math.abs(n1) > 90 && Math.abs(n2) <= 90) {
+    return { lat: n2, lng: n1 };
+  }
+  return { lat: n1, lng: n2 };
+};
+
+export const extractBookingStopsCoords = (b: any): { lat: number; lng: number }[] => {
+  if (!b) return [];
+  const rawStops = b.stopAddressRaw ?? b.stops ?? b.stopAddress ?? b.stop;
+  if (!rawStops) return [];
+
+  if (Array.isArray(rawStops)) {
+    if (rawStops.length === 2 && typeof rawStops[0] === 'number' && typeof rawStops[1] === 'number') {
+      const parsed = parseLatLng(rawStops);
+      return parsed ? [parsed] : [];
+    }
+    const results: { lat: number; lng: number }[] = [];
+    rawStops.forEach((item: any) => {
+      const parsed = parseLatLng(item);
+      if (parsed) results.push(parsed);
+    });
+    return results;
+  }
+
+  const parsed = parseLatLng(rawStops);
+  return parsed ? [parsed] : [];
 };
 
 export const formatLocationString = (val: any): string => {
@@ -304,25 +349,25 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     payload.returnTime = toApiTime(returnTimeVal);
   }
 
-  // 5. Pickup Location (pickupLocation) -> [number, number]
+  // 5. Pickup Location (pickupLocation) -> GeoJSON [longitude, latitude]
   const pickupLocVal = patch.pickupLocation !== undefined ? patch.pickupLocation : patch.pickup;
   if (pickupLocVal !== undefined && pickupLocVal !== null && pickupLocVal !== '') {
     const locArr = to2NumArrayLoc(pickupLocVal);
-    if (locArr) payload.pickupLocation = locArr;
+    if (locArr) payload.pickupLocation = toGeoJsonPosition(locArr);
   }
 
-  // 6. Dropoff Location (dropOffLocation) -> [number, number]
+  // 6. Dropoff Location (dropOffLocation) -> GeoJSON [longitude, latitude]
   const dropoffLocVal = patch.dropOffLocation !== undefined ? patch.dropOffLocation : patch.dropoff;
   if (dropoffLocVal !== undefined && dropoffLocVal !== null && dropoffLocVal !== '') {
     const locArr = to2NumArrayLoc(dropoffLocVal);
-    if (locArr) payload.dropOffLocation = locArr;
+    if (locArr) payload.dropOffLocation = toGeoJsonPosition(locArr);
   }
 
-  // 7. Stop Address (stopAddress) -> [number, number]
+  // 7. Stop Address (stopAddress) -> GeoJSON [longitude, latitude]
   const stopAddressVal = patch.stopAddress !== undefined ? patch.stopAddress : (Array.isArray(patch.stops) ? patch.stops[0] : patch.stop);
   if (stopAddressVal !== undefined && stopAddressVal !== null && stopAddressVal !== '') {
     const locArr = to2NumArrayLoc(stopAddressVal);
-    if (locArr) payload.stopAddress = locArr;
+    if (locArr) payload.stopAddress = toGeoJsonPosition(locArr);
   }
 
   // 8. Mobility Requirements (mobilityRequirements) -> Mongo ObjectId string
@@ -379,14 +424,15 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     payload.programContext = String(progVal);
   }
 
-  // 16. Driver ID (driverId) -> Mongo ObjectId string or null
+  // 16. Driver ID (driverId) -> Mongo ObjectId string, string ID or null
   if ('driverId' in patch) {
     let driverVal = patch.driverId;
     if (typeof driverVal === 'object' && driverVal != null) {
       driverVal = driverVal._id || driverVal.id;
     }
-    payload.driverId = driverVal && isMongoId(String(driverVal)) ? String(driverVal) : null;
+    payload.driverId = driverVal ? String(driverVal) : null;
   }
+
 
   // 17. Booking Status (bookingStatus) & Approval (isApproved)
   if ('isApproved' in patch) {
