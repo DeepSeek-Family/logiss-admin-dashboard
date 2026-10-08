@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       host: true,
-      port: 3000,
+      port: 6001,
     },
   }
 })
