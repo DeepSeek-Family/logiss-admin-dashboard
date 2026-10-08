@@ -53,6 +53,18 @@ export const toLocationValue = (value: any): [number, number] | null => {
   return loc || null;
 };
 
+/**
+ * Picker and geocode points are [latitude, longitude].
+ * MongoDB GeoJSON expects [longitude, latitude].
+ * A first value outside ±90 is already longitude, so it is left as-is.
+ */
+export const toGeoJsonPosition = (pair: [number, number]): [number, number] => {
+  const [a, b] = pair;
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return pair;
+  if (Math.abs(a) > 90 && Math.abs(b) <= 90) return [a, b];
+  return [b, a];
+};
+
 
 export { imageUrl, resolveMediaUrl } from '@/utils/imageUrl';
 
@@ -337,25 +349,25 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     payload.returnTime = toApiTime(returnTimeVal);
   }
 
-  // 5. Pickup Location (pickupLocation) -> [number, number]
+  // 5. Pickup Location (pickupLocation) -> GeoJSON [longitude, latitude]
   const pickupLocVal = patch.pickupLocation !== undefined ? patch.pickupLocation : patch.pickup;
   if (pickupLocVal !== undefined && pickupLocVal !== null && pickupLocVal !== '') {
     const locArr = to2NumArrayLoc(pickupLocVal);
-    if (locArr) payload.pickupLocation = locArr;
+    if (locArr) payload.pickupLocation = toGeoJsonPosition(locArr);
   }
 
-  // 6. Dropoff Location (dropOffLocation) -> [number, number]
+  // 6. Dropoff Location (dropOffLocation) -> GeoJSON [longitude, latitude]
   const dropoffLocVal = patch.dropOffLocation !== undefined ? patch.dropOffLocation : patch.dropoff;
   if (dropoffLocVal !== undefined && dropoffLocVal !== null && dropoffLocVal !== '') {
     const locArr = to2NumArrayLoc(dropoffLocVal);
-    if (locArr) payload.dropOffLocation = locArr;
+    if (locArr) payload.dropOffLocation = toGeoJsonPosition(locArr);
   }
 
-  // 7. Stop Address (stopAddress) -> [number, number]
+  // 7. Stop Address (stopAddress) -> GeoJSON [longitude, latitude]
   const stopAddressVal = patch.stopAddress !== undefined ? patch.stopAddress : (Array.isArray(patch.stops) ? patch.stops[0] : patch.stop);
   if (stopAddressVal !== undefined && stopAddressVal !== null && stopAddressVal !== '') {
     const locArr = to2NumArrayLoc(stopAddressVal);
-    if (locArr) payload.stopAddress = locArr;
+    if (locArr) payload.stopAddress = toGeoJsonPosition(locArr);
   }
 
   // 8. Mobility Requirements (mobilityRequirements) -> Mongo ObjectId string
