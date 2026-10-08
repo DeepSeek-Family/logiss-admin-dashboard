@@ -11,7 +11,7 @@
     "build": "vite build",
     "lint": "eslint . && node scripts/check-typography.cjs",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview --port 6001"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
