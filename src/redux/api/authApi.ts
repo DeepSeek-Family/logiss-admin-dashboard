@@ -31,15 +31,21 @@ export interface ChangePasswordResponse {
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
-      query: (credentials) => ({
-        url: '/auth/login',
-        method: 'POST',
-        body: {
-          ...credentials,
-          fcmToken: credentials.fcmToken || credentials.deviceToken,
-          deviceToken: credentials.deviceToken || credentials.fcmToken,
-        },
-      }),
+      query: (credentials) => {
+        const fcmToken = credentials.fcmToken?.trim() || ''
+        const deviceToken = credentials.deviceToken?.trim() || ''
+        const body: LoginRequest = {
+          email: credentials.email,
+          password: credentials.password,
+        }
+        if (fcmToken) body.fcmToken = fcmToken
+        if (deviceToken) body.deviceToken = deviceToken
+        return {
+          url: '/auth/login',
+          method: 'POST',
+          body,
+        }
+      },
       invalidatesTags: ['Auth', 'Profile', 'User'],
     }),
     changePassword: builder.mutation<ChangePasswordResponse, ChangePasswordRequest>({
