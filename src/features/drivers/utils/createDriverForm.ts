@@ -5,7 +5,7 @@ export interface ICreateDriverInput {
   dateOfBirth: string
   contact: string
   email: string
-  password?: string
+  password: string
   driverExperience: string
   licenseNumber: string
   licenseClass: string
@@ -19,6 +19,16 @@ export const normalizeLicenseClass = (value: string): string => {
   if (fromLabel) return fromLabel[1].toUpperCase()
   if (/^[ABC]$/i.test(trimmed)) return trimmed.toUpperCase()
   return trimmed.replace(/^class\s*/i, '').trim()
+}
+
+/** Backend accepts Bangladesh numbers as `+8801XXXXXXXXX`. */
+export const normalizeContact = (value: string): string | null => {
+  const raw = String(value || '').replace(/[^\d+]/g, '')
+  const compact = raw.startsWith('+') ? `+${raw.slice(1).replace(/\D/g, '')}` : raw.replace(/\D/g, '')
+  if (/^\+8801[3-9]\d{8}$/.test(compact)) return compact
+  if (/^8801[3-9]\d{8}$/.test(compact)) return `+${compact}`
+  if (/^01[3-9]\d{8}$/.test(compact)) return `+88${compact}`
+  return null
 }
 
 export const toIsoDate = (ymd: string): string => {
@@ -38,9 +48,7 @@ export const buildDriverFormData = (input: ICreateDriverInput): FormData => {
   formData.append('contact', input.contact.trim())
   formData.append('email', input.email.trim())
   formData.append('role', 'DRIVER')
-  if (input.password?.trim()) {
-    formData.append('password', input.password.trim())
-  }
+  formData.append('password', input.password.trim())
   formData.append('driverExperience', input.driverExperience)
   formData.append('licenseNumber', input.licenseNumber.trim())
   formData.append('licenseClass', normalizeLicenseClass(input.licenseClass))

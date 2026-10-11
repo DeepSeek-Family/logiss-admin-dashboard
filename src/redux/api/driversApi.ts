@@ -196,7 +196,7 @@ export const driversApi = baseApi.injectEndpoints({
     }),
     createDriver: builder.mutation<ICreateDriverResponse, ICreateDriverInput>({
       query: (body) => ({
-        url: '/user',
+        url: '/user/driver',
         method: 'POST',
         body: buildDriverFormData(body),
       }),

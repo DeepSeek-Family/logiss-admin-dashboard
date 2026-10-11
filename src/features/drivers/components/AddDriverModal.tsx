@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { UserPlus, X, AlertTriangle, Check, UploadCloud, Eye, EyeOff, ShieldCheck, FileText, Mail, KeyRound } from 'lucide-react';
+import { UserPlus, X, AlertTriangle, Check, UploadCloud, Eye, EyeOff, ShieldCheck, FileText, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
-import type { ICreateDriverInput } from '@/features/drivers/utils/createDriverForm';
+import { normalizeContact, type ICreateDriverInput } from '@/features/drivers/utils/createDriverForm';
 
 type LicensePhotoState = {
   file: File;
@@ -37,7 +37,6 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
   const [step, setStep] = useState(1);
   const [stepError, setStepError] = useState('');
-  const [passwordMode, setPasswordMode] = useState<'invite' | 'temp'>('invite');
   const [showPassword, setShowPassword] = useState(false);
   const [confirmedCheckbox, setConfirmedCheckbox] = useState(false);
 
@@ -48,10 +47,11 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
       if (!form.firstName || !form.lastName || !form.phone || !form.email || !form.dob) {
         return 'Please fill in all required personal information fields.';
       }
-      if (passwordMode === 'temp') {
-        if (!form.password) return 'Please set a temporary password for the driver.';
-        if (form.password.length < 6) return 'Temporary password must be at least 6 characters.';
+      if (!normalizeContact(form.phone)) {
+        return 'Enter a valid contact number, for example +8801712345678.';
       }
+      if (!form.password) return 'Password is required.';
+      if (form.password.length < 6) return 'Password must be at least 6 characters.';
       return '';
     }
     if (step === 2) {
@@ -101,6 +101,16 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
       return;
     }
 
+    const contact = normalizeContact(form.phone);
+    if (!contact) {
+      setStepError('Enter a valid contact number, for example +8801712345678.');
+      return;
+    }
+    if (!form.password?.trim()) {
+      setStepError('Password is required.');
+      return;
+    }
+
     setStepError('');
     try {
       await onSave({
@@ -108,9 +118,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         lastName: form.lastName.trim(),
         middleName: form.middleName?.trim() || undefined,
         dateOfBirth: form.dob,
-        contact: form.phone.trim(),
+        contact,
         email: form.email.trim(),
-        password: passwordMode === 'temp' ? form.password : undefined,
+        password: form.password.trim(),
         driverExperience: form.experience,
         licenseNumber: form.licenseNumber.trim(),
         licenseClass: form.licenseClass,
@@ -213,7 +223,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white" 
                     value={form.phone} 
                     onChange={e => set('phone', e.target.value)} 
-                    placeholder="(804) 555-0100" 
+                    placeholder="+8801712345678" 
                   />
                 </div>
               </div>
@@ -229,80 +239,24 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                 />
               </div>
 
-              {/* Account Setup — Admin password mode selector */}
               <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-2">Account Setup *</label>
-                <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Password *</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="w-full bg-bg border border-line-2 rounded-xl pl-4 pr-10 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    value={form.password}
+                    onChange={e => set('password', e.target.value)}
+                    placeholder="Set a password"
+                  />
                   <button
                     type="button"
-                    onClick={() => { setPasswordMode('invite'); set('password', ''); }}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all ${
-                      passwordMode === 'invite'
-                        ? 'border-primary bg-primary-light/20'
-                        : 'border-line-2 bg-bg hover:border-primary/40'
-                    }`}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink transition-colors"
                   >
-                    <Mail size={16} className={`mb-1.5 ${passwordMode === 'invite' ? 'text-primary' : 'text-ink-4'}`} />
-                    <p className={`text-xs font-semibold leading-none mb-1 ${passwordMode === 'invite' ? 'text-primary' : 'text-ink'}`}>Send invite email</p>
-                    <p className="text-xs text-ink-4 leading-tight">Driver sets own password</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPasswordMode('temp')}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all ${
-                      passwordMode === 'temp'
-                        ? 'border-primary bg-primary-light/20'
-                        : 'border-line-2 bg-bg hover:border-primary/40'
-                    }`}
-                  >
-                    <KeyRound size={16} className={`mb-1.5 ${passwordMode === 'temp' ? 'text-primary' : 'text-ink-4'}`} />
-                    <p className={`text-xs font-semibold leading-none mb-1 ${passwordMode === 'temp' ? 'text-primary' : 'text-ink'}`}>Set temp password</p>
-                    <p className="text-xs text-ink-4 leading-tight">Driver changes on first login</p>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-
-                {/* Invite mode: contextual info banner */}
-                {passwordMode === 'invite' && (
-                  <div className={`mt-3 flex items-start gap-2.5 p-3 rounded-xl border transition-all ${
-                    form.email
-                      ? 'bg-accent-light/30 border-accent/20'
-                      : 'bg-bg border-line-2'
-                  }`}>
-                    <Mail size={13} className={`shrink-0 mt-0.5 ${form.email ? 'text-accent' : 'text-ink-4'}`} />
-                    <p className="text-xs text-ink-3 leading-relaxed">
-                      {form.email
-                        ? <span>A secure invite link will be sent to <strong className="text-ink">{form.email}</strong>. The driver will set their own password on first login.</span>
-                        : <span className="text-ink-4">Enter the driver's email above — an invite link will be sent there automatically.</span>
-                      }
-                    </p>
-                  </div>
-                )}
-
-                {/* Temp mode: single password field, no confirm needed */}
-                {passwordMode === 'temp' && (
-                  <div className="mt-3 space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        className="w-full bg-bg border border-line-2 rounded-xl pl-4 pr-10 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
-                        value={form.password}
-                        onChange={e => set('password', e.target.value)}
-                        placeholder="Set a temporary password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink transition-colors"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-warning-light/40 rounded-xl border border-warning/20">
-                      <AlertTriangle size={12} className="text-warning shrink-0" />
-                      <p className="text-xs text-ink-3 leading-relaxed">The driver will be required to change this password when they first log in.</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -456,11 +410,8 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   <div className="col-span-2 pt-2 mt-1 border-t border-line-2">
                     <p className="text-ink-4 mb-1">Account setup</p>
                     <div className="flex items-center gap-1.5">
-                      {passwordMode === 'invite' ? (
-                        <><Mail size={11} className="text-accent" /><p className="font-semibold text-accent">Invite email will be sent</p></>
-                      ) : (
-                        <><KeyRound size={11} className="text-warning" /><p className="font-semibold text-warning">Temporary password configured</p></>
-                      )}
+                      <KeyRound size={11} className="text-accent" />
+                      <p className="font-semibold text-accent">Password will be set</p>
                     </div>
                   </div>
                 </div>
@@ -511,10 +462,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   <div className="flex items-start gap-2.5">
                     <span className="w-5 h-5 bg-white border border-line rounded-lg flex items-center justify-center font-bold text-primary shrink-0">1</span>
                     <p className="leading-normal">
-                      {passwordMode === 'invite'
-                        ? <><strong className="text-ink">Invite email sent</strong><br />The driver gets a secure link to activate their account and set their own password.</>
-                        : <><strong className="text-ink">Account activated</strong><br />The driver logs in with the temporary password and is prompted to update it immediately.</>
-                      }
+                      <><strong className="text-ink">Account created</strong><br />The driver logs in with the email and password you set.</>
                     </p>
                   </div>
                   <div className="flex items-start gap-2.5">
@@ -534,7 +482,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   className="mt-1 rounded border-line-2 text-primary focus:ring-primary focus:ring-offset-2 shrink-0 cursor-pointer w-4 h-4"
                 />
                 <span className="text-xs font-medium text-ink-3 leading-relaxed select-none">
-                  I confirm that the information provided is accurate and authorize LOGGIS to{passwordMode === 'invite' ? ' send this driver an invitation and' : ''} verify their documents, driving record, and background.
+                  I confirm that the information provided is accurate and authorize LOGGIS to verify their documents, driving record, and background.
                 </span>
               </label>
             </div>
