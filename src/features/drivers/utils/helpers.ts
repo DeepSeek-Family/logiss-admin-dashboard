@@ -1,7 +1,7 @@
 import type { IDriverUser } from '@/redux/api/driversApi'
 import { formatShortDate } from '@/utils/helpers'
 import { isMongoId } from '@/features/bookings/utils/helpers'
-import { resolveMediaUrl } from '@/utils/imageUrl'
+import { imageUrl, resolveMediaUrl } from '@/utils/imageUrl'
 
 export const driverFullName = (driver?: Pick<IDriverUser, 'firstName' | 'middleName' | 'lastName'> | null): string => {
   if (!driver) return ''
@@ -13,21 +13,36 @@ export const driverInitials = (driver?: Pick<IDriverUser, 'firstName' | 'lastNam
   return `${driver.firstName?.[0] || ''}${driver.lastName?.[0] || ''}`.toUpperCase() || 'D'
 }
 
-const firstMediaPath = (value: unknown): string | undefined => {
-  if (typeof value === 'string' && value.trim()) return value
-  if (Array.isArray(value)) {
-    const first = value.find((item) => typeof item === 'string' && item.trim())
-    return typeof first === 'string' ? first : undefined
-  }
-  return undefined
+export const mediaPaths = (value: unknown): string[] => {
+  const list = Array.isArray(value) ? value : typeof value === 'string' && value.trim() ? [value] : []
+  return list.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
 }
 
-const licenseBlock = (driver: IDriverUser) => ({
-  number: driver.driverData?.licenseNumber || '—',
-  class: driver.driverData?.licenseClass ? `Class ${driver.driverData.licenseClass}` : '—',
-  expires: driver.driverData?.expirationDate ? formatShortDate(driver.driverData.expirationDate) : '—',
-  image: resolveMediaUrl(firstMediaPath(driver.driverData?.licenseImage)),
-})
+export const resolveLicenseImageUrls = (value: unknown): string[] =>
+  mediaPaths(value).map((path) => {
+    const resolved = resolveMediaUrl(path) || imageUrl(path)
+    if (resolved) return resolved
+    return path.startsWith('/') ? path : `/${path}`
+  })
+
+const displayDate = (iso?: string): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+}
+
+const licenseBlock = (driver: IDriverUser) => {
+  const paths = mediaPaths(driver.driverData?.licenseImage)
+  const images = resolveLicenseImageUrls(paths)
+  return {
+    number: driver.driverData?.licenseNumber || '',
+    class: driver.driverData?.licenseClass ? `Class ${driver.driverData.licenseClass}` : '',
+    expires: driver.driverData?.expirationDate ? formatShortDate(driver.driverData.expirationDate) : '',
+    image: images[0],
+    images,
+  }
+}
 
 export const mapDriverBase = (driver: IDriverUser) => {
   const id = driver._id || driver.id || ''
@@ -51,11 +66,17 @@ export const mapDriverBase = (driver: IDriverUser) => {
     countyId: countyRaw,
     verified: Boolean(driver.verified),
     isBanned: Boolean(driver.isBanned),
-    applicationStatus: driver.applicationStatus,
+    dob: displayDate(driver.dateOfBirth),
+    role: driver.role || '',
+    applicationStatus: driver.applicationStatus || '',
+    isAdminVerified: Boolean(driver.isAdminVerifiedDriver),
+    isOnDuty: Boolean(driver.isOnDuty),
     createdAt: driver.createdAt,
-    joinedDate: driver.createdAt,
+    joinedDate: displayDate(driver.createdAt),
     license: licenseBlock(driver),
-    experience: driver.driverData?.driverExperience || '—',
+    licenseImagePaths: mediaPaths(driver.driverData?.licenseImage),
+    licenseImages: resolveLicenseImageUrls(driver.driverData?.licenseImage),
+    experience: driver.driverData?.driverExperience || '',
   }
 }
 

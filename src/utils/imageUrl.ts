@@ -46,7 +46,7 @@ export const imageUrl = (path?: string | null): string => {
 
   const origin = getMediaOrigin();
   if (!origin) {
-    return isStaticMediaPath(normalizedPath) ? '' : normalizedPath;
+    return normalizedPath;
   }
 
   return `${origin}${normalizedPath}`;

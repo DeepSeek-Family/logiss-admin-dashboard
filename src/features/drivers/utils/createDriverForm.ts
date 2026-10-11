@@ -10,7 +10,7 @@ export interface ICreateDriverInput {
   licenseNumber: string
   licenseClass: string
   expirationDate: string
-  licenseImage: File
+  licenseImages: File[]
 }
 
 export const normalizeLicenseClass = (value: string): string => {
@@ -53,6 +53,8 @@ export const buildDriverFormData = (input: ICreateDriverInput): FormData => {
   formData.append('licenseNumber', input.licenseNumber.trim())
   formData.append('licenseClass', normalizeLicenseClass(input.licenseClass))
   formData.append('expirationDate', toIsoDate(input.expirationDate))
-  formData.append('licenseImage', input.licenseImage)
+  input.licenseImages.slice(0, 3).forEach((file) => {
+    formData.append('licenseImage', file)
+  })
   return formData
 }

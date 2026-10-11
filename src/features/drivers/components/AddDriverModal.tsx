@@ -32,7 +32,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
     licenseNumber: '',
     licenseExpiry: '',
     licenseClass: 'Class C',
-    licensePhoto: null,
+    licensePhotos: [] as LicensePhotoState[],
   });
 
   const [step, setStep] = useState(1);
@@ -57,7 +57,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
     if (step === 2) {
       if (!form.licenseNumber) return 'License number is required.';
       if (!form.licenseExpiry) return 'License expiry date is required.';
-      if (!form.licensePhoto?.file) return 'Please upload a license photo to proceed.';
+      if (!form.licensePhotos?.length) return 'Please upload at least one license photo.';
       return '';
     }
     if (step === 3) {
@@ -69,23 +69,42 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
     return '';
   };
 
-  const setLicenseFile = (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      setStepError('License file must be under 10MB.');
+  const addLicenseFiles = (files: File[]) => {
+    const current: LicensePhotoState[] = form.licensePhotos || [];
+    const room = 3 - current.length;
+    if (room <= 0) {
+      setStepError('You can upload up to 3 license images.');
       return;
     }
-    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
-    set('licensePhoto', {
-      file,
-      name: file.name,
-      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      previewUrl,
-    } as LicensePhotoState);
+    const next = files.slice(0, room);
+    const tooBig = next.find((file) => file.size > 10 * 1024 * 1024);
+    if (tooBig) {
+      setStepError('Each license file must be under 10MB.');
+      return;
+    }
+    setStepError('');
+    set('licensePhotos', [
+      ...current,
+      ...next.map((file) => ({
+        file,
+        name: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+      })),
+    ]);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setLicenseFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length) addLicenseFiles(files);
+    e.target.value = '';
+  };
+
+  const removeLicensePhoto = (index: number) => {
+    const current: LicensePhotoState[] = form.licensePhotos || [];
+    const removed = current[index];
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+    set('licensePhotos', current.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -95,9 +114,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
       return;
     }
 
-    const licenseFile = form.licensePhoto?.file as File | undefined;
-    if (!licenseFile) {
-      setStepError('Please upload a license photo to proceed.');
+    const licenseImages = ((form.licensePhotos || []) as LicensePhotoState[]).map((item) => item.file).slice(0, 3);
+    if (licenseImages.length === 0) {
+      setStepError('Please upload at least one license photo.');
       return;
     }
 
@@ -125,7 +144,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         licenseNumber: form.licenseNumber.trim(),
         licenseClass: form.licenseClass,
         expirationDate: form.licenseExpiry,
-        licenseImage: licenseFile,
+        licenseImages,
       });
     } catch {
       // Parent shows toast; keep modal open for corrections
@@ -314,61 +333,52 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-1.5">License photo *</label>
-                
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">License photos * <span className="font-medium text-ink-4">(up to 3)</span></label>
+
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,application/pdf"
+                  multiple
+                  accept="image/png,image/jpeg,image/webp"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="driver-license-file"
                 />
 
-                {form.licensePhoto ? (
-                  <div className="p-4 bg-accent-light/10 border border-accent/20 rounded-2xl flex items-center justify-between animate-in zoom-in-95 duration-200">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {form.licensePhoto.previewUrl ? (
-                        <img
-                          src={form.licensePhoto.previewUrl}
-                          alt="License preview"
-                          className="w-12 h-12 rounded-xl object-cover border border-line-2 shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-accent-light rounded-xl flex items-center justify-center text-accent shrink-0">
-                          <FileText size={20} />
+                {(form.licensePhotos || []).length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {(form.licensePhotos as LicensePhotoState[]).map((photo, index) => (
+                      <div key={`${photo.name}-${index}`} className="p-3 bg-accent-light/10 border border-accent/20 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {photo.previewUrl ? (
+                            <img src={photo.previewUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-line-2 shrink-0" />
+                          ) : (
+                            <div className="w-12 h-12 bg-accent-light rounded-xl flex items-center justify-center text-accent shrink-0">
+                              <FileText size={20} />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-ink truncate">{photo.name}</p>
+                            <p className="text-xs text-ink-4">{photo.size}</p>
+                          </div>
                         </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-ink truncate">{form.licensePhoto.name}</p>
-                        <p className="text-xs text-ink-4">{form.licensePhoto.size} · sent as licenseImage</p>
+                        <button type="button" onClick={() => removeLicensePhoto(index)} className="text-xs font-semibold text-urgent hover:underline shrink-0">
+                          Remove
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center">
-                        <Check size={12} strokeWidth={3} />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          set('licensePhoto', null);
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
-                        className="text-xs font-semibold text-urgent hover:underline pl-2 border-l border-line-2"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ) : (
+                )}
+
+                {(form.licensePhotos || []).length < 3 && (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full p-6 bg-bg border-2 border-dashed border-line-2 rounded-2xl text-center cursor-pointer hover:bg-white hover:border-primary transition-all group"
                   >
                     <UploadCloud size={28} className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-all" />
-                    <p className="text-xs font-semibold text-ink">Tap to upload license document</p>
-                    <p className="text-xs text-ink-4 mt-0.5">JPEG, PNG, WebP, or PDF (max 10MB)</p>
+                    <p className="text-xs font-semibold text-ink">Add license image ({(form.licensePhotos || []).length}/3)</p>
+                    <p className="text-xs text-ink-4 mt-0.5">JPEG, PNG, or WebP (max 10MB each)</p>
                   </button>
                 )}
               </div>
@@ -449,7 +459,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     <p className="text-ink-4 mb-1">Photo</p>
                     <div className="flex items-center gap-1.5 text-accent font-semibold">
                       <Check size={12} strokeWidth={3} />
-                      <span>{form.licensePhoto?.name || 'Uploaded'}</span>
+                      <span>{(form.licensePhotos || []).length} image{(form.licensePhotos || []).length === 1 ? '' : 's'}</span>
                     </div>
                   </div>
                 </div>

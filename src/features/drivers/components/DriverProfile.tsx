@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Phone, Mail, MapPin, Star, Car, ShieldCheck, Copy,
-  ExternalLink, User, Repeat, ChevronLeft, AlertTriangle, Loader2
+  Phone, Mail, Car, ShieldCheck,
+  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
@@ -30,13 +30,20 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   onAssignVehicle, onViewFleet, assignedVehicle
 }) => {
   const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'docs'>('overview');
-  const [copiedPhone, setCopiedPhone] = useState(false);
-
-  const handleCopyPhone = (phone: string) => {
-    navigator.clipboard.writeText(phone);
-    setCopiedPhone(true);
-    setTimeout(() => setCopiedPhone(false), 2000);
+  const [preview, setPreview] = useState<string | null>(null);
+  const licenseImages: string[] =
+    selectedDriver?.licenseImages?.length
+      ? selectedDriver.licenseImages
+      : selectedDriver?.license?.images?.length
+        ? selectedDriver.license.images
+        : selectedDriver?.license?.image
+          ? [selectedDriver.license.image]
+          : [];
+  const na = (value?: string | number | null) => {
+    const text = value == null ? '' : String(value).trim();
+    return text && text !== '—' ? text : 'N/A';
   };
+  const appStatus = String(selectedDriver?.applicationStatus || 'pending').toLowerCase();
 
   // Use assigned vehicle if admin just assigned one, else fall back to driver data
   const currentVehicle = assignedVehicle
@@ -82,15 +89,15 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-ink">{selectedDriver?.name}</h1>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent bg-accent/10 px-2.5 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" /> Active
+              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${
+                appStatus === 'approved' ? 'text-accent bg-accent/10' : appStatus === 'rejected' ? 'text-urgent bg-urgent/10' : 'text-warning bg-warning/10'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current" /> {appStatus}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-ink-4">
-              <span className="flex items-center gap-1"><MapPin size={13} /> Richmond, VA</span>
-              <span className="flex items-center gap-1">
-                <Car size={13} /> {selectedDriver?.id}
-              </span>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-ink-4">
+              <span className="flex items-center gap-1"><Phone size={13} /> {na(selectedDriver?.phone)}</span>
+              <span className="flex items-center gap-1"><Mail size={13} /> {na(selectedDriver?.email)}</span>
             </div>
           </div>
         </div>
@@ -104,14 +111,12 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-warning flex items-center gap-1">
-                <Star size={18} className="fill-warning" /> {selectedDriver?.rating || 4.9}
-              </p>
-              <p className="text-xs text-ink-4 mt-0.5">Rating</p>
+              <p className="text-2xl font-bold text-ink">{selectedDriver?.isOnDuty ? 'Yes' : 'No'}</p>
+              <p className="text-xs text-ink-4 mt-0.5">On duty</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-ink">0</p>
-              <p className="text-xs text-ink-4 mt-0.5">Reports</p>
+              <p className="text-2xl font-bold text-ink">{selectedDriver?.isAdminVerified ? 'Yes' : 'No'}</p>
+              <p className="text-xs text-ink-4 mt-0.5">Verified</p>
             </div>
           </div>
           {/* Actions */}
@@ -124,12 +129,12 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               onClick={() => selectedDriver?.email && window.open(`mailto:${selectedDriver.email}`)}>
               Email
             </Button>
-            {role === 'admin' && (
+            {/* {role === 'admin' && (
               <Button variant="primary" className="h-9 text-sm"
                 onClick={onAssignVehicle}>
                 {assignedVehicle ? 'Reassign Vehicle' : 'Assign Vehicle'}
               </Button>
-            )}
+            )} */}
           </div>
         </div>
       </div>
@@ -174,37 +179,15 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               </div>
               <div className="pb-4 border-b border-line-2">
                 <p className="text-xs text-ink-4 mb-0.5">Date of birth</p>
-                <p className="text-sm font-medium text-ink">{selectedDriver?.dob || 'Jan 12, 1988'}</p>
+                <p className="text-sm font-medium text-ink">{na(selectedDriver?.dob)}</p>
               </div>
               <div className="pt-4">
                 <p className="text-xs text-ink-4 mb-0.5">License class</p>
-                <p className="text-sm font-medium text-ink">{selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C'}</p>
+                <p className="text-sm font-medium text-ink">{na(selectedDriver?.license?.class)}</p>
               </div>
               <div className="pt-4">
                 <p className="text-xs text-ink-4 mb-0.5">Experience</p>
-                <p className="text-sm font-medium text-ink">{selectedDriver?.experience || '3+ years'}</p>
-              </div>
-            </div>
-
-            {/* Emergency contact */}
-            <div className="mt-5 pt-5 border-t border-line-2">
-              <h3 className="text-base font-bold text-ink mb-4">Emergency contact</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary text-sm font-bold shrink-0">
-                  {(selectedDriver?.emergencyContact?.name || 'EC').split(' ').map((n: string) => n[0]).join('')}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-ink">{selectedDriver?.emergencyContact?.name || 'Sarah Wilson'}</p>
-                  <p className="text-xs text-ink-4">{selectedDriver?.emergencyContact?.relation || 'Wife'}</p>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-ink-4">
-                  <Phone size={14} />
-                  <span className="font-medium text-ink">{selectedDriver?.emergencyContact?.phone || '(804) 555-0999'}</span>
-                  <button onClick={() => handleCopyPhone(selectedDriver?.emergencyContact?.phone || '')}
-                    className="text-ink-4 hover:text-primary transition-colors">
-                    {copiedPhone ? <ShieldCheck size={14} className="text-accent" /> : <Copy size={14} />}
-                  </button>
-                </div>
+                <p className="text-sm font-medium text-ink">{na(selectedDriver?.experience)}</p>
               </div>
             </div>
           </div>
@@ -337,19 +320,19 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
 
       {/* ── LICENSE TAB ──────────────────────────── */}
       {profileTab === 'docs' && (
-        <div className="bg-white border border-line-2 rounded-2xl p-6 animate-in fade-in duration-300 max-w-sm">
+        <div className="bg-white border border-line-2 rounded-2xl p-6 animate-in fade-in duration-300 max-w-2xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-bold text-ink">Driver License</h3>
-            <Badge variant={selectedDriver?.license?.status === 'valid' ? 'accent' : 'warning'}>
-              {selectedDriver?.license?.status || 'Valid'}
-            </Badge>
+            <span className="text-xs font-semibold text-ink-4">
+              {licenseImages.length ? `${licenseImages.length} image${licenseImages.length > 1 ? 's' : ''}` : 'N/A'}
+            </span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 mb-6">
             {[
-              { k: 'License No.', v: selectedDriver?.license?.number || '—' },
-              { k: 'Class', v: selectedDriver?.licenseClass || selectedDriver?.license?.class || 'Class C' },
-              { k: 'Expires', v: selectedDriver?.license?.expires || '—' },
-              { k: 'Date of Birth', v: selectedDriver?.dob || 'Jan 12, 1988' },
+              { k: 'License No.', v: na(selectedDriver?.license?.number) },
+              { k: 'Class', v: na(selectedDriver?.license?.class) },
+              { k: 'Expires', v: na(selectedDriver?.license?.expires) },
+              { k: 'Date of Birth', v: na(selectedDriver?.dob) },
             ].map(({ k, v }) => (
               <div key={k} className="flex justify-between py-2 border-b border-line-2 last:border-0">
                 <span className="text-xs text-ink-4">{k}</span>
@@ -357,6 +340,30 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               </div>
             ))}
           </div>
+          {licenseImages.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {licenseImages.map((url) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => setPreview(url)}
+                  className="overflow-hidden rounded-xl border border-line-2 bg-bg aspect-[4/3]"
+                >
+                  <img src={url} alt="Driver license" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl border border-dashed border-line-2 px-4 py-6 text-sm text-ink-4">
+              <FileText size={16} /> N/A
+            </div>
+          )}
+        </div>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreview(null)}>
+          <img src={preview} alt="License" className="max-h-[80vh] max-w-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
