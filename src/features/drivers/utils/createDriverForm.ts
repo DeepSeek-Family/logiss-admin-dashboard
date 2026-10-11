@@ -1,3 +1,14 @@
+import type { DriverExperience, DriverLicenseClass } from '@/redux/api/driversApi'
+
+export const DRIVER_EXPERIENCE_OPTIONS: DriverExperience[] = [
+  '1-3 years',
+  '4-6 years',
+  '7-10 years',
+  '11-15 years',
+]
+
+export const DRIVER_LICENSE_CLASS_OPTIONS: DriverLicenseClass[] = ['A', 'B', 'C']
+
 export interface ICreateDriverInput {
   firstName: string
   lastName: string
@@ -6,19 +17,31 @@ export interface ICreateDriverInput {
   contact: string
   email: string
   password: string
-  driverExperience: string
+  driverExperience: DriverExperience
   licenseNumber: string
-  licenseClass: string
+  licenseClass: DriverLicenseClass
   expirationDate: string
   licenseImages: File[]
 }
 
-export const normalizeLicenseClass = (value: string): string => {
+export const normalizeLicenseClass = (value: string): DriverLicenseClass => {
   const trimmed = String(value || '').trim()
   const fromLabel = trimmed.match(/class\s*([abc])/i)
-  if (fromLabel) return fromLabel[1].toUpperCase()
-  if (/^[ABC]$/i.test(trimmed)) return trimmed.toUpperCase()
-  return trimmed.replace(/^class\s*/i, '').trim()
+  if (fromLabel) return fromLabel[1].toUpperCase() as DriverLicenseClass
+  if (/^[ABC]$/i.test(trimmed)) return trimmed.toUpperCase() as DriverLicenseClass
+  const letter = trimmed.replace(/^class\s*/i, '').trim().toUpperCase()
+  if (letter === 'A' || letter === 'B' || letter === 'C') return letter
+  return 'C'
+}
+
+export const normalizeDriverExperience = (value: string): DriverExperience | null => {
+  const trimmed = String(value || '').trim()
+  if (DRIVER_EXPERIENCE_OPTIONS.includes(trimmed as DriverExperience)) {
+    return trimmed as DriverExperience
+  }
+  if (trimmed === '11-15 years+') return '11-15 years'
+  if (trimmed === 'Less than 1 year') return '1-3 years'
+  return null
 }
 
 /** Backend accepts Bangladesh numbers as `+8801XXXXXXXXX`. */
@@ -49,12 +72,15 @@ export const buildDriverFormData = (input: ICreateDriverInput): FormData => {
   formData.append('email', input.email.trim())
   formData.append('role', 'DRIVER')
   formData.append('password', input.password.trim())
-  formData.append('driverExperience', input.driverExperience)
-  formData.append('licenseNumber', input.licenseNumber.trim())
-  formData.append('licenseClass', normalizeLicenseClass(input.licenseClass))
-  formData.append('expirationDate', toIsoDate(input.expirationDate))
+
+  const licenseClass = normalizeLicenseClass(input.licenseClass)
+  formData.append('driverData[driverExperience]', input.driverExperience)
+  formData.append('driverData[licenseNumber]', input.licenseNumber.trim())
+  formData.append('driverData[licenseClass]', licenseClass)
+  formData.append('driverData[expirationDate]', toIsoDate(input.expirationDate))
   input.licenseImages.slice(0, 3).forEach((file) => {
-    formData.append('licenseImage', file)
+    formData.append('driverData[licenseImage]', file)
   })
+
   return formData
 }

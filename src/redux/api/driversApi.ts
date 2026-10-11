@@ -4,10 +4,13 @@ import { buildDriverFormData, type ICreateDriverInput } from '@/features/drivers
 
 export type { ICreateDriverInput }
 
+export type DriverExperience = '1-3 years' | '4-6 years' | '7-10 years' | '11-15 years'
+export type DriverLicenseClass = 'A' | 'B' | 'C'
+
 export interface IDriverData {
-  driverExperience?: string
+  driverExperience?: DriverExperience | string
   licenseNumber?: string
-  licenseClass?: string
+  licenseClass?: DriverLicenseClass | string
   expirationDate?: string
   licenseImage?: string | string[]
 }

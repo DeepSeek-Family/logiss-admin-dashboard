@@ -2,7 +2,15 @@ import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, X, AlertTriangle, Check, UploadCloud, Eye, EyeOff, ShieldCheck, FileText, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
-import { normalizeContact, type ICreateDriverInput } from '@/features/drivers/utils/createDriverForm';
+import {
+  DRIVER_EXPERIENCE_OPTIONS,
+  DRIVER_LICENSE_CLASS_OPTIONS,
+  normalizeContact,
+  normalizeDriverExperience,
+  normalizeLicenseClass,
+  type ICreateDriverInput,
+} from '@/features/drivers/utils/createDriverForm';
+import type { DriverExperience, DriverLicenseClass } from '@/redux/api/driversApi';
 
 type LicensePhotoState = {
   file: File;
@@ -28,10 +36,10 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
     email: '',
     password: '',
     confirmPassword: '',
-    experience: '1-3 years',
+    experience: '1-3 years' as DriverExperience,
     licenseNumber: '',
     licenseExpiry: '',
-    licenseClass: 'Class C',
+    licenseClass: 'C' as DriverLicenseClass,
     licensePhotos: [] as LicensePhotoState[],
   });
 
@@ -55,8 +63,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
       return '';
     }
     if (step === 2) {
-      if (!form.licenseNumber) return 'License number is required.';
+      if (!form.licenseNumber?.trim()) return 'License number is required.';
       if (!form.licenseExpiry) return 'License expiry date is required.';
+      if (!normalizeDriverExperience(form.experience)) return 'Please select a valid driving experience.';
       if (!form.licensePhotos?.length) return 'Please upload at least one license photo.';
       return '';
     }
@@ -140,9 +149,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         contact,
         email: form.email.trim(),
         password: form.password.trim(),
-        driverExperience: form.experience,
+        driverExperience: normalizeDriverExperience(form.experience) || '1-3 years',
         licenseNumber: form.licenseNumber.trim(),
-        licenseClass: form.licenseClass,
+        licenseClass: normalizeLicenseClass(form.licenseClass),
         expirationDate: form.licenseExpiry,
         licenseImages,
       });
@@ -290,11 +299,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   value={form.experience} 
                   onChange={e => set('experience', e.target.value)}
                 >
-                  <option value="Less than 1 year">Less than 1 year</option>
-                  <option value="1-3 years">1-3 years</option>
-                  <option value="4-6 years">4-6 years</option>
-                  <option value="7-10 years">7-10 years</option>
-                  <option value="11-15 years+">11-15 years+</option>
+                  {DRIVER_EXPERIENCE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
 
@@ -315,9 +322,9 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     value={form.licenseClass} 
                     onChange={e => set('licenseClass', e.target.value)}
                   >
-                    <option value="Class A">Class A</option>
-                    <option value="Class B">Class B</option>
-                    <option value="Class C">Class C</option>
+                    {DRIVER_LICENSE_CLASS_OPTIONS.map((option) => (
+                      <option key={option} value={option}>Class {option}</option>
+                    ))}
                   </select>
                 </div>
               </div>
