@@ -29,6 +29,7 @@ const rawBaseQuery = fetchBaseQuery({
       headers.set('resettoken', resetToken)
     } else if (authToken) {
       headers.set('authorization', `Bearer ${authToken}`)
+      headers.set('Authorization', `Bearer ${authToken}`)
     }
     return headers
   },
@@ -41,58 +42,40 @@ const baseQueryWithAuthHandling: BaseQueryFn<
   {},
   FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
-  // Proactively check if token is expired before sending request
-  const state = api.getState() as AuthStateSlice
-  const currentToken =
-    state.auth?.token ||
-    (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null)
-
-  const isAuthExemptEndpoint =
-    typeof args === 'object' &&
-    (args.url?.includes('reset') ||
-      args.url?.includes('forgot') ||
-      args.url?.includes('verify') ||
-      args.url?.includes('resend') ||
-      args.url?.includes('/auth/login'))
-
-  if (currentToken && !isAuthExemptEndpoint && isTokenExpired(currentToken)) {
-    api.dispatch(logout())
-    if (baseApi?.util?.resetApiState) {
-      api.dispatch(baseApi.util.resetApiState())
-    }
-    handleAuthSessionExpired({ reason: 'Session expired. Please log in again.' })
-    return {
-      error: {
-        status: 401,
-        data: { message: 'Token expired' },
-      },
-    }
-  }
-
   const result = await rawBaseQuery(args, api, extraOptions)
 
   if (result.error) {
     const status = result.error.status
     const errorData = result.error.data as { message?: string } | undefined
+    const url = typeof args === 'string' ? args : args.url
 
-    if (status === 401) {
-      // Token expired or invalid session
-      api.dispatch(logout())
-      if (baseApi?.util?.resetApiState) {
-        api.dispatch(baseApi.util.resetApiState())
+    const isAuthExemptEndpoint =
+      url?.includes('/auth/login') ||
+      url?.includes('/auth/forgot-password') ||
+      url?.includes('/auth/verify-email') ||
+      url?.includes('/auth/reset-password') ||
+      url?.includes('/auth/resend-otp')
+
+    if (!isAuthExemptEndpoint) {
+      if (status === 401) {
+        // Token expired or invalid session on private routes
+        api.dispatch(logout())
+        if (baseApi?.util?.resetApiState) {
+          api.dispatch(baseApi.util.resetApiState())
+        }
+        handleAuthSessionExpired({
+          reason: errorData?.message || 'Session expired. Please log in again.',
+        })
+      } else if (status === 403) {
+        // Forbidden: redirect to login page
+        api.dispatch(logout())
+        if (baseApi?.util?.resetApiState) {
+          api.dispatch(baseApi.util.resetApiState())
+        }
+        handleForbiddenAccess({
+          message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
+        })
       }
-      handleAuthSessionExpired({
-        reason: errorData?.message || 'Session expired. Please log in again.',
-      })
-    } else if (status === 403) {
-      // Forbidden: redirect to login page
-      api.dispatch(logout())
-      if (baseApi?.util?.resetApiState) {
-        api.dispatch(baseApi.util.resetApiState())
-      }
-      handleForbiddenAccess({
-        message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
-      })
     }
   }
 

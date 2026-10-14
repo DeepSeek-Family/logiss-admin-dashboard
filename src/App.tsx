@@ -37,18 +37,25 @@ function App() {
 
   const [role, setRole] = useState<SessionRole>(() => {
     try {
-      const savedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
-      return isAppRole(savedRole) ? savedRole : null;
+      const savedRole = window.localStorage.getItem(ROLE_STORAGE_KEY)?.toLowerCase()?.trim();
+      if (isAppRole(savedRole)) return savedRole;
+      if (savedRole?.includes('dispatch')) return 'dispatcher';
+      if (savedRole) return 'admin';
+      return null;
     } catch {
       return null;
     }
   });
 
-  const isExpired = Boolean(token && isTokenExpired(token));
-  const isAuthenticated = Boolean(token && role && !isExpired);
+  const isAuthenticated = Boolean(token && role);
 
   const handleRoleSet = (newRole: string | null) => {
-    const safeRole = isAppRole(newRole) ? newRole : null;
+    const normalized = newRole?.toLowerCase();
+    const safeRole: SessionRole = isAppRole(normalized)
+      ? normalized
+      : normalized?.includes('dispatch')
+      ? 'dispatcher'
+      : (normalized ? 'admin' : null);
     setRole(safeRole);
     try {
       if (safeRole) window.localStorage.setItem(ROLE_STORAGE_KEY, safeRole);
@@ -61,14 +68,6 @@ function App() {
     clearAuthStorage();
     handleRoleSet(null);
   };
-
-  // Sync token expiration on mount or token change
-  useEffect(() => {
-    if (token && isTokenExpired(token)) {
-      dispatch(logout());
-      handleRoleSet(null);
-    }
-  }, [token, dispatch]);
 
   // Sync session state across tabs (e.g. multi-tab logout)
   useEffect(() => {

@@ -36,12 +36,6 @@ function buildUrl(path: string, params?: Record<string, string | undefined>) {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = getAuthToken();
 
-  // Proactively check if token is expired before issuing request
-  if (token && isTokenExpired(token)) {
-    handleAuthSessionExpired({ reason: 'Session expired. Please log in again.' });
-    throw new ApiError(401, 'Session expired');
-  }
-
   let res: Response;
   try {
     res = await fetch(buildUrl(path, options.params), {
@@ -72,12 +66,21 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       errorData?.error ||
       `API ${options.method || 'GET'} ${path} failed (${res.status})`;
 
-    if (res.status === 401) {
-      handleAuthSessionExpired({ reason: errorData?.message || 'Session expired. Please log in again.' });
-    } else if (res.status === 403) {
-      handleForbiddenAccess({
-        message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
-      });
+    const isAuthPath =
+      path.includes('login') ||
+      path.includes('forgot-password') ||
+      path.includes('verify-email') ||
+      path.includes('reset-password') ||
+      path.includes('resend-otp');
+
+    if (!isAuthPath) {
+      if (res.status === 401) {
+        handleAuthSessionExpired({ reason: errorData?.message || 'Session expired. Please log in again.' });
+      } else if (res.status === 403) {
+        handleForbiddenAccess({
+          message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
+        });
+      }
     } else if (res.status >= 500) {
       toast.error(errorMessage || `Server error (${res.status}). Please try again later.`, {
         id: `api-server-error-${res.status}`,

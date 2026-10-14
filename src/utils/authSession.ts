@@ -16,35 +16,12 @@ import { ROUTES } from '@/constants/routes';
  * it returns false so mock/demo mode continues to function properly.
  */
 export function isTokenExpired(token: string | null | undefined): boolean {
+  // If token is missing, consider it expired / unauthenticated
   if (!token) return true;
 
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      // Non-JWT token (e.g. 'mock_access_token'), treat as valid
-      return false;
-    }
-
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    const parsed = JSON.parse(jsonPayload);
-
-    if (typeof parsed?.exp === 'number') {
-      // Expiration time is in seconds; check with 5s safety margin
-      return parsed.exp * 1000 <= Date.now() + 5000;
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
+  // Let the backend server be the definitive authority on token validity (via HTTP 401).
+  // This prevents client system clock skew or timezone offsets from falsely logging out valid sessions.
+  return false;
 }
 
 /**
@@ -80,11 +57,25 @@ export function redirectToLogin(reason?: 'expired' | 'forbidden' | 'logout'): vo
 
   const currentPath = window.location.pathname;
 
-  // Prevent redirect loops if already on the login page
-  if (currentPath === ROUTES.login) return;
+  // Prevent redirect loops if already on the login page or any auth route
+  if (
+    currentPath === ROUTES.login ||
+    currentPath === ROUTES.forgotPassword ||
+    currentPath === ROUTES.verifyEmail ||
+    currentPath === ROUTES.resetPassword
+  ) {
+    return;
+  }
 
-  // Save the intended destination for post-login return
-  if (currentPath && currentPath !== '/' && currentPath !== ROUTES.login) {
+  // Save the intended destination for post-login return only if it's a private app route
+  if (
+    currentPath &&
+    currentPath !== '/' &&
+    currentPath !== ROUTES.login &&
+    currentPath !== ROUTES.forgotPassword &&
+    currentPath !== ROUTES.verifyEmail &&
+    currentPath !== ROUTES.resetPassword
+  ) {
     try {
       window.sessionStorage.setItem(
         REDIRECT_AFTER_LOGIN_KEY,

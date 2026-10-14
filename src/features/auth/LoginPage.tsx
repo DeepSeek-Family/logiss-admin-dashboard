@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useLoginMutation } from '@/redux/api/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { setCredentials } from '@/redux/slice/authSlice';
 import { getFcmToken } from '@/config/firebase';
 import { REDIRECT_AFTER_LOGIN_KEY } from '@/constants/auth-storage';
+import { ROUTES } from '@/constants/routes';
 import { AuthLayout } from './components/AuthLayout';
 import {
   RoleSelector,
@@ -18,6 +20,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const [password, setPassword] = useState('');
   const [login, { isLoading }] = useLoginMutation();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role);
@@ -26,18 +29,25 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
     setStep(2);
   };
 
-  const checkPostLoginRedirect = () => {
+  const getPostLoginDestination = (currentRole: string) => {
     try {
       const savedRedirect = window.sessionStorage.getItem(REDIRECT_AFTER_LOGIN_KEY);
-      if (savedRedirect && savedRedirect.startsWith('/') && !savedRedirect.startsWith('//')) {
-        window.sessionStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
-        window.location.replace(savedRedirect);
-        return true;
+      window.sessionStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
+      if (
+        savedRedirect &&
+        savedRedirect.startsWith('/') &&
+        !savedRedirect.startsWith('//') &&
+        savedRedirect !== ROUTES.login &&
+        savedRedirect !== ROUTES.forgotPassword &&
+        savedRedirect !== ROUTES.verifyEmail &&
+        savedRedirect !== ROUTES.resetPassword
+      ) {
+        return savedRedirect;
       }
     } catch {
       /* ignore */
     }
-    return false;
+    return currentRole === 'admin' ? ROUTES.dashboard : ROUTES.operations;
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -46,25 +56,33 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
       const fcmToken = await getFcmToken();
       const response = await login({ email, password, fcmToken, deviceToken: fcmToken }).unwrap();
       if (response.success && response.data) {
-        const { accessToken, refreshToken, user } = response.data;
-        const loggedInRole = (user?.role || selectedRole || 'admin').toLowerCase();
+        const accessToken = response.data?.accessToken || response.data?.token;
+        const refreshToken = response.data?.refreshToken;
+        const user = response.data?.user || response.data;
+        const rawRole = (user?.role || response.data?.role || selectedRole || 'admin').toLowerCase();
+        const loggedInRole = rawRole.includes('dispatch') ? 'dispatcher' : 'admin';
+
         dispatch(
           setCredentials({
             accessToken,
             refreshToken,
             role: loggedInRole,
-            user: user || response.data,
+            user,
           })
         );
         toast.success(response.message || 'Login successful!');
         setRole(loggedInRole);
-        if (checkPostLoginRedirect()) return;
+
+        const destination = getPostLoginDestination(loggedInRole);
+        navigate(destination, { replace: true });
         return;
       }
     } catch (err: any) {
       console.warn('API login error or fallback:', err);
-      // If API error has data message, show error or fallback
-      const errorMsg = err?.data?.message || err?.message;
+      const errorMsg =
+        err?.data?.message ||
+        err?.data?.errorMessages?.[0]?.message ||
+        err?.message;
       if (errorMsg) {
         toast.error(errorMsg);
       } else {
@@ -86,7 +104,9 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         );
         toast.success('Logged in successfully');
         setRole(fallbackRole);
-        if (checkPostLoginRedirect()) return;
+
+        const destination = getPostLoginDestination(fallbackRole);
+        navigate(destination, { replace: true });
       }
     }
   };
