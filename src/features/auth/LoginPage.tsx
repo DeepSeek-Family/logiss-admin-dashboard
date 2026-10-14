@@ -4,6 +4,7 @@ import { useLoginMutation } from '@/redux/api/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { setCredentials } from '@/redux/slice/authSlice';
 import { getFcmToken } from '@/config/firebase';
+import { REDIRECT_AFTER_LOGIN_KEY } from '@/constants/auth-storage';
 import {
   RoleSelector,
   LoginForm
@@ -21,6 +22,20 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
     setSelectedRole(role);
     setEmail(role === 'admin' ? 'admin@gmail.com' : 'dispatcher@logiss.com');
     setStep(2);
+  };
+
+  const checkPostLoginRedirect = () => {
+    try {
+      const savedRedirect = window.sessionStorage.getItem(REDIRECT_AFTER_LOGIN_KEY);
+      if (savedRedirect && savedRedirect.startsWith('/') && !savedRedirect.startsWith('//')) {
+        window.sessionStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
+        window.location.replace(savedRedirect);
+        return true;
+      }
+    } catch {
+      /* ignore */
+    }
+    return false;
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -41,6 +56,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         );
         toast.success(response.message || 'Login successful!');
         setRole(loggedInRole);
+        if (checkPostLoginRedirect()) return;
         return;
       }
     } catch (err: any) {
@@ -68,6 +84,7 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         );
         toast.success('Logged in successfully');
         setRole(fallbackRole);
+        if (checkPostLoginRedirect()) return;
       }
     }
   };

@@ -1,14 +1,16 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import MainLayout from '@/shared/components/layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Button } from '@/shared/components/ui';
 import { PrivateRoute } from '@/router/PrivateRoute';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { logout } from '@/redux/slice/authSlice';
-import { AUTH_TOKEN_KEY } from '@/constants/auth-storage';
+import { AUTH_TOKEN_KEY, ROLE_STORAGE_KEY } from '@/constants/auth-storage';
+import { isTokenExpired, clearAuthStorage, initCrossTabAuthSync } from '@/utils/authSession';
 import {
   AppRouteConfig,
   SessionRole,
@@ -32,28 +34,64 @@ function App() {
 
   const [role, setRole] = useState<SessionRole>(() => {
     try {
-      const savedRole = window.localStorage.getItem('logiss-role');
+      const savedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
       return isAppRole(savedRole) ? savedRole : null;
     } catch {
       return null;
     }
   });
 
-  const isAuthenticated = Boolean(token && role);
+  const isExpired = Boolean(token && isTokenExpired(token));
+  const isAuthenticated = Boolean(token && role && !isExpired);
 
   const handleRoleSet = (newRole: string | null) => {
     const safeRole = isAppRole(newRole) ? newRole : null;
     setRole(safeRole);
     try {
-      if (safeRole) window.localStorage.setItem('logiss-role', safeRole);
-      else window.localStorage.removeItem('logiss-role');
+      if (safeRole) window.localStorage.setItem(ROLE_STORAGE_KEY, safeRole);
+      else window.localStorage.removeItem(ROLE_STORAGE_KEY);
     } catch { /* ignore */ }
   };
 
   const handleLogout = () => {
     dispatch(logout());
+    clearAuthStorage();
     handleRoleSet(null);
   };
+
+  // Sync token expiration on mount or token change
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      dispatch(logout());
+      handleRoleSet(null);
+    }
+  }, [token, dispatch]);
+
+  // Sync session state across tabs (e.g. multi-tab logout)
+  useEffect(() => {
+    const unbind = initCrossTabAuthSync(() => {
+      dispatch(logout());
+      handleRoleSet(null);
+    });
+    return unbind;
+  }, [dispatch]);
+
+  // Handle unhandled dynamic chunk script loading failures gracefully
+  useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const message = event.reason?.message || String(event.reason || '');
+      if (
+        message.includes('Failed to fetch dynamically imported module') ||
+        message.includes('Importing a module script failed')
+      ) {
+        toast.error('New application version detected. Reloading...', { id: 'chunk-load-error' });
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => window.removeEventListener('unhandledrejection', handleRejection);
+  }, []);
 
   const renderRouteElement = (route: AppRouteConfig) => {
     if (!route.Component) return undefined;
