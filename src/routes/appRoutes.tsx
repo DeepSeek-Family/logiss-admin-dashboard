@@ -10,6 +10,9 @@ export const getDefaultRoute = (role: SessionRole) => (
 );
 
 const Login = lazy(() => import('../pages/Login'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
+const VerifyEmail = lazy(() => import('../pages/VerifyEmail'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword'));
 const Operations = lazy(() => import('../pages/Operations'));
 const Bookings = lazy(() => import('../pages/Bookings'));
 const LiveTrips = lazy(() => import('../pages/LiveTrips'));
@@ -44,6 +47,21 @@ export interface AppRouteConfig {
 export const loginRoute = {
   path: ROUTES.login,
   Component: Login,
+};
+
+export const forgotPasswordRoute = {
+  path: ROUTES.forgotPassword,
+  Component: ForgotPassword,
+};
+
+export const verifyEmailRoute = {
+  path: ROUTES.verifyEmail,
+  Component: VerifyEmail,
+};
+
+export const resetPasswordRoute = {
+  path: ROUTES.resetPassword,
+  Component: ResetPassword,
 };
 
 export const authenticatedRoutes: AppRouteConfig[] = [

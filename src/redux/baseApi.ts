@@ -24,6 +24,8 @@ const rawBaseQuery = fetchBaseQuery({
         : null
 
     if (endpoint === 'resetPassword' && resetToken) {
+      headers.set('authorization', resetToken)
+      headers.set('Authorization', resetToken)
       headers.set('resettoken', resetToken)
     } else if (authToken) {
       headers.set('authorization', `Bearer ${authToken}`)
@@ -45,10 +47,15 @@ const baseQueryWithAuthHandling: BaseQueryFn<
     state.auth?.token ||
     (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null)
 
-  const isResetEndpoint = typeof args === 'object' && args.url?.includes('reset')
-  const isAuthLoginEndpoint = typeof args === 'object' && args.url?.includes('/auth/login')
+  const isAuthExemptEndpoint =
+    typeof args === 'object' &&
+    (args.url?.includes('reset') ||
+      args.url?.includes('forgot') ||
+      args.url?.includes('verify') ||
+      args.url?.includes('resend') ||
+      args.url?.includes('/auth/login'))
 
-  if (currentToken && !isResetEndpoint && !isAuthLoginEndpoint && isTokenExpired(currentToken)) {
+  if (currentToken && !isAuthExemptEndpoint && isTokenExpired(currentToken)) {
     api.dispatch(logout())
     if (baseApi?.util?.resetApiState) {
       api.dispatch(baseApi.util.resetApiState())

@@ -14,8 +14,15 @@ const rtkQueryErrorLogger: Middleware = () => (next) => (action: any) => {
     const status = payload?.status
     const endpointName = action.meta?.arg?.endpointName
 
-    // Skip login endpoint so LoginPage can handle its own authentication messages / demo fallbacks
-    if (endpointName === 'login') {
+    // Skip auth endpoints so LoginPage / recovery forms can handle their own messages
+    const authEndpointNames = [
+      'login',
+      'forgotPassword',
+      'resendOtp',
+      'verifyEmail',
+      'resetPassword',
+    ]
+    if (endpointName && authEndpointNames.includes(endpointName)) {
       return next(action)
     }
 

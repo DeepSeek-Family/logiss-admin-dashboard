@@ -1,0 +1,54 @@
+import React, { ReactNode } from "react";
+
+interface AuthLayoutProps {
+  children: ReactNode;
+}
+
+export const AuthLayout = ({ children }: AuthLayoutProps) => {
+  return (
+    <div className="min-h-screen bg-bg flex">
+      {/* Left Side: Brand Imagery & Messaging */}
+      <div className="hidden lg:flex w-1/2 relative items-center justify-center overflow-hidden bg-bg">
+        <div className="absolute inset-0 bg-gradient-to-r from-ink/60 to-ink/20 z-10 pointer-events-none"></div>
+        <img
+          src="/login-bg.png"
+          alt="Dispatch Center"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        <div className="relative z-20 text-left p-16 w-full max-w-2xl mt-auto">
+          <div className="mb-8">
+            <img
+              src="/logo.png"
+              alt="Logiss Rides"
+              className="h-24 w-auto drop-shadow-lg bg-white/80 p-2 rounded-xl backdrop-blur-sm"
+            />
+          </div>
+          <h1 className="font-semibold text-4xl text-white mb-4 leading-tight">
+            Reliable Transportation
+            <br />
+            for Every Appointment
+          </h1>
+          <p className="text-white/70 text-lg max-w-md">
+            Coordinate scheduled medical rides, manage transportation requests,
+            and stay informed with a platform built for dependable and organized
+            trip management.
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side: Authentication Forms */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 relative">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex flex-col items-center mb-10">
+            <img src="/logo.png" alt="Logiss Rides" className="h-20 w-auto" />
+          </div>
+
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthLayout;

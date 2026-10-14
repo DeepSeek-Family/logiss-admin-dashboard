@@ -1,5 +1,8 @@
 export const ROUTES = {
   login: '/login',
+  forgotPassword: '/forgot-password',
+  verifyEmail: '/verify-email',
+  resetPassword: '/reset-password',
   dashboard: '/dashboard',
   operations: '/operations',
   bookings: '/bookings',

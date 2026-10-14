@@ -1,4 +1,5 @@
 import { baseApi } from '../baseApi'
+import { RESET_PASSWORD_TOKEN_KEY } from '@/constants/auth-storage'
 
 export interface LoginRequest {
   email: string
@@ -28,6 +29,48 @@ export interface ChangePasswordResponse {
   message?: string
 }
 
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean
+  message: string
+  data?: any
+}
+
+export interface ResendOtpRequest {
+  email: string
+}
+
+export interface ResendOtpResponse {
+  success: boolean
+  message: string
+  data?: any
+}
+
+export interface VerifyEmailRequest {
+  email: string
+  oneTimeCode: number | string
+}
+
+export interface VerifyEmailResponse {
+  success: boolean
+  message: string
+  data: string
+}
+
+export interface ResetPasswordRequest {
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface ResetPasswordResponse {
+  success: boolean
+  message: string
+  data?: any
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
@@ -48,6 +91,7 @@ export const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ['Auth', 'Profile', 'User'],
     }),
+
     changePassword: builder.mutation<ChangePasswordResponse, ChangePasswordRequest>({
       query: (body) => ({
         url: '/auth/change-password',
@@ -55,8 +99,66 @@ export const authApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+
+    forgotPassword: builder.mutation<ForgotPasswordResponse, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    resendOtp: builder.mutation<ResendOtpResponse, ResendOtpRequest>({
+      query: (body) => ({
+        url: '/auth/resend-otp',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    verifyEmail: builder.mutation<VerifyEmailResponse, VerifyEmailRequest>({
+      query: (body) => ({
+        url: '/auth/verify-email',
+        method: 'POST',
+        body: {
+          email: body.email.trim(),
+          oneTimeCode: Number(body.oneTimeCode),
+        },
+      }),
+    }),
+
+    resetPassword: builder.mutation<ResetPasswordResponse, ResetPasswordRequest>({
+      query: (body) => {
+        const resetToken =
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
+            : null
+        return {
+          url: '/auth/reset-password',
+          method: 'POST',
+          body: {
+            newPassword: body.newPassword,
+            confirmPassword: body.confirmPassword,
+          },
+          headers: resetToken
+            ? {
+                Authorization: resetToken,
+                authorization: resetToken,
+                resettoken: resetToken,
+              }
+            : undefined,
+        }
+      },
+    }),
   }),
   overrideExisting: false,
 })
 
-export const { useLoginMutation, useChangePasswordMutation } = authApi
+export const {
+  useLoginMutation,
+  useChangePasswordMutation,
+  useForgotPasswordMutation,
+  useResendOtpMutation,
+  useVerifyEmailMutation,
+  useResetPasswordMutation,
+} = authApi

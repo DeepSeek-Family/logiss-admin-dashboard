@@ -1,2 +1,10 @@
 export * from './components/RoleSelector';
 export * from './components/LoginForm';
+export * from './components/ForgotPasswordForm';
+export * from './components/VerifyOtpForm';
+export * from './components/ResetPasswordForm';
+export * from './components/AuthLayout';
+export { default as LoginPage } from './LoginPage';
+export { default as ForgotPasswordPage } from './ForgotPasswordPage';
+export { default as VerifyEmailPage } from './VerifyEmailPage';
+export { default as ResetPasswordPage } from './ResetPasswordPage';

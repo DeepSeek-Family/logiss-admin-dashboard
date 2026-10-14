@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ShieldAlert,
   Navigation,
@@ -10,6 +11,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui";
+import { ROUTES } from "@/constants/routes";
 
 interface LoginFormProps {
   selectedRole: string;
@@ -20,6 +22,7 @@ interface LoginFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isLoading?: boolean;
   onBack: () => void;
+  onForgotPassword?: () => void;
 }
 
 export const LoginForm = ({
@@ -31,6 +34,7 @@ export const LoginForm = ({
   onSubmit,
   isLoading = false,
   onBack,
+  onForgotPassword,
 }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   return (
@@ -85,12 +89,18 @@ export const LoginForm = ({
             <label className="block text-xs font-medium text-ink-4">
               Password
             </label>
-            <a
-              href="#"
-              className="text-xs font-medium text-primary hover:text-primary-dark"
+            <Link
+              to={ROUTES.forgotPassword}
+              onClick={(e) => {
+                if (onForgotPassword) {
+                  e.preventDefault();
+                  onForgotPassword();
+                }
+              }}
+              className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
             >
               Forgot?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <Lock

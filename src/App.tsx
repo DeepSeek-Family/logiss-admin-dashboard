@@ -18,6 +18,9 @@ import {
   getDefaultRoute,
   isAppRole,
   loginRoute,
+  forgotPasswordRoute,
+  verifyEmailRoute,
+  resetPasswordRoute,
 } from './routes/appRoutes';
 
 const LoadingScreen = () => (
@@ -117,6 +120,9 @@ function App() {
   };
 
   const LoginPage = loginRoute.Component;
+  const ForgotPasswordPage = forgotPasswordRoute.Component;
+  const VerifyEmailPage = verifyEmailRoute.Component;
+  const ResetPasswordPage = resetPasswordRoute.Component;
 
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -125,6 +131,9 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path={loginRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage setRole={handleRoleSet} />} />
+            <Route path={forgotPasswordRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPasswordPage />} />
+            <Route path={verifyEmailRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <VerifyEmailPage />} />
+            <Route path={resetPasswordRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPasswordPage />} />
             <Route path="/" element={<PrivateRoute role={role}><MainLayout role={role} onLogout={handleLogout} /></PrivateRoute>}>
               <Route index element={<Navigate to={getDefaultRoute(role)} replace />} />
               {authenticatedRoutes.map(renderAppRoute)}
