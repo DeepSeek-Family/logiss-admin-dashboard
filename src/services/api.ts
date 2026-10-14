@@ -74,11 +74,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       path.includes('resend-otp');
 
     if (!isAuthPath) {
-      if (res.status === 401) {
+      if (res.status === 401 && token) {
         handleAuthSessionExpired({ reason: errorData?.message || 'Session expired. Please log in again.' });
       } else if (res.status === 403) {
-        handleForbiddenAccess({
-          message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
+        toast.error(errorData?.message || 'Access restricted (403): You do not have permission for this resource.', {
+          id: 'api-forbidden-toast',
         });
       }
     } else if (res.status >= 500) {

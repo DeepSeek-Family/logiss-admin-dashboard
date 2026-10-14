@@ -6,7 +6,7 @@ import {
   type FetchBaseQueryError,
   type FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query/react'
-import { RESET_PASSWORD_TOKEN_KEY, AUTH_TOKEN_KEY } from '@/constants/auth-storage'
+import { RESET_PASSWORD_TOKEN_KEY, AUTH_TOKEN_KEY, LEGACY_AUTH_TOKEN_KEY } from '@/constants/auth-storage'
 import { isTokenExpired, handleAuthSessionExpired, handleForbiddenAccess } from '@/utils/authSession'
 import { logout } from '@/redux/slice/authSlice'
 
@@ -17,7 +17,9 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState, endpoint }) => {
     const authToken =
       (getState() as AuthStateSlice).auth?.token ||
-      (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null)
+      (typeof localStorage !== 'undefined'
+        ? localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)
+        : null)
     const resetToken =
       typeof localStorage !== 'undefined'
         ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
@@ -28,8 +30,10 @@ const rawBaseQuery = fetchBaseQuery({
       headers.set('Authorization', resetToken)
       headers.set('resettoken', resetToken)
     } else if (authToken) {
-      headers.set('authorization', `Bearer ${authToken}`)
-      headers.set('Authorization', `Bearer ${authToken}`)
+      const cleanToken = authToken.startsWith('Bearer ') ? authToken.slice(7) : authToken
+      headers.set('authorization', `Bearer ${cleanToken}`)
+      headers.set('Authorization', `Bearer ${cleanToken}`)
+      headers.set('token', cleanToken)
     }
     return headers
   },
@@ -56,7 +60,14 @@ const baseQueryWithAuthHandling: BaseQueryFn<
       url?.includes('/auth/reset-password') ||
       url?.includes('/auth/resend-otp')
 
-    if (!isAuthExemptEndpoint) {
+    const state = api.getState() as AuthStateSlice
+    const currentToken =
+      state.auth?.token ||
+      (typeof localStorage !== 'undefined'
+        ? localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)
+        : null)
+
+    if (!isAuthExemptEndpoint && currentToken) {
       if (status === 401) {
         // Token expired or invalid session on private routes
         api.dispatch(logout())
@@ -67,13 +78,9 @@ const baseQueryWithAuthHandling: BaseQueryFn<
           reason: errorData?.message || 'Session expired. Please log in again.',
         })
       } else if (status === 403) {
-        // Forbidden: redirect to login page
-        api.dispatch(logout())
-        if (baseApi?.util?.resetApiState) {
-          api.dispatch(baseApi.util.resetApiState())
-        }
-        handleForbiddenAccess({
-          message: errorData?.message || 'Access forbidden (403): Redirecting to login...',
+        // Forbidden on a specific resource: alert user without killing the entire session
+        toast.error(errorData?.message || 'Access restricted (403): You do not have permission for this resource.', {
+          id: 'auth-forbidden-toast',
         })
       }
     }

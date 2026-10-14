@@ -48,8 +48,10 @@ export const authSlice = createSlice({
         state.token = accessToken
         if (accessToken) {
           localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
+          localStorage.setItem(LEGACY_AUTH_TOKEN_KEY, accessToken)
         } else {
           localStorage.removeItem(AUTH_TOKEN_KEY)
+          localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY)
         }
       }
       if (action.payload.refreshToken !== undefined) {

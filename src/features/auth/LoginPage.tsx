@@ -55,12 +55,46 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
     try {
       const fcmToken = await getFcmToken();
       const response = await login({ email, password, fcmToken, deviceToken: fcmToken }).unwrap();
-      if (response.success && response.data) {
-        const accessToken = response.data?.accessToken || response.data?.token;
-        const refreshToken = response.data?.refreshToken;
-        const user = response.data?.user || response.data;
-        const rawRole = (user?.role || response.data?.role || selectedRole || 'admin').toLowerCase();
+      if (response && (response.success || response.data)) {
+        const data = response.data;
+        const accessToken =
+          (typeof data === 'string' && data.length > 20 ? data : null) ||
+          data?.accessToken ||
+          data?.token ||
+          data?.access_token ||
+          data?.data?.accessToken ||
+          data?.data?.token ||
+          data?.data?.access_token ||
+          response.accessToken ||
+          response.token;
+
+        const refreshToken =
+          data?.refreshToken ||
+          data?.refresh_token ||
+          data?.data?.refreshToken ||
+          response.refreshToken;
+
+        const user =
+          (typeof data === 'object' && data !== null && data.user) ||
+          (typeof data?.data === 'object' && data.data !== null && data.data.user) ||
+          (typeof data === 'object' && data !== null ? data : null) ||
+          response.user;
+
+        const rawRole = (
+          user?.role ||
+          (typeof data === 'object' && data !== null ? data?.role : null) ||
+          response.role ||
+          selectedRole ||
+          'admin'
+        )
+          ?.toString()
+          ?.toLowerCase() || 'admin';
         const loggedInRole = rawRole.includes('dispatch') ? 'dispatcher' : 'admin';
+
+        if (!accessToken) {
+          toast.error(response?.message || 'Authentication failed: Server did not return an access token.');
+          return;
+        }
 
         dispatch(
           setCredentials({
@@ -76,38 +110,21 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
         const destination = getPostLoginDestination(loggedInRole);
         navigate(destination, { replace: true });
         return;
+      } else {
+        toast.error(response?.message || 'Login failed. Please check your credentials.');
       }
     } catch (err: any) {
-      console.warn('API login error or fallback:', err);
-      const errorMsg =
+      console.warn('API login error:', err);
+      let errorMsg =
         err?.data?.message ||
         err?.data?.errorMessages?.[0]?.message ||
         err?.message;
-      if (errorMsg) {
-        toast.error(errorMsg);
-      } else {
-        // Fallback session for demo environment
-        const fallbackRole = (selectedRole || 'admin').toLowerCase();
-        const fallbackUser = {
-          role: fallbackRole.toUpperCase(),
-          accessScope: fallbackRole === 'admin'
-            ? ['/dashboard', '/operations', '/bookings', '/live', '/drivers', '/riders', '/applications', '/reports', '/trips', '/schedule', '/coverage', '/fleet', '/notifications', '/settings', '/profile', '/finance', '/transactions', '/staff', '/cms', '/support', '/push']
-            : ['/dashboard', '/operations', '/bookings', '/live', '/drivers', '/riders', '/trips', '/schedule', '/reports'],
-        };
-        dispatch(
-          setCredentials({
-            accessToken: 'mock_access_token',
-            refreshToken: 'mock_refresh_token',
-            role: fallbackRole,
-            user: fallbackUser,
-          })
-        );
-        toast.success('Logged in successfully');
-        setRole(fallbackRole);
 
-        const destination = getPostLoginDestination(fallbackRole);
-        navigate(destination, { replace: true });
+      if (!errorMsg && (err?.status === 'FETCH_ERROR' || err?.error?.includes('Failed to fetch'))) {
+        errorMsg = 'Cannot connect to server. Connection timed out or server is offline.';
       }
+
+      toast.error(errorMsg || 'Login failed. Please check your credentials and try again.');
     }
   };
 

@@ -9,7 +9,7 @@ import { Button } from '@/shared/components/ui';
 import { PrivateRoute } from '@/router/PrivateRoute';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { logout } from '@/redux/slice/authSlice';
-import { AUTH_TOKEN_KEY, ROLE_STORAGE_KEY } from '@/constants/auth-storage';
+import { AUTH_TOKEN_KEY, ROLE_STORAGE_KEY, LEGACY_AUTH_TOKEN_KEY } from '@/constants/auth-storage';
 import { isTokenExpired, clearAuthStorage, initCrossTabAuthSync } from '@/utils/authSession';
 import {
   AppRouteConfig,
@@ -33,7 +33,12 @@ const LoadingScreen = () => (
 function App() {
   const dispatch = useAppDispatch();
   const reduxToken = useAppSelector((state) => state.auth.token);
-  const token = reduxToken || (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null);
+  const reduxRole = useAppSelector((state) => state.auth.role);
+  const token =
+    reduxToken ||
+    (typeof localStorage !== 'undefined'
+      ? localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)
+      : null);
 
   const [role, setRole] = useState<SessionRole>(() => {
     try {
@@ -47,10 +52,20 @@ function App() {
     }
   });
 
-  const isAuthenticated = Boolean(token && role);
+  const effectiveRole: SessionRole =
+    role ||
+    (reduxRole ? (reduxRole.toLowerCase().includes('dispatch') ? 'dispatcher' : 'admin') : null) ||
+    (typeof localStorage !== 'undefined'
+      ? (() => {
+          const r = localStorage.getItem(ROLE_STORAGE_KEY)?.toLowerCase()?.trim();
+          return r?.includes('dispatch') ? 'dispatcher' : r ? 'admin' : null;
+        })()
+      : null);
+
+  const isAuthenticated = Boolean(token && effectiveRole);
 
   const handleRoleSet = (newRole: string | null) => {
-    const normalized = newRole?.toLowerCase();
+    const normalized = newRole?.toLowerCase()?.trim();
     const safeRole: SessionRole = isAppRole(normalized)
       ? normalized
       : normalized?.includes('dispatch')
@@ -98,10 +113,10 @@ function App() {
   const renderRouteElement = (route: AppRouteConfig) => {
     if (!route.Component) return undefined;
     const Page = route.Component;
-    const pageElement = <Page role={role} />;
+    const pageElement = <Page role={effectiveRole} />;
     if (!route.allowedRoles) return pageElement;
     return (
-      <PrivateRoute role={role} allowedRoles={route.allowedRoles}>
+      <PrivateRoute role={effectiveRole} allowedRoles={route.allowedRoles}>
         {pageElement}
       </PrivateRoute>
     );
@@ -133,8 +148,8 @@ function App() {
             <Route path={forgotPasswordRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPasswordPage />} />
             <Route path={verifyEmailRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <VerifyEmailPage />} />
             <Route path={resetPasswordRoute.path} element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPasswordPage />} />
-            <Route path="/" element={<PrivateRoute role={role}><MainLayout role={role} onLogout={handleLogout} /></PrivateRoute>}>
-              <Route index element={<Navigate to={getDefaultRoute(role)} replace />} />
+            <Route path="/" element={<PrivateRoute role={effectiveRole}><MainLayout role={effectiveRole} onLogout={handleLogout} /></PrivateRoute>}>
+              <Route index element={<Navigate to={getDefaultRoute(effectiveRole)} replace />} />
               {authenticatedRoutes.map(renderAppRoute)}
               <Route path="*" element={
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
