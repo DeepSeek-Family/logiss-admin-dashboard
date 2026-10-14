@@ -14,13 +14,14 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
   const [step, setStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('password');
+  const [password, setPassword] = useState('');
   const [login, { isLoading }] = useLoginMutation();
   const dispatch = useAppDispatch();
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role);
-    setEmail(role === 'admin' ? 'admin@gmail.com' : 'dispatcher@logiss.com');
+    setEmail('');
+    setPassword('');
     setStep(2);
   };
 
@@ -131,7 +132,11 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
               setPassword={setPassword}
               onSubmit={handleAuth}
               isLoading={isLoading}
-              onBack={() => setStep(1)}
+              onBack={() => {
+                setEmail('');
+                setPassword('');
+                setStep(1);
+              }}
             />
           )}
         </div>

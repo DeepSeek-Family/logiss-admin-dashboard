@@ -6,7 +6,8 @@ import {
   Lock,
   ArrowRight,
   Loader2,
-  EyeIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui";
 
@@ -73,6 +74,7 @@ export const LoginForm = ({
               type="email"
               required
               value={email}
+              placeholder="Enter email address"
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
             />
@@ -90,23 +92,26 @@ export const LoginForm = ({
               Forgot?
             </a>
           </div>
-          {/* need to add eye icon to show/hide password */}
           <div className="relative">
             <Lock
               className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
               size={18}
             />
-            <EyeIcon
+            <button
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 cursor-pointer"
-              size={18}
-            />
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink transition-colors focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
             <input
               type={showPassword ? "text" : "password"}
               required
               value={password}
+              placeholder="Enter password"
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
             />
           </div>
         </div>
