@@ -9,6 +9,7 @@ import {
 import { RESET_PASSWORD_TOKEN_KEY, AUTH_TOKEN_KEY, LEGACY_AUTH_TOKEN_KEY } from '@/constants/auth-storage'
 import { isTokenExpired, handleAuthSessionExpired, handleForbiddenAccess } from '@/utils/authSession'
 import { logout } from '@/redux/slice/authSlice'
+import toast from 'react-hot-toast'
 
 type AuthStateSlice = { auth: { token: string | null } }
 
