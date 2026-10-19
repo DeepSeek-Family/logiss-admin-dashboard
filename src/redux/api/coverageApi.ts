@@ -49,7 +49,7 @@ export interface ICounty {
   starting_fare?: number
   first_miles_price?: number
   per_mile_price?: number
-  mileage_based_price?: IMileageBasedPrice
+  mileage_based_price?: IMileageBasedPrice[] | IMileageBasedPrice
   insidePrice?: number
   outsidePrice?: number
   isActive?: boolean
@@ -77,8 +77,10 @@ export interface ISaveCountyInput {
   starting_mileage?: number
   first_miles_price?: number
   per_mile_price?: number
+  mileage_based_price?: IMileageBasedPrice[]
   insidePrice: number
   outsidePrice: number
+  isActive?: boolean
   file?: File
 }
 
@@ -104,6 +106,9 @@ const buildCountyFormData = (input: ISaveCountyInput): FormData => {
   formData.append('priceMethod', priceMethod)
   formData.append('insidePrice', String(input.insidePrice ?? 0))
   formData.append('outsidePrice', String(input.outsidePrice ?? 0))
+  if (input.isActive !== undefined) {
+    formData.append('isActive', String(input.isActive))
+  }
 
   if (priceMethod === 'flat_rate') {
     formData.append('flat_rate_price', String(input.flat_rate_price ?? 0))
@@ -112,9 +117,27 @@ const buildCountyFormData = (input: ISaveCountyInput): FormData => {
     formData.append('first_miles_price', String(input.first_miles_price ?? 0))
     formData.append('per_mile_price', String(input.per_mile_price ?? 0))
   } else {
-    formData.append('starting_mileage', String(input.starting_mileage ?? 0))
-    formData.append('first_miles_price', String(input.first_miles_price ?? 0))
-    formData.append('per_mile_price', String(input.per_mile_price ?? 0))
+    const rawTiers =
+      Array.isArray(input.mileage_based_price) && input.mileage_based_price.length > 0
+        ? input.mileage_based_price
+        : [
+            {
+              starting_mileage: input.starting_mileage ?? 0,
+              first_miles_price: input.first_miles_price ?? 0,
+              per_mile_price: input.per_mile_price ?? 0,
+            },
+          ]
+
+    const sanitizedTiers = rawTiers.map((t) => ({
+      starting_mileage: Number(t.starting_mileage) || 0,
+      first_miles_price: Number(t.first_miles_price) || 0,
+      per_mile_price: Number(t.per_mile_price) || 0,
+    }))
+
+    formData.append('mileage_based_price', JSON.stringify(sanitizedTiers))
+    formData.append('starting_mileage', String(sanitizedTiers[0]?.starting_mileage ?? 0))
+    formData.append('first_miles_price', String(sanitizedTiers[0]?.first_miles_price ?? 0))
+    formData.append('per_mile_price', String(sanitizedTiers[0]?.per_mile_price ?? 0))
   }
 
   if (input.file) formData.append('file', input.file)

@@ -11,6 +11,7 @@ import {
   Upload,
   Loader2,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import {
@@ -30,6 +31,7 @@ import {
 } from '@/features/cms/constants/payerTypes';
 import {
   PRICING_METHOD_LABELS,
+  defaultMileageTiers,
   emptyCoverageDraft,
   findCountyForPayer,
   geoJsonToRings,
@@ -37,6 +39,7 @@ import {
   mapDraftToCountyInput,
   methodChipLabel,
   toUiPriceMethod,
+  type IMileageTier,
   type PayerCoverageDraft,
   type UiPricingMethod,
 } from '@/features/cms/utils/countyHelpers';
@@ -93,15 +96,16 @@ const Field = ({
   </div>
 );
 
-const MoneyInput = (props: InputHTMLAttributes<HTMLInputElement>) => (
+const MoneyInput = ({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) => (
   <div className="relative w-32">
     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
-    <input type="number" step="0.01" {...props} className={`${controlValue} pl-7`} />
+    <input type="number" step="0.01" {...props} className={`${controlValue} pl-7 ${className || ''}`} />
   </div>
 );
 
 const cloneDraft = (d: PayerCoverageDraft): PayerCoverageDraft => ({
   ...d,
+  mileageTiers: (d.mileageTiers || []).map(t => ({ ...t })),
   geofencePolygons: parsePolygons(d.geofencePolygons),
   geofenceFileName: d.geofenceFileName || '',
   geofenceFile: d.geofenceFile,
@@ -280,7 +284,51 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   };
 
   const applyUiMethod = (m: UiPricingMethod) => {
-    setDraft(prev => (prev ? { ...prev, pricingMethod: toUiPriceMethod(m) } : prev));
+    const nextMethod = toUiPriceMethod(m);
+    setDraft(prev => {
+      if (!prev) return prev;
+      const tiers = prev.mileageTiers?.length
+        ? prev.mileageTiers
+        : defaultMileageTiers();
+      return {
+        ...prev,
+        pricingMethod: nextMethod,
+        mileageTiers: tiers,
+      };
+    });
+  };
+
+  const addMileageTier = () => {
+    if (!draft) return;
+    const tiers = draft.mileageTiers || [];
+    const lastTier = tiers[tiers.length - 1];
+    const nextStarting = lastTier ? Number(lastTier.starting_mileage || 0) + 5 : 0;
+    patchDraft({
+      mileageTiers: [
+        ...tiers,
+        {
+          starting_mileage: nextStarting,
+          first_miles_price: lastTier ? lastTier.first_miles_price : 0,
+          per_mile_price: lastTier ? lastTier.per_mile_price : 0,
+        },
+      ],
+    });
+  };
+
+  const updateMileageTier = (index: number, updates: Partial<IMileageTier>) => {
+    if (!draft) return;
+    const tiers = [...(draft.mileageTiers || [])];
+    if (!tiers[index]) return;
+    tiers[index] = { ...tiers[index], ...updates };
+    patchDraft({ mileageTiers: tiers });
+  };
+
+  const removeMileageTier = (index: number) => {
+    if (!draft) return;
+    const tiers = (draft.mileageTiers || []).filter((_, i) => i !== index);
+    patchDraft({
+      mileageTiers: tiers.length > 0 ? tiers : defaultMileageTiers(),
+    });
   };
 
   const handleSave = async () => {
@@ -645,86 +693,165 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                   title="How priced"
                   subtitle="Choose one pricing method and set the rates."
                 >
-                  <div className="flex flex-wrap items-end gap-3">
-                    <Field label="Pricing method" htmlFor="payer-pricing-method">
-                      <select
-                        id="payer-pricing-method"
-                        className={controlSelect}
-                        value={currentMethod}
-                        onChange={e => applyUiMethod(e.target.value as UiPricingMethod)}
-                      >
-                        {METHODS.map(m => (
-                          <option key={m} value={m}>
-                            {PRICING_METHOD_LABELS[m]}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-
-                    {currentMethod === 'flat_rate' && (
-                      <Field label="Flat rate">
-                        <MoneyInput
-                          value={draft.flatRate}
-                          onChange={e => patchDraft({ flatRate: Number(e.target.value) || 0 })}
-                        />
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <Field label="Pricing method" htmlFor="payer-pricing-method">
+                        <select
+                          id="payer-pricing-method"
+                          className={controlSelect}
+                          value={currentMethod}
+                          onChange={e => applyUiMethod(e.target.value as UiPricingMethod)}
+                          disabled={!canEdit}
+                        >
+                          {METHODS.map(m => (
+                            <option key={m} value={m}>
+                              {PRICING_METHOD_LABELS[m]}
+                            </option>
+                          ))}
+                        </select>
                       </Field>
-                    )}
 
-                    {currentMethod === 'per_mile' && (
-                      <>
-                        <Field label="Starting fare">
+                      {currentMethod === 'flat_rate' && (
+                        <Field label="Flat rate">
                           <MoneyInput
-                            value={draft.startingFare}
-                            onChange={e =>
-                              patchDraft({ startingFare: Number(e.target.value) || 0 })
-                            }
+                            value={draft.flatRate}
+                            onChange={e => patchDraft({ flatRate: Number(e.target.value) || 0 })}
+                            disabled={!canEdit}
                           />
                         </Field>
-                        <Field label="First miles price">
-                          <MoneyInput
-                            value={draft.includedRate}
-                            onChange={e =>
-                              patchDraft({ includedRate: Number(e.target.value) || 0 })
-                            }
-                          />
-                        </Field>
-                        <Field label="Per mile">
-                          <MoneyInput
-                            value={draft.perMileRate}
-                            onChange={e => patchDraft({ perMileRate: Number(e.target.value) || 0 })}
-                          />
-                        </Field>
-                      </>
-                    )}
+                      )}
+
+                      {currentMethod === 'per_mile' && (
+                        <>
+                          <Field label="Starting fare">
+                            <MoneyInput
+                              value={draft.startingFare}
+                              onChange={e =>
+                                patchDraft({ startingFare: Number(e.target.value) || 0 })
+                              }
+                              disabled={!canEdit}
+                            />
+                          </Field>
+                          <Field label="First miles price">
+                            <MoneyInput
+                              value={draft.firstMilesPrice}
+                              onChange={e =>
+                                patchDraft({
+                                  firstMilesPrice: Number(e.target.value) || 0,
+                                  includedRate: Number(e.target.value) || 0,
+                                })
+                              }
+                              disabled={!canEdit}
+                            />
+                          </Field>
+                          <Field label="Per mile">
+                            <MoneyInput
+                              value={draft.perMileRate}
+                              onChange={e =>
+                                patchDraft({ perMileRate: Number(e.target.value) || 0 })
+                              }
+                              disabled={!canEdit}
+                            />
+                          </Field>
+                        </>
+                      )}
+                    </div>
 
                     {currentMethod === 'mileage_based' && (
-                      <>
-                        <Field label="Starting fare">
-                          <MoneyInput
-                            value={draft.includedRate}
-                            onChange={e =>
-                              patchDraft({ includedRate: Number(e.target.value) || 0 })
-                            }
-                          />
-                        </Field>
-                        <Field label="First miles">
-                          <input
-                            type="number"
-                            step="1"
-                            className={controlValue}
-                            value={draft.includedMiles}
-                            onChange={e =>
-                              patchDraft({ includedMiles: Number(e.target.value) || 0 })
-                            }
-                          />
-                        </Field>
-                        <Field label="Then per mile">
-                          <MoneyInput
-                            value={draft.perMileRate}
-                            onChange={e => patchDraft({ perMileRate: Number(e.target.value) || 0 })}
-                          />
-                        </Field>
-                      </>
+                      <div className="rounded-xl border border-line-2 bg-bg/40 p-3.5 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3">
+                              Mileage Tiers & Rates
+                            </h4>
+                            <p className="text-[11px] text-ink-4 mt-0.5">
+                              Set starting mileage tiers with first miles and per-mile rates.
+                            </p>
+                          </div>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={addMileageTier}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors px-3 py-1.5 rounded-lg border border-primary/25 bg-primary-tint/50 hover:bg-primary-tint shadow-xs cursor-pointer"
+                            >
+                              <Plus size={14} /> Add tier
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {(draft.mileageTiers || []).map((tier, idx) => (
+                            <div
+                              key={idx}
+                              className="flex flex-wrap items-end gap-3 p-3 rounded-xl bg-white border border-line-2 shadow-xs transition-all hover:border-primary/30"
+                            >
+                              <div className="flex items-center gap-2 min-w-[75px] pb-2">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold bg-primary-tint text-primary border border-primary/20">
+                                  {idx + 1}
+                                </span>
+                                <span className="text-xs font-semibold text-ink-3">
+                                  Tier {idx + 1}
+                                </span>
+                              </div>
+
+                              <Field label="Starting mileage (mi)">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  className={controlValue}
+                                  value={tier.starting_mileage}
+                                  onChange={e =>
+                                    updateMileageTier(idx, {
+                                      starting_mileage: Number(e.target.value) || 0,
+                                    })
+                                  }
+                                  disabled={!canEdit}
+                                  placeholder="0"
+                                />
+                              </Field>
+
+                              <Field label="First miles price">
+                                <MoneyInput
+                                  value={tier.first_miles_price}
+                                  onChange={e =>
+                                    updateMileageTier(idx, {
+                                      first_miles_price: Number(e.target.value) || 0,
+                                    })
+                                  }
+                                  disabled={!canEdit}
+                                  placeholder="0.00"
+                                />
+                              </Field>
+
+                              <Field label="Per mile price">
+                                <MoneyInput
+                                  value={tier.per_mile_price}
+                                  onChange={e =>
+                                    updateMileageTier(idx, {
+                                      per_mile_price: Number(e.target.value) || 0,
+                                    })
+                                  }
+                                  disabled={!canEdit}
+                                  placeholder="0.00"
+                                />
+                              </Field>
+
+                              {canEdit && (draft.mileageTiers || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeMileageTier(idx)}
+                                  className="h-10 w-10 shrink-0 flex items-center justify-center text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl border border-line-2 hover:border-urgent/30 transition-colors cursor-pointer"
+                                  title={`Remove tier ${idx + 1}`}
+                                  aria-label={`Remove tier ${idx + 1}`}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </EditorSection>

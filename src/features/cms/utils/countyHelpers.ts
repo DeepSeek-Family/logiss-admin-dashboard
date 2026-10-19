@@ -4,28 +4,40 @@ import { parseGeoJsonDocument, parsePolygons } from '@/utils/geofenceEngine'
 
 export type UiPricingMethod = CountyPriceMethod
 
+export interface IMileageTier {
+  starting_mileage: number
+  first_miles_price: number
+  per_mile_price: number
+}
+
 export interface PayerCoverageDraft {
   name: string
   active: boolean
   pricingMethod: UiPricingMethod
   flatRate: number
   startingFare: number
-  includedMiles: number
-  includedRate: number
+  firstMilesPrice: number
   perMileRate: number
+  mileageTiers: IMileageTier[]
   passengerCopayInside: number
   passengerCopayOutside: number
   geofencePolygons: [number, number][][]
   geofenceFileName: string
   geofenceFile?: File
   countyId?: string
+  includedMiles?: number
+  includedRate?: number
 }
 
 export const PRICING_METHOD_LABELS: Record<UiPricingMethod, string> = {
   flat_rate: 'Flat rate',
   per_mile: 'Per mile',
-  mileage_based: 'By miles',
+  mileage_based: 'Mileage based',
 }
+
+export const defaultMileageTiers = (): IMileageTier[] => [
+  { starting_mileage: 0, first_miles_price: 0, per_mile_price: 0 },
+]
 
 export const emptyCoverageDraft = (payer?: Pick<IPayer, 'name' | 'isActive'> | null): PayerCoverageDraft => ({
   name: payer?.name || '',
@@ -33,13 +45,15 @@ export const emptyCoverageDraft = (payer?: Pick<IPayer, 'name' | 'isActive'> | n
   pricingMethod: 'mileage_based',
   flatRate: 0,
   startingFare: 0,
-  includedMiles: 0,
-  includedRate: 0,
+  firstMilesPrice: 0,
   perMileRate: 0,
+  mileageTiers: defaultMileageTiers(),
   passengerCopayInside: 0,
   passengerCopayOutside: 0,
   geofencePolygons: [],
   geofenceFileName: '',
+  includedMiles: 0,
+  includedRate: 0,
 })
 
 export const findCountyForPayer = (counties: ICounty[], payerId: string): ICounty | undefined => {
@@ -68,27 +82,62 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback
 }
 
+export const normalizeMileageTiers = (raw: unknown): IMileageTier[] => {
+  let parsed = raw
+  if (typeof raw === 'string') {
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      parsed = []
+    }
+  }
+  if (Array.isArray(parsed) && parsed.length > 0) {
+    return parsed.map((item) => ({
+      starting_mileage: num(item?.starting_mileage),
+      first_miles_price: num(item?.first_miles_price),
+      per_mile_price: num(item?.per_mile_price),
+    }))
+  }
+  if (parsed && typeof parsed === 'object') {
+    const single = parsed as Record<string, unknown>
+    return [
+      {
+        starting_mileage: num(single.starting_mileage),
+        first_miles_price: num(single.first_miles_price),
+        per_mile_price: num(single.per_mile_price),
+      },
+    ]
+  }
+  return defaultMileageTiers()
+}
+
 export const mapCountyToDraft = (payer: IPayer, county?: ICounty): PayerCoverageDraft => {
   const draft = emptyCoverageDraft(payer)
   if (!county) return draft
 
-  const miles = county.mileage_based_price || {}
   const pricingMethod = toUiPriceMethod(county.priceMethod)
   const rings = geoJsonToRings(county.coversAreasGeoJSON)
+  const tiers = normalizeMileageTiers(county.mileage_based_price)
+  const firstTier = tiers[0] || { starting_mileage: 0, first_miles_price: 0, per_mile_price: 0 }
+  const firstMilesPrice = num(county.first_miles_price ?? firstTier.first_miles_price)
+  const perMileRate = num(county.per_mile_price ?? firstTier.per_mile_price)
 
   return {
     ...draft,
     countyId: county._id,
+    active: county.isActive !== undefined ? county.isActive : draft.active,
     pricingMethod,
     flatRate: num(county.flat_rate_price),
     startingFare: num(county.starting_fare),
-    includedMiles: num(miles.starting_mileage),
-    includedRate: num(miles.first_miles_price ?? county.first_miles_price),
-    perMileRate: num(miles.per_mile_price ?? county.per_mile_price),
+    firstMilesPrice,
+    perMileRate,
+    mileageTiers: tiers,
     passengerCopayInside: num(county.insidePrice),
     passengerCopayOutside: num(county.outsidePrice),
     geofencePolygons: rings,
     geofenceFileName: rings.length ? 'Saved fence' : '',
+    includedMiles: num(firstTier.starting_mileage),
+    includedRate: firstMilesPrice,
   }
 }
 
@@ -99,6 +148,7 @@ export const mapDraftToCountyInput = (payerId: string, draft: PayerCoverageDraft
     priceMethod,
     insidePrice: num(draft.passengerCopayInside),
     outsidePrice: num(draft.passengerCopayOutside),
+    isActive: draft.active,
     file: draft.geofenceFile,
   }
 
@@ -110,15 +160,24 @@ export const mapDraftToCountyInput = (payerId: string, draft: PayerCoverageDraft
     return {
       ...base,
       starting_fare: num(draft.startingFare),
-      first_miles_price: num(draft.includedRate),
+      first_miles_price: num(draft.firstMilesPrice ?? draft.includedRate),
       per_mile_price: num(draft.perMileRate),
     }
   }
 
+  const tiers: IMileageTier[] = draft.mileageTiers?.length
+    ? draft.mileageTiers.map((t) => ({
+        starting_mileage: num(t.starting_mileage),
+        first_miles_price: num(t.first_miles_price),
+        per_mile_price: num(t.per_mile_price),
+      }))
+    : defaultMileageTiers()
+
   return {
     ...base,
-    starting_mileage: num(draft.includedMiles),
-    first_miles_price: num(draft.includedRate),
-    per_mile_price: num(draft.perMileRate),
+    mileage_based_price: tiers,
+    starting_mileage: num(tiers[0]?.starting_mileage),
+    first_miles_price: num(tiers[0]?.first_miles_price),
+    per_mile_price: num(tiers[0]?.per_mile_price),
   }
 }
