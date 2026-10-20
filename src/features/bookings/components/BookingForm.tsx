@@ -14,9 +14,13 @@ import toast from 'react-hot-toast';
 import {
   useGetAllBookingsQuery,
   useGetAllPayersQuery,
+  useCalculateBookingPriceMutation,
   useManualCreateBookingMutation,
   ICreateBookingPayload,
+  ICalculatedBookingPrice,
+  ICalculateBookingPriceBody,
 } from '@/redux/api/bookingApi';
+import { useGetCountiesByPayerQuery } from '@/redux/api/coverageApi';
 import { useGetRidersQuery } from '@/redux/api/ridersApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
 import { useGetMobilitiesQuery } from '@/redux/api/mobilityApi';
@@ -62,6 +66,9 @@ export const BookingForm = () => {
   const navigate = useNavigate();
   const { pricing } = usePricing();
   const [manualCreateBooking, { isLoading: isCreating }] = useManualCreateBookingMutation();
+  const [calculateBookingPrice, { isLoading: isCalculatingPrice }] = useCalculateBookingPriceMutation();
+  const [calculatedPrice, setCalculatedPrice] = useState<ICalculatedBookingPrice | null>(null);
+  const [priceAgreed, setPriceAgreed] = useState(false);
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
   const { data: payersResponse } = useGetAllPayersQuery();
   const { data: mobilitiesResponse } = useGetMobilitiesQuery();
@@ -232,6 +239,21 @@ export const BookingForm = () => {
   });
   const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
   const [stopsGps, setStopsGps] = useState<([number, number] | undefined)[]>([]);
+
+  const payerIdForCounties = isMongoId(form.payerSourceId) ? form.payerSourceId : '';
+  const { data: countiesByPayerResponse } = useGetCountiesByPayerQuery(payerIdForCounties, {
+    skip: !payerIdForCounties,
+  });
+
+  const apiCountyId = useMemo(() => {
+    const list = (countiesByPayerResponse?.data || []).filter((c) => c.isActive !== false);
+    if (!list.length) return '';
+    const countyName = form.county?.trim().toLowerCase();
+    const byName = countyName
+      ? list.find((c) => String(c.countyName || '').trim().toLowerCase() === countyName)
+      : undefined;
+    return (byName || list[0])._id;
+  }, [countiesByPayerResponse, form.county]);
 
   useEffect(() => {
     if (availableMobility.length > 0) {
@@ -461,10 +483,20 @@ export const BookingForm = () => {
   }, [form.pickup, form.dropoff, form.county, availableCounties, selectedPolicy?.serviceAreaIds, selectedPolicy?.geofencePolygons, tripGps.pickup, tripGps.dropoff]);
 
   useEffect(() => {
-    if (form.manualFareOverride) return;
-    const next = quote.fundingSourceCharge;
-    setForm(prev => prev.grossFare === next ? prev : { ...prev, grossFare: next });
-  }, [quote.fundingSourceCharge, form.manualFareOverride]);
+    setCalculatedPrice(null);
+    setPriceAgreed(false);
+  }, [
+    form.pickup,
+    form.dropoff,
+    form.stops.join('|'),
+    form.payerSourceId,
+    form.tripType,
+    form.mobilityId,
+    tripGps.pickup?.join(','),
+    tripGps.dropoff?.join(','),
+    stopsGps.map((s) => s?.join(',') ?? '').join('|'),
+    apiCountyId,
+  ]);
 
   // Auto-select the day of the week of the first Service Date
   useEffect(() => {
@@ -513,11 +545,82 @@ export const BookingForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableMobility.length, form.mobilityId]);
 
-  const customerFare = quote.passengerCopay;
-  const governmentFare = form.manualFareOverride ? form.grossFare : quote.fundingSourceCharge;
-  const dueToDriver = Math.max(0, customerFare - form.advancePaid);
-  const perLegCharge = quote.legQuotes[0]?.fundingSourceCharge ?? governmentFare;
-  const perLegCopay = quote.legQuotes[0]?.passengerCopay ?? customerFare;
+  const selectedPayerLabel = useMemo(() => {
+    const p = apiPayers.find((x) => x._id === form.payerSourceId);
+    return p?.name || p?.title || p?.payerName || 'Payer';
+  }, [apiPayers, form.payerSourceId]);
+
+  const formatPriceMethodLabel = (method?: string) =>
+    String(method || '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase()) || 'Pricing';
+
+  const buildCalculatePricePayload = (): ICalculateBookingPriceBody | null => {
+    const pickupRaw = tripGps.pickup || toLocationValue(form.pickup);
+    const dropoffRaw = tripGps.dropoff || toLocationValue(form.dropoff);
+    if (pickupRaw == null || dropoffRaw == null) return null;
+
+    const mobilityOption = availableMobility.find(
+      (m: any) => m.id === form.mobilityId || m.name === form.mobility
+    );
+    const mobilityId = isMongoId(form.mobilityId)
+      ? form.mobilityId
+      : isMongoId(mobilityOption?.id)
+        ? mobilityOption.id
+        : '';
+    const payerSource = form.payerSourceId;
+    if (!isMongoId(payerSource) || !isMongoId(mobilityId) || !isMongoId(apiCountyId)) return null;
+
+    const stopIdx = form.stops.findIndex((s) => s.trim());
+    const stopValue = stopIdx >= 0 ? form.stops[stopIdx].trim() : '';
+    const stopRaw =
+      stopIdx >= 0 ? stopsGps[stopIdx] || toLocationValue(stopValue) : undefined;
+
+    const payload: ICalculateBookingPriceBody = {
+      pickupLocation: toGeoJsonPosition(pickupRaw),
+      dropOffLocation: toGeoJsonPosition(dropoffRaw),
+      payerSource,
+      tripType: form.tripType,
+      mobilityRequirements: mobilityId,
+      countyId: apiCountyId,
+    };
+    if (stopRaw != null) payload.stopAddress = toGeoJsonPosition(stopRaw);
+    return payload;
+  };
+
+  const canCalculatePrice = buildCalculatePricePayload() != null;
+
+  const handleShowPrice = async () => {
+    const payload = buildCalculatePricePayload();
+    if (!payload) {
+      if (!isMongoId(form.payerSourceId)) {
+        toast.error('Please select a payer');
+        return;
+      }
+      if (!isMongoId(apiCountyId)) {
+        toast.error('No county coverage found for this payer');
+        return;
+      }
+      if (!isMongoId(form.mobilityId)) {
+        toast.error('Please select mobility requirement');
+        return;
+      }
+      toast.error('Please enter valid pickup and dropoff locations');
+      return;
+    }
+    try {
+      const res = await calculateBookingPrice(payload).unwrap();
+      setCalculatedPrice(res.data);
+      setPriceAgreed(false);
+      toast.success(res.message || 'Price calculated');
+    } catch (err: any) {
+      toast.error(apiErrorMessage(err, 'Could not calculate price'));
+    }
+  };
+
+  const passengerCopay = calculatedPrice?.passengerCoPay ?? 0;
+  const payerCharge = calculatedPrice?.organizationContribution ?? 0;
+  const dueToDriver = Math.max(0, passengerCopay - form.advancePaid);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -570,6 +673,14 @@ export const BookingForm = () => {
       toast.error('Please select at least one service date');
       return;
     }
+    if (!calculatedPrice) {
+      toast.error('Please calculate the trip price before completing the booking');
+      return;
+    }
+    if (!priceAgreed) {
+      toast.error('Please confirm you agree with the quoted price');
+      return;
+    }
 
     const isRound = form.tripType === 'round-trip';
     const stopIdx = form.stops.findIndex((s) => s.trim());
@@ -583,8 +694,8 @@ export const BookingForm = () => {
     const mobilityId = isMongoId(form.mobilityId)
       ? form.mobilityId
       : isMongoId(mobilityOption?.id)
-      ? mobilityOption.id
-      : undefined;
+        ? mobilityOption.id
+        : undefined;
     if (!isMongoId(mobilityId)) {
       toast.error('Please select a valid mobility requirement');
       return;
@@ -955,6 +1066,166 @@ export const BookingForm = () => {
               </div>
             </div>
           </Card>
+
+          <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible relative z-30">
+            <SectionHeader title="7. Driver Allocation" icon={Car} />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-ink-3">Driver <span className="text-urgent">*</span></p>
+                {selectedDriver && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDriver(null)}
+                    className="text-xs text-urgent hover:underline font-medium"
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+
+              {/* Searchable Dropdown */}
+              <div className="relative" ref={driverDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDriverDropdownOpen(prev => !prev);
+                    if (!isDriverDropdownOpen) {
+                      setDriverSearch('');
+                      setDebouncedDriverSearch('');
+                    }
+                  }}
+                  className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all ${
+                    isDriverDropdownOpen
+                      ? 'border-primary ring-2 ring-primary/20 bg-white shadow-sm'
+                      : selectedDriver
+                      ? 'border-primary/40 bg-primary/5 hover:border-primary'
+                      : 'border-line-2 bg-bg/50 hover:bg-white hover:border-line'
+                  }`}
+                >
+                  {selectedDriver ? (
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar initials={selectedDriver.initials} size="sm" src={resolveMediaUrl(selectedDriver.profile)} online={selectedDriver.onDuty} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-semibold text-ink truncate">{selectedDriver.name}</p>
+                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">
+                            Assigned
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-ink-4 truncate">
+                          {selectedDriver.phone || selectedDriver.email || selectedDriver.vehicle?.plate || 'Active Driver'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 text-ink-4">
+                      <User size={15} className="text-ink-3" />
+                      <span className="text-xs">Select a driver from list...</span>
+                    </div>
+                  )}
+
+                  <ChevronDown
+                    size={16}
+                    className={`text-ink-4 transition-transform duration-200 shrink-0 ${isDriverDropdownOpen ? 'rotate-180 text-primary' : ''}`}
+                  />
+                </button>
+
+                {/* Dropdown popup */}
+                {isDriverDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-line-2 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                    {/* Search inside dropdown */}
+                    <div className="p-2.5 border-b border-line-2 bg-bg/20">
+                      <div className="relative">
+                        <input
+                          autoFocus
+                          type="text"
+                          className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-line-2 rounded-lg text-ink placeholder:text-ink-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                          placeholder="Search drivers by name, phone..."
+                          value={driverSearch}
+                          onChange={e => setDriverSearch(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              setDebouncedDriverSearch(driverSearch.trim());
+                            }
+                          }}
+                        />
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4" />
+                        {driverSearch && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDriverSearch('');
+                              setDebouncedDriverSearch('');
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Options list */}
+                    <div className="max-h-56 overflow-y-auto p-1 space-y-1 custom-scrollbar">
+                      {driversLoading || driversFetching ? (
+                        <div className="py-6 text-center text-xs text-ink-4 flex items-center justify-center gap-2">
+                          <Loader2 size={15} className="animate-spin text-primary" />
+                          Searching drivers...
+                        </div>
+                      ) : filteredDriverOptions.length === 0 ? (
+                        <div className="py-6 text-center text-xs text-ink-4">
+                          {driverSearch.trim() ? `No drivers found matching "${driverSearch}"` : 'No drivers available'}
+                        </div>
+                      ) : (
+                        filteredDriverOptions.map((d) => {
+                          const isSelected = selectedDriver?.id === d.id || selectedDriver?._id === d.id;
+                          return (
+                            <button
+                              key={d.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDriver(d);
+                                setIsDriverDropdownOpen(false);
+                                setDriverSearch('');
+                                setDebouncedDriverSearch('');
+                              }}
+                              className={`w-full p-2.5 rounded-lg flex items-center justify-between gap-3 text-left transition-colors ${
+                                isSelected
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'hover:bg-bg text-ink'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Avatar initials={d.initials} size="sm" src={resolveMediaUrl(d.profile)} online={d.onDuty} />
+                                <div className="min-w-0">
+                                  <p className={`text-xs truncate ${isSelected ? 'font-semibold text-primary' : 'font-medium text-ink'}`}>
+                                    {d.name}
+                                  </p>
+                                  <p className="text-[11px] text-ink-4 truncate">
+                                    {d.phone || d.email || d.vehicle?.plate || 'Active Driver'}
+                                  </p>
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shrink-0">
+                                  <Check size={10} className="text-white" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!selectedDriver && (
+                <p className="text-xs font-medium text-urgent px-1">A driver is required to create this booking</p>
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* RIGHT COLUMN */}
@@ -1229,289 +1500,66 @@ export const BookingForm = () => {
             )}
           </Card>
 
-          <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible relative z-30">
-            <SectionHeader title="7. Driver Allocation" icon={Car} />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-ink-3">Driver <span className="text-urgent">*</span></p>
-                {selectedDriver && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDriver(null)}
-                    className="text-xs text-urgent hover:underline font-medium"
-                  >
-                    Clear selection
-                  </button>
-                )}
-              </div>
-
-              {/* Searchable Dropdown */}
-              <div className="relative" ref={driverDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDriverDropdownOpen(prev => !prev);
-                    if (!isDriverDropdownOpen) {
-                      setDriverSearch('');
-                      setDebouncedDriverSearch('');
-                    }
-                  }}
-                  className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all ${
-                    isDriverDropdownOpen
-                      ? 'border-primary ring-2 ring-primary/20 bg-white shadow-sm'
-                      : selectedDriver
-                      ? 'border-primary/40 bg-primary/5 hover:border-primary'
-                      : 'border-line-2 bg-bg/50 hover:bg-white hover:border-line'
-                  }`}
-                >
-                  {selectedDriver ? (
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar initials={selectedDriver.initials} size="sm" src={resolveMediaUrl(selectedDriver.profile)} online={selectedDriver.onDuty} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-semibold text-ink truncate">{selectedDriver.name}</p>
-                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">
-                            Assigned
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-ink-4 truncate">
-                          {selectedDriver.phone || selectedDriver.email || selectedDriver.vehicle?.plate || 'Active Driver'}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2.5 text-ink-4">
-                      <User size={15} className="text-ink-3" />
-                      <span className="text-xs">Select a driver from list...</span>
-                    </div>
-                  )}
-
-                  <ChevronDown
-                    size={16}
-                    className={`text-ink-4 transition-transform duration-200 shrink-0 ${isDriverDropdownOpen ? 'rotate-180 text-primary' : ''}`}
-                  />
-                </button>
-
-                {/* Dropdown popup */}
-                {isDriverDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-line-2 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                    {/* Search inside dropdown */}
-                    <div className="p-2.5 border-b border-line-2 bg-bg/20">
-                      <div className="relative">
-                        <input
-                          autoFocus
-                          type="text"
-                          className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-line-2 rounded-lg text-ink placeholder:text-ink-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
-                          placeholder="Search drivers by name, phone..."
-                          value={driverSearch}
-                          onChange={e => setDriverSearch(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              setDebouncedDriverSearch(driverSearch.trim());
-                            }
-                          }}
-                        />
-                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4" />
-                        {driverSearch && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDriverSearch('');
-                              setDebouncedDriverSearch('');
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Options list */}
-                    <div className="max-h-56 overflow-y-auto p-1 space-y-1 custom-scrollbar">
-                      {driversLoading || driversFetching ? (
-                        <div className="py-6 text-center text-xs text-ink-4 flex items-center justify-center gap-2">
-                          <Loader2 size={15} className="animate-spin text-primary" />
-                          Searching drivers...
-                        </div>
-                      ) : filteredDriverOptions.length === 0 ? (
-                        <div className="py-6 text-center text-xs text-ink-4">
-                          {driverSearch.trim() ? `No drivers found matching "${driverSearch}"` : 'No drivers available'}
-                        </div>
-                      ) : (
-                        filteredDriverOptions.map((d) => {
-                          const isSelected = selectedDriver?.id === d.id || selectedDriver?._id === d.id;
-                          return (
-                            <button
-                              key={d.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedDriver(d);
-                                setIsDriverDropdownOpen(false);
-                                setDriverSearch('');
-                                setDebouncedDriverSearch('');
-                              }}
-                              className={`w-full p-2.5 rounded-lg flex items-center justify-between gap-3 text-left transition-colors ${
-                                isSelected
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'hover:bg-bg text-ink'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <Avatar initials={d.initials} size="sm" src={resolveMediaUrl(d.profile)} online={d.onDuty} />
-                                <div className="min-w-0">
-                                  <p className={`text-xs truncate ${isSelected ? 'font-semibold text-primary' : 'font-medium text-ink'}`}>
-                                    {d.name}
-                                  </p>
-                                  <p className="text-[11px] text-ink-4 truncate">
-                                    {d.phone || d.email || d.vehicle?.plate || 'Active Driver'}
-                                  </p>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shrink-0">
-                                  <Check size={10} className="text-white" />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {!selectedDriver && (
-                <p className="text-xs font-medium text-urgent px-1">A driver is required to create this booking</p>
-              )}
-            </div>
-          </Card>
-
           <Card className="p-6 border-line-2 bg-bg/20 shadow-none">
             <SectionHeader title="8. Fare & Payment" icon={DollarSign} />
-            {!form.mobility ? (
-              <p className="text-xs font-medium text-ink-3 text-center py-6">Select mobility requirement</p>
-            ) : !selectedPolicy ? (
-              <p className="text-xs font-medium text-ink-3 text-center py-6">
-                Add a payer in Settings → Coverage to quote fares.
-              </p>
+            {!calculatedPrice ? (
+              <div className="py-6 flex flex-col items-center gap-3 text-center">
+                <p className="text-xs text-ink-4 max-w-sm">
+                  Calculate fare from pickup, dropoff, payer, mobility, and county coverage before dispatch.
+                </p>
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={!canCalculatePrice || isCalculatingPrice}
+                  onClick={handleShowPrice}
+                  icon={isCalculatingPrice ? Loader2 : DollarSign}
+                  className="min-w-[160px]"
+                >
+                  {isCalculatingPrice ? 'Calculating...' : 'Show Price'}
+                </Button>
+                {!canCalculatePrice && (
+                  <p className="text-xs font-medium text-ink-3">
+                    Complete pickup, dropoff, payer, mobility, and ensure county coverage exists for the payer.
+                  </p>
+                )}
+              </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="font-semibold text-ink-3">
-                    {selectedPolicy.name} · {quote.methodLabel}
+                    {selectedPayerLabel} · {formatPriceMethodLabel(calculatedPrice.priceMethod)}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink-4">Est. miles / leg</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      className="w-20 text-right bg-white border border-line-2 rounded-lg px-2 py-1 outline-none text-sm text-ink"
-                      value={form.estMiles}
-                      onChange={e => setForm({ ...form, estMiles: Number(e.target.value) || 0 })}
-                    />
-                  </div>
+                  <Badge variant="bg" className="text-[11px] capitalize border border-line-2">
+                    {calculatedPrice.zone} zone
+                  </Badge>
                 </div>
 
-                {/* Dual payment streams — never a single Trip Cost */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-white p-4 rounded-2xl border border-line-2">
                     <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide">Passenger Copay</p>
-                    <p className="text-xs text-ink-4 mt-0.5">
-                      {form.insideCounty ? 'Inside area' : 'Outside area'} · rider-facing
-                    </p>
-                    <p className="text-2xl font-semibold text-ink mt-2">{money(customerFare)}</p>
-                    {quote.legs > 1 && (
-                      <p className="text-xs text-ink-4 mt-1">{money(perLegCopay)} × {quote.legs} legs</p>
-                    )}
+                    <p className="text-xs text-ink-4 mt-0.5">Zone copay {money(calculatedPrice.zoneCoPay)} · rider-facing</p>
+                    <p className="text-2xl font-semibold text-ink mt-2">{money(passengerCopay)}</p>
                   </div>
                   <div className="bg-white p-4 rounded-2xl border border-primary/20 ring-1 ring-primary/10">
                     <p className="text-xs font-semibold text-primary uppercase tracking-wide">Payer Charge</p>
-                    <p className="text-xs text-ink-4 mt-0.5">Sponsor / government bill · admin</p>
-                    <div className="flex items-end gap-2 mt-2">
-                      <span className="text-sm font-medium text-ink-3 mb-1">$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        readOnly={!form.manualFareOverride}
-                        className={`w-full text-2xl font-semibold bg-transparent border-b outline-none ${
-                          form.manualFareOverride ? 'border-primary text-primary' : 'border-transparent text-primary'
-                        }`}
-                        value={governmentFare}
-                        onChange={e =>
-                          setForm({
-                            ...form,
-                            grossFare: Number(e.target.value) || 0,
-                            manualFareOverride: true,
-                          })
-                        }
-                      />
-                    </div>
-                    {quote.legs > 1 && !form.manualFareOverride && (
-                      <p className="text-xs text-ink-4 mt-1">{money(perLegCharge)} × {quote.legs} legs</p>
-                    )}
+                    <p className="text-xs text-ink-4 mt-0.5">Organization contribution · admin</p>
+                    <p className="text-2xl font-semibold text-primary mt-2">{money(payerCharge)}</p>
                   </div>
                 </div>
 
-                {/* Round-trip dual legs */}
-                {quote.legs > 1 && (
-                  <div className="rounded-2xl border border-line-2 bg-white overflow-hidden">
-                    <div className="px-4 py-2.5 bg-bg border-b border-line-2">
-                      <p className="text-xs font-bold text-ink-3 uppercase tracking-wider">
-                        Round-trip · two billing legs
-                      </p>
-                    </div>
-                    <div className="divide-y divide-line-2/60">
-                      {quote.legQuotes.map(leg => (
-                        <div key={leg.legIndex} className="px-4 py-3 flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-ink">{leg.label}</p>
-                            <p className="text-xs text-ink-4">{leg.miles} mi · separate record on dispatch</p>
-                          </div>
-                          <div className="text-right text-xs space-y-0.5">
-                            <p className="text-ink-3">Copay <span className="font-semibold text-ink">{money(leg.passengerCopay)}</span></p>
-                            <p className="text-ink-3">Payer <span className="font-semibold text-primary">{money(leg.fundingSourceCharge)}</span></p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                <div className="rounded-2xl border border-line-2 bg-white px-4 py-3 text-xs space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-ink-4">Total trip price</span>
+                    <span className="font-semibold text-ink">{money(calculatedPrice.totalPrice)}</span>
                   </div>
-                )}
-
-                {/* Manual override */}
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.manualFareOverride}
-                      onChange={e =>
-                        setForm({
-                          ...form,
-                          manualFareOverride: e.target.checked,
-                          overrideReason: e.target.checked ? form.overrideReason : '',
-                          grossFare: e.target.checked ? form.grossFare : quote.fundingSourceCharge,
-                        })
-                      }
-                      className="rounded border-line-2 text-primary focus:ring-primary/20"
-                    />
-                    <span className="text-xs font-semibold text-ink-3">Manual payer-charge override</span>
-                  </label>
-                  {form.manualFareOverride && (
-                    <div>
-                      <label className="text-xs font-semibold text-ink-4 mb-1 block">
-                        Override reason (required · saved to audit trail)
-                      </label>
-                      <input
-                        className={inputClass}
-                        placeholder="e.g. Contract exception approved by county liaison"
-                        value={form.overrideReason}
-                        onChange={e => setForm({ ...form, overrideReason: e.target.value })}
-                      />
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span className="text-ink-4">Mileage component</span>
+                    <span className="font-medium text-ink">{money(calculatedPrice.milesPrice)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink-4">Mobility add-on</span>
+                    <span className="font-medium text-ink">{money(calculatedPrice.mobilityTotalPrice)}</span>
+                  </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm">
@@ -1539,23 +1587,50 @@ export const BookingForm = () => {
                 </div>
 
                 {isRecurring && recurringDates.length > 0 && (
-                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl space-y-1 animate-in zoom-in-95 duration-200">
+                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl space-y-1">
                     <p className="text-xs font-medium text-primary">Recurring totals ({recurringDates.length} days)</p>
                     <div className="flex justify-between text-sm">
                       <span className="text-ink-3">Passenger Copay</span>
-                      <span className="font-semibold text-ink">{money(customerFare * recurringDates.length)}</span>
+                      <span className="font-semibold text-ink">{money(passengerCopay * recurringDates.length)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-ink-3">Payer Charge</span>
-                      <span className="font-semibold text-primary">{money(governmentFare * recurringDates.length)}</span>
+                      <span className="font-semibold text-primary">{money(payerCharge * recurringDates.length)}</span>
                     </div>
                   </div>
                 )}
+
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isCalculatingPrice}
+                    onClick={handleShowPrice}
+                  >
+                    Recalculate
+                  </Button>
+                  <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-[200px]">
+                    <input
+                      type="checkbox"
+                      checked={priceAgreed}
+                      onChange={(e) => setPriceAgreed(e.target.checked)}
+                      className="rounded border-line-2 text-primary focus:ring-primary/20"
+                    />
+                    <span className="text-xs font-semibold text-ink-3">I agree with this quoted price</span>
+                  </label>
+                </div>
               </div>
             )}
           </Card>
 
-          <Button variant="primary" type="submit" disabled={isCreating} className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all" icon={ArrowRight}>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={isCreating || !calculatedPrice || !priceAgreed}
+            className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all"
+            icon={ArrowRight}
+          >
             {isCreating ? 'Creating booking...' : 'Complete & Dispatch'}
           </Button>
         </div>

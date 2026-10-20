@@ -109,6 +109,34 @@ export interface IPayersListResponse {
   data: IPayerSource[]
 }
 
+export interface ICalculateBookingPriceBody {
+  pickupLocation: [number, number]
+  dropOffLocation: [number, number]
+  stopAddress?: [number, number]
+  payerSource: string
+  tripType: string
+  mobilityRequirements: string
+  countyId: string
+}
+
+export interface ICalculatedBookingPrice {
+  totalPrice: number
+  passengerCoPay: number
+  organizationContribution: number
+  zoneCoPay: number
+  milesPrice: number
+  mobilityTotalPrice: number
+  priceMethod: string
+  countyId: string
+  zone: string
+}
+
+export interface ICalculateBookingPriceResponse {
+  success: boolean
+  message: string
+  data: ICalculatedBookingPrice
+}
+
 export interface ICreateBookingPayload {
   userId: string
   pickupLocation: number[] | number
@@ -293,6 +321,17 @@ export const bookingApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Payers', id: 'LIST' }],
     }),
+    calculateBookingPrice: builder.mutation<
+      ICalculateBookingPriceResponse,
+      ICalculateBookingPriceBody
+    >({
+      query: (body) => ({
+        url: '/booking/calculate-price',
+        method: 'POST',
+        body,
+      }),
+    }),
+
     manualCreateBooking: builder.mutation<ISingleBookingResponse, ICreateBookingPayload>({
       query: (body) => ({
         url: '/booking',
@@ -349,6 +388,7 @@ export const bookingApi = baseApi.injectEndpoints({
 export const {
   useGetAllBookingsQuery,
   useGetAllPayersQuery,
+  useCalculateBookingPriceMutation,
   useManualCreateBookingMutation,
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
