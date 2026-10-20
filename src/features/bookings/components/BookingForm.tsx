@@ -734,7 +734,8 @@ export const BookingForm = () => {
           <Card className="p-6 border-line-2 bg-white shadow-none">
             <SectionHeader title="2. Pickup, Dropoff & County Coverage" icon={Navigation} />
             <div className="space-y-4">
-              <div>
+              {/* Service area (commented out for now, can be re-enabled when needed) */}
+              {/* <div>
                 <label className="text-xs font-medium text-ink-2 mb-1 block">Service area</label>
                 <select
                   className={inputClass}
@@ -747,7 +748,7 @@ export const BookingForm = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               <div className="relative pl-9">
                 <div className="absolute left-0 top-3 w-4 h-4 rounded-full border border-primary bg-white flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary" /></div>
