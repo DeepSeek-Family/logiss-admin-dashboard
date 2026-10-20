@@ -35,6 +35,7 @@ import {
   weekdayKeysToNames,
   isMongoId,
   apiErrorMessage,
+  validateServiceScheduleTimes,
 } from '../utils/helpers';
 import {
   quoteFares,
@@ -622,6 +623,104 @@ export const BookingForm = () => {
   const payerCharge = calculatedPrice?.organizationContribution ?? 0;
   const dueToDriver = Math.max(0, passengerCopay - form.advancePaid);
 
+  const scheduleTimeValidation = useMemo(
+    () =>
+      validateServiceScheduleTimes({
+        requestedPickup: form.requestedPickup,
+        appointmentTime: form.appointmentTime,
+        returnPickup: form.returnPickup,
+        tripType: form.tripType,
+        isWillCall: form.isWillCall,
+      }),
+    [
+      form.requestedPickup,
+      form.appointmentTime,
+      form.returnPickup,
+      form.tripType,
+      form.isWillCall,
+    ],
+  );
+
+  const scheduleHasErrors = scheduleTimeValidation.errors.length > 0;
+
+  const pickupApptScheduleError = scheduleTimeValidation.errors.some(
+    (e) => !e.toLowerCase().includes('return'),
+  );
+  const returnScheduleError = scheduleTimeValidation.errors.some((e) =>
+    e.toLowerCase().includes('return'),
+  );
+
+  const timeInputClass = (field: 'pickup' | 'appointment' | 'return') => {
+    if (field === 'return' && returnScheduleError) {
+      return `${inputClass} border-urgent/60 ring-1 ring-urgent/20`;
+    }
+    if ((field === 'pickup' || field === 'appointment') && pickupApptScheduleError) {
+      return `${inputClass} border-urgent/60 ring-1 ring-urgent/20`;
+    }
+    return inputClass;
+  };
+
+  const resetManualDispatchForm = () => {
+    const defaultMobility = availableMobility.find((m: any) => isMongoId(m.id));
+    const defaultPayer = apiPayers[0];
+    const defaultPolicy = fundingPolicies[0];
+    setForm({
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      phone: '',
+      email: '',
+      authId: '',
+      passengerId: '',
+      fundingSourceId: defaultPolicy?.id || '',
+      fundingSource: defaultPolicy?.name || '',
+      payerSourceId: defaultPayer?._id || '',
+      program: 'Medicaid NEMT',
+      source: '',
+      authNotes: '',
+      county: availableCounties[0]?.name || 'Chesterfield County',
+      insideCounty: true,
+      pickup: '',
+      dropoff: '',
+      stops: [],
+      appointmentTime: '',
+      requestedPickup: '',
+      returnPickup: '',
+      tripType: 'one-way',
+      isWillCall: false,
+      mobility: defaultMobility?.name || 'Ambulatory',
+      tripReason: 'Medical Appointment',
+      totalSeats: 1,
+      additionalNotes: '',
+      privateNotes: '',
+      mobilityId: defaultMobility?.id || '',
+      grossFare: 0,
+      countyContribution: 0,
+      manualFareOverride: false,
+      overrideReason: '',
+      advancePaid: 0,
+      estMiles: 10,
+      actualMiles: 0,
+    });
+    setTripGps({});
+    setStopsGps([]);
+    setSelectedDriver(null);
+    setSelectedUserId('');
+    setIsRecurring(false);
+    setRecurringDays([]);
+    setRecurringEndDate('');
+    setSelectedDates([new Date()]);
+    setCalculatedPrice(null);
+    setPriceAgreed(false);
+    setExistingSearch('');
+    setDebouncedRiderSearch('');
+    setDriverSearch('');
+    setDebouncedDriverSearch('');
+    setIsRiderDropdownOpen(false);
+    setIsDriverDropdownOpen(false);
+    prevDayRef.current = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const userId = selectedUserId || form.passengerId.trim();
@@ -645,6 +744,10 @@ export const BookingForm = () => {
     }
     if (!form.appointmentTime) {
       toast.error('Please select an appointment time');
+      return;
+    }
+    if (scheduleTimeValidation.errors.length > 0) {
+      toast.error(scheduleTimeValidation.errors[0]);
       return;
     }
     const driverId = selectedDriver?.id || selectedDriver?._id;
@@ -746,7 +849,8 @@ export const BookingForm = () => {
             : 'Booking created',
         { id: toastId }
       );
-      navigate('/bookings');
+      resetManualDispatchForm();
+      navigate('/bookings?tab=confirmed');
     } catch (err: any) {
       toast.error(apiErrorMessage(err, 'Failed to create booking'), { id: toastId });
     }
@@ -1346,13 +1450,49 @@ export const BookingForm = () => {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-ink-3">Appt Time</label>
-                <input type="time" className={inputClass} value={form.appointmentTime} onChange={e => setForm({ ...form, appointmentTime: e.target.value })} />
+                <input
+                  type="time"
+                  required
+                  className={timeInputClass('appointment')}
+                  value={form.appointmentTime}
+                  onChange={e => setForm({ ...form, appointmentTime: e.target.value })}
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-ink-3">Pickup Time</label>
-                <input type="time" className={inputClass} value={form.requestedPickup} onChange={e => setForm({ ...form, requestedPickup: e.target.value })} />
+                <input
+                  type="time"
+                  required
+                  className={timeInputClass('pickup')}
+                  value={form.requestedPickup}
+                  onChange={e => setForm({ ...form, requestedPickup: e.target.value })}
+                />
               </div>
             </div>
+
+            {(scheduleTimeValidation.errors.length > 0 || scheduleTimeValidation.warnings.length > 0) && (
+              <div className="mt-4 space-y-2">
+                {scheduleTimeValidation.errors.map((msg) => (
+                  <div
+                    key={msg}
+                    className="flex items-start gap-2 rounded-xl border border-urgent/30 bg-urgent/5 px-3 py-2.5 text-xs text-urgent font-medium"
+                  >
+                    <Info size={14} className="shrink-0 mt-0.5" />
+                    <span>{msg}</span>
+                  </div>
+                ))}
+                {scheduleTimeValidation.warnings.map((msg) => (
+                  <div
+                    key={msg}
+                    className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs text-ink font-medium"
+                  >
+                    <Info size={14} className="shrink-0 mt-0.5 text-warning" />
+                    <span>{msg}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {form.tripType === 'round-trip' && (
               <div className="mt-6 pt-5 border-t border-line-2">
                 <div className="flex justify-between items-center mb-3">
@@ -1364,7 +1504,13 @@ export const BookingForm = () => {
                     </button>
                   </div>
                 </div>
-                <input type="time" disabled={form.isWillCall} className={form.isWillCall ? disabledInputClass : inputClass} value={form.isWillCall ? '' : form.returnPickup} onChange={e => setForm({ ...form, returnPickup: e.target.value })} />
+                <input
+                  type="time"
+                  disabled={form.isWillCall}
+                  className={form.isWillCall ? disabledInputClass : timeInputClass('return')}
+                  value={form.isWillCall ? '' : form.returnPickup}
+                  onChange={e => setForm({ ...form, returnPickup: e.target.value })}
+                />
               </div>
             )}
 
@@ -1627,7 +1773,7 @@ export const BookingForm = () => {
           <Button
             variant="primary"
             type="submit"
-            disabled={isCreating || !calculatedPrice || !priceAgreed}
+            disabled={isCreating || !calculatedPrice || !priceAgreed || scheduleHasErrors}
             className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all"
             icon={ArrowRight}
           >

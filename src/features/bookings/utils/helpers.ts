@@ -47,6 +47,87 @@ export const toYmd = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
+/** Minutes from midnight for HTML `<input type="time">` value (`HH:mm`). */
+export const parseTimeInputToMinutes = (value?: string): number | null => {
+  if (!value?.trim()) return null;
+  const m = String(value).trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+};
+
+export const MIN_PICKUP_BEFORE_APPOINTMENT_MIN = 30;
+/** Soft cap — warn if pickup is unusually early. */
+export const MAX_PICKUP_BEFORE_APPOINTMENT_MIN = 240;
+export const MIN_RETURN_AFTER_APPOINTMENT_MIN = 30;
+
+export interface ScheduleTimeValidation {
+  errors: string[];
+  warnings: string[];
+  pickupLeadMinutes: number | null;
+}
+
+export function validateServiceScheduleTimes(input: {
+  requestedPickup?: string;
+  appointmentTime?: string;
+  returnPickup?: string;
+  tripType?: string;
+  isWillCall?: boolean;
+}): ScheduleTimeValidation {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const pickupMin = parseTimeInputToMinutes(input.requestedPickup);
+  const apptMin = parseTimeInputToMinutes(input.appointmentTime);
+
+  if (input.requestedPickup && pickupMin == null) {
+    errors.push('Pickup time is not valid.');
+  }
+  if (input.appointmentTime && apptMin == null) {
+    errors.push('Appointment time is not valid.');
+  }
+
+  let pickupLeadMinutes: number | null = null;
+
+  if (pickupMin != null && apptMin != null) {
+    pickupLeadMinutes = apptMin - pickupMin;
+    if (pickupLeadMinutes <= 0) {
+      errors.push('Pickup time cannot be at or after appointment time.');
+    } else if (pickupLeadMinutes < MIN_PICKUP_BEFORE_APPOINTMENT_MIN) {
+      errors.push(
+        `Pickup must be at least ${MIN_PICKUP_BEFORE_APPOINTMENT_MIN} minutes before appointment (currently ${pickupLeadMinutes} min).`,
+      );
+    } else if (pickupLeadMinutes > MAX_PICKUP_BEFORE_APPOINTMENT_MIN) {
+      warnings.push(
+        `Pickup is ${Math.round(pickupLeadMinutes / 60)} hours before appointment — confirm this is intentional.`,
+      );
+    }
+  }
+
+  const isRound = input.tripType === 'round-trip';
+  if (isRound && !input.isWillCall) {
+    const returnMin = parseTimeInputToMinutes(input.returnPickup);
+    if (!input.returnPickup?.trim()) {
+      errors.push('Return pickup time is required for round trips, or turn on Will Call.');
+    } else if (returnMin == null) {
+      errors.push('Return time is not valid.');
+    } else if (apptMin != null) {
+      const afterAppt = returnMin - apptMin;
+      if (afterAppt <= 0) {
+        errors.push('Return pickup must be after appointment time.');
+      } else if (afterAppt < MIN_RETURN_AFTER_APPOINTMENT_MIN) {
+        warnings.push(
+          `Return is only ${afterAppt} min after appointment — allow time for the visit or adjust return time.`,
+        );
+      }
+    }
+  }
+
+  return { errors, warnings, pickupLeadMinutes };
+}
+
 export const toLocationValue = (value: any): [number, number] | null => {
   if (value == null || value === '') return null;
   const loc = to2NumArrayLoc(value);
