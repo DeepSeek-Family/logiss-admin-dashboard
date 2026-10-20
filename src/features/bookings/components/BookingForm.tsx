@@ -64,9 +64,28 @@ export const BookingForm = () => {
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
   const { data: payersResponse } = useGetAllPayersQuery();
   const { data: ridersResponse } = useGetRidersQuery({ page: 1, limit: 100 });
-  const { data: driversResponse, isLoading: driversLoading } = useGetDriversQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const [driverSearch, setDriverSearch] = useState('');
+  const [debouncedDriverSearch, setDebouncedDriverSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDriverSearch(driverSearch.trim());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [driverSearch]);
+
+  const driverQueryParams = useMemo(() => {
+    const params: Record<string, any> = { limit: 100 };
+    if (debouncedDriverSearch) {
+      params.searchTerm = debouncedDriverSearch;
+    }
+    return params;
+  }, [debouncedDriverSearch]);
+
+  const { data: driversResponse, isLoading: driversLoading, isFetching: driversFetching } = useGetDriversQuery(
+    driverQueryParams,
+    { refetchOnMountOrArgChange: true }
+  );
   const apiPeople = useMemo(() => extractBookingPeople(bookingsResponse?.data || []), [bookingsResponse]);
   const apiPayers = (payersResponse?.data || []).filter((p) => isMongoId(p._id));
 
@@ -93,7 +112,6 @@ export const BookingForm = () => {
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [isDriverDropdownOpen, setIsDriverDropdownOpen] = useState(false);
-  const [driverSearch, setDriverSearch] = useState('');
   const driverDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1107,7 +1125,10 @@ export const BookingForm = () => {
                   type="button"
                   onClick={() => {
                     setIsDriverDropdownOpen(prev => !prev);
-                    if (!isDriverDropdownOpen) setDriverSearch('');
+                    if (!isDriverDropdownOpen) {
+                      setDriverSearch('');
+                      setDebouncedDriverSearch('');
+                    }
                   }}
                   className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all ${
                     isDriverDropdownOpen
@@ -1158,12 +1179,21 @@ export const BookingForm = () => {
                           placeholder="Search drivers by name, phone..."
                           value={driverSearch}
                           onChange={e => setDriverSearch(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              setDebouncedDriverSearch(driverSearch.trim());
+                            }
+                          }}
                         />
                         <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4" />
                         {driverSearch && (
                           <button
                             type="button"
-                            onClick={() => setDriverSearch('')}
+                            onClick={() => {
+                              setDriverSearch('');
+                              setDebouncedDriverSearch('');
+                            }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
                           >
                             <X size={12} />
@@ -1174,10 +1204,10 @@ export const BookingForm = () => {
 
                     {/* Options list */}
                     <div className="max-h-56 overflow-y-auto p-1 space-y-1 custom-scrollbar">
-                      {driversLoading ? (
+                      {driversLoading || driversFetching ? (
                         <div className="py-6 text-center text-xs text-ink-4 flex items-center justify-center gap-2">
                           <Loader2 size={15} className="animate-spin text-primary" />
-                          Loading drivers...
+                          Searching drivers...
                         </div>
                       ) : filteredDriverOptions.length === 0 ? (
                         <div className="py-6 text-center text-xs text-ink-4">
@@ -1194,6 +1224,7 @@ export const BookingForm = () => {
                                 setSelectedDriver(d);
                                 setIsDriverDropdownOpen(false);
                                 setDriverSearch('');
+                                setDebouncedDriverSearch('');
                               }}
                               className={`w-full p-2.5 rounded-lg flex items-center justify-between gap-3 text-left transition-colors ${
                                 isSelected
