@@ -2,8 +2,6 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Printer } from 'lucide-react';
 import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
-import { useTrips } from '@/hooks/useTrips';
-import { useDrivers } from '@/hooks/useDrivers';
 import { useFleet } from '@/hooks/useFleet';
 import { toast } from 'react-hot-toast';
 import {
@@ -85,8 +83,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       toast.error(apiErrorMessage(e, 'Failed to export trip history'));
     }
   };
-  const { trips: fallbackTrips, loading: tripsLoading, updateTrip: fallbackUpdateTrip } = useTrips();
-  const { drivers: fallbackDrivers, loading: driversLoading } = useDrivers();
   const { vehicles, loading: fleetLoading } = useFleet();
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -135,7 +131,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   );
 
   const drivers = useMemo(() => {
-    const list = [...(apiDriversResponse?.data ? fetchedApiDrivers : fallbackDrivers)];
+    const list = [...fetchedApiDrivers];
     const driverMap = new Map<string, any>();
 
     list.forEach((d) => {
@@ -165,7 +161,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     });
 
     return Array.from(driverMap.values());
-  }, [apiDriversResponse, fetchedApiDrivers, fallbackDrivers, scheduleResponse, historyResponse]);
+  }, [fetchedApiDrivers, scheduleResponse, historyResponse]);
 
   const apiTrips = useMemo(
     () => (historyResponse?.data || []).map(mapApiBooking),
@@ -177,9 +173,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     [scheduleResponse]
   );
 
-  const trips = historyResponse?.data ? apiTrips : (env.useMock ? fallbackTrips : []);
-  const scheduleTrips = scheduleResponse?.data ? apiScheduleTrips : (env.useMock ? trips : []);
-  const loading = (historyLoading || tripsLoading) && trips.length === 0;
+  const trips = apiTrips;
+  const scheduleTrips = apiScheduleTrips;
+  const loading = historyLoading && trips.length === 0;
 
   const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
     const existingTrip = (trips || []).find((t: any) => String(t.id) === String(id) || String(t._id) === String(id));
@@ -202,7 +198,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
         refetchHistory();
       } catch (e: any) {
         toast.error(apiErrorMessage(e, 'Failed to update trip'));
-        fallbackUpdateTrip(id, patch);
       }
     };
 

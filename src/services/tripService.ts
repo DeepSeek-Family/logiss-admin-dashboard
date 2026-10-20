@@ -12,9 +12,11 @@ export interface Trip {
 let tripsDB: Trip[] = [];
 
 export const tripService = {
-  getTrips: (filters: { status?: string } = {}): Promise<Trip[]> => {
+  getTrips: async (filters: { status?: string } = {}): Promise<Trip[]> => {
     if (!env.useMock) {
-      return api.get<Trip[]>(API.trips, { status: filters.status });
+      const res: any = await api.get(API.trips, { status: filters.status });
+      const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.data) ? res.data.data : [];
+      return list;
     }
     let result = [...tripsDB];
     if (filters.status && filters.status !== 'all') {

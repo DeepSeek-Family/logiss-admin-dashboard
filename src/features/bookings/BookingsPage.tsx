@@ -9,7 +9,6 @@ import {
 import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination, ConfirmationModal } from '@/shared/components/ui';
 import { ManualTripModal } from '@/components/ManualTripModal';
 import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
-import { useDrivers } from '@/hooks/useDrivers';
 import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from '@/utils/helpers';
 import { CancelTripModal } from '@/features/reports';
 import { toast } from 'react-hot-toast';
@@ -132,8 +131,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
     [apiDriversResponse]
   );
 
-  const { drivers } = useDrivers();
-
   const refresh = () => {
     refetchPendingBookings();
     refetchAssignedBookings();
@@ -224,7 +221,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
 
   const mergedDrivers = useMemo(() => {
-    const merged = [...apiDrivers, ...(drivers || [])];
+    const merged = [...apiDrivers];
     const extra = bookingsList
       .filter((b: any) => b.driverId && b.driverName)
       .map((b: any) => ({
@@ -238,7 +235,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
       if (!merged.some((x: any) => String(x.id) === String(d.id))) merged.push(d);
     });
     return merged;
-  }, [apiDrivers, drivers, bookingsList]);
+  }, [apiDrivers, bookingsList]);
 
   // Search and payer filtering are applied server-side via listParams.
   const filteredTrips = currentTabBookings;

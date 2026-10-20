@@ -17,8 +17,12 @@ export interface Driver {
 let driversDB: Driver[] = [];
 
 export const driverService = {
-  getDrivers: (filters: { status?: string } = {}): Promise<Driver[]> => {
-    if (!env.useMock) return api.get<Driver[]>(API.drivers, { status: filters.status });
+  getDrivers: async (filters: { status?: string } = {}): Promise<Driver[]> => {
+    if (!env.useMock) {
+      const res: any = await api.get(API.drivers, { status: filters.status });
+      const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.data) ? res.data.data : [];
+      return list;
+    }
     let result = [...driversDB];
     if (filters.status && filters.status !== 'all') {
       result = result.filter(d => d.status === filters.status);
