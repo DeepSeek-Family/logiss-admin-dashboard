@@ -19,6 +19,7 @@ import {
 } from '@/redux/api/bookingApi';
 import { useGetRidersQuery } from '@/redux/api/ridersApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { useGetMobilitiesQuery } from '@/redux/api/mobilityApi';
 import { riderFullName } from '@/features/riders/utils/helpers';
 import {
   extractBookingPeople,
@@ -64,6 +65,7 @@ export const BookingForm = () => {
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
   const { data: payersResponse } = useGetAllPayersQuery();
   const { data: ridersResponse } = useGetRidersQuery({ page: 1, limit: 100 });
+  const { data: mobilitiesResponse } = useGetMobilitiesQuery();
   const [driverSearch, setDriverSearch] = useState('');
   const [debouncedDriverSearch, setDebouncedDriverSearch] = useState('');
 
@@ -93,19 +95,45 @@ export const BookingForm = () => {
     ? pricing.counties.filter(c => c.status === 'active')
     : DEFAULT_COUNTIES;
 
-  const availableMobility = (apiPeople.mobility.length > 0
-    ? apiPeople.mobility.map((m) => ({
+  const availableMobility = useMemo(() => {
+    const rawMobilities: any[] = Array.isArray(mobilitiesResponse?.data)
+      ? mobilitiesResponse.data
+      : Array.isArray(mobilitiesResponse)
+      ? mobilitiesResponse
+      : [];
+
+    const apiMobilities = rawMobilities
+      .filter((m) => isMongoId(m._id) && m.status !== false)
+      .map((m) => ({
         id: m._id,
+        _id: m._id,
         name: m.name,
-        fee: m.price,
+        fee: Number(m.price) || 0,
         iconUrl: resolveMediaUrl(m.icon),
         iconKey: undefined as string | undefined,
-        status: m.status === false ? 'inactive' : 'active',
-      }))
-    : (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
+        status: 'active',
+      }));
+
+    if (apiMobilities.length > 0) return apiMobilities;
+
+    if (apiPeople.mobility.length > 0) {
+      return apiPeople.mobility
+        .filter((m) => isMongoId(m._id))
+        .map((m) => ({
+          id: m._id,
+          _id: m._id,
+          name: m.name,
+          fee: m.price,
+          iconUrl: resolveMediaUrl(m.icon),
+          iconKey: undefined as string | undefined,
+          status: m.status === false ? 'inactive' : 'active',
+        }));
+    }
+
+    return (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
       ? pricing.mobilityTypes
-      : DEFAULT_MOBILITY_TYPES
-  ).filter((m: any) => m.status !== 'inactive');
+      : DEFAULT_MOBILITY_TYPES;
+  }, [mobilitiesResponse, apiPeople.mobility, pricing.mobilityTypes]);
 
   const [userType, setUserType] = useState('existing');
   const [existingSearch, setExistingSearch] = useState('');
@@ -176,6 +204,22 @@ export const BookingForm = () => {
   });
   const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
   const [stopsGps, setStopsGps] = useState<([number, number] | undefined)[]>([]);
+
+  useEffect(() => {
+    if (availableMobility.length > 0) {
+      const match = availableMobility.find(
+        (m: any) => isMongoId(m.id) && (m.id === form.mobilityId || m.name === form.mobility)
+      );
+      const firstValid = match || availableMobility.find((m: any) => isMongoId(m.id));
+      if (firstValid && (!form.mobilityId || !isMongoId(form.mobilityId))) {
+        setForm(prev => ({
+          ...prev,
+          mobility: firstValid.name,
+          mobilityId: firstValid.id,
+        }));
+      }
+    }
+  }, [availableMobility, form.mobilityId, form.mobility]);
 
   const fundingPolicies = (pricing.fundingPolicies || []).filter(p => p.active);
   const selectedPolicy =
@@ -497,7 +541,12 @@ export const BookingForm = () => {
       toast.error('Please enter a valid stop address location');
       return;
     }
-    const mobilityId = form.mobilityId || availableMobility.find((m: any) => m.name === form.mobility)?.id;
+    const mobilityOption = availableMobility.find((m: any) => m.id === form.mobilityId || m.name === form.mobility);
+    const mobilityId = isMongoId(form.mobilityId)
+      ? form.mobilityId
+      : isMongoId(mobilityOption?.id)
+      ? mobilityOption.id
+      : undefined;
     if (!isMongoId(mobilityId)) {
       toast.error('Please select a valid mobility requirement');
       return;
