@@ -1,6 +1,7 @@
 import { Search, ChevronRight, ChevronDown, UserCheck, UserX, Ban } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Card, Avatar, Badge, Pagination, SearchInput } from '@/shared/components/ui';
+import { displayDob, calculateAge } from '@/features/riders/utils/helpers';
 
 interface RidersTableProps {
   search: string;
@@ -52,7 +53,7 @@ export const RidersTable = ({
         <table className="w-full text-left">
           <thead className="bg-bg/10 border-b border-line-2/50">
             <tr>
-              {['Rider', 'IDs', 'County / Payer', 'Status', 'Mobility', 'Contact', 'Trips', ''].map(h => (
+              {['Rider', 'IDs', 'County / Payer', 'Status', 'Date of Birth', 'Contact', 'Trips', ''].map(h => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>
@@ -86,13 +87,13 @@ export const RidersTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-1.5">
-                    {rider.county && (
+                    {(rider.payerName || rider.county) && (
                       <span className="px-2.5 py-1 bg-primary/5 text-primary text-xs font-medium rounded-full w-fit">
-                        {rider.county}
+                        {rider.payerName || rider.county}
                       </span>
                     )}
                     {rider.source && <Badge variant="outline" className="font-medium text-primary border-primary/20 bg-primary/5 w-fit">{rider.source}</Badge>}
-                    {!rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
+                    {!rider.payerName && !rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
                   </div>
                 </td>
                 <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
@@ -140,16 +141,17 @@ export const RidersTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {rider.mobility ? (
-                    <Badge
-                      variant={
-                        rider.mobility === 'Wheelchair' ? 'accent' :
-                        rider.mobility === 'Ambulatory' ? 'neutral' : 'warning'
-                      }
-                      className="font-medium py-0.5 px-2 text-xs rounded-full"
-                    >
-                      {rider.mobility}
-                    </Badge>
+                  {rider.dateOfBirth ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium text-ink whitespace-nowrap">
+                        {displayDob(rider.dateOfBirth)}
+                      </span>
+                      {calculateAge(rider.dateOfBirth) !== null && (
+                        <span className="text-[11px] text-ink-4 whitespace-nowrap">
+                          {calculateAge(rider.dateOfBirth)} yrs
+                        </span>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-xs text-ink-4">—</span>
                   )}

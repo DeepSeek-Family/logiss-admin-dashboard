@@ -9,6 +9,19 @@ export interface IRiderDriverData {
   licenseImage?: string
 }
 
+export interface IPayer {
+  _id: string
+  name: string
+  type?: string
+  isActive?: boolean
+}
+
+export interface IRiderCounty {
+  _id?: string
+  name?: string
+  payersId?: IPayer | string
+}
+
 export interface IRider {
   _id: string
   id?: string
@@ -22,7 +35,7 @@ export interface IRider {
   accessScope?: string[]
   isBanned?: boolean
   isAdminVerifiedDriver?: boolean
-  county?: string
+  county?: string | IRiderCounty | null
   email?: string
   contact?: string
   applicationStatus?: string
@@ -31,6 +44,7 @@ export interface IRider {
   profile?: string
   verified?: boolean
   deviceToken?: string | null
+  fcmToken?: string | null
   createdAt?: string
   updatedAt?: string
 }

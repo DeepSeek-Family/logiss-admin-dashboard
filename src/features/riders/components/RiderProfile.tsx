@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
+import { displayDob, calculateAge } from '../utils/helpers';
 import { RouteTimeline, TRIP_STATUS_VARIANT } from './RouteTimeline';
 
 interface RiderProfileProps {
@@ -79,6 +80,11 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                 }`} />
                 {(selectedRider?.status || 'inactive').charAt(0).toUpperCase() + (selectedRider?.status || 'inactive').slice(1)}
               </span>
+              {(selectedRider?.payerName || selectedRider?.county) && (
+                <span className="text-xs font-medium text-primary bg-primary/5 border border-primary/20 px-2.5 py-0.5 rounded-full">
+                  {selectedRider.payerName || selectedRider.county}
+                </span>
+              )}
               {selectedRider?.source && (
                 <span className="text-xs font-medium text-primary bg-primary/5 border border-primary/20 px-2 py-0.5 rounded-full">
                   {selectedRider.source}
@@ -108,12 +114,17 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               <p className="text-2xl font-bold text-ink">{tripsTotal ?? (trips.length || selectedRider?.totalTrips || 0)}</p>
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
-            {selectedRider?.mobility && (
+            {calculateAge(selectedRider?.dateOfBirth) !== null ? (
+              <div>
+                <p className="text-2xl font-bold text-primary">{calculateAge(selectedRider?.dateOfBirth)} yrs</p>
+                <p className="text-xs text-ink-4 mt-0.5">Age</p>
+              </div>
+            ) : selectedRider?.mobility ? (
               <div>
                 <p className="text-lg font-bold text-primary">{selectedRider.mobility}</p>
                 <p className="text-xs text-ink-4 mt-0.5">Mobility</p>
               </div>
-            )}
+            ) : null}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
@@ -211,7 +222,18 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               </div>
               <div className="pb-4 border-b border-line-2">
                 <p className="text-xs text-ink-4 mb-0.5">Date of Birth</p>
-                <p className="text-sm font-medium text-ink">{formatShortDate(selectedRider?.dateOfBirth) || '—'}</p>
+                <p className="text-sm font-medium text-ink">
+                  {displayDob(selectedRider?.dateOfBirth) || formatShortDate(selectedRider?.dateOfBirth) || '—'}
+                  {calculateAge(selectedRider?.dateOfBirth) !== null && (
+                    <span className="text-xs text-ink-4 ml-1.5 font-normal">
+                      ({calculateAge(selectedRider?.dateOfBirth)} yrs)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="pt-4 border-b border-line-2 pb-4">
+                <p className="text-xs text-ink-4 mb-0.5">County / Payer</p>
+                <p className="text-sm font-medium text-ink">{selectedRider?.payerName || selectedRider?.county || '—'}</p>
               </div>
               <div className="pt-4">
                 <p className="text-xs text-ink-4 mb-0.5">Auth ID</p>

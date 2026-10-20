@@ -21,10 +21,53 @@ export const mapRiderStatus = (rider: IRider): string => {
   return 'inactive'
 }
 
+export const displayDob = (iso?: string | null): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+}
+
+export const calculateAge = (iso?: string | null): number | null => {
+  if (!iso) return null
+  const dob = new Date(iso)
+  if (Number.isNaN(dob.getTime())) return null
+  const today = new Date()
+  let age = today.getUTCFullYear() - dob.getUTCFullYear()
+  const m = today.getUTCMonth() - dob.getUTCMonth()
+  if (m < 0 || (m === 0 && today.getUTCDate() < dob.getUTCDate())) {
+    age--
+  }
+  return age >= 0 ? age : null
+}
+
 export const mapApiRider = (rider: IRider) => {
   const id = rider._id || rider.id || ''
   const name = riderFullName(rider) || 'Rider'
-  const countyRaw = rider.county ? String(rider.county) : ''
+
+  let payerName = ''
+  let countyName = ''
+  let countyId = ''
+
+  if (rider.county && typeof rider.county === 'object') {
+    countyId = rider.county._id || ''
+    if (rider.county.name) {
+      countyName = rider.county.name
+    }
+    const payersId = rider.county.payersId
+    if (payersId && typeof payersId === 'object') {
+      payerName = payersId.name || ''
+    } else if (typeof payersId === 'string' && !isMongoId(payersId)) {
+      payerName = payersId
+    }
+  } else if (typeof rider.county === 'string') {
+    countyId = rider.county
+    if (!isMongoId(rider.county)) {
+      countyName = rider.county
+    }
+  }
+
+  const countyDisplay = payerName || countyName || ''
 
   return {
     id,
@@ -42,8 +85,10 @@ export const mapApiRider = (rider: IRider) => {
     passengerId: id,
     authorizationId: rider.authorizationID || '',
     authId: rider.authorizationID || '',
-    county: countyRaw && !isMongoId(countyRaw) ? countyRaw : '',
-    countyId: countyRaw,
+    county: countyDisplay,
+    countyId,
+    countyName,
+    payerName,
     source: '',
     program: '',
     mobility: '',

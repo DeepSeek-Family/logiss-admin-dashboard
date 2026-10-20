@@ -31,8 +31,8 @@ import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ROUTES } from '@/constants/routes';
-import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
-import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
+// import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
+// import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -150,6 +150,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
   const { unreadCount } = useNotifications();
+  // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
+  /*
   const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 10 });
   const { data: applicationsMeta } = useGetDriverApplicationsQuery({ page: 1, limit: 1 });
   const { data: driversResponse } = useGetDriversQuery();
@@ -193,6 +195,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       dest: ROUTES.drivers,
     })),
   ] : [];
+  */
 
   React.useEffect(() => {
     const close = () => setProfileOpen(false);
@@ -238,6 +241,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
             {NAV_CONFIG.flatMap(group => group.items)
               .filter(isNavItemVisible)
               .map(item => {
+                // Badge logic (Commented out to prevent background API calls. Uncomment when needed.)
+                /*
                 const liveBadge = item.isLive ? (
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent pulse-dot"></span>
@@ -248,6 +253,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   : item.id === ROUTES.applications
                     ? applicationsBadge
                     : item.badge;
+                */
+                const liveBadge = item.badge;
 
                 const isActive = item.id.includes('tab=schedule')
                   ? (page === '/trips' && location.search.includes('tab=schedule'))
