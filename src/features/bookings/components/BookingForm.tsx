@@ -64,8 +64,33 @@ export const BookingForm = () => {
   const [manualCreateBooking, { isLoading: isCreating }] = useManualCreateBookingMutation();
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
   const { data: payersResponse } = useGetAllPayersQuery();
-  const { data: ridersResponse } = useGetRidersQuery({ page: 1, limit: 100 });
   const { data: mobilitiesResponse } = useGetMobilitiesQuery();
+
+  // Rider backend search state
+  const [existingSearch, setExistingSearch] = useState('');
+  const [debouncedRiderSearch, setDebouncedRiderSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedRiderSearch(existingSearch.trim());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [existingSearch]);
+
+  const riderQueryParams = useMemo(() => {
+    const params: Record<string, any> = { page: 1, limit: 100 };
+    if (debouncedRiderSearch) {
+      params.searchTerm = debouncedRiderSearch;
+    }
+    return params;
+  }, [debouncedRiderSearch]);
+
+  const { data: ridersResponse, isLoading: ridersLoading, isFetching: ridersFetching } = useGetRidersQuery(
+    riderQueryParams,
+    { refetchOnMountOrArgChange: true }
+  );
+
+  // Driver backend search state
   const [driverSearch, setDriverSearch] = useState('');
   const [debouncedDriverSearch, setDebouncedDriverSearch] = useState('');
 
@@ -135,8 +160,8 @@ export const BookingForm = () => {
       : DEFAULT_MOBILITY_TYPES;
   }, [mobilitiesResponse, apiPeople.mobility, pricing.mobilityTypes]);
 
-  const [userType, setUserType] = useState('existing');
-  const [existingSearch, setExistingSearch] = useState('');
+  const [isRiderDropdownOpen, setIsRiderDropdownOpen] = useState(false);
+  const riderDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [isDriverDropdownOpen, setIsDriverDropdownOpen] = useState(false);
@@ -147,14 +172,17 @@ export const BookingForm = () => {
       if (driverDropdownRef.current && !driverDropdownRef.current.contains(event.target as Node)) {
         setIsDriverDropdownOpen(false);
       }
+      if (riderDropdownRef.current && !riderDropdownRef.current.contains(event.target as Node)) {
+        setIsRiderDropdownOpen(false);
+      }
     };
-    if (isDriverDropdownOpen) {
+    if (isDriverDropdownOpen || isRiderDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDriverDropdownOpen]);
+  }, [isDriverDropdownOpen, isRiderDropdownOpen]);
 
   // Recurring Booking state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -297,12 +325,20 @@ export const BookingForm = () => {
     );
   }, [driverOptions, driverSearch]);
 
-  const filteredRiders = existingSearch.trim() === ''
-    ? apiRiders.slice(0, 8)
-    : apiRiders.filter(r =>
-        (r.name || '').toLowerCase().includes(existingSearch.toLowerCase()) ||
-        (r.id || '').toLowerCase().includes(existingSearch.toLowerCase())
-      );
+  const filteredRiders = useMemo(() => {
+    if (!existingSearch.trim()) {
+      return apiRiders.slice(0, 20);
+    }
+    const q = existingSearch.toLowerCase().trim();
+    const matched = apiRiders.filter(r =>
+      (r.name || '').toLowerCase().includes(q) ||
+      (r.phone || '').toLowerCase().includes(q) ||
+      (r.email || '').toLowerCase().includes(q) ||
+      (r.authorizationId || '').toLowerCase().includes(q) ||
+      (r.id || '').toLowerCase().includes(q)
+    );
+    return matched.length > 0 ? matched : apiRiders;
+  }, [apiRiders, existingSearch]);
 
   const handleSelectRider = (rider: any) => {
     setSelectedUserId(rider._id || rider.id || '');
@@ -317,6 +353,8 @@ export const BookingForm = () => {
       authId: rider.authorizationId || rider.authId || prev.authId,
     }));
     setExistingSearch('');
+    setDebouncedRiderSearch('');
+    setIsRiderDropdownOpen(false);
     toast.success(`Selected ${rider.name}`);
   };
 
@@ -627,106 +665,144 @@ export const BookingForm = () => {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
-          <Card className="p-6 border-line-2 bg-white shadow-none">
-            <div className="flex justify-between items-center mb-6">
+          <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible relative z-40">
+            <div className="flex justify-between items-center mb-4">
               <SectionHeader title="1. Passenger Identification" icon={UserIcon} />
-              <div className="flex bg-bg p-1 rounded-lg border border-line-2">
-                {['guest', 'existing'].map(t => (
-                  <button key={t} type="button" onClick={() => setUserType(t)} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${userType === t ? 'bg-white shadow-sm text-primary' : 'text-ink-4'}`}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-              </div>
+              {selectedUserId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUserId('');
+                    setExistingSearch('');
+                    setDebouncedRiderSearch('');
+                    setForm(prev => ({
+                      ...prev,
+                      firstName: '',
+                      middleName: '',
+                      lastName: '',
+                      phone: '',
+                      email: '',
+                      passengerId: '',
+                      authId: '',
+                    }));
+                    setIsRiderDropdownOpen(true);
+                  }}
+                  className="text-xs text-urgent hover:underline font-medium"
+                >
+                  Clear passenger
+                </button>
+              )}
             </div>
-            <div className="space-y-4">
-              {userType === 'guest' ? (
-                <>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">First Name</label>
-                      <input className={inputClass} value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="First" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Middle</label>
-                      <input className={inputClass} value={form.middleName} onChange={e => setForm({ ...form, middleName: e.target.value })} placeholder="M.I." />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Last Name</label>
-                      <input className={inputClass} value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} placeholder="Last" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Phone Number</label>
-                      <input className={inputClass} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="(804) 555-0000" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Email Address</label>
-                      <div className="relative">
-                        <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                        <input className={`${inputClass} pl-8`} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="rider@example.com" />
+
+            <div className="space-y-3">
+              {selectedUserId && (
+                <div
+                  onClick={() => setIsRiderDropdownOpen(true)}
+                  className="flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5 cursor-pointer hover:border-primary transition-all group"
+                  title="Click to change passenger"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar initials={`${form.firstName?.[0] || ''}${form.lastName?.[0] || 'R'}`} size="sm" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors truncate">
+                          {form.firstName} {form.lastName}
+                        </p>
+                        <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">Selected</span>
                       </div>
+                      <p className="text-[11px] text-ink-4 truncate">
+                        {form.phone || form.email || (form.authId ? `Auth: ${form.authId}` : selectedUserId)}
+                      </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Customer ID</label>
-                      <div className="relative">
-                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                        <input className={`${inputClass} pl-8`} value={form.passengerId} onChange={e => setForm({ ...form, passengerId: e.target.value })} placeholder="PX-2024-XXXX" />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-ink-3">Auth ID</label>
-                      <input className={inputClass} value={form.authId} onChange={e => setForm({ ...form, authId: e.target.value })} placeholder="AUTH-XXXX-XXXX" />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-ink-3">Authorization Notes</label>
-                    <div className="relative">
-                      <FileText size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                      <input className={`${inputClass} pl-8`} value={form.authNotes} onChange={e => setForm({ ...form, authNotes: e.target.value })} placeholder="e.g. Approved for 10 trips this month, door-to-door escort allowed" />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  {selectedUserId && (
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-primary/20 bg-primary/5">
-                      <p className="text-xs font-semibold text-ink">{form.firstName} {form.lastName}</p>
-                      <span className="text-xs text-ink-4 truncate max-w-[160px]" title={selectedUserId}>{selectedUserId}</span>
-                    </div>
-                  )}
-                  <div className="relative">
-                    <input className={inputClass} placeholder="Search passengers by name..." value={existingSearch} onChange={e => setExistingSearch(e.target.value)} />
-                    <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3" />
-                  </div>
-                  {filteredRiders.length > 0 && (
-                    <div className="border border-line-2 rounded-xl bg-bg/50 divide-y divide-line-2 max-h-56 overflow-y-auto shadow-inner p-1">
-                      {filteredRiders.map(rider => (
-                        <button
-                          key={rider.id}
-                          type="button"
-                          onClick={() => handleSelectRider(rider)}
-                          className={`w-full text-left p-3 hover:bg-white rounded-lg transition-all flex items-center justify-between group ${selectedUserId === rider.id ? 'bg-white ring-1 ring-primary' : ''}`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Avatar initials={`${rider.firstName?.[0] || ''}${rider.lastName?.[0] || 'R'}`} src={resolveMediaUrl(rider.profile)} size="xs" />
-                            <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors truncate">{rider.name}</p>
-                          </div>
-                          <Badge variant="bg" className="bg-white border border-line-2 text-xs font-medium text-ink-3">
-                            Select
-                          </Badge>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {filteredRiders.length === 0 && (
-                    <div className="text-center p-4 border border-dashed border-line-2 rounded-xl text-xs text-ink-4">
-                      {existingSearch.trim() ? 'No matching passengers found.' : 'No passengers available from bookings yet.'}
-                    </div>
+                  <span className="text-xs text-primary font-medium group-hover:underline ml-2 shrink-0">
+                    Change
+                  </span>
+                </div>
+              )}
+
+              <div className="relative" ref={riderDropdownRef}>
+                <div className="relative">
+                  <input
+                    className={`${inputClass} pr-8`}
+                    placeholder={selectedUserId ? "Click to search or change passenger..." : "Search passengers by name, phone..."}
+                    value={existingSearch}
+                    onChange={e => {
+                      setExistingSearch(e.target.value);
+                      setIsRiderDropdownOpen(true);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        setDebouncedRiderSearch(existingSearch.trim());
+                      }
+                    }}
+                    onFocus={() => setIsRiderDropdownOpen(true)}
+                    onClick={() => setIsRiderDropdownOpen(true)}
+                  />
+                  <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                  {existingSearch && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExistingSearch('');
+                        setDebouncedRiderSearch('');
+                      }}
+                      className="absolute right-8 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
+                    >
+                      <X size={13} />
+                    </button>
                   )}
                 </div>
+
+                {/* Dropdown list - closes when rider selected, opens when field clicked */}
+                {isRiderDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 border border-line-2 rounded-xl bg-white shadow-xl divide-y divide-line-2 max-h-56 overflow-y-auto p-1 custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-150">
+                    {ridersLoading || ridersFetching ? (
+                      <div className="flex items-center justify-center gap-2 p-4 text-xs text-ink-3">
+                        <Loader2 size={16} className="animate-spin text-primary" />
+                        <span>Searching passengers...</span>
+                      </div>
+                    ) : filteredRiders.length > 0 ? (
+                      filteredRiders.map(rider => {
+                        const isSelected = selectedUserId === rider.id || selectedUserId === rider._id;
+                        return (
+                          <button
+                            key={rider.id}
+                            type="button"
+                            onClick={() => handleSelectRider(rider)}
+                            className={`w-full text-left p-2.5 hover:bg-bg rounded-lg transition-all flex items-center justify-between group ${
+                              isSelected ? 'bg-primary/5 ring-1 ring-primary/30' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Avatar initials={`${rider.firstName?.[0] || ''}${rider.lastName?.[0] || 'R'}`} src={resolveMediaUrl(rider.profile)} size="xs" />
+                              <div className="min-w-0">
+                                <p className={`text-xs font-semibold truncate ${isSelected ? 'text-primary' : 'text-ink group-hover:text-primary transition-colors'}`}>
+                                  {rider.name}
+                                </p>
+                                <p className="text-[11px] text-ink-4 truncate">
+                                  {rider.phone || rider.email || rider.authorizationId || 'Passenger'}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="bg" className={`border text-[11px] font-medium ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white border-line-2 text-ink-3'}`}>
+                              {isSelected ? 'Selected' : 'Select'}
+                            </Badge>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center p-4 text-xs text-ink-4">
+                        {existingSearch.trim() ? 'No matching passengers found.' : 'No passengers available.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {!selectedUserId && (
+                <p className="text-xs font-medium text-urgent px-1">A passenger is required to create this booking</p>
               )}
             </div>
           </Card>

@@ -246,17 +246,17 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
                     <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Customer ID</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Auth ID</th>
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Auth ID</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-center min-w-[135px]">Status</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Driver</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Run</th>
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Run</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[280px]">Route</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">Trip Reason</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Distance</th>
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Distance</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Trip Type</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Dispatch Time</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th>
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Dispatch Time</th> */}
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th> */}
+                    {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge (est.)</th>
@@ -374,9 +374,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       </td>
 
                       {/* Auth ID */}
-                      <td className="px-3.5 py-3 min-w-[130px]">
+                      {/* <td className="px-3.5 py-3 min-w-[130px]">
                         <span className="text-xs text-ink-3 whitespace-nowrap" title={booking.authorizationId || booking.authId || ''}>{booking.authorizationId || booking.authId || '—'}</span>
-                      </td>
+                      </td> */}
 
                       {/* Status (editable) */}
                       <td className="px-3.5 py-3 text-center min-w-[135px]">
@@ -402,9 +402,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       </td>
 
                       {/* Run */}
-                      <td className="px-3.5 py-3 min-w-[95px]">
+                      {/* <td className="px-3.5 py-3 min-w-[95px]">
                         <InlineText value={booking.driverRun} onCommit={(v) => updateTrip(booking.id, { driverRun: v })} placeholder="—" className="w-[84px] " />
-                      </td>
+                      </td> */}
 
                       {/* Route */}
                       <td className="px-3.5 py-3 min-w-[280px]">
@@ -438,14 +438,14 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       </td>
 
                       {/* Distance (editable) */}
-                      <td className="px-3.5 py-3 min-w-[90px]">
+                      {/* <td className="px-3.5 py-3 min-w-[90px]">
                         <InlineText
                           value={booking?.distance || (booking?.miles ? `${booking.miles} mi` : '')}
                           onCommit={(v) => updateTrip(booking.id, { distance: v })}
                           placeholder="—"
                           className="w-[72px]"
                         />
-                      </td>
+                      </td> */}
 
                       {/* Trip Type */}
                       <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
@@ -470,19 +470,19 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       </td>
 
                       {/* Dispatch Time (filled once dispatched) */}
-                      <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
+                      {/* <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
                         <InlineTime value={booking?.dispatchTime} onCommit={(v) => updateTrip(booking.id, { dispatchTime: v })} />
-                      </td>
+                      </td> */}
 
                       {/* Perform / departure */}
-                      <td className="px-3.5 py-3 whitespace-nowrap min-w-[100px]">
+                      {/* <td className="px-3.5 py-3 whitespace-nowrap min-w-[100px]">
                         <InlineTime value={booking?.departureTime || booking?.actualPickup} onCommit={(v) => updateTrip(booking.id, { departureTime: v })} />
-                      </td>
+                      </td> */}
 
                       {/* Arrival Time */}
-                      <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
+                      {/* <td className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">
                         <InlineTime value={booking?.arrivalTime || booking?.actualDropoff} onCommit={(v) => updateTrip(booking.id, { arrivalTime: v })} />
-                      </td>
+                      </td> */}
 
                       {/* Funding */}
                       <td className="px-3.5 py-3 min-w-[120px]">
