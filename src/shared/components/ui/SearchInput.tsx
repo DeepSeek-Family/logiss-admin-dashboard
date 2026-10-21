@@ -35,6 +35,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const callbacksRef = useRef({ onSearchChange, onChange });
   callbacksRef.current = { onSearchChange, onChange };
   const lastEmittedRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const emit = (value: string) => {
     if (lastEmittedRef.current === value) return;
     lastEmittedRef.current = value;
@@ -55,6 +63,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   // Debounced effect for URL and callback triggers
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (!mountedRef.current) return;
+
       const trimmed = text.trim();
       const currentParam = searchParams.get(paramName) || '';
 
@@ -76,11 +86,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         );
       }
 
-      emit(trimmed);
+      if (mountedRef.current) {
+        emit(trimmed);
+      }
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [text, debounceMs, paramName, setSearchParams]);
+  }, [text, debounceMs, paramName, setSearchParams, searchParams]);
 
   const handleClear = () => {
     setText('');

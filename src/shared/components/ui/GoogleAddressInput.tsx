@@ -98,6 +98,11 @@ export const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
 
     return () => {
       active = false;
+      const ac = autocompleteRef.current;
+      if (ac && (window as any).google?.maps?.event?.clearInstanceListeners) {
+        (window as any).google.maps.event.clearInstanceListeners(ac);
+      }
+      autocompleteRef.current = null;
     };
   }, []);
 

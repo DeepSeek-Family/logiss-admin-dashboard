@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   LayoutDashboard,
@@ -25,7 +25,8 @@ import {
   CreditCard,
   UserPlus,
   Activity,
-  Send
+  Send,
+  Loader2,
 } from 'lucide-react';
 import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -35,24 +36,24 @@ import { ROUTES } from '@/constants/routes';
 // import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
 interface NavItemProps {
+  to: string;
   icon: React.ElementType;
   label: string;
   badge?: React.ReactNode;
   active: boolean;
-  onClick: () => void;
   badgeVariant?: 'neutral' | 'white' | 'primary' | 'accent' | 'urgent';
 }
 
 const NavItem: React.FC<NavItemProps> = ({
+  to,
   icon: Icon,
   label,
   badge,
   active,
-  onClick,
   badgeVariant = 'neutral',
 }) => (
-  <div
-    onClick={onClick}
+  <Link
+    to={to}
     className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group relative ${
       active
         ? 'bg-primary text-white shadow-sm font-semibold'
@@ -71,6 +72,13 @@ const NavItem: React.FC<NavItemProps> = ({
     {active && (
       <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full shadow-sm"></div>
     )}
+  </Link>
+);
+
+const RouteLoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[40vh] w-full gap-3">
+    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+    <p className="text-xs text-ink-4 font-medium">Loading page…</p>
   </div>
 );
 
@@ -149,7 +157,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const mainScrollRef = React.useRef<HTMLElement>(null);
+  const routeOutletKey = `${location.pathname}${location.search}`;
   const { unreadCount } = useNotifications();
+
+  React.useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    setProfileOpen(false);
+  }, [routeOutletKey]);
   // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
   /*
   const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 10 });
@@ -267,11 +282,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                 return (
                   <NavItem
                     key={item.id}
+                    to={item.id}
                     icon={item.icon}
                     label={item.label}
                     badge={liveBadge}
                     active={isActive}
-                    onClick={() => navigate(item.id)}
                   />
                 );
               })}
@@ -279,7 +294,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
           {isNavItemVisible({ id: ROUTES.settings, label: 'Settings', icon: Settings, roles: ['admin', 'dispatcher'] }) && (
             <div className="pt-4 border-t border-line-2">
-              <NavItem icon={Settings} label="System Settings" active={page === ROUTES.settings} onClick={() => navigate(ROUTES.settings)} />
+              <NavItem to={ROUTES.settings} icon={Settings} label="System Settings" active={page === ROUTES.settings} />
             </div>
           )}
         </nav>
@@ -296,7 +311,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50">
+      <main ref={mainScrollRef} className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50">
         {/* Top Bar */}
         <header className="h-16 bg-white border-b border-line flex items-center justify-end px-8 sticky top-0 z-10 shrink-0">
 
@@ -368,9 +383,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
         {/* Content Wrapper */}
         <div className="p-8 flex-1">
-          <div className="animate-fade-in">
-            <ErrorBoundary key={location.pathname}>
-              <Outlet />
+          <div className="animate-fade-in" key={routeOutletKey}>
+            <ErrorBoundary key={routeOutletKey}>
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <Outlet />
+              </Suspense>
             </ErrorBoundary>
           </div>
         </div>
