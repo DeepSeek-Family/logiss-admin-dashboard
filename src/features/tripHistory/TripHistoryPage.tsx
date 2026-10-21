@@ -271,7 +271,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
-          onUpdate={handleUpdateTrip}
+          readOnly={activeTab === 'trips'}
+          onUpdate={activeTab === 'trips' ? undefined : handleUpdateTrip}
         />
       )}
 
@@ -326,10 +327,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             <TripArchiveTab
               trips={trips}
               drivers={drivers}
-              setSelectedTripId={setSelectedTripId}
               selectedIds={selectedIds}
               setSelectedIds={setSelectedIds}
-              updateTrip={handleUpdateTrip}
+              onOpenDetails={setSelectedTripId}
               onRowSelect={setMapTripId}
               selectedMapId={mapTripId}
               search={historySearch}

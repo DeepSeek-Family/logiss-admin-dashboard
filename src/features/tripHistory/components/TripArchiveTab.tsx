@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2, Pencil, Trash2 } from 'lucide-react';
-import { Card, Badge, Avatar, Pagination, SearchInput } from '@/shared/components/ui';
-import { formatShortDate, money, formatTripId } from '@/utils/helpers';
-import { DriverAssignSelect } from '@/features/bookings';
+import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
+import { Card, Avatar, Pagination, SearchInput, TripStatusBadge } from '@/shared/components/ui';
+import { formatShortDate, money, formatTripId, formatTime } from '@/utils/helpers';
 import { isRoundTrip, resolveMediaUrl } from '@/features/bookings/utils/helpers';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { ServiceDateFilter } from './ServiceDateFilter';
@@ -10,10 +9,10 @@ import { ServiceDateFilter } from './ServiceDateFilter';
 interface TripArchiveTabProps {
   trips: any[];
   drivers: any[];
-  setSelectedTripId: (id: string | null) => void;
   selectedIds: string[];
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
-  updateTrip: (id: string, patch: Record<string, any>) => void;
+  /** Open trip details (view-only from Trip History page). */
+  onOpenDetails?: (id: string) => void;
   /** Locate this trip's vehicle on the side map. */
   onRowSelect?: (id: string | null) => void;
   selectedMapId?: string | null;
@@ -33,35 +32,7 @@ interface TripArchiveTabProps {
   inlineDateFilter?: boolean;
 }
 
-// Editable status options (mirrors TripStatusBadge config).
-const STATUS_OPTIONS = [
-  { value: 'pending_review', label: 'Pending Review' },
-  { value: 'assigned', label: 'Assigned' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'dispatched', label: 'Dispatched' },
-  { value: 'en_route', label: 'En Route' },
-  { value: 'arrived', label: 'Arrived' },
-  { value: 'in_trip', label: 'In Trip' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'no_show', label: 'No Show' },
-];
-
-// Color cue per status so the inline dropdown still reads at a glance.
-const STATUS_STYLE: Record<string, string> = {
-  pending_review: 'text-amber-700 bg-amber-50 border-amber-200',
-  assigned: 'text-primary bg-primary/5 border-primary/20',
-  confirmed: 'text-primary bg-primary/5 border-primary/20',
-  dispatched: 'text-indigo-700 bg-indigo-50 border-indigo-200',
-  en_route: 'text-indigo-700 bg-indigo-50 border-indigo-200',
-  arrived: 'text-amber-700 bg-amber-50 border-amber-200',
-  in_trip: 'text-accent bg-accent/5 border-accent/20',
-  completed: 'text-green-700 bg-green-50 border-green-200',
-  cancelled: 'text-ink-3 bg-bg border-line-2',
-  no_show: 'text-urgent bg-urgent/5 border-urgent/20',
-};
-
-// Normalize "8:32 AM" / "13:05" → "HH:MM" for <input type="time">; '' if unparseable.
+// Normalize "8:32 AM" / "13:05" → "HH:MM"; '' if unparseable.
 const to24h = (val?: string): string => {
   if (!val) return '';
   const s = String(val).trim();
@@ -105,50 +76,19 @@ const resolveTripTimes = (trip: any) => ({
   arrival: trip.arrivalTime || to24h(trip.actualDropoff) || demoTimeFor(trip, 'arrival'),
 });
 
-const INLINE_INPUT =
-  'bg-transparent border border-transparent hover:bg-bg/70 focus:bg-white focus:ring-2 focus:ring-primary/15 rounded-lg px-2 py-1 text-xs font-medium text-ink outline-none transition-all cursor-pointer';
-
-// Inline time picker cell (Dispatch / Departure / Arrival).
-const InlineTime: React.FC<{ value?: string; onCommit: (v: string) => void }> = ({ value, onCommit }) => (
-  <input
-    type="time"
-    value={to24h(value)}
-    onClick={(e) => e.stopPropagation()}
-    onChange={(e) => onCommit(e.target.value)}
-    className={`${INLINE_INPUT} w-fit min-w-0 px-1.5 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:p-0 [&::-webkit-calendar-picker-indicator]:ml-1 [&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
-  />
-);
-
-// Inline free-text cell (Distance / notes). Commits on blur or Enter so typing stays smooth.
-const InlineText: React.FC<{ value?: string; onCommit: (v: string) => void; placeholder?: string; className?: string }> = ({
-  value,
-  onCommit,
-  placeholder,
-  className = '',
-}) => {
-  const [val, setVal] = useState(value ?? '');
-  React.useEffect(() => { setVal(value ?? ''); }, [value]);
-  return (
-    <input
-      type="text"
-      value={val}
-      placeholder={placeholder}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => setVal(e.target.value)}
-      onBlur={() => { if (val !== (value ?? '')) onCommit(val); }}
-      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-      className={`${INLINE_INPUT} placeholder:text-ink-4/60 ${className}`}
-    />
-  );
+const displayTime = (val?: string) => {
+  if (!val) return '—';
+  const hhmm = to24h(val) || (val.length >= 16 ? val.slice(11, 16) : '');
+  if (hhmm) return to12h(hhmm);
+  return formatTime(val) || val;
 };
 
 export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   trips,
   drivers,
-  setSelectedTripId,
   selectedIds,
   setSelectedIds,
-  updateTrip,
+  onOpenDetails,
   onRowSelect,
   selectedMapId,
   search,
@@ -319,32 +259,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
             <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">{selectedIds.length} selected</span>
             <div className="h-4 w-px bg-primary/20" />
 
-            {/* Bulk assign driver */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
-              <select
-                value=""
-                onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { driverId: e.target.value })); }}
-                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
-              >
-                <option value="">Driver…</option>
-                {(drivers || []).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            </div>
-
-            {/* Bulk change status */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-ink-4 whitespace-nowrap">Status</span>
-              <select
-                value=""
-                onChange={(e) => { if (e.target.value) selectedIds.forEach(id => updateTrip(id, { status: e.target.value })); }}
-                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
-              >
-                <option value="">Set status…</option>
-                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-
             <button
               type="button"
               onClick={handleExport}
@@ -375,7 +289,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                   />
                 </th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap">Actions</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Trip ID</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Date</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[105px]">Pickup Time</th>
@@ -401,6 +314,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <tr
                   key={trip.id}
                   onClick={() => onRowSelect?.(trip.id)}
+                  onDoubleClick={() => onOpenDetails?.(trip.id)}
+                  title={onOpenDetails ? 'Double-click to view trip details' : undefined}
                   className={`transition-colors group cursor-pointer ${selectedMapId === trip.id ? 'bg-primary-tint/40 ring-1 ring-inset ring-primary/30' : selectedIds.includes(trip.id) ? 'bg-primary-tint/10' : 'hover:bg-primary-tint/20'}`}
                 >
                   <td className="pl-6 pr-3 py-3 w-10" onClick={(e) => e.stopPropagation()}>
@@ -411,27 +326,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       className="w-4 h-4 rounded border-line text-primary focus:ring-primary/20 cursor-pointer"
                     />
                   </td>
-                  <td className="px-3.5 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        title="Edit ride details"
-                        className="p-2 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                        onClick={() => setSelectedTripId(trip.id)}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        title="Cancel ride"
-                        className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-all"
-                        onClick={() => updateTrip(trip.id, { status: 'cancelled' })}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-
                   <td className="px-3.5 py-3 min-w-[120px]">
                     <div className="flex flex-col gap-1.5 items-start">
                       <span className="text-xs text-ink-3 whitespace-nowrap">{formatTripId(trip.id || trip._id)}</span>
@@ -449,17 +343,15 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   <td className="px-3.5 py-3 whitespace-nowrap min-w-[105px]">
-                    <InlineTime
-                      value={trip?.pickupTime || trip?.requestedPickup || ''}
-                      onCommit={(v) => updateTrip(trip.id, { requestedPickup: v })}
-                    />
+                    <span className="text-xs font-medium text-ink whitespace-nowrap">
+                      {displayTime(trip?.pickupTime || trip?.requestedPickup)}
+                    </span>
                   </td>
 
                   <td className="px-3.5 py-3 whitespace-nowrap min-w-[95px]">
-                    <InlineTime
-                      value={trip?.appointmentTime}
-                      onCommit={(v) => updateTrip(trip.id, { appointmentTime: v })}
-                    />
+                    <span className="text-xs font-medium text-ink whitespace-nowrap">
+                      {displayTime(trip?.appointmentTime)}
+                    </span>
                   </td>
 
                   <td className="px-4 py-3 min-w-[200px]">
@@ -526,27 +418,13 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   <td className="px-3.5 py-3 text-center min-w-[135px]">
-                    <select
-                      value={trip.status}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => updateTrip(trip.id, { status: e.target.value })}
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[trip.status] || 'text-ink-3 bg-bg'}`}
-                    >
-                      {STATUS_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value} className="text-ink bg-white">{opt.label}</option>
-                      ))}
-                    </select>
+                    <TripStatusBadge status={trip.status} />
                   </td>
 
-                  {/* Driver (inline assignment — smart suggestions + force-assign) */}
                   <td className="px-3.5 py-3 min-w-[160px]">
-                    <DriverAssignSelect
-                      trip={trip}
-                      drivers={drivers}
-                      allTrips={trips}
-                      onAssign={(driverId) => updateTrip(trip.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })}
-                      className={`${INLINE_INPUT} max-w-[150px] ${trip.driverId ? '' : 'text-ink-4'}`}
-                    />
+                    <span className="text-xs font-medium text-ink truncate block max-w-[150px]" title={drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name}>
+                      {drivers.find((d: any) => String(d.id) === String(trip.driverId))?.name || trip.driver?.name || '—'}
+                    </span>
                   </td>
 
                   <td className="px-3.5 py-3 min-w-[280px]">
@@ -624,18 +502,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     </div>
                   </td>
 
-                  {/* County (editable) */}
                   <td className="px-3 py-2.5">
-                    <select
-                      value={trip.insideCounty === true ? 'inside' : trip.insideCounty === false ? 'outside' : ''}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => updateTrip(trip.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${trip.insideCounty === false ? 'text-urgent bg-urgent/5' : trip.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
-                    >
-                      <option value="">—</option>
-                      <option value="inside">In-County</option>
-                      <option value="outside">Out-of-County</option>
-                    </select>
+                    <span className="text-xs font-medium text-ink-3">
+                      {trip.insideCounty === true ? 'In-County' : trip.insideCounty === false ? 'Out-of-County' : '—'}
+                    </span>
                   </td>
 
                   <td className="px-3 py-2.5 text-right">
@@ -649,21 +519,15 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   </td>
 
                   <td className="px-3 py-2.5">
-                    <InlineText
-                      value={trip.tripNote || trip.notes}
-                      onCommit={(v) => updateTrip(trip.id, { notes: v })}
-                      placeholder="Add note…"
-                      className="w-[150px]"
-                    />
+                    <span className="text-xs text-ink-3 block max-w-[150px] truncate" title={trip.tripNote || trip.notes || ''}>
+                      {trip.tripNote || trip.notes || '—'}
+                    </span>
                   </td>
 
                   <td className="px-3 py-2.5">
-                    <InlineText
-                      value={trip.internalPrivateNote || trip.privateNotes}
-                      onCommit={(v) => updateTrip(trip.id, { privateNotes: v })}
-                      placeholder="Internal note…"
-                      className="w-[150px]"
-                    />
+                    <span className="text-xs text-ink-3 block max-w-[150px] truncate" title={trip.internalPrivateNote || trip.privateNotes || ''}>
+                      {trip.internalPrivateNote || trip.privateNotes || '—'}
+                    </span>
                   </td>
                 </tr>
               ))}

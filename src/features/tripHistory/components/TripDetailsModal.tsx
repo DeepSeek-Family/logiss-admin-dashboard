@@ -118,6 +118,8 @@ interface TripDetailsModalProps {
   onUpdate?: (id: string, patch: Record<string, any>) => void;
   /** Open directly in edit mode (used by the Bookings Edit / Assign action). */
   startInEdit?: boolean;
+  /** View-only — no edit, cancel, or save actions (Trip History archive). */
+  readOnly?: boolean;
 }
 
 const INPUT = 'w-full bg-white border border-line-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
@@ -150,8 +152,9 @@ const numFrom = (v?: string): string => {
   return m ? m[0] : '';
 };
 
-export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit = false }: TripDetailsModalProps) => {
-  const [editMode, setEditMode] = useState(startInEdit);
+export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit = false, readOnly = false }: TripDetailsModalProps) => {
+  const [editMode, setEditMode] = useState(!readOnly && startInEdit);
+  const isEditing = editMode && !readOnly;
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [overrideReason, setOverrideReason] = useState('');
@@ -324,7 +327,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
     return (
       <div key={k as string}>
         <p className="text-xs text-ink-4 mb-1">{label}</p>
-        {editMode ? (
+        {isEditing ? (
           options ? (
             <select value={raw} onChange={(e) => set(k as string, e.target.value)} className={`${INPUT} cursor-pointer`}>
               {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -365,7 +368,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {!editMode && !cancelMode && !performMode && (
+            {!readOnly && !isEditing && !cancelMode && !performMode && (
               <>
                 <Button variant="outline" size="sm" icon={Pencil} onClick={() => setEditMode(true)}>Edit Details</Button>
                 {(trip.status === 'no_show' || trip.status === 'cancelled') && (
@@ -378,13 +381,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 )}
               </>
             )}
-            {editMode && (
+            {isEditing && (
               <>
                 <Button variant="ghost" size="sm" onClick={() => setEditMode(false)}>Discard</Button>
                 <Button variant="primary" size="sm" onClick={handleSave}>Save Changes</Button>
               </>
             )}
-            {cancelMode && (
+            {!readOnly && cancelMode && (
               <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
                 <input placeholder="Reason for cancellation..." className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
                 <Button variant="primary" className="bg-urgent hover:bg-urgent/90" size="sm" onClick={() => {
@@ -427,7 +430,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 <button onClick={() => setCancelMode(false)} className="p-2 text-ink-4 hover:text-ink"><X size={16} /></button>
               </div>
             )}
-            {performMode && (
+            {!readOnly && performMode && (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setPerformMode(false)}>Discard</Button>
                 <Button
@@ -502,13 +505,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-bg/40">
-          {editMode && (
+          {isEditing && (
             <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 border border-primary/15 rounded-xl px-4 py-2.5">
               <Pencil size={13} /> Editing mode — update any field except the rider's name, then Save Changes.
             </div>
           )}
 
-          {performMode && (
+          {!readOnly && performMode && (
             <div className="mb-5 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
               <p className="text-xs font-semibold text-primary">Manual perform — re-quote and mark completed. The previous {trip.status} stays on the audit trail.</p>
               <div className="grid grid-cols-2 gap-3 max-w-md">
@@ -524,7 +527,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
             </div>
           )}
 
-          {trip.cancelReason && !editMode && (
+          {trip.cancelReason && !isEditing && (
             <div className="mb-6 bg-urgent-light/40 border border-urgent/20 p-4 rounded-xl flex items-start gap-3">
               <XCircle className="text-urgent shrink-0 mt-0.5" size={18} />
               <div>
@@ -541,7 +544,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Calendar size={14} /> Trip Overview</h3>
 
-                {editMode && (
+                {isEditing && (
                   <div className="mb-5 grid grid-cols-2 gap-4 p-4 bg-primary-tint/10 rounded-xl border border-primary/20">
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Scheduled Date</p>
@@ -562,13 +565,13 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                   {Field({ label: 'Trip Reason', k: 'reason' })}
                   {Field({ label: 'Program Context', k: 'source' })}
                 </div>
-                {!editMode && <p className="sr-only">{tripTypeLabel(trip.type)}</p>}
+                {!isEditing && <p className="sr-only">{tripTypeLabel(trip.type)}</p>}
               </section>
 
               {/* Route */}
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4"><Navigation size={14} /> Route & Timeline</h3>
-                {editMode ? (
+                {isEditing ? (
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Pickup Location (Google Maps)</p>
@@ -632,7 +635,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                     <Avatar initials={trip?.rider?.initials || '?'} size="lg" />
                     <div>
                       <h4 className="text-base font-semibold text-ink">{trip?.rider?.name || 'Unknown Rider'}</h4>
-                      {editMode ? (
+                      {isEditing ? (
                         <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={`${INPUT} mt-1`} placeholder="Phone" />
                       ) : (
                         <p className="text-xs text-ink-4 mt-0.5 font-medium">{trip?.rider?.phone || 'No phone provided'}</p>
@@ -643,7 +646,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                     {Field({ label: 'Age', k: 'age', type: 'number' })}
                     <div>
                       <p className="text-xs text-ink-4 mb-1">Mobility Need</p>
-                      {editMode ? (
+                      {isEditing ? (
                         <select value={form.mobility} onChange={(e) => set('mobility', e.target.value)} className={`${INPUT} cursor-pointer`}>
                           {['Ambulatory', 'Cane', 'Walker', 'Wheelchair', 'Stretcher'].map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
@@ -658,17 +661,17 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
 
                 {/* Notes */}
                 <div className="mt-5 space-y-3">
-                  <div className={`p-4 rounded-xl border ${editMode ? 'border-line-2 bg-white' : 'bg-bg border-line-2'}`}>
+                  <div className={`p-4 rounded-xl border ${isEditing ? 'border-line-2 bg-white' : 'bg-bg border-line-2'}`}>
                     <p className="text-xs text-ink-4 mb-1">Instructions for Driver</p>
-                    {editMode ? (
+                    {isEditing ? (
                       <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className={`${INPUT} resize-none`} placeholder="Driver instructions…" />
                     ) : (
                       <p className="text-sm font-medium text-ink">{trip.notes || <span className="text-ink-4">None</span>}</p>
                     )}
                   </div>
-                  <div className={`p-4 rounded-xl border ${editMode ? 'border-urgent/20 bg-white' : 'bg-urgent-light/40 border-urgent/20'}`}>
+                  <div className={`p-4 rounded-xl border ${isEditing ? 'border-urgent/20 bg-white' : 'bg-urgent-light/40 border-urgent/20'}`}>
                     <p className="text-xs font-bold text-urgent mb-1 flex items-center gap-1.5"><Lock size={12} /> Internal Private Notes</p>
-                    {editMode ? (
+                    {isEditing ? (
                       <textarea value={form.privateNotes} onChange={(e) => set('privateNotes', e.target.value)} rows={2} className={`${INPUT} resize-none`} placeholder="Dispatcher / admin only…" />
                     ) : (
                       <p className="text-sm font-medium text-ink">{trip.privateNotes || <span className="text-ink-4">None</span>}</p>
@@ -684,9 +687,9 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
               <section className="bg-white rounded-2xl border border-line-2 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-ink flex items-center gap-2"><Truck size={14} /> Fleet & Driver</h3>
-                  {editMode && <Badge variant="warning">Editing</Badge>}
+                  {isEditing && <Badge variant="warning">Editing</Badge>}
                 </div>
-                {editMode ? (
+                {isEditing ? (
                   <select value={form.driverId} onChange={(e) => set('driverId', e.target.value)} className={`${INPUT} cursor-pointer`}>
                     <option value="">Unassigned</option>
                     {(drivers || []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -723,7 +726,7 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                 <div className="space-y-4">
                   <div className="bg-primary/5 p-4 rounded-xl border border-primary/15">
                     <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Trip Price ($)</p>
-                    {editMode ? (
+                    {isEditing ? (
                       <input
                         type="number"
                         step="0.01"
