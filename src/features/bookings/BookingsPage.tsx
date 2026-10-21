@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Search, Clock, MapPin, Phone, ChevronRight,
+  Clock, MapPin, Phone, ChevronRight,
   CheckCircle2, User, Users, CalendarClock,
   AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
   Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List, Map as MapIcon
@@ -36,33 +36,28 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showManualModal, setShowManualModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
-  const [bookingSearch, setBookingSearch] = useState('');
-  const [debouncedBookingSearch, setDebouncedBookingSearch] = useState('');
+  const [bookingSearch, setBookingSearch] = useState(
+    () => searchParams.get('searchTerm') || searchParams.get('search') || '',
+  );
   const [fundingFilter, setFundingFilter] = useState('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedBookingSearch(bookingSearch.trim());
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [bookingSearch]);
 
   const listParams = useMemo(() => {
     const params: Record<string, any> = {
       page: currentPage,
       limit: itemsPerPage,
     };
-    if (debouncedBookingSearch) {
-      params.searchTerm = debouncedBookingSearch;
+    const searchTerm = bookingSearch.trim();
+    if (searchTerm) {
+      params.searchTerm = searchTerm;
     }
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
     return params;
-  }, [currentPage, itemsPerPage, debouncedBookingSearch, fundingFilter]);
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
 
   // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
   const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);

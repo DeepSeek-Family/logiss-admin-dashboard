@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Search, List, ArrowRight, MapPin, Repeat, MoveRight,
+  List, ArrowRight, MapPin, Repeat, MoveRight,
   Check, Trash2, CheckCircle2, ClipboardList, Pencil, X,
   Accessibility, Bed, Disc, Info, User
 } from 'lucide-react';
-import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
+import { Avatar, Badge, Button, Pagination, SearchInput } from '@/shared/components/ui';
 import { formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
@@ -145,16 +145,16 @@ export const BookingsList: React.FC<BookingsListProps> = ({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap shrink-0">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={14} />
-          <input
-            type="text"
-            placeholder="Search rider or ID..."
-            value={bookingSearch}
-            onChange={e => { setBookingSearch(e.target.value); setCurrentPage(1); }}
-            className="w-full pl-8 pr-3 py-2 bg-white border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/10 outline-none h-9"
-          />
-        </div>
+        <SearchInput
+          className="w-full sm:w-72"
+          placeholder="Search rider or ID..."
+          paramName="searchTerm"
+          defaultValue={bookingSearch}
+          onSearchChange={(debouncedVal) => {
+            setBookingSearch(debouncedVal);
+            setCurrentPage(1);
+          }}
+        />
         <div className="flex items-center gap-2">
           <DollarSign size={12} className="text-ink-4" />
           <span className="text-xs text-ink-4">Payer</span>
@@ -245,7 +245,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Appt</th>
                     <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
                     <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Customer ID</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[70px] text-center">Seats</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[140px]">Program</th>
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Auth ID</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-center min-w-[135px]">Status</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Driver</th>
@@ -368,9 +369,21 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         })()}
                       </td>
 
-                      {/* Customer ID */}
-                      <td className="px-3.5 py-3 min-w-[110px]">
-                        <span className="text-xs text-ink-3 whitespace-nowrap" title={booking.passengerId || booking.rider?.passengerId || ''}>{booking.passengerId || booking.rider?.passengerId || '—'}</span>
+                      {/* Passenger seats */}
+                      <td className="px-3.5 py-3 min-w-[70px] text-center">
+                        <span className="text-xs font-semibold text-ink tabular-nums">
+                          {booking.passengerSeats ?? '—'}
+                        </span>
+                      </td>
+
+                      {/* Program context */}
+                      <td className="px-3.5 py-3 min-w-[140px]">
+                        <span
+                          className="text-xs font-medium text-ink-3 block max-w-[130px] truncate"
+                          title={booking.programContext || ''}
+                        >
+                          {booking.programContext || '—'}
+                        </span>
                       </td>
 
                       {/* Auth ID */}

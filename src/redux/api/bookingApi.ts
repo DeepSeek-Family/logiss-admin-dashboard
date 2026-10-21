@@ -53,6 +53,9 @@ export interface IBooking {
   bookingStatus?: 'pending' | 'assigned' | 'in-progress'|  'confirmed' | 'completed' | 'cancelled' | string
   recurringBatchId?: string
   price?: number
+  totalPrice?: number
+  passengerCoPay?: number
+  organizationContribution?: number
   isApproved?: string
   paymentStatus?: string
   createdAt?: string

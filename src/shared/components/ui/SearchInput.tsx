@@ -108,7 +108,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        className="w-full pl-12 pr-10 py-3.5 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-medium text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
+        className="w-full pl-12 pr-10 py-3 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-medium text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
       />
       {text && (
         <button
