@@ -96,21 +96,90 @@ const Field = ({
   </div>
 );
 
+/** Controlled number input that stays empty while typing (no forced 0 on clear). */
+const ClearableNumberInput = ({
+  value,
+  onValueChange,
+  className,
+  onBlur,
+  ...rest
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'> & {
+  value: number
+  onValueChange: (value: number) => void
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [text, setText] = useState(() => String(value))
+
+  useEffect(() => {
+    if (inputRef.current === document.activeElement) return
+    setText(String(value))
+  }, [value])
+
+  const commit = () => {
+    const raw = text.trim()
+    if (raw === '' || raw === '-') {
+      onValueChange(0)
+      setText('0')
+      return
+    }
+    const n = Number(raw)
+    const next = Number.isFinite(n) ? n : 0
+    onValueChange(next)
+    setText(String(next))
+  }
+
+  return (
+    <input
+      {...rest}
+      ref={inputRef}
+      type="number"
+      className={className}
+      value={text}
+      onChange={e => {
+        const next = e.target.value
+        setText(next)
+        if (next === '' || next === '-') return
+        const n = Number(next)
+        if (Number.isFinite(n)) onValueChange(n)
+      }}
+      onBlur={e => {
+        commit()
+        onBlur?.(e)
+      }}
+    />
+  )
+}
+
 const MoneyInput = ({
   className,
   wrapperClassName,
-  ...props
-}: InputHTMLAttributes<HTMLInputElement> & { wrapperClassName?: string }) => (
+  value = 0,
+  onValueChange,
+  disabled,
+  placeholder,
+  'aria-label': ariaLabel,
+}: {
+  className?: string
+  wrapperClassName?: string
+  value?: number
+  onValueChange: (value: number) => void
+  disabled?: boolean
+  placeholder?: string
+  'aria-label'?: string
+}) => (
   <div className={`relative ${wrapperClassName ?? 'w-32'}`}>
     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
-    <input
-      type="number"
+    <ClearableNumberInput
       step="0.01"
-      {...props}
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
       className={`${wrapperClassName ? controlGrow : controlValue} pl-7 min-w-0 ${className || ''}`}
     />
   </div>
-);
+)
 
 const cloneDraft = (d: PayerCoverageDraft): PayerCoverageDraft => ({
   ...d,
@@ -743,7 +812,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                         <Field label="Flat rate">
                           <MoneyInput
                             value={draft.flatRate}
-                            onChange={e => patchDraft({ flatRate: Number(e.target.value) || 0 })}
+                            onValueChange={n => patchDraft({ flatRate: n })}
                             disabled={!canEdit}
                           />
                         </Field>
@@ -754,20 +823,15 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                           <Field label="Starting fare">
                             <MoneyInput
                               value={draft.startingFare}
-                              onChange={e =>
-                                patchDraft({ startingFare: Number(e.target.value) || 0 })
-                              }
+                              onValueChange={n => patchDraft({ startingFare: n })}
                               disabled={!canEdit}
                             />
                           </Field>
                           <Field label="First miles price">
                             <MoneyInput
                               value={draft.firstMilesPrice}
-                              onChange={e =>
-                                patchDraft({
-                                  firstMilesPrice: Number(e.target.value) || 0,
-                                  includedRate: Number(e.target.value) || 0,
-                                })
+                              onValueChange={n =>
+                                patchDraft({ firstMilesPrice: n, includedRate: n })
                               }
                               disabled={!canEdit}
                             />
@@ -775,9 +839,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                           <Field label="Per mile">
                             <MoneyInput
                               value={draft.perMileRate}
-                              onChange={e =>
-                                patchDraft({ perMileRate: Number(e.target.value) || 0 })
-                              }
+                              onValueChange={n => patchDraft({ perMileRate: n })}
                               disabled={!canEdit}
                             />
                           </Field>
@@ -808,31 +870,25 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                               key={idx}
                               className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-center px-4 py-3 bg-white"
                             >
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
+                              <ClearableNumberInput
+                                min={0}
+                                step={1}
                                 className={`${controlGrow} min-w-0`}
                                 value={tier.starting_mileage}
-                                onChange={e =>
-                                  updateMileageTier(idx, {
-                                    starting_mileage: Number(e.target.value) || 0,
-                                  })
+                                onValueChange={n =>
+                                  updateMileageTier(idx, { starting_mileage: n })
                                 }
                                 disabled={!canEdit}
                                 placeholder="0"
                                 aria-label={`Bracket ${idx + 1} from miles`}
                               />
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
+                              <ClearableNumberInput
+                                min={0}
+                                step={1}
                                 className={`${controlGrow} min-w-0`}
                                 value={tier.first_miles_price}
-                                onChange={e =>
-                                  updateMileageTier(idx, {
-                                    first_miles_price: Number(e.target.value) || 0,
-                                  })
+                                onValueChange={n =>
+                                  updateMileageTier(idx, { first_miles_price: n })
                                 }
                                 disabled={!canEdit}
                                 placeholder="0"
@@ -841,10 +897,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                               <MoneyInput
                                 wrapperClassName="w-full min-w-0"
                                 value={tier.per_mile_price}
-                                onChange={e =>
-                                  updateMileageTier(idx, {
-                                    per_mile_price: Number(e.target.value) || 0,
-                                  })
+                                onValueChange={n =>
+                                  updateMileageTier(idx, { per_mile_price: n })
                                 }
                                 disabled={!canEdit}
                                 placeholder="0.00"
@@ -894,17 +948,13 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     <Field label="Copay · inside">
                       <MoneyInput
                         value={draft.passengerCopayInside}
-                        onChange={e =>
-                          patchDraft({ passengerCopayInside: Number(e.target.value) || 0 })
-                        }
+                        onValueChange={n => patchDraft({ passengerCopayInside: n })}
                       />
                     </Field>
                     <Field label="Copay · outside">
                       <MoneyInput
                         value={draft.passengerCopayOutside}
-                        onChange={e =>
-                          patchDraft({ passengerCopayOutside: Number(e.target.value) || 0 })
-                        }
+                        onValueChange={n => patchDraft({ passengerCopayOutside: n })}
                       />
                     </Field>
                   </div>
