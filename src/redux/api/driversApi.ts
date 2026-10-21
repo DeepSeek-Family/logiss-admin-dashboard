@@ -37,6 +37,8 @@ export interface IDriverUser {
   profile?: string
   verified?: boolean
   deviceToken?: string | null
+  fcmToken?: string | null
+  isPushNotificationEnabled?: boolean
   createdAt?: string
   updatedAt?: string
 }

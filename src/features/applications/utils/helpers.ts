@@ -1,8 +1,6 @@
 import type { IDriverUser } from '@/redux/api/driversApi'
-import { mapDriverBase } from '@/features/drivers/utils/helpers'
+import { driverFullName, driverInitials } from '@/features/drivers/utils/helpers'
 import { resolveMediaUrl } from '@/utils/imageUrl'
-
-export type ApplicationUiStatus = 'reviewing' | 'info_requested' | 'approved' | 'rejected'
 
 const displayDate = (iso?: string): string => {
   if (!iso) return ''
@@ -23,40 +21,38 @@ export const licenseImageUrls = (value: unknown): string[] => {
     .filter((url): url is string => Boolean(url))
 }
 
-export const mapApplicationStage = (applicationStatus?: string): number => {
-  const status = String(applicationStatus || 'pending').toLowerCase()
-  if (status === 'approved') return 4
-  return 2
-}
-
-export const mapApplicationUiStatus = (applicationStatus?: string): ApplicationUiStatus => {
-  const status = String(applicationStatus || 'pending').toLowerCase()
-  if (status === 'approved') return 'approved'
-  if (status === 'rejected') return 'rejected'
-  if (status === 'info_requested') return 'info_requested'
-  return 'reviewing'
-}
-
+/** Maps API driver application fields only — no mock vehicle/docs/stages. */
 export const mapApiDriverApplication = (driver: IDriverUser) => {
-  const base = mapDriverBase(driver)
-  const images = licenseImageUrls(driver.driverData?.licenseImage)
+  const id = driver._id || driver.id || ''
+  const status = String(driver.applicationStatus || 'pending').toLowerCase()
 
   return {
-    ...base,
-    status: String(driver.applicationStatus || 'pending').toLowerCase(),
-    stage: mapApplicationStage(driver.applicationStatus),
-    _status: mapApplicationUiStatus(driver.applicationStatus),
-    submitted: displayDate(driver.createdAt),
-    dob: displayDate(driver.dateOfBirth),
-    experience: driver.driverData?.driverExperience?.trim() || '',
+    id,
+    firstName: driver.firstName,
+    lastName: driver.lastName,
+    name: driverFullName(driver) || 'Applicant',
+    initials: driverInitials(driver),
+    email: driver.email?.trim() || '',
+    phone: driver.contact?.trim() || '',
+    image: resolveMediaUrl(driver.profile),
+    authorizationID: driver.authorizationID?.trim() || '',
+    county: driver.county ? String(driver.county) : '',
+    dateOfBirth: displayDate(driver.dateOfBirth),
+    role: driver.role?.trim() || '',
+    applicationStatus: status,
+    status,
+    isAdminVerifiedDriver: Boolean(driver.isAdminVerifiedDriver),
+    isOnDuty: Boolean(driver.isOnDuty),
+    trip: driver.trip ?? 0,
+    verified: Boolean(driver.verified),
+    isBanned: Boolean(driver.isBanned),
+    createdAt: displayDate(driver.createdAt),
+    updatedAt: displayDate(driver.updatedAt),
+    driverExperience: driver.driverData?.driverExperience?.trim() || '',
     licenseNumber: driver.driverData?.licenseNumber?.trim() || '',
     licenseClass: driver.driverData?.licenseClass?.trim() || '',
     licenseExpires: displayDate(driver.driverData?.expirationDate),
-    licenseImages: images,
-    isAdminVerified: Boolean(driver.isAdminVerifiedDriver),
-    isOnDuty: Boolean(driver.isOnDuty),
-    trips: driver.trip ?? 0,
-    role: driver.role || '',
+    licenseImages: licenseImageUrls(driver.driverData?.licenseImage),
   }
 }
 
