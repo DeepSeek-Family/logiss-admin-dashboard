@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Download, Map as MapIcon, Printer } from 'lucide-react';
 import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
@@ -23,6 +23,7 @@ const formatYmd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const TripHistory = ({ role }: { role?: string | null }) => {
+  const [searchParams] = useSearchParams();
   const [scheduleQueryParams, setScheduleQueryParams] = useState<{
     serviceDate?: string;
     bookingStatus?: string;
@@ -39,25 +40,22 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     });
   }, []);
 
-  const [historySearch, setHistorySearch] = useState('');
-  const [debouncedHistorySearch, setDebouncedHistorySearch] = useState('');
+  const [historySearch, setHistorySearch] = useState(
+    () => searchParams.get('searchTerm') || searchParams.get('search') || '',
+  );
   const [driverFilter, setDriverFilter] = useState('all');
   const [payerFilter, setPayerFilter] = useState('all');
   const [serviceDate, setServiceDate] = useState('');
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedHistorySearch(historySearch.trim()), 400);
-    return () => clearTimeout(timer);
-  }, [historySearch]);
-
   const historyQueryParams = useMemo(() => {
     const params: IGetBookingsQueryParams = {};
-    if (debouncedHistorySearch) params.searchTerm = debouncedHistorySearch;
+    const searchTerm = historySearch.trim();
+    if (searchTerm) params.searchTerm = searchTerm;
     if (serviceDate) params.serviceDate = serviceDate;
     if (driverFilter !== 'all') params.driverId = driverFilter;
     if (payerFilter !== 'all') params.payerSource = payerFilter;
     return params;
-  }, [debouncedHistorySearch, serviceDate, driverFilter, payerFilter]);
+  }, [historySearch, serviceDate, driverFilter, payerFilter]);
 
   const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
     refetchOnMountOrArgChange: true,
@@ -236,7 +234,6 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   };
 
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const activeTab = location.pathname.includes('/schedule') ? 'schedule' : (searchParams.get('tab') || 'trips');
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);

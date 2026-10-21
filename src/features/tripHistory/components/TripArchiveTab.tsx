@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
-import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
+import { Card, Badge, Avatar, Pagination, SearchInput } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money, formatTripId } from '@/utils/helpers';
 import { DriverAssignSelect } from '@/features/bookings';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
@@ -275,19 +275,19 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       <Card className="overflow-hidden border-line-2 shadow-sm">
         <div className="px-5 py-3 border-b border-line-2 bg-bg/30 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Search */}
-            <div className="w-full sm:w-56 relative shadow-sm rounded-xl">
-              {isFetching
-                ? <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 text-primary animate-spin" size={16} />
-                : <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={16} />}
-              <input
-                type="text"
-                placeholder="Search trips, riders..."
-                className="w-full bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 pl-9 pr-3 text-xs font-medium text-ink placeholder:text-ink-4/80 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none h-9"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              />
-            </div>
+            <SearchInput
+              className="w-full sm:w-56"
+              placeholder="Search trips, riders..."
+              paramName="searchTerm"
+              defaultValue={search}
+              onSearchChange={(debouncedVal) => {
+                setSearch(debouncedVal);
+                setCurrentPage(1);
+              }}
+            />
+            {isFetching && (
+              <Loader2 className="text-primary animate-spin shrink-0" size={18} aria-label="Loading trips" />
+            )}
 
             {/* Driver Filter */}
             <div className="flex items-center gap-2">
