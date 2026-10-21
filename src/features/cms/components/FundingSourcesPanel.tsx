@@ -96,10 +96,19 @@ const Field = ({
   </div>
 );
 
-const MoneyInput = ({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) => (
-  <div className="relative w-32">
+const MoneyInput = ({
+  className,
+  wrapperClassName,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { wrapperClassName?: string }) => (
+  <div className={`relative ${wrapperClassName ?? 'w-32'}`}>
     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
-    <input type="number" step="0.01" {...props} className={`${controlValue} pl-7 ${className || ''}`} />
+    <input
+      type="number"
+      step="0.01"
+      {...props}
+      className={`${wrapperClassName ? controlGrow : controlValue} pl-7 min-w-0 ${className || ''}`}
+    />
   </div>
 );
 
@@ -302,14 +311,19 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     if (!draft) return;
     const tiers = draft.mileageTiers || [];
     const lastTier = tiers[tiers.length - 1];
-    const nextStarting = lastTier ? Number(lastTier.starting_mileage || 0) + 5 : 0;
+    const nextFrom = lastTier
+      ? Number(lastTier.first_miles_price ?? lastTier.starting_mileage ?? 0)
+      : 0;
+    const span = lastTier
+      ? Math.max(5, Number(lastTier.first_miles_price ?? 0) - Number(lastTier.starting_mileage ?? 0))
+      : 5;
     patchDraft({
       mileageTiers: [
         ...tiers,
         {
-          starting_mileage: nextStarting,
-          first_miles_price: lastTier ? lastTier.first_miles_price : 0,
-          per_mile_price: lastTier ? lastTier.per_mile_price : 0,
+          starting_mileage: nextFrom,
+          first_miles_price: nextFrom + span,
+          per_mile_price: 0,
         },
       ],
     });
@@ -320,6 +334,20 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     const tiers = [...(draft.mileageTiers || [])];
     if (!tiers[index]) return;
     tiers[index] = { ...tiers[index], ...updates };
+
+    if (updates.starting_mileage !== undefined && index > 0) {
+      tiers[index - 1] = {
+        ...tiers[index - 1],
+        first_miles_price: Number(updates.starting_mileage) || 0,
+      };
+    }
+    if (updates.first_miles_price !== undefined && index < tiers.length - 1) {
+      tiers[index + 1] = {
+        ...tiers[index + 1],
+        starting_mileage: Number(updates.first_miles_price) || 0,
+      };
+    }
+
     patchDraft({ mileageTiers: tiers });
   };
 
@@ -758,99 +786,100 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     </div>
 
                     {currentMethod === 'mileage_based' && (
-                      <div className="rounded-xl border border-line-2 bg-bg/40 p-3.5 space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3">
-                              Mileage Tiers & Rates
-                            </h4>
-                            <p className="text-[11px] text-ink-4 mt-0.5">
-                              Set starting mileage tiers with first miles and per-mile rates.
-                            </p>
-                          </div>
-                          {canEdit && (
-                            <button
-                              type="button"
-                              onClick={addMileageTier}
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors px-3 py-1.5 rounded-lg border border-primary/25 bg-primary-tint/50 hover:bg-primary-tint shadow-xs cursor-pointer"
-                            >
-                              <Plus size={14} /> Add tier
-                            </button>
-                          )}
+                      <div className="rounded-xl border border-line-2 bg-white overflow-hidden">
+                        <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 px-4 py-2.5 bg-primary-tint/50 border-b border-line-2">
+                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                            From (miles)
+                          </span>
+                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                            To (miles)
+                          </span>
+                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                            Rate ($)
+                          </span>
+                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide text-right pr-1">
+                            Actions
+                          </span>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="divide-y divide-line-2">
                           {(draft.mileageTiers || []).map((tier, idx) => (
                             <div
                               key={idx}
-                              className="flex flex-wrap items-end gap-3 p-3 rounded-xl bg-white border border-line-2 shadow-xs transition-all hover:border-primary/30"
+                              className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-center px-4 py-3 bg-white"
                             >
-                              <div className="flex items-center gap-2 min-w-[75px] pb-2">
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold bg-primary-tint text-primary border border-primary/20">
-                                  {idx + 1}
-                                </span>
-                                <span className="text-xs font-semibold text-ink-3">
-                                  Tier {idx + 1}
-                                </span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                className={`${controlGrow} min-w-0`}
+                                value={tier.starting_mileage}
+                                onChange={e =>
+                                  updateMileageTier(idx, {
+                                    starting_mileage: Number(e.target.value) || 0,
+                                  })
+                                }
+                                disabled={!canEdit}
+                                placeholder="0"
+                                aria-label={`Bracket ${idx + 1} from miles`}
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                className={`${controlGrow} min-w-0`}
+                                value={tier.first_miles_price}
+                                onChange={e =>
+                                  updateMileageTier(idx, {
+                                    first_miles_price: Number(e.target.value) || 0,
+                                  })
+                                }
+                                disabled={!canEdit}
+                                placeholder="0"
+                                aria-label={`Bracket ${idx + 1} to miles`}
+                              />
+                              <MoneyInput
+                                wrapperClassName="w-full min-w-0"
+                                value={tier.per_mile_price}
+                                onChange={e =>
+                                  updateMileageTier(idx, {
+                                    per_mile_price: Number(e.target.value) || 0,
+                                  })
+                                }
+                                disabled={!canEdit}
+                                placeholder="0.00"
+                                aria-label={`Bracket ${idx + 1} rate`}
+                              />
+                              <div className="flex justify-end">
+                                {canEdit && (draft.mileageTiers || []).length > 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeMileageTier(idx)}
+                                    className="h-10 w-10 shrink-0 flex items-center justify-center text-urgent/80 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-colors cursor-pointer"
+                                    title={`Remove bracket ${idx + 1}`}
+                                    aria-label={`Remove bracket ${idx + 1}`}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                ) : (
+                                  <span className="h-10 w-10" aria-hidden />
+                                )}
                               </div>
-
-                              <Field label="Starting mileage (mi)">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="1"
-                                  className={controlValue}
-                                  value={tier.starting_mileage}
-                                  onChange={e =>
-                                    updateMileageTier(idx, {
-                                      starting_mileage: Number(e.target.value) || 0,
-                                    })
-                                  }
-                                  disabled={!canEdit}
-                                  placeholder="0"
-                                />
-                              </Field>
-
-                              <Field label="First miles price">
-                                <MoneyInput
-                                  value={tier.first_miles_price}
-                                  onChange={e =>
-                                    updateMileageTier(idx, {
-                                      first_miles_price: Number(e.target.value) || 0,
-                                    })
-                                  }
-                                  disabled={!canEdit}
-                                  placeholder="0.00"
-                                />
-                              </Field>
-
-                              <Field label="Per mile price">
-                                <MoneyInput
-                                  value={tier.per_mile_price}
-                                  onChange={e =>
-                                    updateMileageTier(idx, {
-                                      per_mile_price: Number(e.target.value) || 0,
-                                    })
-                                  }
-                                  disabled={!canEdit}
-                                  placeholder="0.00"
-                                />
-                              </Field>
-
-                              {canEdit && (draft.mileageTiers || []).length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeMileageTier(idx)}
-                                  className="h-10 w-10 shrink-0 flex items-center justify-center text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl border border-line-2 hover:border-urgent/30 transition-colors cursor-pointer"
-                                  title={`Remove tier ${idx + 1}`}
-                                  aria-label={`Remove tier ${idx + 1}`}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
                             </div>
                           ))}
                         </div>
+
+                        {canEdit && (
+                          <div className="px-4 py-3 border-t border-line-2 bg-bg/30">
+                            <button
+                              type="button"
+                              onClick={addMileageTier}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors px-3 py-2 rounded-lg border border-primary/25 bg-primary-tint/40 hover:bg-primary-tint/70 cursor-pointer"
+                            >
+                              <Plus size={14} /> Add bracket
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -32,7 +32,7 @@ export interface PayerCoverageDraft {
 export const PRICING_METHOD_LABELS: Record<UiPricingMethod, string> = {
   flat_rate: 'Flat rate',
   per_mile: 'Per mile',
-  mileage_based: 'Mileage based',
+  mileage_based: 'Mileage Brackets',
 }
 
 export const defaultMileageTiers = (): IMileageTier[] => [
