@@ -38,6 +38,12 @@ export interface IIncidentReportTrip {
   price?: number;
 }
 
+export type ReportResolutionStatus = "approved" | "rejected";
+
+export interface IUpdateReportStatusBody {
+  reportStatus: ReportResolutionStatus;
+}
+
 export interface IIncidentReport {
   _id: string;
   userId?: IReportUser | string;
@@ -180,6 +186,21 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
       transformResponse: normalizeReport,
       providesTags: (_result, _error, id) => [{ type: "all_reports", id }],
     }),
+    updateReportStatus: builder.mutation<
+      IIncidentReport,
+      { id: string; body: IUpdateReportStatusBody }
+    >({
+      query: ({ id, body }) => ({
+        url: `/reports/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: normalizeReport,
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "all_reports", id },
+        { type: "all_reports", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -188,4 +209,5 @@ export const {
   useGetDashboardAnalyticsQuery,
   useGetAllReportsQuery,
   useGetSingleReportQuery,
+  useUpdateReportStatusMutation,
 } = dashboardOnvordingApi;

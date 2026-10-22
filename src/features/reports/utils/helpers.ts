@@ -4,15 +4,20 @@ import type {
   IReportUser,
 } from "@/redux/apivtwo/dashboardOnvording";
 
-export const statusLabel = (status: string) =>
-  status
+export const statusLabel = (status: string) => {
+  const key = status.toLowerCase();
+  if (key === "approved") return "Solved";
+  if (key === "rejected") return "Rejected";
+  return status
     .replace(/[_-]/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 export const reportStatusVariant = (status: string) => {
   const key = status.toLowerCase();
   if (key === "pending" || key === "open" || key === "reviewing") return "warning";
-  if (key === "resolved" || key === "completed" || key === "closed") return "accent";
+  if (key === "approved" || key === "resolved" || key === "completed" || key === "closed")
+    return "accent";
   if (key === "rejected" || key === "cancelled" || key === "canceled") return "urgent";
   return "primary";
 };

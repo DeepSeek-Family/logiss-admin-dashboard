@@ -1,10 +1,12 @@
-import { AlertTriangle, Calendar, MapPin, Repeat, User } from "lucide-react";
-
+import { AlertTriangle, Calendar, CheckCircle2, MapPin, Repeat, User, XCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import { Badge, Button, TripStatusBadge } from "@/shared/components/ui";
-
-import type { IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
-
-import { useGetSingleReportQuery } from "@/redux/apivtwo/dashboardOnvording";
+import type { IIncidentReport, ReportResolutionStatus } from "@/redux/apivtwo/dashboardOnvording";
+import {
+  useGetSingleReportQuery,
+  useUpdateReportStatusMutation,
+} from "@/redux/apivtwo/dashboardOnvording";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 
 import { Loader } from "@/shared/Lodder";
 
@@ -90,8 +92,7 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
     refetch,
 
   } = useGetSingleReportQuery(reportId);
-
-
+  const [updateReportStatus, { isLoading: isUpdating }] = useUpdateReportStatusMutation();
 
   if (isLoading && !previewReport) {
 
@@ -173,7 +174,18 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
 
       trip.price != null);
 
+  const statusKey = merged.reportStatus?.toLowerCase() ?? "";
+  const isResolved = statusKey === "approved" || statusKey === "rejected";
 
+  const setStatus = async (reportStatus: ReportResolutionStatus) => {
+    try {
+      await updateReportStatus({ id: reportId, body: { reportStatus } }).unwrap();
+      toast.success(reportStatus === "approved" ? "Report marked as solved" : "Report rejected");
+      refetch();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "Failed to update report status"));
+    }
+  };
 
   return (
 
@@ -471,6 +483,35 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
 
         )}
 
+      </div>
+
+      <div className="px-6 py-4 border-t border-line-2 shrink-0 flex flex-wrap items-center justify-end gap-3 bg-bg/30">
+        {isResolved ? (
+          <p className="text-sm text-ink-3 mr-auto">
+            This report is already <span className="font-semibold text-ink">{statusLabel(merged.reportStatus)}</span>.
+          </p>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              icon={XCircle}
+              disabled={isUpdating}
+              onClick={() => setStatus("rejected")}
+            >
+              Reject
+            </Button>
+            <Button
+              type="button"
+              variant="accent"
+              icon={CheckCircle2}
+              disabled={isUpdating}
+              onClick={() => setStatus("approved")}
+            >
+              {isUpdating ? "Saving…" : "Mark as solved"}
+            </Button>
+          </>
+        )}
       </div>
 
     </div>
