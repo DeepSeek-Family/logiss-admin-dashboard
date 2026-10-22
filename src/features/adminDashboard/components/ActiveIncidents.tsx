@@ -35,11 +35,13 @@ const tripDetail = (report: IIncidentReport) => {
 
 export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
   const {
-    data: reports = [],
+    data: reportsResponse,
     isLoading,
     isError,
     refetch,
-  } = useGetAllReportsQuery();
+  } = useGetAllReportsQuery({ page: 1, limit: 50 });
+
+  const reports = reportsResponse?.data ?? [];
 
   const preview = [...reports]
     .sort(

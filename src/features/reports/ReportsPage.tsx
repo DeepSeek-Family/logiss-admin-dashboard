@@ -6,83 +6,101 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
-import { Button } from "@/shared/components/ui";
+import { Button, Pagination } from "@/shared/components/ui";
 import { Loader } from "@/shared/Lodder";
 import { useGetAllReportsQuery } from "@/redux/apivtwo/dashboardOnvording";
 import { tripTypeLabel } from "@/utils/helpers";
 import { DetailPanel, ReportCard } from "@/features/reports";
-import { reportTrip, statusLabel } from "./utils/helpers";
+import { statusLabel } from "./utils/helpers";
 
 const Reports = ({ role: _role }: { role?: string | null }) => {
-  const {
-    data: reports = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetAllReportsQuery();
   const [activeTab, setActiveTab] = useState("all");
   const [tripType, setTripType] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const sorted = useMemo(
-    () =>
-      [...reports].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      ),
-    [reports],
-  );
+  const listParams = useMemo(() => {
+    const params: {
+      page: number;
+      limit: number;
+      search?: string;
+      reportStatus?: string;
+      tripType?: string;
+    } = {
+      page: currentPage,
+      limit: itemsPerPage,
+    };
+    const q = search.trim();
+    if (q) params.search = q;
+    if (activeTab !== "all") params.reportStatus = activeTab;
+    if (tripType !== "all") params.tripType = tripType;
+    return params;
+  }, [currentPage, itemsPerPage, search, activeTab, tripType]);
+
+  const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
+
+  const {
+    data: reportsResponse,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useGetAllReportsQuery(listParams, { refetchOnMountOrArgChange: true });
+
+  const { data: allCountResponse } = useGetAllReportsQuery(countOnlyParams, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const reports = reportsResponse?.data ?? [];
+  const pagination = reportsResponse?.pagination;
+  const totalPages = pagination?.totalPage ?? 1;
+  const totalItems = pagination?.total ?? reports.length;
 
   const statusTabs = useMemo(() => {
-    const counts = new Map<string, number>();
-    sorted.forEach((report) => {
-      const key = report.reportStatus || "unknown";
-      counts.set(key, (counts.get(key) || 0) + 1);
+    const statuses = new Set<string>();
+    reports.forEach((report) => {
+      if (report.reportStatus) statuses.add(report.reportStatus);
     });
+    const allTotal = allCountResponse?.pagination?.total;
     return [
-      { id: "all", label: "All reports", count: sorted.length },
-      ...Array.from(counts.entries()).map(([id, count]) => ({
+      {
+        id: "all",
+        label: "All reports",
+        count: activeTab === "all" ? totalItems : allTotal,
+      },
+      ...Array.from(statuses).map((id) => ({
         id,
         label: statusLabel(id),
-        count,
+        count: activeTab === id ? totalItems : undefined,
       })),
     ];
-  }, [sorted]);
+  }, [reports, activeTab, totalItems, allCountResponse?.pagination?.total]);
 
   const tripTypes = useMemo(() => {
     const types = new Set<string>();
-    sorted.forEach((report) => {
-      const type = reportTrip(report)?.tripType;
-      if (type) types.add(type);
+    reports.forEach((report) => {
+      const trip = report.tripId;
+      if (trip && typeof trip !== "string" && trip.tripType) {
+        types.add(trip.tripType);
+      }
     });
     return Array.from(types);
-  }, [sorted]);
-
-  const filteredReports = sorted.filter((report) => {
-    const trip = reportTrip(report);
-    const matchTab = activeTab === "all" || report.reportStatus === activeTab;
-    const matchType = tripType === "all" || trip?.tripType === tripType;
-    const q = search.trim().toLowerCase();
-    const haystack = [
-      report.documents,
-      report.reportStatus,
-      trip?.tripReason,
-      trip?.tripType,
-      trip?.programContext,
-      trip?.bookingStatus,
-      trip?.serviceDate,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    return matchTab && matchType && (!q || haystack.includes(q));
-  });
+  }, [reports]);
 
   const selectedReport =
-    filteredReports.find((report) => report._id === selectedReportId) ??
-    filteredReports[0] ??
+    reports.find((report) => report._id === selectedReportId) ??
+    reports[0] ??
     null;
+
+  const resetListSelection = () => setSelectedReportId(null);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setCurrentPage(1);
+    resetListSelection();
+  };
 
   return (
     <div className="flex flex-col gap-0 animate-in fade-in duration-300 pb-12">
@@ -104,10 +122,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
             {statusTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setSelectedReportId(null);
-                }}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-3.5 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-primary text-primary"
@@ -115,15 +130,17 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                 }`}
               >
                 {tab.label}
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                    activeTab === tab.id
-                      ? "bg-primary/10 text-primary"
-                      : "bg-bg text-ink-4"
-                  }`}
-                >
-                  {tab.count}
-                </span>
+                {tab.count != null && (
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                      activeTab === tab.id
+                        ? "bg-primary/10 text-primary"
+                        : "bg-bg text-ink-4"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -140,7 +157,8 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setSelectedReportId(null);
+                    setCurrentPage(1);
+                    resetListSelection();
                   }}
                   className="bg-transparent text-xs outline-none w-full text-ink placeholder:text-ink-4"
                 />
@@ -150,7 +168,8 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                   value={tripType}
                   onChange={(e) => {
                     setTripType(e.target.value);
-                    setSelectedReportId(null);
+                    setCurrentPage(1);
+                    resetListSelection();
                   }}
                   className="appearance-none pl-2.5 pr-6 py-1.5 text-xs font-medium bg-bg border border-line-2 rounded-lg text-ink-3 outline-none cursor-pointer"
                 >
@@ -168,8 +187,8 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {isLoading && reports.length === 0 ? (
                 <Loader message="Loading reports..." />
               ) : isError ? (
                 <div className="flex flex-col items-center justify-center h-full text-center py-16 px-6">
@@ -188,15 +207,22 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                     Retry
                   </Button>
                 </div>
-              ) : filteredReports.length > 0 ? (
-                filteredReports.map((report) => (
-                  <ReportCard
-                    key={report._id}
-                    report={report}
-                    selected={selectedReport?._id === report._id}
-                    onClick={() => setSelectedReportId(report._id)}
-                  />
-                ))
+              ) : reports.length > 0 ? (
+                <>
+                  {isFetching && (
+                    <p className="text-[10px] text-ink-4 px-3 py-1.5 border-b border-line-2 bg-bg/50">
+                      Updating…
+                    </p>
+                  )}
+                  {reports.map((report) => (
+                    <ReportCard
+                      key={report._id}
+                      report={report}
+                      selected={selectedReport?._id === report._id}
+                      onClick={() => setSelectedReportId(report._id)}
+                    />
+                  ))}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center py-16 px-6">
                   <div className="w-12 h-12 bg-bg rounded-xl flex items-center justify-center mb-3">
@@ -210,6 +236,24 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                   </p>
                 </div>
               )}
+            </div>
+
+            <div className="shrink-0 overflow-x-auto border-t border-line-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.max(1, totalPages)}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={(page) => {
+                  setCurrentPage(page);
+                  resetListSelection();
+                }}
+                onItemsPerPageChange={(size) => {
+                  setItemsPerPage(size);
+                  setCurrentPage(1);
+                  resetListSelection();
+                }}
+              />
             </div>
           </div>
 

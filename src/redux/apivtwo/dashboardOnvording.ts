@@ -40,6 +40,28 @@ export interface IIncidentReport {
   updatedAt?: string;
 }
 
+export interface IReportsPagination {
+  total: number;
+  limit: number;
+  page: number;
+  totalPage: number;
+}
+
+export interface IReportsQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  reportStatus?: string;
+  tripType?: string;
+}
+
+export interface IReportsListResponse {
+  success?: boolean;
+  message?: string;
+  pagination?: IReportsPagination;
+  data: IIncidentReport[];
+}
+
 const normalizeTripDistribution = (
   response: ITripDistributionMonth[] | { data?: ITripDistributionMonth[] },
 ): ITripDistributionMonth[] => {
@@ -47,22 +69,45 @@ const normalizeTripDistribution = (
   return Array.isArray(response?.data) ? response.data : [];
 };
 
-const normalizeReports = (
-  response:
-    | IIncidentReport[]
-    | IIncidentReport
-    | { data?: IIncidentReport[] | IIncidentReport },
-): IIncidentReport[] => {
-  if (Array.isArray(response)) return response;
-  if (response && typeof response === "object" && "data" in response) {
-    const data = response.data;
-    if (Array.isArray(data)) return data;
-    if (data && typeof data === "object") return [data];
+const normalizeReportsListResponse = (response: unknown): IReportsListResponse => {
+  if (Array.isArray(response)) {
+    return {
+      data: response,
+      pagination: {
+        total: response.length,
+        limit: response.length || 10,
+        page: 1,
+        totalPage: 1,
+      },
+    };
   }
-  if (response && typeof response === "object" && "_id" in response) {
-    return [response];
+
+  const body = response as Record<string, unknown> | null | undefined;
+  const nested = body?.data as Record<string, unknown> | IIncidentReport[] | undefined;
+
+  let list: IIncidentReport[] = [];
+  if (Array.isArray(body?.data)) {
+    list = body.data as IIncidentReport[];
+  } else if (Array.isArray(nested)) {
+    list = nested as IIncidentReport[];
+  } else if (nested && typeof nested === "object" && "_id" in nested) {
+    list = [nested as unknown as IIncidentReport];
+  } else if (body && typeof body === "object" && "_id" in body) {
+    list = [body as unknown as IIncidentReport];
   }
-  return [];
+
+  const pagination =
+    (body?.pagination as IReportsPagination | undefined) ||
+    (nested && !Array.isArray(nested)
+      ? (nested as { pagination?: IReportsPagination }).pagination
+      : undefined);
+
+  return {
+    success: body?.success as boolean | undefined,
+    message: body?.message as string | undefined,
+    pagination,
+    data: list,
+  };
 };
 
 const normalizeReport = (
@@ -91,13 +136,27 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
       transformResponse: normalizeTripDistribution,
       providesTags: ["trip_distribution"],
     }),
-    getAllReports: builder.query<IIncidentReport[], void>({
-      query: () => "/reports",
-      transformResponse: normalizeReports,
+    getAllReports: builder.query<IReportsListResponse, IReportsQueryParams | void>({
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {};
+        if (params && typeof params === "object") {
+          if (params.page != null) queryParams.page = params.page;
+          if (params.limit != null) queryParams.limit = params.limit;
+          if (params.search?.trim()) queryParams.search = params.search.trim();
+          if (params.reportStatus?.trim()) queryParams.reportStatus = params.reportStatus.trim();
+          if (params.tripType?.trim()) queryParams.tripType = params.tripType.trim();
+        }
+        return {
+          url: "/reports",
+          method: "GET",
+          params: queryParams,
+        };
+      },
+      transformResponse: normalizeReportsListResponse,
       providesTags: (result) =>
-        result?.length
+        result?.data?.length
           ? [
-              ...result.map(({ _id }) => ({
+              ...result.data.map(({ _id }) => ({
                 type: "all_reports" as const,
                 id: _id,
               })),

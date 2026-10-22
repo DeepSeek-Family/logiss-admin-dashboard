@@ -21,8 +21,11 @@ const Operations = ({ role }: { role?: string | null }) => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading } = useTrips();
-  const { data: reportsData, isLoading: reportsLoading } = useGetAllReportsQuery();
-  const reports = reportsData || [];
+  const { data: reportsData, isLoading: reportsLoading } = useGetAllReportsQuery({
+    page: 1,
+    limit: 100,
+  });
+  const reports = reportsData?.data ?? [];
 
   const loading = tripsLoading || reportsLoading;
 
