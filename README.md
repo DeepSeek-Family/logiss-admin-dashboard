@@ -20,7 +20,6 @@ Edit `.env`:
 |----------|---------|
 | `VITE_API_BASE_URL` | Backend API base (e.g. `https://api.example.com/api/v1`) |
 | `VITE_IMAGE_BASE_URL` | Media host for `/image/...` paths |
-| `VITE_USE_MOCK` | `true` only for offline demo; **production must be `false` or unset** |
 | `VITE_GOOGLE_MAPS` | Google Maps JavaScript API key |
 | `VITE_FIREBASE_*` | FCM / web push (login device token) |
 

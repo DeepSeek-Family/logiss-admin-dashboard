@@ -6,7 +6,6 @@ import {
   useDeleteVehicleMutation,
   useAssignVehicleDriverMutation,
 } from '@/redux/api/vehiclesMangeApi';
-import { fleetService } from '../services/fleetService';
 import toast from 'react-hot-toast';
 
 export const formatConfigurationType = (val: string): 'ambulatory_van' | 'wheelchair_van' | 'stretcher_van' => {
@@ -149,7 +148,8 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
       await updateVehicleApi({ id, data: { isActive: status === 'available' } as any }).unwrap();
       refetch();
     } catch (err: any) {
-      await fleetService.updateVehicleStatus(id, status);
+      toast.error(err?.data?.message || err?.message || 'Failed to update vehicle status');
+      throw err;
     }
   }, [updateVehicleApi, refetch]);
 

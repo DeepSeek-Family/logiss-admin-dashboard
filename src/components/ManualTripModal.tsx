@@ -5,7 +5,9 @@ import {
   Clock, Navigation, ShieldCheck, Phone, ArrowRight, Zap, HeartPulse, Activity
 } from 'lucide-react';
 import { Avatar, Button } from '@/shared/components/ui';
-import { usePricing, DEFAULT_MOBILITY_TYPES, DEFAULT_COUNTIES, quoteFares, findFundingPolicy } from '@/hooks/usePricing';
+import { usePricing, quoteFares, findFundingPolicy } from '@/hooks/usePricing';
+import { useGetMobilitiesQuery } from '@/redux/api/mobilityApi';
+import { resolveMediaUrl } from '@/features/bookings/utils/helpers';
 import { evaluateTripBoundary, geocodeAddress } from '@/utils/geofenceEngine';
 import { money } from '@/utils/helpers';
 
@@ -38,13 +40,25 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
 
 export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], onClose, onSave }) => {
   const { pricing } = usePricing();
-  const availableCounties = (pricing.counties && pricing.counties.length > 0)
-    ? pricing.counties.filter(c => c.status === 'active')
-    : DEFAULT_COUNTIES;
+  const { data: mobilitiesResponse } = useGetMobilitiesQuery();
 
-  const availableMobility = (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
-    ? pricing.mobilityTypes.filter(m => m.status === 'active')
-    : DEFAULT_MOBILITY_TYPES;
+  const availableCounties = (pricing.counties || []).filter((c) => c.status === 'active');
+
+  const availableMobility = React.useMemo(() => {
+    const raw = mobilitiesResponse?.data || [];
+    const fromApi = raw
+      .filter((m) => m.status !== false)
+      .map((m) => ({
+        id: m._id,
+        name: m.name,
+        fee: Number(m.price) || 0,
+        iconUrl: resolveMediaUrl(m.icon),
+        iconKey: undefined as string | undefined,
+        status: 'active' as const,
+      }));
+    if (fromApi.length > 0) return fromApi;
+    return (pricing.mobilityTypes || []).filter((m) => m.status === 'active');
+  }, [mobilitiesResponse, pricing.mobilityTypes]);
 
   const [userType, setUserType] = useState('new');
   const [existingSearch, setExistingSearch] = useState('');
@@ -75,7 +89,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
   const boundaryEval = evaluateTripBoundary(
     form.pickup,
     form.dropoff,
-    form.source || 'Chesterfield County',
+    form.source || '',
     availableCounties,
     previewPolicy?.serviceAreaIds,
     {
@@ -119,7 +133,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({ trips = [], on
     const evaluation = evaluateTripBoundary(
       form.pickup,
       form.dropoff,
-      form.source || 'Chesterfield County',
+      form.source || '',
       availableCounties,
       previewPolicy?.serviceAreaIds,
       {

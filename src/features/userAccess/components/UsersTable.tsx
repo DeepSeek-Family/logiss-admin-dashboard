@@ -23,13 +23,22 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-line-2">
-            {users.map((user: any) => (
+            {users.map((user: any) => {
+              const displayFirst = user.firstName || '';
+              const displayLast = user.lastName || '';
+              const initials =
+                `${displayFirst[0] || ''}${displayLast[0] || ''}`.toUpperCase() ||
+                user.name?.slice(0, 2).toUpperCase() ||
+                'U';
+              return (
               <tr key={user.id} className={`hover:bg-bg/50 transition-colors group ${user.status === 'inactive' ? 'bg-bg/40' : ''}`}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <Avatar initials={user.name.split(' ').map((n: string) => n[0]).join('')} size="sm" />
+                    <Avatar initials={initials} size="sm" />
                     <div>
-                      <p className="text-sm font-medium text-ink">{user.name}</p>
+                      <p className="text-sm font-medium text-ink">
+                        {[displayFirst, displayLast].filter(Boolean).join(' ') || user.name}
+                      </p>
                       <p className="text-xs text-ink-4 flex items-center gap-1 mt-0.5">
                         <Mail size={10} /> {user.email}
                       </p>
@@ -47,10 +56,17 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                       <Building2 size={12} />
                       <span className="text-xs font-medium">Facility User</span>
                     </div>
-                  ) : (
+                  ) : user.role === 'dispatcher' ? (
                     <div className="flex items-center gap-1.5 px-2 py-1 bg-bg text-ink-3 rounded-md w-fit border border-line-2">
                       <Users size={12} />
                       <span className="text-xs font-medium">Dispatch</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-bg text-ink-3 rounded-md w-fit border border-line-2 max-w-[200px]">
+                      <Users size={12} className="shrink-0" />
+                      <span className="text-xs font-medium truncate" title={user.roleLabel || user.role}>
+                        {user.roleLabel || user.role}
+                      </span>
                     </div>
                   )}
                 </td>
@@ -87,7 +103,8 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   )}
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

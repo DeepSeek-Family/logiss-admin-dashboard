@@ -4,8 +4,9 @@ import { Users, Check, Eye, EyeOff } from 'lucide-react';
 import { Button, Badge } from '@/shared/components/ui';
 import { PERMISSION_GROUPS, ALL_PERMISSIONS } from '../permissions';
 
-interface InviteData {
-  name: string;
+export interface InviteData {
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   permissions: string[];
@@ -58,26 +59,53 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
 
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
-            {/* Name + Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Full Name</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">First Name</label>
                 <input
-                  type="text" required value={inviteData.name}
-                  onChange={e => setInviteData({ ...inviteData, name: e.target.value })}
+                  type="text"
+                  required
+                  value={inviteData.firstName}
+                  onChange={(e) => setInviteData({ ...inviteData, firstName: e.target.value })}
                   className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                  placeholder="e.g. Jane Doe"
+                  placeholder="Jane"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Email Address</label>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Role</label>
                 <input
-                  type="email" required value={inviteData.email}
-                  onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
+                  type="text"
+                  required
+                  value={inviteData.role}
+                  onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
                   className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                  placeholder="jane@logiss.com"
+                  placeholder="e.g. Dispatcher, Supervisor"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Last Name</label>
+                <input
+                  type="text"
+                  required
+                  value={inviteData.lastName}
+                  onChange={(e) => setInviteData({ ...inviteData, lastName: e.target.value })}
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-3 mb-1.5">Email Address</label>
+              <input
+                type="email"
+                required
+                value={inviteData.email}
+                onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                placeholder="jane@logiss.com"
+              />
             </div>
 
             {/* Contact + Password */}

@@ -455,20 +455,32 @@ const normalizePolicy = (p: any, fallbackBrackets: PricingBracket[]): FundingSou
   });
 };
 
+const emptyPricingConfig = (): PricingConfig => ({
+  rules: { ...DEFAULT_TRANSIT_RULES },
+  counties: [],
+  mobilityTypes: [],
+  billingClasses: [],
+  brackets: [],
+  items: [],
+  fundingPolicies: [],
+  customerInside: 0,
+  customerOutside: 0,
+  pickupFee: 0,
+});
+
 const load = (): PricingConfig => {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY) || window.localStorage.getItem(LEGACY_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
-        const brackets = Array.isArray(parsed.brackets) && parsed.brackets.length
-          ? parsed.brackets
-          : DEFAULT_BRACKETS;
-        const fundingPolicies = Array.isArray(parsed.fundingPolicies) && parsed.fundingPolicies.length
+        const brackets = Array.isArray(parsed.brackets) ? parsed.brackets : [];
+        const fundingPolicies = Array.isArray(parsed.fundingPolicies)
           ? parsed.fundingPolicies.map((p: any) => normalizePolicy(p, brackets))
-          : DEFAULT_FUNDING_POLICIES.map(p => ({ ...p, brackets: p.brackets.map(b => ({ ...b })) }));
+          : [];
+        const base = emptyPricingConfig();
         return {
-          ...DEFAULT_PRICING,
+          ...base,
           ...parsed,
           rules: { ...DEFAULT_TRANSIT_RULES, ...(parsed.rules || {}) },
           counties: Array.isArray(parsed.counties) && parsed.counties.length
@@ -497,45 +509,22 @@ const load = (): PricingConfig => {
                   polygon,
                 };
               })
-            : DEFAULT_COUNTIES,
-          mobilityTypes: Array.isArray(parsed.mobilityTypes) && parsed.mobilityTypes.length
+            : [],
+          mobilityTypes: Array.isArray(parsed.mobilityTypes)
             ? parsed.mobilityTypes.map((m: any) => ({
                 ...m,
                 billingClassId: m.billingClassId || guessBillingClassId(m.id || m.name),
               }))
-            : DEFAULT_MOBILITY_TYPES,
-          billingClasses: Array.isArray(parsed.billingClasses) && parsed.billingClasses.length
-            ? parsed.billingClasses
-            : DEFAULT_BILLING_CLASSES,
+            : [],
+          billingClasses: Array.isArray(parsed.billingClasses) ? parsed.billingClasses : [],
           brackets,
-          items: Array.isArray(parsed.items) && parsed.items.length ? parsed.items : DEFAULT_PRICING.items,
+          items: Array.isArray(parsed.items) ? parsed.items : [],
           fundingPolicies,
         };
       }
     }
-  } catch { /* seed */ }
-  return {
-    ...DEFAULT_PRICING,
-    rules: { ...DEFAULT_TRANSIT_RULES },
-    brackets: DEFAULT_BRACKETS.map(b => ({ ...b })),
-    items: DEFAULT_PRICING.items.map(i => ({ ...i })),
-    counties: DEFAULT_COUNTIES.map(c => ({
-      ...c,
-      zipCodes: [...c.zipCodes],
-      cities: [...c.cities],
-      polygon: c.polygon.map(([lat, lng]) => [lat, lng] as [number, number]),
-    })),
-    mobilityTypes: DEFAULT_MOBILITY_TYPES.map(m => ({ ...m })),
-    billingClasses: DEFAULT_BILLING_CLASSES.map(c => ({ ...c })),
-    fundingPolicies: DEFAULT_FUNDING_POLICIES.map(p => ({
-      ...p,
-      brackets: p.brackets.map(b => ({ ...b })),
-      reportColumns: [...p.reportColumns],
-      serviceAreaIds: [...(p.serviceAreaIds || [])],
-      geofencePolygons: parsePolygons(p.geofencePolygons),
-      geofenceFileName: p.geofenceFileName || '',
-    })),
-  };
+  } catch { /* ignore corrupt cache */ }
+  return emptyPricingConfig();
 };
 
 let store: PricingConfig = load();
@@ -701,7 +690,7 @@ function chargeForMethod(
       }
       case 'mileage_brackets':
       default:
-        base = bracketRateFor(miles, policy.brackets?.length ? policy.brackets : DEFAULT_BRACKETS);
+        base = bracketRateFor(miles, policy.brackets?.length ? policy.brackets : []);
         break;
     }
   }
@@ -789,7 +778,7 @@ export function usePricing() {
         pricingMethod: 'included_then_per_mile',
         ...partial,
       },
-      pricingStore.get().brackets || DEFAULT_BRACKETS
+      pricingStore.get().brackets || []
     );
     setPricing(prev => ({
       ...prev,
@@ -803,7 +792,7 @@ export function usePricing() {
       ...prev,
       fundingPolicies: (prev.fundingPolicies || []).map(p => {
         if (p.id !== id) return p;
-        const next = normalizePolicy({ ...p, ...updates }, prev.brackets || DEFAULT_BRACKETS);
+        const next = normalizePolicy({ ...p, ...updates }, prev.brackets || []);
         return archiveVersionOnRateChange(p, next);
       }),
     }));
@@ -928,7 +917,7 @@ export function quoteFares(
     ? chargeForMethod(policy, miles, insideCounty, addOns)
     : Number(
         (
-          bracketRateFor(miles, cfg.brackets?.length ? cfg.brackets : DEFAULT_BRACKETS) + addOns
+          bracketRateFor(miles, cfg.brackets?.length ? cfg.brackets : []) + addOns
         ).toFixed(2)
       );
 

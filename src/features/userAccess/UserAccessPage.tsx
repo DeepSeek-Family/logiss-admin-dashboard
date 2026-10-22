@@ -6,20 +6,29 @@ import { useUsers } from '@/hooks/useUsers';
 import {
   InviteUserModal,
   UsersTable,
-  DEFAULT_DISPATCH_PERMISSIONS
+  DEFAULT_DISPATCH_PERMISSIONS,
+  type InviteData,
 } from '@/features/userAccess';
+
+const emptyInviteData = (): InviteData => ({
+  firstName: '',
+  lastName: '',
+  email: '',
+  role: '',
+  permissions: [...DEFAULT_DISPATCH_PERMISSIONS],
+});
 
 const UserAccess = ({ role }: { role?: string | null }) => {
   const { users, loading, toggleStatus, inviteUser } = useUsers();
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteData, setInviteData] = useState<{ name: string; email: string; role: string; permissions: string[]; facility?: string }>({ name: '', email: '', role: 'dispatcher', permissions: [...DEFAULT_DISPATCH_PERMISSIONS] });
+  const [inviteData, setInviteData] = useState<InviteData>(emptyInviteData);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await inviteUser(inviteData);
       setShowInviteModal(false);
-      setInviteData({ name: '', email: '', role: 'dispatcher', permissions: [...DEFAULT_DISPATCH_PERMISSIONS] });
+      setInviteData(emptyInviteData());
     } catch (err) {
       console.error(err);
     }

@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { Send, Users, User, Clock, CheckCircle2, Trash2, Building2, ShieldCheck, Headset, ShieldAlert } from 'lucide-react';
+import { Send, Users, User, Clock, CheckCircle2, Building2, ShieldCheck, Headset, ShieldAlert, Loader2 } from 'lucide-react';
 import { Card, Button, Badge } from '@/shared/components/ui';
 import { toast } from 'react-hot-toast';
 import { pushNotification } from '@/hooks/useNotifications';
 import { useSendPushNotificationMutation } from '@/redux/api/pushNotificationsApi';
+import { useGetNotificationsQuery } from '@/redux/api/notificationsApi';
 import { useGetRidersQuery } from '@/redux/api/ridersApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
 
 interface SentLog {
-  id: number;
+  id: string;
   audienceLabel: string;
   title: string;
   message: string;
@@ -17,24 +17,13 @@ interface SentLog {
   recipients: number;
 }
 
-const MOCK_LOGS: SentLog[] = [
-  {
-    id: 1,
-    audienceLabel: 'All Drivers',
-    title: 'Route Update: I-95 Closure',
-    message: 'I-95 northbound closed between exits 74-78. Please use alternate routes.',
-    sentAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    recipients: 12,
-  },
-  {
-    id: 2,
-    audienceLabel: 'All Riders',
-    title: 'Service Reminder',
-    message: 'Please be ready at your pickup location 5 minutes before your scheduled time.',
-    sentAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    recipients: 47,
-  },
-];
+const audienceLabelFromApi = (audience?: string) => {
+  const a = String(audience || '').toUpperCase();
+  if (a === 'DRIVER') return 'All Drivers';
+  if (a === 'USER') return 'All Riders';
+  if (a === 'ALL') return 'All (Riders & Drivers)';
+  return audience || 'Broadcast';
+};
 
 const timeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
@@ -46,11 +35,12 @@ const timeAgo = (iso: string) => {
 };
 
 const PushNotifications = ({ role }: { role?: string | null }) => {
-  const currentUser = useSelector((state: any) => state.auth?.user);
-  const senderId = currentUser?._id || currentUser?.id || '6a71bd6614662c1d7334a9c2';
-
   const { data: driversResponse } = useGetDriversQuery();
   const { data: ridersResponse } = useGetRidersQuery();
+  const { data: notificationsResponse, isLoading: logsLoading, refetch: refetchLogs } = useGetNotificationsQuery({
+    page: 1,
+    limit: 50,
+  });
 
   const driversCount = driversResponse?.data?.length || 0;
   const ridersCount = ridersResponse?.data?.length || 0;
@@ -67,7 +57,19 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [sendPushNotification, { isLoading: isSending }] = useSendPushNotificationMutation();
-  const [logs, setLogs] = useState<SentLog[]>(MOCK_LOGS);
+
+  const logs: SentLog[] = useMemo(
+    () =>
+      (notificationsResponse?.data || []).map((n) => ({
+        id: n._id,
+        audienceLabel: audienceLabelFromApi(n.audience),
+        title: n.title || n.text || 'Notification',
+        message: n.message || n.text || '',
+        sentAt: n.createdAt || n.updatedAt || new Date().toISOString(),
+        recipients: 0,
+      })),
+    [notificationsResponse]
+  );
 
   const selected = AUDIENCES.find(a => a.id === audience) || AUDIENCES[0];
 
@@ -97,14 +99,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
         audience: selected.apiAudience || 'ALL',
       }).unwrap();
 
-      setLogs(prev => [{
-        id: Date.now(),
-        audienceLabel: selected.label,
-        title: title.trim(),
-        message: message.trim(),
-        sentAt,
-        recipients: selected.count,
-      }, ...prev]);
+      refetchLogs();
 
       if (['dispatchers', 'facility_users'].includes(selected.id)) {
         pushNotification({
@@ -194,9 +189,15 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
       </Card>
 
       {/* Sent Log */}
-      {logs.length > 0 && (
+      {(logsLoading || logs.length > 0) && (
         <div className="space-y-2">
           <p className="text-xs font-bold text-ink-4 uppercase tracking-widest px-1">Sent History</p>
+          {logsLoading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-ink-4">
+              <Loader2 size={18} className="animate-spin text-primary" />
+              Loading history…
+            </div>
+          ) : (
           <div className="space-y-2">
             {logs.map(log => (
               <div key={log.id} className="group flex items-start gap-3 px-4 py-3.5 rounded-2xl border border-line-2 bg-white hover:bg-bg transition-all">
@@ -215,23 +216,20 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
                   <p className="text-xs text-ink-4 line-clamp-1 mb-1.5">{log.message}</p>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-ink-3">{log.audienceLabel}</span>
-                    <span className="flex items-center gap-1 text-xs text-accent">
-                      <CheckCircle2 size={10} /> {log.recipients} delivered
-                    </span>
+                    {log.recipients > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-accent">
+                        <CheckCircle2 size={10} /> {log.recipients} delivered
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-xs text-ink-4">
                       <Clock size={10} /> {new Date(log.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setLogs(prev => prev.filter(l => l.id !== log.id))}
-                  className="p-1.5 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-                >
-                  <Trash2 size={12} />
-                </button>
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
     </div>

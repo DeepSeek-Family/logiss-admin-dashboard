@@ -11,6 +11,7 @@ import {
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { apiErrorMessage, mapApiBooking } from '@/features/bookings/utils/helpers';
 import toast from 'react-hot-toast';
+import { useFleet } from '@/hooks/useFleet';
 
 import {
   AddDriverModal,
@@ -42,6 +43,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [assignedVehicles, setAssignedVehicles] = useState<Record<string, any>>({});
+  const { vehicles: fleetVehicles, loading: fleetLoading, handleAssign } = useFleet();
 
   const listParams = useMemo(() => ({
     page: currentPage,
@@ -69,6 +71,17 @@ const Drivers = ({ role }: { role?: string | null }) => {
   );
 
   const pagination = driversResponse?.pagination;
+
+  const assignableVehicles = useMemo(
+    () =>
+      fleetVehicles.map((v) => ({
+        id: String(v.id),
+        name: [v.make, v.model].filter(Boolean).join(' ').trim() || 'Vehicle',
+        type: v.type || 'Van',
+        plate: v.plate || '—',
+      })),
+    [fleetVehicles]
+  );
 
   if (isLoading && drivers.length === 0) {
     return (
@@ -131,12 +144,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
     return <Badge variant={variant} className="w-fit">{label}</Badge>;
   };
 
-  const mockVehicles = [
-    { id: 'V001', name: 'Ford Transit', type: 'Ambulatory Van', plate: 'VA-4KL-8392' },
-    { id: 'V002', name: 'Toyota Sienna', type: 'Wheelchair Van', plate: 'VA-2MX-5510' },
-    { id: 'V003', name: 'Honda Odyssey', type: 'Standard', plate: 'VA-9TQ-1147' },
-  ];
-
   if (selectedDriver) {
     return (
       <>
@@ -155,40 +162,63 @@ const Drivers = ({ role }: { role?: string | null }) => {
               </div>
               <p className="text-xs text-ink-4 mb-4">Select a vehicle to assign to <span className="font-semibold text-ink">{selectedDriver.name}</span></p>
               <div className="space-y-2 mb-5">
-                {mockVehicles.map(v => (
-                  <button key={v.id} onClick={() => setSelectedVehicleId(v.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                      selectedVehicleId === v.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-line-2 hover:border-primary/30 hover:bg-bg'
-                    }`}>
-                    <div className="w-8 h-8 rounded-lg bg-bg border border-line-2 flex items-center justify-center shrink-0">
-                      <Car size={14} className="text-ink-3" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-ink">{v.name}</p>
-                      <p className="text-xs text-ink-4">{v.type} · {v.plate}</p>
-                    </div>
-                    {selectedVehicleId === v.id && <Check size={15} className="text-primary shrink-0" />}
-                  </button>
-                ))}
+                {fleetLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-ink-4">
+                    <Loader2 size={18} className="animate-spin text-primary" />
+                    Loading vehicles…
+                  </div>
+                ) : assignableVehicles.length === 0 ? (
+                  <p className="text-sm text-ink-4 py-4 text-center">No vehicles available from the fleet.</p>
+                ) : (
+                  assignableVehicles.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVehicleId(v.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                        selectedVehicleId === v.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-line-2 hover:border-primary/30 hover:bg-bg'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-bg border border-line-2 flex items-center justify-center shrink-0">
+                        <Car size={14} className="text-ink-3" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-ink">{v.name}</p>
+                        <p className="text-xs text-ink-4">
+                          {v.type} · {v.plate}
+                        </p>
+                      </div>
+                      {selectedVehicleId === v.id && <Check size={15} className="text-primary shrink-0" />}
+                    </button>
+                  ))
+                )}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 h-9 text-sm"
                   onClick={() => { setShowAssignModal(false); setSelectedVehicleId(null); }}>
                   Cancel
                 </Button>
-                <Button variant="primary" className="flex-1 h-9 text-sm"
-                  onClick={() => {
-                    const vehicle = mockVehicles.find(v => v.id === selectedVehicleId);
-                    if (vehicle && selectedDriver) {
-                      setAssignedVehicles(prev => ({ ...prev, [selectedDriver.id]: vehicle }));
+                <Button
+                  variant="primary"
+                  className="flex-1 h-9 text-sm"
+                  onClick={async () => {
+                    const vehicle = assignableVehicles.find((v) => v.id === selectedVehicleId);
+                    if (!vehicle || !selectedDriver || !selectedVehicleId) return;
+                    try {
+                      await handleAssign(selectedVehicleId, selectedDriver.id);
+                      setAssignedVehicles((prev) => ({ ...prev, [selectedDriver.id]: vehicle }));
+                      setShowAssignModal(false);
+                      setSelectedVehicleId(null);
+                      setAssignSuccess(true);
+                      setTimeout(() => setAssignSuccess(false), 3000);
+                    } catch (err) {
+                      toast.error(apiErrorMessage(err, 'Failed to assign vehicle'));
                     }
-                    setShowAssignModal(false);
-                    setAssignSuccess(true);
-                    setTimeout(() => setAssignSuccess(false), 3000);
                   }}
-                  disabled={!selectedVehicleId}>
+                  disabled={!selectedVehicleId || fleetLoading}
+                >
                   Confirm
                 </Button>
               </div>

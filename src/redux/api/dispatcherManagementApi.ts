@@ -5,6 +5,7 @@ export interface IDispatcher {
   _id: string
   id?: string
   firstName: string
+  middleName?: string
   lastName: string
   email: string
   contact?: string
@@ -39,6 +40,7 @@ export interface IGetDispatchersResponse {
 
 export interface ICreateDispatcherInput {
   firstName: string
+  middleName?: string
   lastName: string
   email: string
   password?: string

@@ -40,16 +40,31 @@ import {
 import {
   quoteFares,
   usePricing,
-  DEFAULT_COUNTIES,
-  DEFAULT_MOBILITY_TYPES,
+  type CountyConfig,
   evaluateTripBoundary,
   detectCountyFromAddress,
   findFundingPolicy,
 } from '@/hooks/usePricing';
+import type { ICounty } from '@/redux/api/coverageApi';
 import { geocodeAddress } from '@/utils/geofenceEngine';
 
 const inputClass = "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
 const disabledInputClass = "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
+
+const mapApiCountiesToConfig = (rows: ICounty[]): CountyConfig[] =>
+  rows
+    .filter((c) => c.isActive !== false && String(c.countyName || '').trim())
+    .map((c) => ({
+      id: c._id,
+      name: String(c.countyName || '').trim(),
+      state: 'VA',
+      localFare: Number(c.insidePrice ?? c.flat_rate_price ?? 0),
+      status: 'active' as const,
+      notes: '',
+      zipCodes: [],
+      cities: [],
+      polygon: [],
+    }));
 
 const MOBILITY_ICON_MAP: { [key: string]: any } = {
   User,
@@ -124,9 +139,55 @@ export const BookingForm = () => {
   const apiPeople = useMemo(() => extractBookingPeople(bookingsResponse?.data || []), [bookingsResponse]);
   const apiPayers = (payersResponse?.data || []).filter((p) => isMongoId(p._id));
 
-  const availableCounties = (pricing.counties && pricing.counties.length > 0)
-    ? pricing.counties.filter(c => c.status === 'active')
-    : DEFAULT_COUNTIES;
+  const [form, setForm] = useState({
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    authId: '',
+    passengerId: '',
+    fundingSourceId: '',
+    fundingSource: '',
+    payerSourceId: '',
+    program: 'Medicaid NEMT',
+    source: '',
+    authNotes: '',
+    county: '',
+    insideCounty: true,
+    pickup: '',
+    dropoff: '',
+    stops: [] as string[],
+    appointmentTime: '',
+    requestedPickup: '',
+    returnPickup: '',
+    tripType: 'one-way',
+    isWillCall: false,
+    mobility: 'Ambulatory',
+    tripReason: 'Medical Appointment',
+    totalSeats: 1,
+    additionalNotes: '',
+    privateNotes: '',
+    mobilityId: '',
+    grossFare: 0,
+    countyContribution: 0,
+    manualFareOverride: false,
+    overrideReason: '',
+    advancePaid: 0,
+    estMiles: 10,
+    actualMiles: 0,
+  });
+
+  const payerIdForCounties = isMongoId(form.payerSourceId) ? form.payerSourceId : '';
+  const { data: countiesByPayerResponse } = useGetCountiesByPayerQuery(payerIdForCounties, {
+    skip: !payerIdForCounties,
+  });
+
+  const availableCounties = useMemo(() => {
+    const fromApi = mapApiCountiesToConfig(countiesByPayerResponse?.data || []);
+    if (fromApi.length > 0) return fromApi;
+    return (pricing.counties || []).filter((c) => c.status === 'active');
+  }, [countiesByPayerResponse, pricing.counties]);
 
   const availableMobility = useMemo(() => {
     const rawMobilities: any[] = Array.isArray(mobilitiesResponse?.data)
@@ -163,9 +224,7 @@ export const BookingForm = () => {
         }));
     }
 
-    return (pricing.mobilityTypes && pricing.mobilityTypes.length > 0)
-      ? pricing.mobilityTypes
-      : DEFAULT_MOBILITY_TYPES;
+    return (pricing.mobilityTypes || []).filter((m) => m.status === 'active');
   }, [mobilitiesResponse, apiPeople.mobility, pricing.mobilityTypes]);
 
   const [isRiderDropdownOpen, setIsRiderDropdownOpen] = useState(false);
@@ -200,51 +259,8 @@ export const BookingForm = () => {
   
   const [selectedDates, setSelectedDates] = useState<Date[]>([new Date()]);
 
-  const [form, setForm] = useState({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    authId: '',
-    passengerId: '',
-    fundingSourceId: '',
-    fundingSource: '',
-    payerSourceId: '',
-    program: 'Medicaid NEMT',
-    source: '',
-    authNotes: '',
-    county: availableCounties[0]?.name || 'Chesterfield County',
-    insideCounty: true,
-    pickup: '',
-    dropoff: '',
-    stops: [] as string[],
-    appointmentTime: '',
-    requestedPickup: '',
-    returnPickup: '',
-    tripType: 'one-way',
-    isWillCall: false,
-    mobility: 'Ambulatory',
-    tripReason: 'Medical Appointment',
-    totalSeats: 1,
-    additionalNotes: '',
-    privateNotes: '',
-    mobilityId: '',
-    grossFare: 0,
-    countyContribution: 0,
-    manualFareOverride: false,
-    overrideReason: '',
-    advancePaid: 0,
-    estMiles: 10,
-    actualMiles: 0,
-  });
   const [tripGps, setTripGps] = useState<{ pickup?: [number, number]; dropoff?: [number, number] }>({});
   const [stopsGps, setStopsGps] = useState<([number, number] | undefined)[]>([]);
-
-  const payerIdForCounties = isMongoId(form.payerSourceId) ? form.payerSourceId : '';
-  const { data: countiesByPayerResponse } = useGetCountiesByPayerQuery(payerIdForCounties, {
-    skip: !payerIdForCounties,
-  });
 
   const apiCountyId = useMemo(() => {
     const list = (countiesByPayerResponse?.data || []).filter((c) => c.isActive !== false);
@@ -271,6 +287,14 @@ export const BookingForm = () => {
       }
     }
   }, [availableMobility, form.mobilityId, form.mobility]);
+
+  useEffect(() => {
+    if (!availableCounties.length) return;
+    setForm((prev) => {
+      if (prev.county && availableCounties.some((c) => c.name === prev.county)) return prev;
+      return { ...prev, county: availableCounties[0].name };
+    });
+  }, [availableCounties]);
 
   const fundingPolicies = (pricing.fundingPolicies || []).filter(p => p.active);
   const selectedPolicy =
@@ -678,7 +702,7 @@ export const BookingForm = () => {
       program: 'Medicaid NEMT',
       source: '',
       authNotes: '',
-      county: availableCounties[0]?.name || 'Chesterfield County',
+      county: availableCounties[0]?.name || '',
       insideCounty: true,
       pickup: '',
       dropoff: '',
