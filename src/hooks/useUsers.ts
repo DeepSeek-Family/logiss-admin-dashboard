@@ -20,7 +20,13 @@ export interface User {
 }
 
 export const useUsers = () => {
-  const { data: apiResponse, isLoading: apiLoading, refetch } = useGetDispatchersQuery();
+  const {
+    data: apiResponse,
+    isLoading: apiLoading,
+    isError: isLoadError,
+    error: loadError,
+    refetch,
+  } = useGetDispatchersQuery();
   const [createDispatcher] = useCreateDispatcherMutation();
   const [deleteDispatcher] = useDeleteDispatcherMutation();
   const [error, setError] = useState<string | null>(null);
@@ -40,13 +46,8 @@ export const useUsers = () => {
   }));
 
   const toggleStatus = async (id: string) => {
-    try {
-      await deleteDispatcher(id).unwrap();
-      refetch();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update user status';
-      setError(message);
-    }
+    await deleteDispatcher(id).unwrap();
+    refetch();
   };
 
   const inviteUser = async (userData: {
@@ -90,5 +91,14 @@ export const useUsers = () => {
     }
   };
 
-  return { users, loading: apiLoading, error, toggleStatus, inviteUser, refetch };
+  return {
+    users,
+    loading: apiLoading,
+    isError: isLoadError,
+    loadError,
+    error,
+    toggleStatus,
+    inviteUser,
+    refetch,
+  };
 };

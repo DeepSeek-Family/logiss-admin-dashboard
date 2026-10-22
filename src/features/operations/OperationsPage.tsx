@@ -29,17 +29,7 @@ const Operations = ({ role }: { role?: string | null }) => {
   const reports = reportsData?.data ?? [];
 
   const loading = tripsLoading || reportsLoading || driversLoading;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-ink-4">Loading Operations...</p>
-        </div>
-      </div>
-    );
-  }
+  const showInitialLoader = loading && !(trips?.length || drivers?.length || reports?.length);
 
   // All trips relevant to today
   const activeTrips = (trips || []).filter((t: any) =>
@@ -67,12 +57,26 @@ const Operations = ({ role }: { role?: string | null }) => {
   const totalPages = Math.ceil(activeTrips.length / itemsPerPage);
   const paginatedActiveTrips = activeTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  if (showInitialLoader) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-sm text-ink-4">Loading operations…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Fleet Operations</h1>
-          <p className="text-sm text-ink-3 font-medium mt-1 tracking-normal">Managing {trips.length} active and scheduled assignments</p>
+          <p className="text-sm text-ink-3 font-medium mt-1 tracking-normal flex items-center gap-2">
+            Managing {trips.length} active and scheduled assignments
+            {loading ? <Loader2 size={14} className="animate-spin text-primary" aria-label="Refreshing" /> : null}
+          </p>
         </div>
       </div>
 

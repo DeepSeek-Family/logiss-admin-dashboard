@@ -32,6 +32,9 @@ import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ROUTES } from '@/constants/routes';
+import { can } from '@/features/userAccess/permissions';
+import toast from 'react-hot-toast';
+import { getDefaultRoute } from '@/routes/appRoutes';
 // import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
 // import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
@@ -218,30 +221,39 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
     return () => window.removeEventListener('click', close);
   }, [profileOpen]);
 
-  const isNavItemVisible = React.useCallback((item: NavConfigItem) => {
-    if (!role) return false;
-    if (role === 'admin') return item.roles.includes('admin');
+  const isNavItemVisible = React.useCallback(
+    (item: NavConfigItem) => {
+      if (!role) return false;
+      if (!item.roles.includes(role) && !(role === 'admin' && item.roles.includes('admin'))) {
+        if (role !== 'dispatcher' || !item.roles.includes('dispatcher')) return false;
+      }
+      const pathKey = item.id.startsWith('/') ? item.id : `/${item.id}`;
+      return can(role, pathKey, accessScope?.length ? accessScope : undefined);
+    },
+    [role, accessScope]
+  );
 
-    if (!item.roles.includes(role) && !item.roles.includes('dispatcher')) {
-      return false;
-    }
+  const pathForAccessCheck = React.useCallback((pathname: string) => {
+    if (pathname.startsWith('/fleet/')) return ROUTES.fleet;
+    if (pathname.startsWith('/coverage')) return ROUTES.coverage;
+    return pathname.split('?')[0];
+  }, []);
 
-    if (accessScope && Array.isArray(accessScope) && accessScope.length > 0) {
-      const cleanId = item.id.startsWith('/') ? item.id : `/${item.id}`;
-      const rawId = item.id.replace(/^\//, '');
+  React.useEffect(() => {
+    if (!role || role === 'admin') return;
+    const path = pathForAccessCheck(page);
+    if (path === ROUTES.profile || path === ROUTES.settings || path === ROUTES.notifications) return;
+    if (can(role, path, accessScope?.length ? accessScope : undefined)) return;
 
-      return accessScope.some(s => {
-        const cleanS = s.startsWith('/') ? s : `/${s}`;
-        const rawS = s.replace(/^\//, '');
-        if (cleanS === cleanId || rawS === rawId) return true;
-        if (cleanId === '/finance' && (cleanS === '/transactions' || rawS === 'transactions')) return true;
-        if (cleanId === '/transactions' && (cleanS === '/finance' || rawS === 'finance')) return true;
-        return false;
-      });
-    }
-
-    return true;
-  }, [role, accessScope]);
+    toast.error('You do not have permission to view this page.', { id: 'page-access-denied' });
+    const fallback =
+      accessScope?.find(Boolean)?.startsWith('/')
+        ? accessScope.find(Boolean)!
+        : accessScope?.[0]
+          ? `/${accessScope[0].replace(/^\//, '')}`
+          : getDefaultRoute(role as 'dispatcher');
+    navigate(fallback, { replace: true });
+  }, [page, role, accessScope, navigate]);
 
   return (
     <div className="flex h-screen bg-bg overflow-hidden font-sans text-ink">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Loader2, CheckCircle2, X, AlertTriangle } from 'lucide-react';
-import { Pagination } from '@/shared/components/ui';
+import { Loader2, CheckCircle2, X } from 'lucide-react';
+import { Pagination, EmptyState, QueryFeedback } from '@/shared/components/ui';
+import { FileCheck } from 'lucide-react';
 import { ApplicationCard, ApplicationDetails } from '@/features/applications';
 import {
   useGetDriverApplicationsQuery,
@@ -78,16 +79,13 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
     );
   }
 
-  if (isError) {
+  if (isError && applications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
-        <h3 className="text-lg font-semibold text-ink mb-2">Failed to load applications</h3>
-        <p className="text-ink-3 text-sm mb-4">{apiErrorMessage(error, 'Unable to fetch driver applications')}</p>
-        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
-          Retry
-        </button>
-      </div>
+      <QueryFeedback
+        title="Failed to load applications"
+        message={apiErrorMessage(error, 'Unable to fetch driver applications')}
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -113,9 +111,11 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-220px)]">
         <div className="lg:col-span-5 flex flex-col gap-2.5 overflow-y-auto pr-1 scrollbar-hide">
           {applications.length === 0 ? (
-            <div className="py-16 text-center text-sm text-ink-4 border border-dashed border-line-2 rounded-2xl">
-              No driver applications found
-            </div>
+            <EmptyState
+              icon={FileCheck}
+              title="No applications"
+              description="New driver onboarding requests will appear here for review."
+            />
           ) : applications.map((app) => (
             <ApplicationCard
               key={app.id}

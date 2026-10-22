@@ -6,13 +6,14 @@ import { AccessScopeModal } from './AccessScopeModal';
 
 interface UsersTableProps {
   users: any[];
-  onToggleStatus: (id: string) => void;
+  onRevokeAccess: (user: any) => void;
+  onRestoreAccess: (user: any) => void;
 }
 
 const scopeTriggerClass =
   'text-left rounded-lg transition-colors hover:ring-2 hover:ring-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
-export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
+export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTableProps) => {
   const [scopeUser, setScopeUser] = useState<any | null>(null);
 
   return (
@@ -95,7 +96,9 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   {user.id !== 'LOGISS-882' && (
                     <button
                       type="button"
-                      onClick={() => onToggleStatus(user.id)}
+                      onClick={() =>
+                        user.status === 'active' ? onRevokeAccess(user) : onRestoreAccess(user)
+                      }
                       className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border shadow-2xs ${
                         user.status === 'active'
                           ? 'bg-urgent/10 text-urgent border-urgent/30 hover:bg-urgent hover:text-white'
