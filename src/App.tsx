@@ -154,8 +154,13 @@ function App() {
               <Route path="*" element={
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                   <h1 className="text-6xl font-semibold text-ink opacity-20 mb-4">404</h1>
-                  <p className="text-lg text-ink-4 mb-6">Resource not found</p>
-                  <Button variant="primary" onClick={() => window.history.back()}>Go Back</Button>
+                  <p className="text-lg text-ink-4 mb-6">This page does not exist or was moved.</p>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <Button variant="outline" onClick={() => window.history.back()}>Go back</Button>
+                    <Button variant="primary" onClick={() => window.location.assign(getDefaultRoute(effectiveRole))}>
+                      Go to home
+                    </Button>
+                  </div>
                 </div>
               } />
             </Route>

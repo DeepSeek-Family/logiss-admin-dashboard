@@ -20,9 +20,16 @@ interface InviteUserModalProps {
   setInviteData: (val: InviteData) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  isSubmitting?: boolean;
 }
 
-export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }: InviteUserModalProps) => {
+export const InviteUserModal = ({
+  inviteData,
+  setInviteData,
+  onSubmit,
+  onClose,
+  isSubmitting = false,
+}: InviteUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const perms = inviteData.permissions || [];
 
@@ -45,7 +52,7 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
 
   return createPortal((
     <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0" onClick={onClose} />
+      <div className="absolute inset-0" onClick={() => !isSubmitting && onClose()} />
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 border-b border-line-2 shrink-0 flex items-center justify-between">
@@ -196,8 +203,12 @@ export const InviteUserModal = ({ inviteData, setInviteData, onSubmit, onClose }
           <div className="flex items-center gap-3 px-6 py-4 border-t border-line-2 shrink-0">
             <Badge variant="primary" className="text-xs">{perms.length} page permissions selected</Badge>
             <div className="flex gap-3 ml-auto">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit" variant="primary">Add Dispatcher</Button>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding…' : 'Add Dispatcher'}
+              </Button>
             </div>
           </div>
         </form>

@@ -6,6 +6,7 @@ export * from './Card';
 export * from './StatCard';
 export * from './Pagination';
 export * from './EmptyState';
+export * from './QueryFeedback';
 export * from './SectionHeader';
 export * from './MultiCalendar';
 export * from './MultiDatePicker';
