@@ -1,4 +1,4 @@
-import { Users, Shield, Mail, Building2 } from 'lucide-react';
+import { Mail, Building2 } from 'lucide-react';
 import { Card, Badge, Avatar } from '@/shared/components/ui';
 import { ALL_PERMISSIONS } from '../permissions';
 
@@ -46,29 +46,12 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {user.role === 'admin' ? (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-light/20 text-primary rounded-md w-fit border border-primary/20">
-                      <Shield size={12} />
-                      <span className="text-xs font-medium">Admin</span>
-                    </div>
-                  ) : user.role === 'facility' ? (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/10 text-accent rounded-md w-fit border border-accent/20">
-                      <Building2 size={12} />
-                      <span className="text-xs font-medium">Facility User</span>
-                    </div>
-                  ) : user.role === 'dispatcher' ? (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-bg text-ink-3 rounded-md w-fit border border-line-2">
-                      <Users size={12} />
-                      <span className="text-xs font-medium">Dispatch</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-bg text-ink-3 rounded-md w-fit border border-line-2 max-w-[200px]">
-                      <Users size={12} className="shrink-0" />
-                      <span className="text-xs font-medium truncate" title={user.roleLabel || user.role}>
-                        {user.roleLabel || user.role}
-                      </span>
-                    </div>
-                  )}
+                  <span
+                    className="text-sm font-medium text-ink"
+                    title={user.middleName || undefined}
+                  >
+                    {user.middleName?.trim() || '—'}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   {user.role === 'admin' ? (

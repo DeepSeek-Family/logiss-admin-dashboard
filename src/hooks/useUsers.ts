@@ -14,7 +14,6 @@ export interface User {
   email?: string;
   contact?: string;
   role: string;
-  roleLabel?: string;
   status: 'active' | 'inactive';
   lastLogin?: string;
   permissions?: string[];
@@ -28,14 +27,13 @@ export const useUsers = () => {
 
   const users: User[] = (apiResponse?.data || []).map((d) => ({
     id: d._id || d.id || '',
-    name: [d.firstName, d.middleName, d.lastName].filter(Boolean).join(' ') || 'Dispatcher User',
+    name: [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Dispatcher User',
     firstName: d.firstName,
     middleName: d.middleName,
     lastName: d.lastName,
     email: d.email,
     contact: d.contact,
-    role: (d.role || d.middleName || 'dispatcher').toLowerCase(),
-    roleLabel: (d.middleName || d.role || 'Dispatcher').trim(),
+    role: (d.role || 'dispatcher').toLowerCase(),
     status: d.isBanned ? 'inactive' : 'active',
     lastLogin: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Active',
     permissions: d.accessScope || [],
