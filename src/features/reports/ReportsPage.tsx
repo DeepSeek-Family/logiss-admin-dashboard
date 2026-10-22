@@ -259,7 +259,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
 
           <div className="flex-1 overflow-hidden bg-white min-w-0">
             {selectedReport ? (
-              <DetailPanel reportId={selectedReport._id} />
+              <DetailPanel reportId={selectedReport._id} previewReport={selectedReport} />
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-12">
                 <div className="w-14 h-14 bg-bg rounded-2xl flex items-center justify-center mb-4">

@@ -5,7 +5,12 @@ import {
   type IIncidentReport,
 } from "@/redux/apivtwo/dashboardOnvording";
 import { Loader } from "@/shared/Lodder";
-import { timeAgo, tripTypeLabel } from "@/utils/helpers";
+import { timeAgo } from "@/utils/helpers";
+import {
+  reportCardSubtitle,
+  reportCategory,
+  statusLabel,
+} from "@/features/reports/utils/helpers";
 
 interface ActiveIncidentsProps {
   onNavigate: (path: string) => void;
@@ -25,12 +30,6 @@ const statusTone = (status: string) => {
     return { badge: "urgent", icon: "bg-urgent-light text-urgent" };
   }
   return { badge: "primary", icon: "bg-primary-light text-primary" };
-};
-
-const tripDetail = (report: IIncidentReport) => {
-  const trip = report.tripId;
-  if (!trip || typeof trip === "string") return "";
-  return trip.tripReason || (trip.tripType ? tripTypeLabel(trip.tripType) : "");
 };
 
 export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
@@ -81,8 +80,8 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
         <div className="space-y-4">
           {preview.map((report) => {
             const tone = statusTone(report.reportStatus);
-            const detail = tripDetail(report);
             const when = timeAgo(report.createdAt);
+            const subtitle = reportCardSubtitle(report);
             return (
               <div
                 key={report._id}
@@ -97,15 +96,15 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-ink truncate">
-                      {report.documents}
+                      {reportCategory(report)}
                     </p>
                     <p className="text-xs text-ink-4 truncate">
-                      {detail ? `${detail} · ${when}` : when}
+                      {subtitle} · {when}
                     </p>
                   </div>
                 </div>
                 <Badge variant={tone.badge} className="shrink-0 ml-3">
-                  {report.reportStatus}
+                  {statusLabel(report.reportStatus)}
                 </Badge>
               </div>
             );

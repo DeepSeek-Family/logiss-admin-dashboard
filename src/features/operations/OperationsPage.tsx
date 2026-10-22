@@ -36,8 +36,8 @@ const Operations = ({ role }: { role?: string | null }) => {
     ['in_trip', 'assigned', 'pending_review', 'en_route', 'arrived'].includes(t?.status)
   );
   const pendingTrips = (trips || []).filter((t: any) => t?.status === 'pending_review');
-  const openReports = (reports || []).filter((r: any) => {
-    const s = String(r?.reportStatus || r?.status || '').toLowerCase();
+  const openReports = (reports || []).filter((r) => {
+    const s = String(r?.reportStatus || '').toLowerCase();
     return s === 'open' || s === 'pending' || s === 'reviewing';
   });
 

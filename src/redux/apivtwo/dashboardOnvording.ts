@@ -6,9 +6,18 @@ export interface ITripDistributionMonth {
   roundTripTrips: number;
 }
 
+export interface IReportUser {
+  _id: string;
+  id?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  email?: string;
+}
+
 export interface IIncidentReportTrip {
   _id: string;
-  userId?: string;
+  userId?: IReportUser | string;
   pickupLocation?: string | number;
   dropOffLocation?: string | number;
   stopAddress?: string | number;
@@ -31,11 +40,13 @@ export interface IIncidentReportTrip {
 
 export interface IIncidentReport {
   _id: string;
-  userId?: string;
+  userId?: IReportUser | string;
   reportStatus: string;
+  /** API category label (e.g. "Reckless or unsafe driving") */
   documents: string;
-  reportedBy?: string;
-  tripId?: IIncidentReportTrip | string;
+  reportedBy?: IReportUser | string;
+  tripId?: IIncidentReportTrip | string | null;
+  reason?: string;
   createdAt: string;
   updatedAt?: string;
 }

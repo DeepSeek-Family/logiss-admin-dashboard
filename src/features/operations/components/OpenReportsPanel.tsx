@@ -1,8 +1,10 @@
 import { FileWarning } from 'lucide-react';
 import { Card, Badge } from '@/shared/components/ui';
+import type { IIncidentReport } from '@/redux/apivtwo/dashboardOnvording';
+import { formatReportUser, reportCategory, statusLabel } from '@/features/reports/utils/helpers';
 
 interface OpenReportsPanelProps {
-  openReports: any[];
+  openReports: IIncidentReport[];
   onReviewClick: () => void;
 }
 
@@ -14,21 +16,32 @@ export const OpenReportsPanel = ({ openReports, onReviewClick }: OpenReportsPane
           <FileWarning size={14} className="text-urgent" />
           <h3 className="text-xs font-medium text-ink">Open Reports</h3>
         </div>
-        <button onClick={onReviewClick} className="text-xs font-medium text-primary hover:underline">View all</button>
+        <button
+          type="button"
+          onClick={onReviewClick}
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          View all
+        </button>
       </div>
       <div className="divide-y divide-line-2">
-        {openReports.slice(0, 4).map((report: any) => (
+        {openReports.slice(0, 4).map((report) => (
           <div
-            key={report?.id}
+            key={report._id}
             onClick={onReviewClick}
+            onKeyDown={(e) => e.key === 'Enter' && onReviewClick()}
+            role="button"
+            tabIndex={0}
             className="px-4 py-3 flex items-center justify-between hover:bg-bg cursor-pointer transition-colors group"
           >
             <div className="min-w-0">
-              <p className="text-xs font-medium text-ink truncate">{report?.type || 'Incident'}</p>
-              <p className="text-xs text-ink-4">By {report?.filedBy?.name || 'Unknown'}</p>
+              <p className="text-xs font-medium text-ink truncate">{reportCategory(report)}</p>
+              <p className="text-xs text-ink-4 truncate">
+                By {formatReportUser(report.reportedBy)}
+              </p>
             </div>
-            <Badge variant={report?.severity === 'high' ? 'urgent' : 'warning'} className="flex-shrink-0 ml-2">
-              {report?.severity || 'medium'}
+            <Badge variant="warning" className="flex-shrink-0 ml-2">
+              {statusLabel(report.reportStatus)}
             </Badge>
           </div>
         ))}
