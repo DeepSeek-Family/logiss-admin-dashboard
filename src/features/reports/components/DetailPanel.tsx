@@ -253,11 +253,11 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
 
             <Field label="Reported about" value={subjectName} />
 
-            <Field label="Subject email" value={subjectEmail} />
+            <Field label="Email" value={subjectEmail} />
 
             <Field label="Filed by" value={reporterName} />
 
-            <Field label="Reporter email" value={reporterEmail} />
+            <Field label="Email" value={reporterEmail} />
 
           </div>
 
