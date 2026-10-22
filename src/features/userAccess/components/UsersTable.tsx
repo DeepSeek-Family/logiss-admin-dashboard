@@ -1,14 +1,22 @@
+import { useState } from 'react';
 import { Mail, Building2 } from 'lucide-react';
 import { Card, Badge, Avatar } from '@/shared/components/ui';
 import { ALL_PERMISSIONS } from '../permissions';
+import { AccessScopeModal } from './AccessScopeModal';
 
 interface UsersTableProps {
   users: any[];
   onToggleStatus: (id: string) => void;
 }
 
+const scopeTriggerClass =
+  'text-left rounded-lg transition-colors hover:ring-2 hover:ring-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
+
 export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
+  const [scopeUser, setScopeUser] = useState<any | null>(null);
+
   return (
+    <>
     <Card className="overflow-hidden border-line-2 shadow-sm">
       <div className="overflow-x-auto scrollbar-hide">
         <table className="w-full text-left">
@@ -55,11 +63,24 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
                 </td>
                 <td className="px-6 py-4">
                   {user.role === 'admin' ? (
-                    <span className="text-xs font-medium text-ink-3">Full access</span>
+                    <button type="button" className={scopeTriggerClass} onClick={() => setScopeUser(user)}>
+                      <span className="text-xs font-medium text-primary underline-offset-2 hover:underline">
+                        Full access · {ALL_PERMISSIONS.length} pages
+                      </span>
+                    </button>
                   ) : user.role === 'facility' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-3"><Building2 size={11} className="text-ink-4" />{user.facility || 'No facility set'}</span>
+                    <button type="button" className={scopeTriggerClass} onClick={() => setScopeUser(user)}>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-3 hover:text-primary">
+                        <Building2 size={11} className="text-ink-4" />
+                        {user.facility || 'Facility'} · view pages
+                      </span>
+                    </button>
                   ) : (
-                    <Badge variant="primary" className="text-xs">{(user.permissions?.length ?? 0)} / {ALL_PERMISSIONS.length} permissions</Badge>
+                    <button type="button" className={scopeTriggerClass} onClick={() => setScopeUser(user)}>
+                      <Badge variant="primary" className="text-xs cursor-pointer">
+                        {(user.permissions?.length ?? 0)} / {ALL_PERMISSIONS.length} permissions
+                      </Badge>
+                    </button>
                   )}
                 </td>
                 <td className="px-6 py-4">
@@ -92,5 +113,8 @@ export const UsersTable = ({ users, onToggleStatus }: UsersTableProps) => {
         </table>
       </div>
     </Card>
+
+    {scopeUser ? <AccessScopeModal user={scopeUser} onClose={() => setScopeUser(null)} /> : null}
+    </>
   );
 };
