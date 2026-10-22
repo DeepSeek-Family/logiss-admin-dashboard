@@ -1,60 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Driver, driverService } from '../services/driverService';
+import { useMemo, useState } from 'react';
+import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { mapApiDriver } from '@/features/drivers/utils/helpers';
+
+export type Driver = ReturnType<typeof mapApiDriver>;
 
 export const useDrivers = (initialFilters: { status?: string } = {}) => {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters] = useState(initialFilters);
+  const { data, isLoading, isError, refetch } = useGetDriversQuery(
+    { page: 1, limit: 200 },
+    { refetchOnMountOrArgChange: true },
+  );
 
-  const fetchDrivers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await driverService.getDrivers(filters);
-      setDrivers(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch drivers');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    fetchDrivers();
-  }, [fetchDrivers]);
-
-  const addDriver = async (driverData: Partial<Driver>) => {
-    try {
-      setError(null);
-      const newDriver = await driverService.createDriver(driverData);
-      setDrivers((prev: Driver[]) => [newDriver, ...prev]);
-      return newDriver;
-    } catch (err: any) {
-      setError(err.message || 'Failed to add driver');
-      throw err;
-    }
-  };
-
-  const updateDriverStatus = async (id: string, status: string) => {
-    try {
-      setError(null);
-      const updated = await driverService.updateDriver(id, { status });
-      setDrivers((prev: Driver[]) => prev.map((d: Driver) => d.id === id ? updated : d));
-      return updated;
-    } catch (err: any) {
-      setError(err.message || 'Failed to update driver');
-      throw err;
-    }
-  };
+  const drivers = useMemo(() => {
+    const list = (data?.data ?? []).map(mapApiDriver);
+    if (!filters.status || filters.status === 'all') return list;
+    return list.filter((d) => d.status === filters.status);
+  }, [data, filters.status]);
 
   return {
     drivers,
-    loading,
-    error,
-    addDriver,
-    updateDriverStatus,
-    setFilters,
-    refresh: fetchDrivers
+    loading: isLoading,
+    error: isError ? 'Failed to load drivers' : null,
+    setFilters: () => {},
+    refresh: refetch,
+    addDriver: async () => {
+      throw new Error('Use Drivers page / API to add drivers');
+    },
+    updateDriverStatus: async () => {
+      throw new Error('Use Drivers page / API to update driver status');
+    },
   };
 };

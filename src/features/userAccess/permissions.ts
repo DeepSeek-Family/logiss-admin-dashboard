@@ -65,9 +65,6 @@ export const DEFAULT_DISPATCH_PERMISSIONS = [
   '/reports',
 ];
 
-import { FACILITY_PROGRAMS } from '@/data/mockData';
-export const FACILITIES = FACILITY_PROGRAMS.filter(f => f.active).map(f => f.name);
-
 export const ROLE_LABEL: Record<string, string> = {
   admin: 'Admin',
   dispatcher: 'Dispatch',

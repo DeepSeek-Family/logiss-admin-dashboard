@@ -5,8 +5,8 @@ import {
   Clock, CalendarDays, FileWarning, Loader2
 } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui';
-import { opsStats } from '@/data/mockData';
 import { useTrips } from '@/hooks/useTrips';
+import { useDrivers } from '@/hooks/useDrivers';
 import { useGetAllReportsQuery } from '@/redux/apivtwo/dashboardOnvording';
 
 import {
@@ -21,13 +21,14 @@ const Operations = ({ role }: { role?: string | null }) => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading } = useTrips();
+  const { drivers, loading: driversLoading } = useDrivers();
   const { data: reportsData, isLoading: reportsLoading } = useGetAllReportsQuery({
     page: 1,
     limit: 100,
   });
   const reports = reportsData?.data ?? [];
 
-  const loading = tripsLoading || reportsLoading;
+  const loading = tripsLoading || reportsLoading || driversLoading;
 
   if (loading) {
     return (
@@ -45,7 +46,23 @@ const Operations = ({ role }: { role?: string | null }) => {
     ['in_trip', 'assigned', 'pending_review', 'en_route', 'arrived'].includes(t?.status)
   );
   const pendingTrips = (trips || []).filter((t: any) => t?.status === 'pending_review');
-  const openReports = (reports || []).filter((r: any) => r?.status === 'open');
+  const openReports = (reports || []).filter((r: any) => {
+    const s = String(r?.reportStatus || r?.status || '').toLowerCase();
+    return s === 'open' || s === 'pending' || s === 'reviewing';
+  });
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const tripsToday = (trips || []).filter((t: any) => {
+    const d = t?.serviceDate || t?.scheduledTime;
+    return d && String(d).slice(0, 10) === todayKey;
+  }).length;
+  const onDuty = (drivers || []).filter((d: any) => d?.onDuty || d?.isOnDuty).length;
+  const completedToday = (trips || []).filter((t: any) => {
+    const d = t?.serviceDate || t?.scheduledTime;
+    return t?.status === 'completed' && d && String(d).slice(0, 10) === todayKey;
+  }).length;
+  const completionRate =
+    tripsToday > 0 ? Math.round((completedToday / tripsToday) * 100) : 0;
 
   const totalPages = Math.ceil(activeTrips.length / itemsPerPage);
   const paginatedActiveTrips = activeTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -60,9 +77,9 @@ const Operations = ({ role }: { role?: string | null }) => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Trips Today" value={opsStats.todaysTrips} sub={`${pendingTrips.length} pending`} icon={Truck} accent="primary" />
-        <StatCard label="On Duty Now" value={`${opsStats.driversOnDuty}/${opsStats.driversTotal}`} sub="Active fleet" icon={Users} accent="accent" />
-        <StatCard label="Success Rate" value={`${opsStats.completionRate}%`} sub="Avg rating" icon={BarChart3} accent="accent" trend="+2.1%" />
+        <StatCard label="Trips Today" value={tripsToday} sub={`${pendingTrips.length} pending`} icon={Truck} accent="primary" />
+        <StatCard label="On Duty Now" value={`${onDuty}/${drivers.length}`} sub="Active fleet" icon={Users} accent="accent" />
+        <StatCard label="Completed Today" value={`${completionRate}%`} sub={`${completedToday} of ${tripsToday || '—'} trips`} icon={BarChart3} accent="accent" />
         <StatCard label="Action Required" value={pendingTrips.length + openReports.length} sub="Needs attention" icon={AlertTriangle} accent="warning" />
       </div>
 

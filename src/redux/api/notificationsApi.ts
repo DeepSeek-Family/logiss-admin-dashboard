@@ -29,6 +29,12 @@ export interface ISendNotificationPayload {
   [key: string]: any
 }
 
+export interface INotificationsQueryParams {
+  page?: number
+  limit?: number
+  search?: string
+}
+
 export interface IGetNotificationsResponse {
   success: boolean
   message?: string
@@ -41,13 +47,38 @@ export interface IGetNotificationsResponse {
   }
 }
 
+const normalizeNotificationsResponse = (response: unknown): IGetNotificationsResponse => {
+  const body = response as Record<string, unknown> | null | undefined
+  const list = Array.isArray(body?.data)
+    ? (body.data as INotificationItem[])
+    : Array.isArray(response)
+      ? (response as INotificationItem[])
+      : []
+  return {
+    success: body?.success !== false,
+    message: body?.message as string | undefined,
+    data: list,
+    pagination: body?.pagination as IGetNotificationsResponse['pagination'],
+  }
+}
+
 export const notificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getNotifications: builder.query<IGetNotificationsResponse, void>({
-      query: () => ({
-        url: '/notification',
-        method: 'GET',
-      }),
+    getNotifications: builder.query<IGetNotificationsResponse, INotificationsQueryParams | void>({
+      query: (params) => {
+        const queryParams: Record<string, string | number> = {}
+        if (params && typeof params === 'object') {
+          if (params.page != null) queryParams.page = params.page
+          if (params.limit != null) queryParams.limit = params.limit
+          if (params.search?.trim()) queryParams.search = params.search.trim()
+        }
+        return {
+          url: '/notification',
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeNotificationsResponse,
       providesTags: ['Notifications'],
     }),
     sendNotification: builder.mutation<{ success: boolean; message?: string; data?: any }, ISendNotificationPayload>({

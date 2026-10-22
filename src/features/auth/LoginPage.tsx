@@ -57,32 +57,38 @@ const Login = ({ setRole }: { setRole: (role: string | null) => void }) => {
       const response = await login({ email, password, fcmToken, deviceToken: fcmToken }).unwrap();
       if (response && (response.success || response.data)) {
         const data = response.data;
+        const dataObj =
+          typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : null;
+        const nested =
+          dataObj && typeof dataObj.data === 'object' && dataObj.data !== null
+            ? (dataObj.data as Record<string, unknown>)
+            : null;
         const accessToken =
           (typeof data === 'string' && data.length > 20 ? data : null) ||
-          data?.accessToken ||
-          data?.token ||
-          data?.access_token ||
-          data?.data?.accessToken ||
-          data?.data?.token ||
-          data?.data?.access_token ||
+          (dataObj?.accessToken as string | undefined) ||
+          (dataObj?.token as string | undefined) ||
+          (dataObj?.access_token as string | undefined) ||
+          (nested?.accessToken as string | undefined) ||
+          (nested?.token as string | undefined) ||
+          (nested?.access_token as string | undefined) ||
           response.accessToken ||
           response.token;
 
         const refreshToken =
-          data?.refreshToken ||
-          data?.refresh_token ||
-          data?.data?.refreshToken ||
+          (dataObj?.refreshToken as string | undefined) ||
+          (dataObj?.refresh_token as string | undefined) ||
+          (nested?.refreshToken as string | undefined) ||
           response.refreshToken;
 
         const user =
-          (typeof data === 'object' && data !== null && data.user) ||
-          (typeof data?.data === 'object' && data.data !== null && data.data.user) ||
-          (typeof data === 'object' && data !== null ? data : null) ||
+          (dataObj?.user as { role?: string } | undefined) ||
+          (nested?.user as { role?: string } | undefined) ||
+          (dataObj as { role?: string } | null) ||
           response.user;
 
         const rawRole = (
           user?.role ||
-          (typeof data === 'object' && data !== null ? data?.role : null) ||
+          (dataObj?.role as string | undefined) ||
           response.role ||
           selectedRole ||
           'admin'

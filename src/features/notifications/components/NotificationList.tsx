@@ -3,8 +3,8 @@ import { timeAgo } from '@/utils/helpers';
 
 interface NotificationListProps {
   filtered: any[];
-  onMarkRead: (id: number) => void;
-  onDelete: (id: number) => void;
+  onMarkRead: (id: string | number) => void;
+  onDelete: (id: string | number) => void;
 }
 
 const urgentTypes = ['critical', 'warning'];

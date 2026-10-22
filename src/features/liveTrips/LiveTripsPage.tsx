@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Card, Avatar, Badge, Button, TripStatusBadge } from '@/shared/components/ui';
-import { willCallQueue } from '@/data/mockData';
 import { useTrips } from '@/hooks/useTrips';
 import { useDrivers } from '@/hooks/useDrivers';
 import { tripTypeLabel, formatTime } from '@/utils/helpers';
@@ -141,23 +140,11 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
 
           <section className="space-y-2">
             <p className="text-xs text-ink-4 px-1 mb-1">Will Call Standby</p>
-            {willCallQueue.map(item => (
-              <Card key={item.tripId} className="p-4 border-l-2 border-l-warning">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-ink">{item.rider}</span>
-                  <span className="text-xs text-ink-4">#{item.tripId}</span>
-                </div>
-                <p className="text-xs text-ink-4 mb-3 flex items-center gap-1"><MapPin size={10} className="text-primary shrink-0" />{item.pickupLocation}</p>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-full bg-warning border-none hover:bg-warning/80 text-white"
-                  onClick={() => setDispatchModalTrip(item)}
-                >
-                  Dispatch Return
-                </Button>
-              </Card>
-            ))}
+            <Card className="p-4 border border-line-2 bg-bg/40">
+              <p className="text-xs text-ink-4 text-center py-2">
+                Will-call queue will appear here when the API provides standby trips.
+              </p>
+            </Card>
           </section>
         </div>
 
@@ -175,7 +162,9 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-ink-4">#{selectedTrip.id}</span>
                   <TripStatusBadge status={selectedTrip.status} />
-                  <span className="text-xs text-ink-4">Started {selectedTrip.actualPickup || '8:30 AM'}</span>
+                  <span className="text-xs text-ink-4">
+                    Pickup {selectedTrip.requestedPickup || formatTime(selectedTrip.scheduledTime) || '—'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -220,14 +209,6 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               <div className="flex items-center gap-2 px-3 py-2.5 bg-bg rounded-xl mb-4 text-xs text-ink-4 overflow-hidden">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                 <span className="truncate text-ink">{selectedTrip.pickup}</span>
-
-                {(selectedTrip.stop && !Array.isArray(selectedTrip.stop)) && (
-                  <>
-                    <MoveRight size={11} className="text-ink-4/50 shrink-0" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                    <span className="truncate text-ink">{selectedTrip.stop}</span>
-                  </>
-                )}
 
                 {Array.isArray(selectedTrip.stops) && selectedTrip.stops.map((s: string, i: number) => (
                   <span key={i} className="flex items-center gap-2 min-w-0">

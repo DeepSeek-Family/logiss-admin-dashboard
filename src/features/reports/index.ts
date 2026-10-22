@@ -1,5 +1,4 @@
-export * from './components/CreateReportModal';
 export * from './components/CancelTripModal';
-export * from './components/SendWarningModal';
-export * from './components/ReportCard';
-export * from './components/DetailPanel';
+export { default as ReportsPage } from './ReportsPage';
+export { DetailPanel } from './components/DetailPanel';
+export { ReportCard } from './components/ReportCard';

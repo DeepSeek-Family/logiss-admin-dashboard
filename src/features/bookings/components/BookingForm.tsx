@@ -567,7 +567,7 @@ export const BookingForm = () => {
     const mobilityId = isMongoId(form.mobilityId)
       ? form.mobilityId
       : isMongoId(mobilityOption?.id)
-        ? mobilityOption.id
+        ? (mobilityOption?.id ?? '')
         : '';
     const payerSource = form.payerSourceId;
     if (!isMongoId(payerSource) || !isMongoId(mobilityId) || !isMongoId(apiCountyId)) return null;
@@ -797,7 +797,7 @@ export const BookingForm = () => {
     const mobilityId = isMongoId(form.mobilityId)
       ? form.mobilityId
       : isMongoId(mobilityOption?.id)
-        ? mobilityOption.id
+        ? mobilityOption?.id
         : undefined;
     if (!isMongoId(mobilityId)) {
       toast.error('Please select a valid mobility requirement');

@@ -1,76 +1,45 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Trip, tripService } from '../services/tripService';
-import { quoteFares } from './usePricing';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { updateTrip as updateTripAction, setTrips as setTripsAction } from '@/redux/slice/tripsSlice';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  useGetAllBookingsQuery,
+  useUpdateBookingMutation,
+} from '@/redux/api/bookingApi';
+import { mapApiBooking, mapPatchToApiPayload } from '@/features/bookings/utils/helpers';
+
+export type Trip = ReturnType<typeof mapApiBooking>;
 
 export const useTrips = (initialFilters: { status?: string } = {}) => {
-  const dispatch = useAppDispatch();
-  const reduxTrips = useAppSelector((state) => state.trips.items);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState(initialFilters);
+  const { data, isLoading, isError, refetch } = useGetAllBookingsQuery(
+    { page: 1, limit: 500 },
+    { refetchOnMountOrArgChange: true },
+  );
+  const [updateBookingMutation] = useUpdateBookingMutation();
 
-  const fetchTrips = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await tripService.getTrips(filters);
-      dispatch(setTripsAction(data));
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, dispatch]);
+  const allTrips = useMemo(
+    () => (data?.data ?? []).map(mapApiBooking),
+    [data],
+  );
 
-  useEffect(() => {
-    fetchTrips();
-  }, [fetchTrips]);
+  const trips = useMemo(() => {
+    if (!filters.status || filters.status === 'all') return allTrips;
+    return allTrips.filter((t) => t.status === filters.status);
+  }, [allTrips, filters.status]);
 
-  const trips = filters.status && filters.status !== 'all'
-    ? reduxTrips.filter(t => t.status === filters.status)
-    : reduxTrips;
+  const updateTrip = useCallback(
+    async (id: string, patch: Record<string, unknown>) => {
+      const body = mapPatchToApiPayload(patch);
+      await updateBookingMutation({ id, payload: body }).unwrap();
+      refetch();
+    },
+    [updateBookingMutation, refetch],
+  );
 
-  const updateTrip = useCallback(async (id: string, patch: Partial<Trip>) => {
-    let nextPatch = patch;
-    if ('insideCounty' in patch && !('cost' in patch) && !('copay' in patch)) {
-      const current = reduxTrips.find(t => t.id === id);
-      if (current) {
-        const merged = { ...current, ...patch };
-        const miles = merged.miles ?? (parseFloat(String(merged.distance || '').replace(/[^\d.]/g, '')) || 0);
-        const quoted = quoteFares({
-          insideCounty: merged.insideCounty,
-          tripType: merged.type,
-          miles,
-          calculatedMiles: merged.calculatedMiles ?? miles,
-          actualMiles: merged.actualMiles,
-          mobility: merged.mobility,
-          stops: merged.stops,
-          fundingSourceId: merged.fundingSourceId,
-          fundingSource: merged.fundingSource,
-          tripDate: merged.scheduledTime,
-          pickup: merged.pickup,
-          dropoff: merged.dropoff,
-        });
-        nextPatch = {
-          ...patch,
-          ...quoted,
-          miles: quoted.billedMiles,
-          billingClassId: quoted.billingClassId,
-          billingClassName: quoted.billingClassName,
-        };
-      }
-    }
-    dispatch(updateTripAction({ id, patch: nextPatch }));
-    try {
-      await tripService.updateTrip(id, nextPatch);
-    } catch (err: any) {
-      setError(err.message);
-      fetchTrips();
-    }
-  }, [fetchTrips, reduxTrips, dispatch]);
-
-  return { trips, loading, error, setFilters, refresh: fetchTrips, updateTrip };
+  return {
+    trips,
+    loading: isLoading,
+    error: isError ? 'Failed to load trips' : null,
+    setFilters,
+    refresh: refetch,
+    updateTrip,
+  };
 };
-

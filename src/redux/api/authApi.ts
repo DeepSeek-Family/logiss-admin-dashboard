@@ -11,11 +11,30 @@ export interface LoginRequest {
 export interface LoginResponse {
   success: boolean
   message: string
-  data: {
-    accessToken: string
-    refreshToken: string
-    [key: string]: any
-  }
+  data?:
+    | string
+    | {
+        accessToken?: string
+        refreshToken?: string
+        token?: string
+        access_token?: string
+        refresh_token?: string
+        user?: { role?: string; [key: string]: unknown }
+        role?: string
+        data?: {
+          accessToken?: string
+          token?: string
+          access_token?: string
+          refreshToken?: string
+          user?: { role?: string; [key: string]: unknown }
+        }
+        [key: string]: unknown
+      }
+  accessToken?: string
+  token?: string
+  refreshToken?: string
+  user?: { role?: string; [key: string]: unknown }
+  role?: string
 }
 
 export interface ChangePasswordRequest {
