@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Phone, Mail, Car, ShieldCheck,
-  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText
+  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
@@ -22,12 +22,14 @@ interface DriverProfileProps {
   onAssignVehicle?: () => void;
   onViewFleet?: () => void;
   assignedVehicle?: { id: string; name: string; type: string; plate: string } | null;
+  onToggleBan?: () => void;
+  banToggleLoading?: boolean;
 }
 
 export const DriverProfile: React.FC<DriverProfileProps> = ({
   selectedDriver, setSelectedDriverId, role, trips,
   tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10, onTripsPageChange,
-  onAssignVehicle, onViewFleet, assignedVehicle
+  onAssignVehicle, onViewFleet, assignedVehicle, onToggleBan, banToggleLoading
 }) => {
   const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'docs'>('overview');
   const [preview, setPreview] = useState<string | null>(null);
@@ -90,9 +92,16 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-ink">{selectedDriver?.name}</h1>
               <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${
-                appStatus === 'approved' ? 'text-accent bg-accent/10' : appStatus === 'rejected' ? 'text-urgent bg-urgent/10' : 'text-warning bg-warning/10'
+                selectedDriver?.isBanned
+                  ? 'text-urgent bg-urgent/10'
+                  : appStatus === 'approved'
+                    ? 'text-accent bg-accent/10'
+                    : appStatus === 'rejected'
+                      ? 'text-urgent bg-urgent/10'
+                      : 'text-warning bg-warning/10'
               }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current" /> {appStatus}
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                {selectedDriver?.isBanned ? 'Banned' : appStatus}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-ink-4">
@@ -129,6 +138,17 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
               onClick={() => selectedDriver?.email && window.open(`mailto:${selectedDriver.email}`)}>
               Email
             </Button>
+            {onToggleBan && (
+              <Button
+                variant={selectedDriver?.isBanned ? 'primary' : 'outline'}
+                icon={Ban}
+                className={`h-9 text-sm ${selectedDriver?.isBanned ? '' : 'text-urgent border-urgent/30 hover:bg-urgent hover:text-white'}`}
+                onClick={onToggleBan}
+                disabled={banToggleLoading}
+              >
+                {banToggleLoading ? 'Updating…' : selectedDriver?.isBanned ? 'Unban driver' : 'Ban driver'}
+              </Button>
+            )}
             {/* {role === 'admin' && (
               <Button variant="primary" className="h-9 text-sm"
                 onClick={onAssignVehicle}>

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import {
   useGetDispatchersQuery,
   useCreateDispatcherMutation,
-  useDeleteDispatcherMutation,
 } from '@/redux/api/dispatcherManagementApi';
+import { useToggleUserBannedMutation } from '@/redux/api/userApi';
 
 export interface User {
   id: string;
@@ -28,7 +28,7 @@ export const useUsers = () => {
     refetch,
   } = useGetDispatchersQuery();
   const [createDispatcher] = useCreateDispatcherMutation();
-  const [deleteDispatcher] = useDeleteDispatcherMutation();
+  const [toggleUserBanned] = useToggleUserBannedMutation();
   const [error, setError] = useState<string | null>(null);
 
   const users: User[] = (apiResponse?.data || []).map((d) => ({
@@ -46,7 +46,7 @@ export const useUsers = () => {
   }));
 
   const toggleStatus = async (id: string) => {
-    await deleteDispatcher(id).unwrap();
+    await toggleUserBanned(id).unwrap();
     refetch();
   };
 

@@ -8,6 +8,7 @@ import {
   useGetDriverTripHistoryQuery,
   type IDriverUser,
 } from '@/redux/api/driversApi';
+import { useToggleUserBannedMutation } from '@/redux/api/userApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { apiErrorMessage, mapApiBooking } from '@/features/bookings/utils/helpers';
 import toast from 'react-hot-toast';
@@ -64,6 +65,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   );
   const historyPagination = historyResponse?.pagination;
   const [createDriver, { isLoading: isCreatingDriver }] = useCreateDriverMutation();
+  const [toggleUserBanned, { isLoading: isBanToggling }] = useToggleUserBannedMutation();
 
   const drivers = useMemo(
     () => (driversResponse?.data || []).map(mapApiDriver),
@@ -133,12 +135,27 @@ const Drivers = ({ role }: { role?: string | null }) => {
     );
   }
 
+  const handleToggleDriverBan = async () => {
+    if (!selectedDriver?.id) return;
+    try {
+      const res = await toggleUserBanned(selectedDriver.id).unwrap();
+      const nextBanned = res.data?.isBanned ?? !selectedDriver.isBanned;
+      toast.success(
+        res.message || (nextBanned ? 'Driver banned' : 'Driver unbanned'),
+      );
+      refetch();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to update ban status'));
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const config: { [key: string]: any } = {
       available: { variant: 'accent', label: 'Available' },
       in_trip: { variant: 'solid_accent', label: 'In Trip' },
       break: { variant: 'warning', label: 'On Break' },
       off_duty: { variant: 'neutral', label: 'Off Duty' },
+      banned: { variant: 'urgent', label: 'Banned' },
     };
     const { variant, label } = config[status] || { variant: 'neutral', label: status };
     return <Badge variant={variant} className="w-fit">{label}</Badge>;
@@ -246,6 +263,8 @@ const Drivers = ({ role }: { role?: string | null }) => {
           onAssignVehicle={() => { setShowAssignModal(true); setSelectedVehicleId(null); }}
           onViewFleet={() => navigate('/fleet')}
           assignedVehicle={assignedVehicles[selectedDriver.id] || null}
+          onToggleBan={() => void handleToggleDriverBan()}
+          banToggleLoading={isBanToggling}
         />
       </>
     );

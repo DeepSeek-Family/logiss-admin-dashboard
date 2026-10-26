@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Phone, Mail, MapPin, Activity, Star,
-  ShieldCheck, Copy, User, Repeat, ChevronLeft, Loader2
+  ShieldCheck, Copy, User, Repeat, ChevronLeft, Loader2, Ban
 } from 'lucide-react';
 import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
@@ -24,13 +24,16 @@ interface RiderProfileProps {
   copiedPhone: boolean;
   onCopyPhone: (phone: string) => void;
   onEditRider?: () => void;
+  onToggleBan?: () => void;
+  banToggleLoading?: boolean;
 }
 
 export const RiderProfile: React.FC<RiderProfileProps> = ({
   selectedRider, trips, tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10,
   onTripsPageChange, role, onBack,
-  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider
+  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider, onToggleBan, banToggleLoading
 }) => {
+  const isBanned = selectedRider?.status === 'banned' || selectedRider?.isBanned;
   const TABS = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'trips', label: 'Trip history', icon: Repeat },
@@ -147,6 +150,17 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             >
               Email
             </Button>
+            {onToggleBan && (
+              <Button
+                variant={isBanned ? 'primary' : 'outline'}
+                icon={Ban}
+                className={`h-9 text-sm ${isBanned ? '' : 'text-urgent border-urgent/30 hover:bg-urgent hover:text-white'}`}
+                onClick={onToggleBan}
+                disabled={banToggleLoading}
+              >
+                {banToggleLoading ? 'Updating…' : isBanned ? 'Unban rider' : 'Ban rider'}
+              </Button>
+            )}
             {role === 'admin' && (
               <Button
                 variant="primary"

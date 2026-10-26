@@ -1,5 +1,6 @@
 import { baseApi } from './baseApi'
 import './api/authApi'
+import './api/userApi'
 import './api/bookingApi'
 import './api/ridersApi'
 import './api/driversApi'

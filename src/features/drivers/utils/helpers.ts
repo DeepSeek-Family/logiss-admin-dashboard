@@ -86,7 +86,8 @@ export const mapApiDriver = (driver: IDriverUser) => {
   const onDuty = Boolean(driver.isOnDuty)
 
   let status = 'off_duty'
-  if (onDuty) status = 'available'
+  if (driver.isBanned) status = 'banned'
+  else if (onDuty) status = 'available'
   else if (appStatus === 'pending') status = 'off_duty'
 
   return {

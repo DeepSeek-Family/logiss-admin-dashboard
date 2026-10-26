@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from '@/redux/api/ridersApi';
-import { mapApiBooking } from '@/features/bookings/utils/helpers';
+import { useToggleUserBannedMutation } from '@/redux/api/userApi';
+import { mapApiBooking, apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { mapApiRider } from '@/features/riders/utils/helpers';
+import toast from 'react-hot-toast';
 
 import {
   RiderProfile,
@@ -45,6 +47,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const { data: ridersResponse, isLoading, isError, error, refetch } = useGetRidersQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
+  const [toggleUserBanned, { isLoading: isBanToggling }] = useToggleUserBannedMutation();
 
   const { data: historyResponse, isFetching: historyLoading } = useGetRiderHistoryQuery(
     { id: selectedRiderId || '', page: historyPage, limit: historyLimit },
@@ -71,8 +74,42 @@ const Riders = ({ role }: { role?: string | null }) => {
     setTimeout(() => setCopiedPhone(false), 2000);
   };
 
-  const updateRiderStatus = (riderId: string, status: string) => {
+  const toggleRiderBan = async (riderId: string, riderName?: string) => {
+    const rider = riders.find((r) => r.id === riderId);
+    const isBanned = rider?.status === 'banned' || rider?.isBanned;
+    try {
+      const res = await toggleUserBanned(riderId).unwrap();
+      setOverrides((prev) => {
+        const { [riderId]: _, ...rest } = prev;
+        return rest;
+      });
+      const nextBanned = res.data?.isBanned ?? !isBanned;
+      toast.success(
+        res.message ||
+          (nextBanned
+            ? `${riderName || rider?.name || 'Rider'} has been banned`
+            : `${riderName || rider?.name || 'Rider'} is active again`),
+      );
+      void refetch();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to update ban status'));
+      throw err;
+    }
+  };
+
+  const updateRiderStatus = async (riderId: string, status: string) => {
+    const rider = riders.find((r) => r.id === riderId);
+    const isBanned = rider?.status === 'banned' || rider?.isBanned;
+    const needsBanToggle =
+      (status === 'banned' && !isBanned) || (status === 'active' && isBanned);
+
+    if (needsBanToggle) {
+      await toggleRiderBan(riderId, rider?.name);
+      return;
+    }
+
     setOverrides((prev) => ({ ...prev, [riderId]: { ...(prev[riderId] || {}), status } }));
+    toast.success(`${rider?.name || 'Rider'} marked as ${status}`);
   };
 
   const updateRider = (riderId: string, updatedFields: Record<string, any>) => {
@@ -176,6 +213,8 @@ const Riders = ({ role }: { role?: string | null }) => {
           copiedPhone={copiedPhone}
           onCopyPhone={handleCopyPhone}
           onEditRider={() => setShowEditModal(true)}
+          onToggleBan={() => void toggleRiderBan(selectedRider.id, selectedRider.name)}
+          banToggleLoading={isBanToggling}
         />
       </>
     );

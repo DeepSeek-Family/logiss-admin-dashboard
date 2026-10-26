@@ -1,5 +1,4 @@
 import { Search, ChevronRight, ChevronDown, UserCheck, UserX, Ban } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import { Card, Avatar, Badge, Pagination, SearchInput } from '@/shared/components/ui';
 import { displayDob, calculateAge } from '@/features/riders/utils/helpers';
 
@@ -14,7 +13,7 @@ interface RidersTableProps {
   itemsPerPage: number;
   setItemsPerPage: (size: number) => void;
   onRiderClick: (id: string) => void;
-  updateRiderStatus: (id: string, status: string) => void;
+  updateRiderStatus: (id: string, status: string) => void | Promise<void>;
   openStatusId: string | null;
   setOpenStatusId: (id: string | null) => void;
 }
@@ -126,9 +125,8 @@ export const RidersTable = ({
                             key={opt.value}
                             disabled={rider.status === opt.value}
                             onClick={() => {
-                              updateRiderStatus(rider.id, opt.value);
                               setOpenStatusId(null);
-                              toast.success(rider.name + ' marked as ' + opt.value);
+                              void updateRiderStatus(rider.id, opt.value);
                             }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${opt.color}`}
                           >

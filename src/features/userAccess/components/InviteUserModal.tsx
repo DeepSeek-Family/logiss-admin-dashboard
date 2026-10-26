@@ -67,7 +67,7 @@ export const InviteUserModal = ({
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
             {/* Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-ink-3 mb-1.5">First Name</label>
                 <input
@@ -79,17 +79,7 @@ export const InviteUserModal = ({
                   placeholder="Jane"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Role</label>
-                <input
-                  type="text"
-                  required
-                  value={inviteData.role}
-                  onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
-                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                  placeholder="e.g. Dispatcher, Supervisor"
-                />
-              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-ink-3 mb-1.5">Last Name</label>
                 <input
@@ -103,16 +93,29 @@ export const InviteUserModal = ({
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-ink-3 mb-1.5">Email Address</label>
-              <input
-                type="email"
-                required
-                value={inviteData.email}
-                onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                placeholder="jane@logiss.com"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteData.email}
+                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                  placeholder="jane@logiss.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-3 mb-1.5">Role</label>
+                <input
+                  type="text"
+                  required
+                  value={inviteData.role}
+                  onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
+                  placeholder="e.g. Dispatcher, Supervisor"
+                />
+              </div>
             </div>
 
             {/* Contact + Password */}
