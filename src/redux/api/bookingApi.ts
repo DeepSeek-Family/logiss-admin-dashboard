@@ -176,6 +176,8 @@ export interface IGetBookingsQueryParams {
   bookingStatus?: string
   serviceDate?: string
   driverId?: string
+  /** When true, only bookings without a driver (`/booking/approved?unassign=true`). */
+  unassign?: boolean
   [key: string]: any
 }
 
@@ -199,6 +201,8 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
     if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
     if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
     if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
+    if (params.unassign === true) queryParams.unassign = 'true'
+    else if (params.unassign === false) queryParams.unassign = 'false'
   }
   return queryParams
 }

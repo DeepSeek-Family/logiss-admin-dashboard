@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Card, Avatar, Badge } from '@/shared/components/ui';
 import { formatTime } from '@/utils/helpers';
+import { assignFilterToUnassignQuery, type DriverAssignmentFilter } from '@/features/bookings/utils/helpers';
 import { DriverDayPanel } from './DriverDayPanel';
 
 interface ScheduleTabProps {
@@ -22,7 +23,7 @@ interface ScheduleTabProps {
     todayCancelledStatusTrips: number;
   };
   isLoading?: boolean;
-  onFilterChange?: (params: { serviceDate?: string; bookingStatus?: string }) => void;
+  onFilterChange?: (params: { serviceDate?: string; bookingStatus?: string; unassign?: boolean }) => void;
 }
 
 // Timeline window: 6 AM → 10 PM (covers virtually all NEMT operating hours).
@@ -103,14 +104,20 @@ const statusAccent = (status: string) => {
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading, onFilterChange }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
     const serviceDate = formatYmd(selectedDate);
     const bookingStatus = statusFilter !== 'all' ? statusFilter : undefined;
-    onFilterChange?.({ serviceDate, bookingStatus });
-  }, [selectedDate, statusFilter, onFilterChange]);
+    const unassign = assignFilterToUnassignQuery(assignFilter);
+    onFilterChange?.({
+      serviceDate,
+      bookingStatus,
+      ...(unassign !== undefined ? { unassign } : {}),
+    });
+  }, [selectedDate, statusFilter, assignFilter, onFilterChange]);
 
   const isToday = sameDay(selectedDate, new Date());
 
@@ -279,6 +286,16 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           )}
         </div>
 
+        <select
+          value={assignFilter}
+          onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
+          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
+          title="Filter by driver assignment"
+        >
+          <option value="all">All assignments</option>
+          <option value="unassigned">Unassigned only</option>
+          <option value="assigned">Assigned only</option>
+        </select>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}

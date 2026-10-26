@@ -1,5 +1,16 @@
 import type { IBooking, IBookingDriver, IBookingUser, IMobilityRequirement } from '@/redux/api/bookingApi';
 
+export type DriverAssignmentFilter = 'all' | 'assigned' | 'unassigned'
+
+/** Maps UI filter to `unassign` query param for approved/schedule/history lists. */
+export const assignFilterToUnassignQuery = (
+  filter: DriverAssignmentFilter,
+): boolean | undefined => {
+  if (filter === 'unassigned') return true
+  if (filter === 'assigned') return false
+  return undefined
+}
+
 export const WEEKDAY_KEY_TO_NAME: Record<string, string> = {
   '0': 'sunday',
   '1': 'monday',

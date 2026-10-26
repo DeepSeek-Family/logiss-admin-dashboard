@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
 import { Card, Avatar, Pagination, SearchInput, TripStatusBadge } from '@/shared/components/ui';
 import { formatShortDate, money, formatTripId, formatTime } from '@/utils/helpers';
-import { isRoundTrip, resolveMediaUrl } from '@/features/bookings/utils/helpers';
+import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from '@/features/bookings/utils/helpers';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { ServiceDateFilter } from './ServiceDateFilter';
 
@@ -23,6 +23,8 @@ interface TripArchiveTabProps {
   setDriverFilter: (v: string) => void;
   payerFilter: string;
   setPayerFilter: (v: string) => void;
+  assignFilter: DriverAssignmentFilter;
+  setAssignFilter: (v: DriverAssignmentFilter) => void;
   /** `YYYY-MM-DD`, or '' for all dates. */
   serviceDate: string;
   setServiceDate: (v: string) => void;
@@ -97,6 +99,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   setDriverFilter,
   payerFilter,
   setPayerFilter,
+  assignFilter,
+  setAssignFilter,
   serviceDate,
   setServiceDate,
   isFetching,
@@ -210,19 +214,22 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               <Loader2 className="text-primary animate-spin shrink-0" size={18} aria-label="Loading trips" />
             )}
 
-            {/* Driver Filter */}
+        
+
             <div className="flex items-center gap-2">
-              <Filter size={12} className="text-ink-4" />
-              <span className="text-xs text-ink-4">Driver</span>
+              <User size={12} className="text-ink-4" />
+              <span className="text-xs text-ink-4">Assigned</span>
               <select
-                value={driverFilter}
-                onChange={(e) => { setDriverFilter(e.target.value); setCurrentPage(1); }}
+                value={assignFilter}
+                onChange={(e) => {
+                  setAssignFilter(e.target.value as DriverAssignmentFilter);
+                  setCurrentPage(1);
+                }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
-                <option value="all">All Drivers</option>
-                {(drivers || []).map((d: any) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
+                <option value="all">All</option>
+                <option value="unassigned">Unassigned</option>
+                <option value="assigned">Assigned</option>
               </select>
             </div>
 

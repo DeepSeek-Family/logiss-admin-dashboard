@@ -10,7 +10,7 @@ import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { DriverAssignSelect } from './DriverAssignSelect';
-import { isRoundTrip, resolveMediaUrl } from '../utils/helpers';
+import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from '../utils/helpers';
 
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
@@ -86,6 +86,8 @@ interface BookingsListProps {
   setBookingSearch: (val: string) => void;
   fundingFilter: string;
   setFundingFilter: (val: string) => void;
+  assignFilter?: DriverAssignmentFilter;
+  setAssignFilter?: (val: DriverAssignmentFilter) => void;
   pendingCount?: number;
   confirmedCount?: number;
   filteredTrips: any[];
@@ -116,6 +118,7 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
+  assignFilter = 'all', setAssignFilter,
   pendingCount, confirmedCount,
 
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
@@ -171,6 +174,21 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             ))}
           </select>
         </div>
+        {activeTab === 'confirmed' && setAssignFilter && (
+          <div className="flex items-center gap-2">
+            <User size={12} className="text-ink-4" />
+            <span className="text-xs text-ink-4">Driver</span>
+            <select
+              value={assignFilter}
+              onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
+              className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+            >
+              <option value="all">All</option>
+              <option value="unassigned">Unassigned</option>
+              <option value="assigned">Assigned</option>
+            </select>
+          </div>
+        )}
       </div>
 
 

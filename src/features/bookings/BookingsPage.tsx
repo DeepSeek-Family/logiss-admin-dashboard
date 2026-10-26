@@ -13,7 +13,13 @@ import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } fro
 import { CancelTripModal } from '@/features/reports';
 import { toast } from 'react-hot-toast';
 import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } from '@/features/bookings';
-import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
+import {
+  mapApiBooking,
+  mapPatchToApiPayload,
+  apiErrorMessage,
+  assignFilterToUnassignQuery,
+  type DriverAssignmentFilter,
+} from '@/features/bookings/utils/helpers';
 import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
 import { useGetAllBookingsQuery, useGetAllAssignedBookingsQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
@@ -40,6 +46,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     () => searchParams.get('searchTerm') || searchParams.get('search') || '',
   );
   const [fundingFilter, setFundingFilter] = useState('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -56,8 +63,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
+    if (activeTab === 'confirmed') {
+      const unassign = assignFilterToUnassignQuery(assignFilter);
+      if (unassign !== undefined) params.unassign = unassign;
+    }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, activeTab, assignFilter]);
 
   // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
   const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
@@ -575,6 +586,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setBookingSearch={setBookingSearch}
             fundingFilter={fundingFilter}
             setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
+            assignFilter={assignFilter}
+            setAssignFilter={(v: DriverAssignmentFilter) => { setAssignFilter(v); setCurrentPage(1); }}
             pendingCount={pendingCount}
             confirmedCount={confirmedCount}
             filteredTrips={filteredTrips}

@@ -14,7 +14,13 @@ import {
 } from '@/redux/api/bookingApi';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
-import { mapApiBooking, mapPatchToApiPayload, apiErrorMessage } from '@/features/bookings/utils/helpers';
+import {
+  mapApiBooking,
+  mapPatchToApiPayload,
+  apiErrorMessage,
+  assignFilterToUnassignQuery,
+  type DriverAssignmentFilter,
+} from '@/features/bookings/utils/helpers';
 
 import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap, ServiceDateFilter } from '@/features/tripHistory';
 import { env } from '@/config/env';
@@ -24,16 +30,17 @@ const formatYmd = (d: Date) =>
 
 const TripHistory = ({ role }: { role?: string | null }) => {
   const [searchParams] = useSearchParams();
-  const [scheduleQueryParams, setScheduleQueryParams] = useState<{
-    serviceDate?: string;
-    bookingStatus?: string;
-  }>({
+  const [scheduleQueryParams, setScheduleQueryParams] = useState<IGetBookingsQueryParams>({
     serviceDate: formatYmd(new Date()),
   });
 
-  const handleScheduleFilterChange = useCallback((params: { serviceDate?: string; bookingStatus?: string }) => {
+  const handleScheduleFilterChange = useCallback((params: IGetBookingsQueryParams) => {
     setScheduleQueryParams((prev) => {
-      if (prev.serviceDate === params.serviceDate && prev.bookingStatus === params.bookingStatus) {
+      if (
+        prev.serviceDate === params.serviceDate &&
+        prev.bookingStatus === params.bookingStatus &&
+        prev.unassign === params.unassign
+      ) {
         return prev;
       }
       return params;
@@ -45,6 +52,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   );
   const [driverFilter, setDriverFilter] = useState('all');
   const [payerFilter, setPayerFilter] = useState('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
   const [serviceDate, setServiceDate] = useState('');
 
   const historyQueryParams = useMemo(() => {
@@ -54,8 +62,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     if (serviceDate) params.serviceDate = serviceDate;
     if (driverFilter !== 'all') params.driverId = driverFilter;
     if (payerFilter !== 'all') params.payerSource = payerFilter;
+    const unassign = assignFilterToUnassignQuery(assignFilter);
+    if (unassign !== undefined) params.unassign = unassign;
     return params;
-  }, [historySearch, serviceDate, driverFilter, payerFilter]);
+  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter]);
 
   const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
     refetchOnMountOrArgChange: true,
@@ -338,6 +348,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               setDriverFilter={setDriverFilter}
               payerFilter={payerFilter}
               setPayerFilter={setPayerFilter}
+              assignFilter={assignFilter}
+              setAssignFilter={setAssignFilter}
               serviceDate={serviceDate}
               setServiceDate={setServiceDate}
               isFetching={historyFetching}
