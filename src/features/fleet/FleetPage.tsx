@@ -1,10 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { useFleet } from '@/hooks/useFleet';
-import { useDrivers } from '@/hooks/useDrivers';
 
 import {
   AddVehicleModal,
@@ -20,21 +18,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
   const urlSearch = searchParams.get('searchTerm') || searchParams.get('search') || '';
   const [search, setSearch] = useState(urlSearch);
 
-  const { vehicles, loading: fleetLoading, addVehicle, handleAssign } = useFleet({ searchTerm: search });
-  const { drivers, loading: driversLoading } = useDrivers();
-
-  const assignDriverToVehicle = useCallback(async (vId: string, dId: string | null) => {
-    if (!dId) {
-      toast.error('Driver unassign is not available for this endpoint.');
-      return;
-    }
-    try {
-      await handleAssign(vId, dId);
-      toast.success('Driver assigned to vehicle');
-    } catch {
-      toast.error('Failed to assign driver');
-    }
-  }, [handleAssign]);
+  const { vehicles, loading: fleetLoading, addVehicle } = useFleet({ searchTerm: search });
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,7 +35,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
     }
   }, [searchParams]);
 
-  const loading = fleetLoading || driversLoading;
+  const loading = fleetLoading;
 
   // `searchTerm` is applied server-side by useFleet.
   const filtered = vehicles || [];
@@ -97,8 +81,6 @@ const Fleet = ({ role }: { role?: string | null }) => {
       {/* Fleet Table Card */}
       <FleetTable
         paginated={paginated}
-        drivers={drivers}
-        handleAssign={assignDriverToVehicle}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         totalPages={totalPages}

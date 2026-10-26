@@ -1,6 +1,5 @@
 import { ChevronRight, Truck, ShieldAlert, ClipboardCheck } from 'lucide-react';
 import { Card, Badge, Pagination, SearchInput } from '@/shared/components/ui';
-import { AssignDriverCell } from './AssignDriverCell';
 
 const VEHICLE_PLACEHOLDER = '/vehicle-placeholder.svg';
 
@@ -12,8 +11,6 @@ function toSentenceCase(value?: string | null) {
 
 interface FleetTableProps {
   paginated: any[];
-  drivers: any[];
-  handleAssign: (vId: string, dId: string | null) => void | Promise<void>;
   currentPage: number;
   setCurrentPage: (val: number) => void;
   totalPages: number;
@@ -29,8 +26,6 @@ interface FleetTableProps {
 
 export const FleetTable = ({
   paginated,
-  drivers,
-  handleAssign,
   currentPage,
   setCurrentPage,
   totalPages,
@@ -62,7 +57,7 @@ export const FleetTable = ({
         <table className="w-full text-left border-collapse">
           <thead className="bg-bg/40 border-b border-line-2 sticky top-0 z-10">
             <tr>
-              {['Vehicle', 'Vehicle Type', 'Status', 'Operator', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
+              {['Vehicle', 'Vehicle Type', 'Status', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -103,10 +98,6 @@ export const FleetTable = ({
                   </td>
 
                   <td className="px-6 py-4">
-                    <AssignDriverCell vehicle={v} allDrivers={drivers} onAssign={handleAssign} />
-                  </td>
-
-                  <td className="px-6 py-4">
                     <p className="text-sm font-medium text-ink">{(v?.mileage || 0).toLocaleString()}<span className="text-xs text-ink-4 ml-1">mi</span></p>
                     <p className="text-xs text-ink-4 mt-0.5">{v?.seats || 0} seats</p>
                   </td>
@@ -139,7 +130,7 @@ export const FleetTable = ({
             })}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-8 py-24 text-center">
+                <td colSpan={7} className="px-8 py-24 text-center">
                   <div className="w-20 h-20 bg-bg rounded-[32px] flex items-center justify-center text-ink-4 mx-auto mb-6 shadow-inner border-2 border-dashed border-line group">
                     <Truck size={40} className="group-hover:text-primary transition-colors" />
                   </div>
