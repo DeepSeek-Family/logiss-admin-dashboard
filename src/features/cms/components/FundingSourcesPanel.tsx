@@ -20,6 +20,7 @@ import {
   useUpdatePayerMutation,
   useGetCountiesQuery,
   useGetCountiesByPayerQuery,
+  useGetCountyByIdQuery,
   useSaveCountyMutation,
   useUpdateCountyMutation,
 } from '@/redux/api/coverageApi';
@@ -294,6 +295,13 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   const selectedCounty = selectedId
     ? findCountyForPayer(payerCounties, selectedId) || payerCounties[0]
     : undefined;
+  const selectedCountyId = selectedCounty?._id || '';
+  const {
+    data: countyDetailResponse,
+    isLoading: countyDetailLoading,
+    isFetching: countyDetailFetching,
+  } = useGetCountyByIdQuery(selectedCountyId, { skip: !isMongoId(selectedCountyId) });
+  const countyForDraft = countyDetailResponse?.data ?? selectedCounty;
 
   const selectPayer = useCallback((id: string) => {
     setSearchParams(prev => {
@@ -321,16 +329,24 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
       return;
     }
     if (detailLoading) return;
+    if (selectedCountyId && (countyDetailLoading || countyDetailFetching)) return;
 
-    const county = selectedCounty;
-    const key = `${selected._id}:${county?._id || 'empty'}`;
+    const county = countyForDraft;
+    const key = `${selected._id}:${county?._id || 'empty'}:${county?.updatedAt || ''}`;
     if (hydratedKey.current === key) return;
 
     setDraftPayerType(normalizePayerType(selected.type));
     setDraft(cloneDraft(mapCountyToDraft(selected, county)));
     setCoversAreasOpen(true);
     hydratedKey.current = key;
-  }, [selected, selectedCounty, detailLoading]);
+  }, [
+    selected,
+    selectedCountyId,
+    countyForDraft,
+    detailLoading,
+    countyDetailLoading,
+    countyDetailFetching,
+  ]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -350,7 +366,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     if (!apiPayer) return;
     const county =
       payerId === selectedId
-        ? selectedCounty
+        ? countyForDraft
         : findCountyForPayer(counties, payerId);
     setDraftPayerType(normalizePayerType(apiPayer.type));
     setDraft(cloneDraft(mapCountyToDraft(apiPayer, county)));
@@ -436,13 +452,18 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     }
     const typeValue = normalizePayerType(draftPayerType);
 
+    const payload = mapDraftToCountyInput(selected._id, draft);
+    if (payload.passengerCopayInside <= 0 && payload.passengerCopayOutside <= 0) {
+      toast.error('Set at least one passenger copay (inside or outside).');
+      return;
+    }
+
     try {
       await updatePayer({
         id: selected._id,
         body: { name: draft.name.trim(), type: typeValue, isActive: draft.active },
       }).unwrap();
       const countyId = draft.countyId || selectedCounty?._id;
-      const payload = mapDraftToCountyInput(selected._id, draft);
       if (countyId) {
         await updateCounty({ id: countyId, body: payload }).unwrap();
       } else {

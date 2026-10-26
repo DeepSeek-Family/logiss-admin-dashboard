@@ -82,6 +82,40 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback
 }
 
+/** Passenger copay from API county — never treat insidePrice/outsidePrice as copay. */
+export const readPassengerCopaysFromCounty = (
+  county?: ICounty | null,
+): { inside: number; outside: number } => {
+  if (!county) return { inside: 0, outside: 0 }
+
+  const topInside = county.passengerCopayInside
+  const topOutside = county.passengerCopayOutside
+  const hasTopLevel =
+    topInside !== undefined ||
+    topOutside !== undefined ||
+    num(topInside) > 0 ||
+    num(topOutside) > 0
+
+  if (hasTopLevel) {
+    return { inside: num(topInside), outside: num(topOutside) }
+  }
+
+  const zoneInside = num(county.zonePricing?.inside?.passenger_copay)
+  const zoneOutside = num(county.zonePricing?.outside?.passenger_copay)
+  if (zoneInside > 0 || zoneOutside > 0) {
+    return { inside: zoneInside, outside: zoneOutside }
+  }
+
+  // Legacy UI wrote copay into insidePrice/outsidePrice before API fields existed.
+  const legacyInside = num(county.insidePrice)
+  const legacyOutside = num(county.outsidePrice)
+  if (legacyInside > 0 || legacyOutside > 0) {
+    return { inside: legacyInside, outside: legacyOutside }
+  }
+
+  return { inside: 0, outside: 0 }
+}
+
 export const normalizeMileageTiers = (raw: unknown): IMileageTier[] => {
   let parsed = raw
   if (typeof raw === 'string') {
@@ -122,6 +156,8 @@ export const mapCountyToDraft = (payer: IPayer, county?: ICounty): PayerCoverage
   const firstMilesPrice = num(county.first_miles_price ?? firstTier.first_miles_price)
   const perMileRate = num(county.per_mile_price ?? firstTier.per_mile_price)
 
+  const copays = readPassengerCopaysFromCounty(county)
+
   return {
     ...draft,
     countyId: county._id,
@@ -132,8 +168,8 @@ export const mapCountyToDraft = (payer: IPayer, county?: ICounty): PayerCoverage
     firstMilesPrice,
     perMileRate,
     mileageTiers: tiers,
-    passengerCopayInside: num(county.insidePrice),
-    passengerCopayOutside: num(county.outsidePrice),
+    passengerCopayInside: copays.inside,
+    passengerCopayOutside: copays.outside,
     geofencePolygons: rings,
     geofenceFileName: rings.length ? 'Saved fence' : '',
     includedMiles: num(firstTier.starting_mileage),
@@ -146,8 +182,8 @@ export const mapDraftToCountyInput = (payerId: string, draft: PayerCoverageDraft
   const base: ISaveCountyInput = {
     payersId: payerId,
     priceMethod,
-    insidePrice: num(draft.passengerCopayInside),
-    outsidePrice: num(draft.passengerCopayOutside),
+    passengerCopayInside: num(draft.passengerCopayInside),
+    passengerCopayOutside: num(draft.passengerCopayOutside),
     isActive: draft.active,
     file: draft.geofenceFile,
   }

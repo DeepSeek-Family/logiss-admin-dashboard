@@ -39,6 +39,23 @@ export interface ICountyGeoJSON {
   coordinates?: unknown
 }
 
+export interface ICountyZoneClassRate {
+  passenger_copay?: number
+  billingClass?: string
+  [key: string]: unknown
+}
+
+export interface ICountyZonePricingSide {
+  passenger_copay?: number
+  classRates?: ICountyZoneClassRate[]
+  [key: string]: unknown
+}
+
+export interface ICountyZonePricing {
+  inside?: ICountyZonePricingSide
+  outside?: ICountyZonePricingSide
+}
+
 export interface ICounty {
   _id: string
   payersId?: ICountyPayerRef | string
@@ -50,8 +67,14 @@ export interface ICounty {
   first_miles_price?: number
   per_mile_price?: number
   mileage_based_price?: IMileageBasedPrice[] | IMileageBasedPrice
+  /** Funding tariff — not passenger copay. */
   insidePrice?: number
+  /** Funding tariff — not passenger copay. */
   outsidePrice?: number
+  passengerCopayInside?: number
+  passengerCopayOutside?: number
+  zonePricing?: ICountyZonePricing
+  mobilityBillingMap?: { mobilityId: string; billingClass: string }[]
   isActive?: boolean
   createdAt?: string
   updatedAt?: string
@@ -78,8 +101,8 @@ export interface ISaveCountyInput {
   first_miles_price?: number
   per_mile_price?: number
   mileage_based_price?: IMileageBasedPrice[]
-  insidePrice: number
-  outsidePrice: number
+  passengerCopayInside: number
+  passengerCopayOutside: number
   isActive?: boolean
   file?: File
 }
@@ -104,8 +127,8 @@ const buildCountyFormData = (input: ISaveCountyInput): FormData => {
   const priceMethod = toApiPriceMethod(input.priceMethod)
   formData.append('payersId', input.payersId)
   formData.append('priceMethod', priceMethod)
-  formData.append('insidePrice', String(input.insidePrice ?? 0))
-  formData.append('outsidePrice', String(input.outsidePrice ?? 0))
+  formData.append('passengerCopayInside', String(input.passengerCopayInside ?? 0))
+  formData.append('passengerCopayOutside', String(input.passengerCopayOutside ?? 0))
   if (input.isActive !== undefined) {
     formData.append('isActive', String(input.isActive))
   }
@@ -262,6 +285,20 @@ export const coverageApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Counties', id: 'LIST' }],
     }),
+    getCountyById: builder.query<{ success: boolean; message?: string; data?: ICounty }, string>({
+      query: (id) => ({ url: `/counties/${id}`, method: 'GET' }),
+      transformResponse: (response: any) => {
+        const raw = response?.data ?? response
+        const data =
+          raw && typeof raw === 'object' && (raw._id || raw.payersId) ? (raw as ICounty) : undefined
+        return {
+          success: response?.success !== false,
+          message: response?.message,
+          data,
+        }
+      },
+      providesTags: (_r, _e, id) => [{ type: 'Counties', id }],
+    }),
     getCountiesByPayer: builder.query<ICountiesResponse, string>({
       query: (payerId) => ({ url: `/counties/admin/${payerId}`, method: 'GET' }),
       transformResponse: (response: any): ICountiesResponse => ({
@@ -367,6 +404,7 @@ export const {
   useCreatePayerMutation,
   useUpdatePayerMutation,
   useGetCountiesQuery,
+  useGetCountyByIdQuery,
   useGetCountiesByPayerQuery,
   useSaveCountyMutation,
   useUpdateCountyMutation,
