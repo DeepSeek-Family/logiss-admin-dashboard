@@ -270,7 +270,25 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                 <Users size={11} className="text-primary" /> Driver Assignment
               </p>
               <div>
-              {assignedDriver && !isAssigning ? (
+              {activeTab === 'pending' || selectedBooking.status === 'pending_review' ? (
+                <div
+                  title="Please approve this booking first"
+                  className="border border-line-2 rounded-xl p-4 flex items-center justify-between bg-bg/80 opacity-60 cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-ink-4 shadow-sm">
+                      <Users size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-ink">Assign a Driver</p>
+                      <p className="text-xs text-ink-4">Available after approval</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" disabled>
+                    Select
+                  </Button>
+                </div>
+              ) : assignedDriver && !isAssigning ? (
                 <div className="border border-accent/20 bg-accent-light/10 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

@@ -6,7 +6,8 @@ import type {
   IMobilityRequirement,
 } from '@/redux/api/bookingApi';
 
-export type DriverAssignmentFilter = 'all' | 'assigned' | 'unassigned'
+/** Empty string = no `unassign` query param until the user picks a filter. */
+export type DriverAssignmentFilter = '' | 'all' | 'assigned' | 'unassigned'
 
 /** Maps UI filter to `unassign` query param for approved/schedule/history lists. */
 export const assignFilterToUnassignQuery = (
@@ -644,7 +645,7 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     const s = String(patch.status).toLowerCase();
     if (s === 'approved') {
       payload.isApproved = 'approved';
-      payload.bookingStatus = 'assigned';
+      payload.bookingStatus = 'confirmed';
     } else if (s === 'rejected' || s === 'cancelled') {
       payload.isApproved = 'rejected';
       payload.bookingStatus = 'cancelled';

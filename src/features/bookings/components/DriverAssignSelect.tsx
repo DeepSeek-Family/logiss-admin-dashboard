@@ -2,6 +2,8 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 import { suggestDrivers } from '../utils/suggestDriver';
 
+const APPROVE_BEFORE_DRIVER_TOOLTIP = 'Please approve this booking first';
+
 interface DriverAssignSelectProps {
   trip: any;
   drivers: any[];
@@ -9,6 +11,8 @@ interface DriverAssignSelectProps {
   allTrips: any[];
   onAssign: (driverId: string) => void;
   className?: string;
+  disabled?: boolean;
+  disabledTitle?: string;
 }
 
 /**
@@ -19,11 +23,18 @@ interface DriverAssignSelectProps {
  * wrong vehicle) can still be picked — dispatcher override — but surfaces a warning.
  */
 export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
-  trip, drivers, allTrips, onAssign, className = '',
+  trip,
+  drivers,
+  allTrips,
+  onAssign,
+  className = '',
+  disabled = false,
+  disabledTitle = APPROVE_BEFORE_DRIVER_TOOLTIP,
 }) => {
   const scored = suggestDrivers(trip, drivers, allTrips);
 
   const handle = (id: string) => {
+    if (disabled) return;
     onAssign(id);
     if (!id) return;
     const s = scored.find(x => String(x.driver.id) === String(id));
@@ -35,9 +46,11 @@ export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
   return (
     <select
       value={String(trip.driverId || '')}
+      disabled={disabled}
+      title={disabled ? disabledTitle : undefined}
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => handle(e.target.value)}
-      className={className}
+      className={`${className}${disabled ? ' cursor-not-allowed opacity-60' : ''}`}
     >
       <option value="">Unassigned</option>
       {scored.map(s => (

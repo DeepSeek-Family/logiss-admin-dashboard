@@ -240,7 +240,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
-                <option value="all">All</option>
+                <option value="">All</option>
                 <option value="unassigned">Unassigned</option>
                 <option value="assigned">Assigned</option>
               </select>

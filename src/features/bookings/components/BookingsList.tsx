@@ -61,6 +61,12 @@ const STATUS_STYLE: Record<string, string> = {
   no_show: 'text-urgent bg-urgent/5',
 };
 
+const PENDING_TAB_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) =>
+  ['pending_review', 'cancelled', 'no_show'].includes(o.value),
+);
+
+const APPROVE_BEFORE_DRIVER_TOOLTIP = 'Please approve this booking first';
+
 const InlineTime: React.FC<{ value?: string; onCommit: (v: string) => void }> = ({ value, onCommit }) => (
   <input
     type="time"
@@ -125,7 +131,7 @@ interface BookingsListProps {
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
-  assignFilter = 'all', setAssignFilter,
+  assignFilter = '', setAssignFilter,
   pendingCount, confirmedCount,
 
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
@@ -146,7 +152,13 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         >
           <List size={16} /> Pending Review{' '}
           {pendingCount != null && (
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{pendingCount}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'
+              }`}
+            >
+              {pendingCount}
+            </span>
           )}
         </button>
         <button
@@ -155,7 +167,13 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         >
           Ready to Assign{' '}
           {confirmedCount != null && (
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{confirmedCount}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'
+              }`}
+            >
+              {confirmedCount}
+            </span>
           )}
         </button>
       </div>
@@ -196,7 +214,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
               className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
             >
-              <option value="all">All</option>
+              <option value="">All</option>
               <option value="unassigned">Unassigned</option>
               <option value="assigned">Assigned</option>
             </select>
@@ -212,18 +230,30 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">{selectedTrips.length} selected</span>
             <div className="h-4 w-px bg-primary/20" />
 
-            {/* Bulk assign driver — moves the booking into Trip History once assigned */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
-              <select
-                value=""
-                onChange={(e) => { if (e.target.value) { selectedTrips.forEach(id => updateTrip(id, { driverId: e.target.value, status: 'assigned' })); setSelectedTrips([]); } }}
-                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
-              >
-                <option value="">Driver…</option>
-                {(drivers || []).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            </div>
+            {activeTab === 'confirmed' && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      selectedTrips.forEach((id) =>
+                        updateTrip(id, { driverId: e.target.value, status: 'assigned' }),
+                      );
+                      setSelectedTrips([]);
+                    }
+                  }}
+                  className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
+                >
+                  <option value="">Driver…</option>
+                  {(drivers || []).map((d: any) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {activeTab === 'pending' && (
               <button
@@ -432,17 +462,22 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           onChange={(e) => updateTrip(booking.id, { status: e.target.value })}
                           className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || 'text-ink-3 bg-bg'}`}
                         >
-                          {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} className="text-ink bg-white">{o.label}</option>)}
+                          {(activeTab === 'pending' ? PENDING_TAB_STATUS_OPTIONS : STATUS_OPTIONS).map(o => (
+                            <option key={o.value} value={o.value} className="text-ink bg-white">{o.label}</option>
+                          ))}
                         </select>
                       </td>
 
-                      {/* Driver (inline assign — smart suggestions + force-assign) */}
-                      <td className="px-3.5 py-3 min-w-[160px]">
+                      <td className="px-3.5 py-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
                         <DriverAssignSelect
                           trip={booking}
                           drivers={drivers}
                           allTrips={trips}
-                          onAssign={(driverId) => updateTrip(booking.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })}
+                          disabled={activeTab === 'pending'}
+                          disabledTitle={APPROVE_BEFORE_DRIVER_TOOLTIP}
+                          onAssign={(driverId) =>
+                            updateTrip(booking.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })
+                          }
                           className={`${INLINE_INPUT} max-w-[150px] ${booking.driverId ? '' : 'text-ink-4'}`}
                         />
                       </td>

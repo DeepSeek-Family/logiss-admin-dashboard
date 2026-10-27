@@ -46,12 +46,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
     () => searchParams.get('searchTerm') || searchParams.get('search') || '',
   );
   const [fundingFilter, setFundingFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const listParams = useMemo(() => {
+  const baseListParams = useMemo(() => {
     const params: Record<string, any> = {
       page: currentPage,
       limit: itemsPerPage,
@@ -63,21 +63,35 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
-    if (activeTab === 'confirmed') {
-      const unassign = assignFilterToUnassignQuery(assignFilter);
-      if (unassign !== undefined) params.unassign = unassign;
+    return params;
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
+
+  const confirmedListParams = useMemo(() => {
+    const params = { ...baseListParams };
+    const unassign = assignFilterToUnassignQuery(assignFilter);
+    if (unassign !== undefined) {
+      params.unassign = unassign;
     }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, activeTab, assignFilter]);
+  }, [baseListParams, assignFilter]);
+
+  /** Inactive tab: pagination total only (`limit=1`), not the full list. */
+  const tabBadgeCountParams = useMemo(() => ({ page: 1, limit: 1 }), []);
+
+  const pendingQueryParams =
+    activeTab === 'pending' ? baseListParams : tabBadgeCountParams;
+
+  const confirmedQueryParams =
+    activeTab === 'confirmed' ? confirmedListParams : tabBadgeCountParams;
 
   const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
-    listParams,
-    { skip: activeTab !== 'pending', refetchOnMountOrArgChange: true },
+    pendingQueryParams,
+    { refetchOnMountOrArgChange: true },
   );
 
   const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
-    listParams,
-    { skip: activeTab !== 'confirmed', refetchOnMountOrArgChange: true },
+    confirmedQueryParams,
+    { refetchOnMountOrArgChange: true },
   );
 
   const [updateBookingMutation] = useUpdateBookingMutation();
@@ -126,6 +140,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(undefined, {
+    skip: activeTab !== 'confirmed',
     refetchOnMountOrArgChange: true,
   });
 
@@ -135,8 +150,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
   );
 
   const refresh = () => {
-    if (activeTab === 'pending') void refetchPendingBookings();
-    else void refetchAssignedBookings();
+    void refetchPendingBookings();
+    void refetchAssignedBookings();
     void refetchDrivers();
   };
 
@@ -148,6 +163,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
       : '';
     const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
     const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+    const isPendingReview =
+      existingTrip?.status === 'pending_review' ||
+      existingTrip?.status === 'pending' ||
+      activeTab === 'pending';
+
+    if (isDriverAssign && isPendingReview) {
+      toast.error('Approve the booking before assigning a driver');
+      return;
+    }
 
     const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
     const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
@@ -199,13 +223,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const pendingBookings = useMemo(
-    () => (pendingResponse?.data || []).map(mapApiBooking),
-    [pendingResponse]
+    () =>
+      (activeTab === 'pending' ? pendingResponse?.data || [] : []).map(mapApiBooking),
+    [pendingResponse, activeTab],
   );
 
   const assignedBookings = useMemo(
-    () => (assignedResponse?.data || []).map(mapApiBooking),
-    [assignedResponse]
+    () =>
+      (activeTab === 'confirmed' ? assignedResponse?.data || [] : []).map(mapApiBooking),
+    [assignedResponse, activeTab],
   );
 
   const bookingsList = useMemo(
@@ -261,7 +287,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
               selectedTrips.map(id =>
                 updateBookingMutation({
                   id,
-                  payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+                  payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
                 }).unwrap()
               )
             );
@@ -404,7 +430,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
         try {
           await updateBookingMutation({
             id: targetId,
-            payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+            payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
           }).unwrap();
           toast.success('Booking approved — moved to Ready to Assign');
           refresh();

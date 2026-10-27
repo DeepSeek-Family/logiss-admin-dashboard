@@ -54,7 +54,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   );
   const [driverFilter, setDriverFilter] = useState('all');
   const [payerFilter, setPayerFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [serviceDate, setServiceDate] = useState('');
 
   const historyQueryParams = useMemo(() => {
