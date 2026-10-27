@@ -1,7 +1,47 @@
 const HTML_TAG = /<(?:p|div|br|strong|b|em|i|ul|ol|li|blockquote|a|span|code|s|strike|u|h[1-6])\b/i;
 
 export function isProbablyHtml(value: string): boolean {
-  return HTML_TAG.test(value);
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (HTML_TAG.test(trimmed)) return true;
+  return /<[a-z][^>]*>/i.test(trimmed);
+}
+
+/** Some API payloads repeat the same block twice — collapse identical halves. */
+export function dedupeRepeatedEditorHtml(html: string): string {
+  const safe = stripUnsafeHtml(html.trim());
+  if (!safe) return '';
+
+  const doc = new DOMParser().parseFromString(safe, 'text/html');
+  const children = [...doc.body.childNodes].filter(
+    (node) =>
+      node.nodeType === Node.ELEMENT_NODE ||
+      (node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim())),
+  );
+
+  if (children.length >= 2 && children.length % 2 === 0) {
+    const mid = children.length / 2;
+    const serialize = (nodes: ChildNode[]) =>
+      nodes
+        .map((node) => (node instanceof Element ? node.outerHTML : node.textContent ?? ''))
+        .join('');
+
+    const first = serialize(children.slice(0, mid));
+    const second = serialize(children.slice(mid));
+    if (first && first === second) {
+      return first;
+    }
+  }
+
+  return safe;
+}
+
+export function prepareRuleContentForEditor(raw: string): string {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed) return '';
+
+  const html = isProbablyHtml(trimmed) ? stripUnsafeHtml(trimmed) : toEditorHtml(trimmed);
+  return dedupeRepeatedEditorHtml(html);
 }
 
 export function escapeHtml(text: string): string {

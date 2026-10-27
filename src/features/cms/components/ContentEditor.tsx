@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import {
   Bold,
   Italic,
@@ -18,10 +18,11 @@ import {
 } from 'lucide-react';
 import { useGetRuleByTypeQuery, RuleType } from '@/redux/api/rulesApi';
 import {
+  dedupeRepeatedEditorHtml,
   escapeHtml,
   htmlToPlainText,
+  prepareRuleContentForEditor,
   stripUnsafeHtml,
-  toEditorHtml,
 } from '@/features/cms/utils/richText';
 
 interface ContentEditorProps {
@@ -40,23 +41,33 @@ const EDITOR_BODY_CLASS =
 export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, content, setContent }) => {
   const isRulePage = ['terms', 'privacy', 'about'].includes(activePage);
 
-  const { data: ruleResponse, isLoading, isFetching } = useGetRuleByTypeQuery(
-    activePage as RuleType,
-    { skip: !isRulePage },
-  );
+  const {
+    data: ruleResponse,
+    isLoading,
+    isUninitialized,
+  } = useGetRuleByTypeQuery(activePage as RuleType, { skip: !isRulePage });
+
+  const ruleBootLoading = isUninitialized || (isLoading && !ruleResponse);
+  const lastServerContentRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    if (isRulePage && ruleResponse?.data?.content !== undefined) {
-      setContent((prev) => ({
-        ...prev,
-        [activePage]: toEditorHtml(ruleResponse.data.content),
-      }));
-    }
-  }, [ruleResponse, activePage, isRulePage, setContent]);
+    if (!isRulePage || ruleResponse?.data?.content === undefined) return;
+
+    const raw = ruleResponse.data.content;
+    if (lastServerContentRef.current[activePage] === raw) return;
+    lastServerContentRef.current[activePage] = raw;
+
+    const html = prepareRuleContentForEditor(raw);
+    setContent((prev) => {
+      if (prev[activePage] === html) return prev;
+      return { ...prev, [activePage]: html };
+    });
+  }, [ruleResponse?.data?.content, activePage, isRulePage, setContent]);
 
   const value = content[activePage] || '';
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSyncedHtml = useRef(value);
+  const isProgrammaticDomSync = useRef(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -75,22 +86,32 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
   const syncEditorDom = useCallback((html: string) => {
     const el = editorRef.current;
     if (!el) return;
-    if (el.innerHTML !== html) {
-      el.innerHTML = html || '';
+    const normalized = dedupeRepeatedEditorHtml(html);
+    if (el.innerHTML !== normalized) {
+      isProgrammaticDomSync.current = true;
+      el.innerHTML = normalized || '';
+      queueMicrotask(() => {
+        isProgrammaticDomSync.current = false;
+      });
     }
-    lastSyncedHtml.current = html;
+    lastSyncedHtml.current = normalized;
   }, []);
 
   useEffect(() => {
     const el = editorRef.current;
-    if (!el || viewMode !== 'edit') return;
+    if (!el) return;
     if (value === lastSyncedHtml.current) return;
     if (document.activeElement === el) return;
     syncEditorDom(value);
-  }, [value, viewMode, syncEditorDom]);
+  }, [value, syncEditorDom]);
+
+  useLayoutEffect(() => {
+    if (viewMode !== 'edit' || ruleBootLoading) return;
+    syncEditorDom(value);
+  }, [viewMode, ruleBootLoading, value, syncEditorDom]);
 
   const updateContent = (newValue: string) => {
-    const safe = stripUnsafeHtml(newValue);
+    const safe = dedupeRepeatedEditorHtml(stripUnsafeHtml(newValue));
     setContent((prev) => ({ ...prev, [activePage]: safe }));
     setHistory((prevHistory) => {
       const trimmed = prevHistory.slice(0, historyIndex + 1);
@@ -104,9 +125,22 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
   const readEditorHtml = () => stripUnsafeHtml(editorRef.current?.innerHTML ?? '');
 
   const syncFromEditor = () => {
+    if (isProgrammaticDomSync.current) return;
     const html = readEditorHtml();
     if (html === lastSyncedHtml.current) return;
     updateContent(html);
+  };
+
+  const flushEditorToState = () => {
+    const html = readEditorHtml();
+    if (html !== lastSyncedHtml.current) {
+      updateContent(html);
+    }
+  };
+
+  const openPreview = () => {
+    flushEditorToState();
+    setViewMode('preview');
   };
 
   const preventToolbarBlur = (event: React.MouseEvent) => {
@@ -198,16 +232,17 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
     />
   );
 
-  const previewSurface = (
-    <div className={`${EDITOR_BODY_CLASS} bg-bg/20 cursor-default`}>
-      {plainText ? (
-        <div dangerouslySetInnerHTML={{ __html: stripUnsafeHtml(value) }} />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full text-ink-4">
-          <Eye size={32} className="mb-2 opacity-30" />
-          <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
-        </div>
-      )}
+  const previewHtml = dedupeRepeatedEditorHtml(stripUnsafeHtml(value));
+
+  const previewSurface = plainText ? (
+    <div
+      className={`${EDITOR_BODY_CLASS} bg-bg/20 cursor-default`}
+      dangerouslySetInnerHTML={{ __html: previewHtml }}
+    />
+  ) : (
+    <div className={`${EDITOR_BODY_CLASS} bg-bg/20 flex flex-col items-center justify-center text-ink-4`}>
+      <Eye size={32} className="mb-2 opacity-30" />
+      <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
     </div>
   );
 
@@ -338,7 +373,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('preview')}
+              onClick={openPreview}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'preview' ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:text-ink'
               }`}
@@ -350,15 +385,20 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
         </div>
 
         <div className="relative">
-          {isLoading || isFetching ? (
+          {ruleBootLoading ? (
             <div className="flex flex-col items-center justify-center h-[460px] text-ink-3 gap-3 bg-bg/10">
               <Loader2 size={24} className="animate-spin text-primary" />
               <p className="text-sm font-medium">Loading {activePage} content...</p>
             </div>
-          ) : viewMode === 'edit' ? (
-            editorSurface
           ) : (
-            previewSurface
+            <>
+              <div className={viewMode === 'edit' ? 'block' : 'hidden'} aria-hidden={viewMode !== 'edit'}>
+                {editorSurface}
+              </div>
+              <div className={viewMode === 'preview' ? 'block' : 'hidden'} aria-hidden={viewMode !== 'preview'}>
+                {previewSurface}
+              </div>
+            </>
           )}
         </div>
       </div>
