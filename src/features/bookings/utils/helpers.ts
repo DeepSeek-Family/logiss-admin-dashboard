@@ -339,6 +339,26 @@ export const zoneBadgeTone = (zone?: string | null): string => {
   return 'text-ink-3 bg-bg border-line-2'
 }
 
+/** Payer display name from populated `countyId.payersId` (e.g. "Dhaka City"). */
+export const countyPayerNameFromBooking = (booking: {
+  countyId?: IBooking['countyId']
+}): string => {
+  const county = booking.countyId
+  if (!county || typeof county !== 'object') return ''
+  const payersId = county.payersId
+  if (payersId && typeof payersId === 'object') {
+    const name = payersId.name || payersId.title || payersId.payerName
+    if (name && String(name).trim()) return String(name).trim()
+  }
+  return ''
+}
+
+export const payerSourceObjectLabel = (payer: unknown): string => {
+  if (!payer || typeof payer !== 'object') return ''
+  const p = payer as { name?: string; title?: string; payerName?: string }
+  return String(p.name || p.title || p.payerName || '').trim()
+}
+
 export const parseStopsArray = (stopAddressVal: any): string[] => {
   if (stopAddressVal == null || stopAddressVal === '') return [];
   if (Array.isArray(stopAddressVal)) {
@@ -360,6 +380,9 @@ export const mapApiBooking = (b: IBooking) => {
       : null;
   const rawMobilityId = mobilityObj?._id || (typeof b.mobilityRequirements === 'string' && isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : undefined);
   const payerObj = typeof b.payerSource === 'object' && b.payerSource ? b.payerSource : null;
+  const countyPayerName = countyPayerNameFromBooking(b);
+  const payerSourceName = payerSourceObjectLabel(payerObj);
+  const fundingSourceLabel = countyPayerName || payerSourceName || b.programContext || '';
 
   const riderName = personName(userObj) || 'Rider';
   const driverName = personName(driverObj) || undefined;
@@ -422,8 +445,16 @@ export const mapApiBooking = (b: IBooking) => {
     reason: b.tripReason,
     passengerSeats: b.passengerSeats || 1,
     programContext: b.programContext,
-    fundingSource: payerObj?.name || b.programContext || '',
+    countyPayerName,
+    fundingSource: fundingSourceLabel,
+    paymentMethod: fundingSourceLabel,
     fundingSourceId: payerObj?._id || (typeof b.payerSource === 'string' ? b.payerSource : undefined),
+    countyId:
+      typeof b.countyId === 'object' && b.countyId?._id
+        ? b.countyId._id
+        : typeof b.countyId === 'string'
+          ? b.countyId
+          : undefined,
     isRecurring: Boolean(b.recurringBooking),
     recurringDays: b.selectedDate || [],
     endDate: b.endDate,

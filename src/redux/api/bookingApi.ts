@@ -32,6 +32,21 @@ export interface IBookingDriver {
   id?: string
 }
 
+export interface IBookingCountyPayerRef {
+  _id?: string
+  name?: string
+  title?: string
+  payerName?: string
+  type?: string
+}
+
+export interface IBookingCountyRef {
+  _id: string
+  payersId?: IBookingCountyPayerRef | string
+  countyName?: string
+  name?: string
+}
+
 export interface IBookingPricingLeg {
   leg?: string
   zone?: string
@@ -56,7 +71,8 @@ export interface IBooking {
   tripType: 'round-trip' | 'one-way' | string
   tripReason?: string
   passengerSeats?: number
-  payerSource?: any
+  payerSource?: IPayerSource | string
+  countyId?: IBookingCountyRef | string
   programContext?: string
   serviceDate?: string
   appointmentTime?: string
