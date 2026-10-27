@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
   Phone, Mail, Car, ShieldCheck,
-  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban
+  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban, Clock
 } from 'lucide-react';
+import { DriverWorkHistoryTab } from './DriverWorkHistoryTab';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
 import { resolveMediaUrl } from '@/utils/imageUrl';
@@ -31,7 +32,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10, onTripsPageChange,
   onAssignVehicle, onViewFleet, assignedVehicle, onToggleBan, banToggleLoading
 }) => {
-  const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'docs'>('overview');
+  const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'work' | 'docs'>('overview');
   const [preview, setPreview] = useState<string | null>(null);
   const licenseImages: string[] =
     selectedDriver?.licenseImages?.length
@@ -56,6 +57,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   const TABS = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'trips', label: 'Trip history', icon: Repeat },
+    { id: 'work', label: 'Work history', icon: Clock },
     { id: 'docs', label: 'License', icon: ShieldCheck },
   ];
 
@@ -333,6 +335,11 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
             />
           )}
         </div>
+      )}
+
+      {/* ── WORK HISTORY TAB ─────────────────────── */}
+      {profileTab === 'work' && selectedDriver?.id && (
+        <DriverWorkHistoryTab driverId={String(selectedDriver.id)} />
       )}
 
       {/* ── LICENSE TAB ──────────────────────────── */}
