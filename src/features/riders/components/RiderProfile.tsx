@@ -32,7 +32,7 @@ interface RiderProfileProps {
 export const RiderProfile: React.FC<RiderProfileProps> = ({
   selectedRider, trips, tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10,
   onTripsPageChange, role, onBack,
-  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider,   onToggleBan, banToggleLoading, detailLoading
+  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider, onToggleBan, banToggleLoading, detailLoading
 }) => {
   const isBanned = selectedRider?.status === 'banned' || selectedRider?.isBanned;
   const TABS = [
@@ -72,16 +72,14 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-ink">{selectedRider?.name || 'Unknown'}</h1>
-              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                selectedRider?.status === 'active'
+              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full ${selectedRider?.status === 'active'
                   ? 'text-accent bg-accent/10'
                   : selectedRider?.status === 'banned'
-                  ? 'text-urgent bg-urgent/10'
-                  : 'text-ink-3 bg-bg border border-line-2'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  selectedRider?.status === 'active' ? 'bg-accent' : selectedRider?.status === 'banned' ? 'bg-urgent' : 'bg-ink-3'
-                }`} />
+                    ? 'text-urgent bg-urgent/10'
+                    : 'text-ink-3 bg-bg border border-line-2'
+                }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${selectedRider?.status === 'active' ? 'bg-accent' : selectedRider?.status === 'banned' ? 'bg-urgent' : 'bg-ink-3'
+                  }`} />
                 {(selectedRider?.status || 'inactive').charAt(0).toUpperCase() + (selectedRider?.status || 'inactive').slice(1)}
               </span>
               {(selectedRider?.payerName || selectedRider?.county) && (
@@ -189,11 +187,10 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
           <button
             key={tab.id}
             onClick={() => setProfileTab(tab.id as any)}
-            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 -mb-px ${
-              profileTab === tab.id
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 -mb-px ${profileTab === tab.id
                 ? 'border-primary text-primary'
                 : 'border-transparent text-ink-4 hover:text-ink'
-            }`}
+              }`}
           >
             <tab.icon size={14} />
             {tab.label}
@@ -211,8 +208,30 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
             </div>
           ) : null}
 
+          {(selectedRider?.totalRiderAmount != null ||
+            selectedRider?.totalOrganizationAmount != null ||
+            selectedRider?.totalAmount != null) && (
+            <div className="lg:col-span-5 w-full bg-white border border-line-2 rounded-2xl p-6">
+              <h3 className="text-base font-bold text-ink mb-4">Trip spend summary</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                <div className="rounded-xl bg-bg border border-line-2 p-4 w-full">
+                  <p className="text-xs text-ink-4 mb-1">Passenger copay total</p>
+                  <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalRiderAmount)}</p>
+                </div>
+                <div className="rounded-xl bg-bg border border-line-2 p-4 w-full">
+                  <p className="text-xs text-ink-4 mb-1">Organization total</p>
+                  <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalOrganizationAmount)}</p>
+                </div>
+                <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 w-full">
+                  <p className="text-xs text-ink-4 mb-1">Combined total</p>
+                  <p className="text-lg font-bold text-primary">{formatRiderCurrency(selectedRider?.totalAmount)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* LEFT — Contact & Mobility (3 cols) */}
-          <div className={`${selectedRider?.defaultPickup || selectedRider?.defaultDropoff ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white border border-line-2 rounded-2xl p-6 ${detailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+          <div className={`${selectedRider?.defaultPickup || selectedRider?.defaultDropoff ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white border border-line-2 rounded-xl p-6 ${detailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
             <h3 className="text-base font-bold text-ink mb-5">Contact & account</h3>
 
             {/* Email full width */}
@@ -290,27 +309,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               </div>
             </div>
 
-            {(selectedRider?.totalRiderAmount != null ||
-              selectedRider?.totalOrganizationAmount != null ||
-              selectedRider?.totalAmount != null) && (
-              <div className="mt-5 pt-5 border-t border-line-2">
-                <h3 className="text-base font-bold text-ink mb-4">Trip spend summary</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="rounded-xl bg-bg border border-line-2 p-4">
-                    <p className="text-xs text-ink-4 mb-1">Passenger copay total</p>
-                    <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalRiderAmount)}</p>
-                  </div>
-                  <div className="rounded-xl bg-bg border border-line-2 p-4">
-                    <p className="text-xs text-ink-4 mb-1">Organization total</p>
-                    <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalOrganizationAmount)}</p>
-                  </div>
-                  <div className="rounded-xl bg-primary/5 border border-primary/15 p-4">
-                    <p className="text-xs text-ink-4 mb-1">Combined total</p>
-                    <p className="text-lg font-bold text-primary">{formatRiderCurrency(selectedRider?.totalAmount)}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Emergency contact */}
             {(selectedRider?.emergencyContact?.name || selectedRider?.emergencyContact?.phone) && (
