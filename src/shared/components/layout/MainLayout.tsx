@@ -161,13 +161,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
-  const routeOutletKey = `${location.pathname}${location.search}`;
+  /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
+  const routeOutletKey = location.pathname;
   const { unreadCount } = useNotifications();
 
   React.useEffect(() => {
     mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
     setProfileOpen(false);
-  }, [routeOutletKey]);
+  }, [location.pathname]);
   // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
   /*
   const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 10 });

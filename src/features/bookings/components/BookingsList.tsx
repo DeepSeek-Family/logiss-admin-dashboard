@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   List, ArrowRight, MapPin, Repeat, MoveRight,
   Check, Trash2, CheckCircle2, ClipboardList, Pencil, X,
-  Accessibility, Bed, Disc, Info, User
+  Accessibility, Bed, Disc, Info, User, Loader2
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination, SearchInput } from '@/shared/components/ui';
 import { formatShortDate, formatTripId } from '@/utils/helpers';
@@ -127,6 +127,7 @@ interface BookingsListProps {
   /** Locate this booking's vehicle on the side map. */
   onRowSelect?: (id: string | null) => void;
   selectedMapId?: string | null;
+  isFetching?: boolean;
 }
 
 export const BookingsList: React.FC<BookingsListProps> = ({
@@ -138,7 +139,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
   totalItems,
-  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
+  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId,
+  isFetching,
 }) => {
   const { data: payersResponse } = useGetAllPayersQuery();
   const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
@@ -183,12 +185,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           className="w-full sm:w-72"
           placeholder="Search rider or ID..."
           paramName="searchTerm"
-          defaultValue={bookingSearch}
+          value={bookingSearch}
           onSearchChange={(debouncedVal) => {
             setBookingSearch(debouncedVal);
             setCurrentPage(1);
           }}
         />
+        {isFetching && (
+          <Loader2 className="text-primary animate-spin shrink-0" size={18} aria-label="Updating results" />
+        )}
         <div className="flex items-center gap-2">
           <DollarSign size={12} className="text-ink-4" />
           <span className="text-xs text-ink-4">Payer</span>

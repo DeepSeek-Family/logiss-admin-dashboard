@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Clock, MapPin, Phone, ChevronRight,
@@ -84,15 +84,18 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const confirmedQueryParams =
     activeTab === 'confirmed' ? confirmedListParams : tabBadgeCountParams;
 
-  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
+  const { data: pendingResponse, isLoading: pendingLoading, isFetching: pendingFetching, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
     pendingQueryParams,
     { refetchOnMountOrArgChange: true },
   );
 
-  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
+  const { data: assignedResponse, isLoading: assignedLoading, isFetching: assignedFetching, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
     confirmedQueryParams,
     { refetchOnMountOrArgChange: true },
   );
+
+  const stalePendingRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
+  const staleAssignedRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
 
   const [updateBookingMutation] = useUpdateBookingMutation();
   const [showMap, setShowMap] = useState(false);
@@ -222,17 +225,25 @@ const Bookings = ({ role }: { role?: string | null }) => {
     }
   };
 
-  const pendingBookings = useMemo(
-    () =>
-      (activeTab === 'pending' ? pendingResponse?.data || [] : []).map(mapApiBooking),
-    [pendingResponse, activeTab],
-  );
+  const pendingBookings = useMemo(() => {
+    if (activeTab !== 'pending') return [];
+    if (pendingResponse?.data) {
+      const mapped = pendingResponse.data.map(mapApiBooking);
+      stalePendingRowsRef.current = mapped;
+      return mapped;
+    }
+    return stalePendingRowsRef.current;
+  }, [pendingResponse, activeTab]);
 
-  const assignedBookings = useMemo(
-    () =>
-      (activeTab === 'confirmed' ? assignedResponse?.data || [] : []).map(mapApiBooking),
-    [assignedResponse, activeTab],
-  );
+  const assignedBookings = useMemo(() => {
+    if (activeTab !== 'confirmed') return [];
+    if (assignedResponse?.data) {
+      const mapped = assignedResponse.data.map(mapApiBooking);
+      staleAssignedRowsRef.current = mapped;
+      return mapped;
+    }
+    return staleAssignedRowsRef.current;
+  }, [assignedResponse, activeTab]);
 
   const bookingsList = useMemo(
     () => [...pendingBookings, ...assignedBookings],
@@ -244,7 +255,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const currentTabBookings = activeTab === 'pending' ? pendingBookings : assignedBookings;
   const currentPagination = activeTab === 'pending' ? pendingResponse?.pagination : assignedResponse?.pagination;
-  const loading = activeTab === 'pending' ? pendingLoading : assignedLoading;
+  const loading =
+    activeTab === 'pending'
+      ? pendingLoading && pendingBookings.length === 0
+      : assignedLoading && assignedBookings.length === 0;
+  const listFetching = activeTab === 'pending' ? pendingFetching : assignedFetching;
   const isError = activeTab === 'pending' ? pendingError : assignedError;
 
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
@@ -636,6 +651,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
             onEditTrip={(id) => setEditTripId(id)}
             onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
             selectedMapId={mapTripId}
+            isFetching={listFetching}
           />
         </div>
         {showMap && (
