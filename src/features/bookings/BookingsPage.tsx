@@ -70,17 +70,14 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return params;
   }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, activeTab, assignFilter]);
 
-  // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
-  const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
-
   const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
-    activeTab === 'pending' ? listParams : countOnlyParams,
-    { refetchOnMountOrArgChange: true }
+    listParams,
+    { skip: activeTab !== 'pending', refetchOnMountOrArgChange: true },
   );
 
   const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
-    activeTab === 'confirmed' ? listParams : countOnlyParams,
-    { refetchOnMountOrArgChange: true }
+    listParams,
+    { skip: activeTab !== 'confirmed', refetchOnMountOrArgChange: true },
   );
 
   const [updateBookingMutation] = useUpdateBookingMutation();
@@ -138,9 +135,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
   );
 
   const refresh = () => {
-    refetchPendingBookings();
-    refetchAssignedBookings();
-    refetchDrivers();
+    if (activeTab === 'pending') void refetchPendingBookings();
+    else void refetchAssignedBookings();
+    void refetchDrivers();
   };
 
   const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -216,8 +213,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
     [pendingBookings, assignedBookings]
   );
 
-  const pendingCount = pendingResponse?.pagination?.total ?? pendingBookings.length;
-  const confirmedCount = assignedResponse?.pagination?.total ?? assignedBookings.length;
+  const pendingCount = pendingResponse?.pagination?.total;
+  const confirmedCount = assignedResponse?.pagination?.total;
 
   const currentTabBookings = activeTab === 'pending' ? pendingBookings : assignedBookings;
   const currentPagination = activeTab === 'pending' ? pendingResponse?.pagination : assignedResponse?.pagination;

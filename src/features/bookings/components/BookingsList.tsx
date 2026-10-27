@@ -144,13 +144,19 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('pending'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{pendingCount ?? (trips || []).filter((t: any) => t.status === 'pending_review' || t.status === 'pending').length}</span>
+          <List size={16} /> Pending Review{' '}
+          {pendingCount != null && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{pendingCount}</span>
+          )}
         </button>
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{confirmedCount ?? (trips || []).filter((t: any) => t.status === 'confirmed' || t.status === 'assigned').length}</span>
+          Ready to Assign{' '}
+          {confirmedCount != null && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{confirmedCount}</span>
+          )}
         </button>
       </div>
 
