@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Bold,
   Italic,
@@ -12,13 +12,17 @@ import {
   Undo,
   Redo,
   CheckCircle2,
-  HelpCircle,
   Loader2,
   Eye,
   Edit3,
 } from 'lucide-react';
-import { Badge } from '@/shared/components/ui';
 import { useGetRuleByTypeQuery, RuleType } from '@/redux/api/rulesApi';
+import {
+  escapeHtml,
+  htmlToPlainText,
+  stripUnsafeHtml,
+  toEditorHtml,
+} from '@/features/cms/utils/richText';
 
 interface ContentEditorProps {
   activePage: string;
@@ -26,152 +30,192 @@ interface ContentEditorProps {
   setContent: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
+const EDITOR_BODY_CLASS =
+  'w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none overflow-y-auto ' +
+  '[&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_s]:line-through [&_strike]:line-through ' +
+  '[&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-bg [&_code]:text-primary [&_code]:text-xs [&_code]:font-mono ' +
+  '[&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:my-2 [&_blockquote]:text-ink-3 [&_blockquote]:italic ' +
+  '[&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_hr]:my-4 [&_hr]:border-line-2';
+
 export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, content, setContent }) => {
   const isRulePage = ['terms', 'privacy', 'about'].includes(activePage);
 
   const { data: ruleResponse, isLoading, isFetching } = useGetRuleByTypeQuery(
     activePage as RuleType,
-    { skip: !isRulePage }
+    { skip: !isRulePage },
   );
 
   useEffect(() => {
     if (isRulePage && ruleResponse?.data?.content !== undefined) {
       setContent((prev) => ({
         ...prev,
-        [activePage]: ruleResponse.data.content,
+        [activePage]: toEditorHtml(ruleResponse.data.content),
       }));
     }
   }, [ruleResponse, activePage, isRulePage, setContent]);
 
   const value = content[activePage] || '';
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
+  const editorRef = useRef<HTMLDivElement>(null);
+  const lastSyncedHtml = useRef(value);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
-  const charCount = value.length;
-  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  useEffect(() => {
+    setHistory([value]);
+    setHistoryIndex(0);
+    lastSyncedHtml.current = value;
+  }, [activePage]);
+
+  const plainText = htmlToPlainText(value);
+  const charCount = plainText.length;
+  const wordCount = plainText ? plainText.split(/\s+/).filter(Boolean).length : 0;
   const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
-  // Update content with history tracking
+  const syncEditorDom = useCallback((html: string) => {
+    const el = editorRef.current;
+    if (!el) return;
+    if (el.innerHTML !== html) {
+      el.innerHTML = html || '';
+    }
+    lastSyncedHtml.current = html;
+  }, []);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el || viewMode !== 'edit') return;
+    if (value === lastSyncedHtml.current) return;
+    if (document.activeElement === el) return;
+    syncEditorDom(value);
+  }, [value, viewMode, syncEditorDom]);
+
   const updateContent = (newValue: string) => {
-    setContent({ ...content, [activePage]: newValue });
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newValue);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
+    const safe = stripUnsafeHtml(newValue);
+    setContent((prev) => ({ ...prev, [activePage]: safe }));
+    setHistory((prevHistory) => {
+      const trimmed = prevHistory.slice(0, historyIndex + 1);
+      trimmed.push(safe);
+      setHistoryIndex(trimmed.length - 1);
+      return trimmed;
+    });
+    lastSyncedHtml.current = safe;
   };
 
-  // Undo / Redo
+  const readEditorHtml = () => stripUnsafeHtml(editorRef.current?.innerHTML ?? '');
+
+  const syncFromEditor = () => {
+    const html = readEditorHtml();
+    if (html === lastSyncedHtml.current) return;
+    updateContent(html);
+  };
+
+  const preventToolbarBlur = (event: React.MouseEvent) => {
+    event.preventDefault();
+  };
+
+  const focusEditor = () => {
+    editorRef.current?.focus();
+  };
+
+  const runCommand = (command: string, commandValue?: string) => {
+    focusEditor();
+    document.execCommand(command, false, commandValue);
+    syncFromEditor();
+  };
+
   const handleUndo = () => {
     if (historyIndex > 0) {
-      const prev = history[historyIndex - 1];
+      const previousValue = history[historyIndex - 1];
       setHistoryIndex(historyIndex - 1);
-      setContent({ ...content, [activePage]: prev });
+      setContent((prev) => ({ ...prev, [activePage]: previousValue }));
+      syncEditorDom(previousValue);
+      return;
     }
+    focusEditor();
+    document.execCommand('undo');
+    syncFromEditor();
   };
 
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
       const next = history[historyIndex + 1];
       setHistoryIndex(historyIndex + 1);
-      setContent({ ...content, [activePage]: next });
+      setContent((prev) => ({ ...prev, [activePage]: next }));
+      syncEditorDom(next);
+      return;
+    }
+    focusEditor();
+    document.execCommand('redo');
+    syncFromEditor();
+  };
+
+  const handleEditorKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    const key = event.key.toLowerCase();
+    if (key === 'b') {
+      event.preventDefault();
+      runCommand('bold');
+    } else if (key === 'i') {
+      event.preventDefault();
+      runCommand('italic');
+    } else if (key === 'z') {
+      event.preventDefault();
+      if (event.shiftKey) handleRedo();
+      else handleUndo();
+    } else if (key === 'y') {
+      event.preventDefault();
+      handleRedo();
     }
   };
 
-  // Insert formatting at cursor position
-  const applyFormat = (prefix: string, suffix = '', defaultText = 'text') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = value.substring(start, end);
-    const replacement = selected ? `${prefix}${selected}${suffix}` : `${prefix}${defaultText}${suffix}`;
-
-    const newValue = value.substring(0, start) + replacement + value.substring(end);
-    updateContent(newValue);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + prefix.length,
-        start + prefix.length + (selected ? selected.length : defaultText.length)
-      );
-    }, 10);
+  const insertLink = () => {
+    focusEditor();
+    const url = window.prompt('Link URL', 'https://');
+    if (!url?.trim()) return;
+    runCommand('createLink', url.trim());
   };
 
-  const insertLinePrefix = (prefix: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-    const newValue = value.substring(0, lineStart) + prefix + value.substring(lineStart);
-    updateContent(newValue);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, start + prefix.length);
-    }, 10);
+  const insertCode = () => {
+    focusEditor();
+    const selection = window.getSelection();
+    const text = selection?.toString() || 'code';
+    document.execCommand('insertHTML', false, `<code>${escapeHtml(text)}</code>`);
+    syncFromEditor();
   };
 
-  // Render markdown preview
-  const renderPreview = (text: string) => {
-    const lines = text.split('\n');
-    return (
-      <div className="prose prose-sm max-w-none text-ink space-y-3 leading-relaxed">
-        {lines.map((line, idx) => {
-          if (line.startsWith('# ')) {
-            return <h1 key={idx} className="text-xl font-bold text-ink pb-1 border-b border-line-2 mt-4">{line.replace('# ', '')}</h1>;
-          }
-          if (line.startsWith('## ')) {
-            return <h2 key={idx} className="text-lg font-bold text-ink mt-3">{line.replace('## ', '')}</h2>;
-          }
-          if (line.startsWith('### ')) {
-            return <h3 key={idx} className="text-sm font-bold text-ink mt-2">{line.replace('### ', '')}</h3>;
-          }
-          if (line.startsWith('- ') || line.startsWith('* ')) {
-            return (
-              <li key={idx} className="ml-4 list-disc text-sm text-ink-2">
-                {line.replace(/^[-*]\s+/, '')}
-              </li>
-            );
-          }
-          if (/^\d+\.\s/.test(line)) {
-            return (
-              <li key={idx} className="ml-4 list-decimal text-sm text-ink-2 font-medium">
-                {line.replace(/^\d+\.\s+/, '')}
-              </li>
-            );
-          }
-          if (line.startsWith('> ')) {
-            return (
-              <blockquote key={idx} className="border-l-4 border-primary pl-4 py-1.5 my-2 text-ink-3 italic bg-primary/5 rounded-r-lg">
-                {line.replace('> ', '')}
-              </blockquote>
-            );
-          }
-          if (line.startsWith('---')) {
-            return <hr key={idx} className="my-4 border-line-2" />;
-          }
-          if (!line.trim()) {
-            return <div key={idx} className="h-2" />;
-          }
-          return <p key={idx} className="text-sm text-ink-2">{line}</p>;
-        })}
-      </div>
-    );
-  };
+  const editorSurface = (
+    <div
+      ref={editorRef}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline
+      className={EDITOR_BODY_CLASS}
+      data-placeholder="Write your document content here..."
+      onInput={syncFromEditor}
+      onBlur={syncFromEditor}
+      onKeyDown={handleEditorKeyDown}
+    />
+  );
+
+  const previewSurface = (
+    <div className={`${EDITOR_BODY_CLASS} bg-bg/20 cursor-default`}>
+      {plainText ? (
+        <div dangerouslySetInnerHTML={{ __html: stripUnsafeHtml(value) }} />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full text-ink-4">
+          <Eye size={32} className="mb-2 opacity-30" />
+          <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-3 animate-in fade-in duration-300">
-      {/* Editor Main Container */}
       <div className="bg-white rounded-2xl border border-line-2 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-        {/* Rich Formatting Toolbar */}
         <div className="bg-bg/60 border-b border-line-2 px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1 flex-wrap">
-            {/* History */}
             <div className="flex items-center gap-0.5 pr-1.5 border-r border-line-2">
               <button
                 type="button"
@@ -193,39 +237,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
             </div>
 
-            {/* Headings */}
             <div className="flex items-center gap-0.5 px-1.5 border-r border-line-2">
               <button
                 type="button"
-                onClick={() => insertLinePrefix('# ')}
-                title="Heading 1"
-                className="px-2 py-1 rounded-lg text-xs font-bold text-ink-3 hover:text-primary hover:bg-white transition-colors"
-              >
-                H1
-              </button>
-              <button
-                type="button"
-                onClick={() => insertLinePrefix('## ')}
-                title="Heading 2"
-                className="px-2 py-1 rounded-lg text-xs font-bold text-ink-3 hover:text-primary hover:bg-white transition-colors"
-              >
-                H2
-              </button>
-              <button
-                type="button"
-                onClick={() => insertLinePrefix('### ')}
-                title="Heading 3"
-                className="px-2 py-1 rounded-lg text-xs font-bold text-ink-3 hover:text-primary hover:bg-white transition-colors"
-              >
-                H3
-              </button>
-            </div>
-
-            {/* Text Styling */}
-            <div className="flex items-center gap-0.5 px-1.5 border-r border-line-2">
-              <button
-                type="button"
-                onClick={() => applyFormat('**', '**', 'bold text')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('bold')}
                 title="Bold (Ctrl+B)"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -233,7 +249,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => applyFormat('*', '*', 'italic text')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('italic')}
                 title="Italic (Ctrl+I)"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -241,7 +258,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => applyFormat('~~', '~~', 'strikethrough')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('strikeThrough')}
                 title="Strikethrough"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -249,7 +267,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => applyFormat('`', '`', 'code')}
+                onMouseDown={preventToolbarBlur}
+                onClick={insertCode}
                 title="Inline Code"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -257,11 +276,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
             </div>
 
-            {/* Lists & Quotes */}
             <div className="flex items-center gap-0.5 px-1.5 border-r border-line-2">
               <button
                 type="button"
-                onClick={() => insertLinePrefix('- ')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('insertUnorderedList')}
                 title="Bullet List"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -269,7 +288,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => insertLinePrefix('1. ')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('insertOrderedList')}
                 title="Numbered List"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -277,7 +297,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => insertLinePrefix('> ')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('formatBlock', 'blockquote')}
                 title="Quote Block"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -285,7 +306,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => applyFormat('[', '](https://example.com)', 'Link Title')}
+                onMouseDown={preventToolbarBlur}
+                onClick={insertLink}
                 title="Insert Hyperlink"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -293,7 +315,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               </button>
               <button
                 type="button"
-                onClick={() => insertLinePrefix('\n---\n')}
+                onMouseDown={preventToolbarBlur}
+                onClick={() => runCommand('insertHorizontalRule')}
                 title="Horizontal Divider"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -302,15 +325,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
             </div>
           </div>
 
-          {/* Right Mode Switchers */}
           <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-line-2">
             <button
               type="button"
               onClick={() => setViewMode('edit')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'edit'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-ink-3 hover:text-ink'
+                viewMode === 'edit' ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:text-ink'
               }`}
             >
               <Edit3 size={12} />
@@ -320,24 +340,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               type="button"
               onClick={() => setViewMode('preview')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'preview'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-ink-3 hover:text-ink'
+                viewMode === 'preview' ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:text-ink'
               }`}
             >
               <Eye size={12} />
               <span>Preview</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('split')}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'split'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-ink-3 hover:text-ink'
-              }`}
-            >
-              <span>Split View</span>
             </button>
           </div>
         </div>
@@ -348,51 +355,14 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <Loader2 size={24} className="animate-spin text-primary" />
               <p className="text-sm font-medium">Loading {activePage} content...</p>
             </div>
+          ) : viewMode === 'edit' ? (
+            editorSurface
           ) : (
-            <>
-              {viewMode === 'edit' && (
-                <textarea
-                  ref={textareaRef}
-                  className="w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 focus:ring-0 border-none"
-                  value={value}
-                  onChange={(e) => updateContent(e.target.value)}
-                  placeholder="Write your document content here... Use the toolbar above or standard markdown formatting."
-                />
-              )}
-
-              {viewMode === 'preview' && (
-                <div className="w-full h-[460px] p-6 bg-bg/20 overflow-y-auto">
-                  {value.trim() ? (
-                    renderPreview(value)
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-ink-4">
-                      <Eye size={32} className="mb-2 opacity-30" />
-                      <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {viewMode === 'split' && (
-                <div className="grid grid-cols-2 divide-x divide-line-2 h-[460px]">
-                  <textarea
-                    ref={textareaRef}
-                    className="w-full h-full p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none resize-none placeholder:text-ink-4 border-none"
-                    value={value}
-                    onChange={(e) => updateContent(e.target.value)}
-                    placeholder="Write your document content here..."
-                  />
-                  <div className="w-full h-full p-6 bg-bg/20 overflow-y-auto">
-                    {renderPreview(value)}
-                  </div>
-                </div>
-              )}
-            </>
+            previewSurface
           )}
         </div>
       </div>
 
-      {/* Editor Footer / Meta bar */}
       <div className="flex items-center justify-between px-2 text-xs text-ink-3">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
@@ -408,6 +378,14 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
           <span>{charCount} characters</span>
         </div>
       </div>
+
+      <style>{`
+        [contenteditable][data-placeholder]:empty:before {
+          content: attr(data-placeholder);
+          color: var(--ink-4, #94a3b8);
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 };

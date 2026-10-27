@@ -1,4 +1,5 @@
 import { baseApi } from "../baseApi";
+import type { IBooking } from "../api/bookingApi";
 
 export interface ITripDistributionMonth {
   month: string;
@@ -127,6 +128,37 @@ const normalizeReportsListResponse = (response: unknown): IReportsListResponse =
   };
 };
 
+export interface IActiveTripsListResponse {
+  success?: boolean;
+  message?: string;
+  pagination?: IReportsPagination;
+  data: IBooking[];
+}
+
+const normalizeActiveTripsListResponse = (response: unknown): IActiveTripsListResponse => {
+  if (Array.isArray(response)) {
+    return {
+      data: response as IBooking[],
+      pagination: {
+        total: response.length,
+        limit: response.length || 10,
+        page: 1,
+        totalPage: 1,
+      },
+    };
+  }
+
+  const body = response as Record<string, unknown> | null | undefined;
+  const list = Array.isArray(body?.data) ? (body.data as IBooking[]) : [];
+
+  return {
+    success: body?.success as boolean | undefined,
+    message: body?.message as string | undefined,
+    pagination: body?.pagination as IReportsPagination | undefined,
+    data: list,
+  };
+};
+
 const normalizeReport = (
   response: IIncidentReport | { data?: IIncidentReport },
 ): IIncidentReport => {
@@ -201,6 +233,24 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
         { type: "all_reports", id: "LIST" },
       ],
     }),
+
+    getActiveTrips: builder.query<IActiveTripsListResponse, void>({
+      query: () => ({
+        url: "/dashboard/active-trips",
+        method: "GET",
+      }),
+      transformResponse: normalizeActiveTripsListResponse,
+      providesTags: (result) =>
+        result?.data?.length
+          ? [
+              ...result.data.map(({ _id }) => ({
+                type: "ActiveTrips" as const,
+                id: _id,
+              })),
+              { type: "ActiveTrips", id: "LIST" },
+            ]
+          : [{ type: "ActiveTrips", id: "LIST" }],
+    }),
   }),
 });
 
@@ -210,4 +260,5 @@ export const {
   useGetAllReportsQuery,
   useGetSingleReportQuery,
   useUpdateReportStatusMutation,
+  useGetActiveTripsQuery,
 } = dashboardOnvordingApi;

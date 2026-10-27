@@ -9,7 +9,6 @@ import {
   ActiveIncidents,
   RecentActivity,
 } from "@/features/adminDashboard";
-
 const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
   const navigate = useNavigate();
 

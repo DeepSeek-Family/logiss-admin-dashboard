@@ -122,6 +122,7 @@ export const baseApi = createApi({
     'trip_distribution',
     'Payments',
     'Dispatchers',
+    'ActiveTrips',
   ],
   endpoints: () => ({}),
 })
