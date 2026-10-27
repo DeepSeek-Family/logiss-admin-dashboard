@@ -62,9 +62,11 @@ export const RouteLocationLabel = ({
     };
   }, [parsed?.lat, parsed?.lng, fallback]);
 
+  const widthClass = /\bmax-w-/.test(className) ? '' : 'max-w-[120px]';
+
   return (
     <span
-      className={`text-xs font-semibold text-ink truncate block max-w-[120px] ${className}`}
+      className={`text-xs font-semibold text-ink truncate block ${widthClass} ${className}`}
       title={text}
     >
       {text}

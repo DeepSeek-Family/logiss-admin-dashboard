@@ -6,7 +6,7 @@ import {
 import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
 import { displayDob, calculateAge, formatRiderCurrency } from '../utils/helpers';
-import { RouteTimeline, TRIP_STATUS_VARIANT } from './RouteTimeline';
+import { TripRouteRow, TripRouteMapsLink, tripRouteMapsProps, TRIP_STATUS_VARIANT } from './RouteTimeline';
 
 interface RiderProfileProps {
   selectedRider: any;
@@ -369,37 +369,38 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
 
       {/* ── TRIP HISTORY TAB ─────────────────────── */}
       {profileTab === 'trips' && (
-        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden animate-in fade-in duration-300">
-          <table className="w-full text-left">
-            <thead className="bg-bg border-b border-line-2">
+        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden animate-in fade-in duration-300 shadow-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left">
+            <thead className="bg-bg/80 border-b border-line-2">
               <tr>
-                {['Trip ID', 'Date & Time', 'Type', 'Route', 'Status'].map(h => (
-                  <th key={h} className="px-5 py-3 type-th">{h}</th>
+                {['Trip ID', 'Date & Time', 'Type', 'Route', 'View map', 'Status'].map(h => (
+                  <th key={h} className="px-4 py-3 type-th whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-2">
               {tripsLoading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-16 text-sm text-ink-4">
+                  <td colSpan={6} className="text-center py-16 text-sm text-ink-4">
                     <Loader2 size={20} className="mx-auto mb-2 animate-spin text-primary" />
                     Loading trip history
                   </td>
                 </tr>
               ) : trips.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
+                <tr><td colSpan={6} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
               ) : trips.map((trip: any) => (
-                <tr key={trip.id} className="align-top hover:bg-bg/50 transition-colors">
-                  <td className="px-5 py-4">
+                <tr key={trip.id} className="align-middle hover:bg-bg/40 transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
                       #{String(trip.id || '').slice(-6)}
                     </span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <p className="text-xs font-medium text-ink">{formatShortDate(trip.serviceDate || trip.scheduledTime) || '—'}</p>
                     <p className="text-[10px] text-ink-4">{formatTime(trip.pickupTime || trip.scheduledTime) || '—'}</p>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <p className="text-xs font-medium text-ink">{tripTypeLabel(trip.tripType || trip.type || '')}</p>
                     {trip.isRecurring && (
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -407,16 +408,13 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-4">
-                    <RouteTimeline
-                      points={[
-                        { kind: 'pickup', raw: trip.pickupLocationRaw ?? trip.pickup },
-                        { kind: 'stop', raw: trip.stopAddressRaw },
-                        { kind: 'dropoff', raw: trip.dropOffLocationRaw ?? trip.dropoff },
-                      ]}
-                    />
+                  <td className="px-4 py-3">
+                    <TripRouteRow trip={trip} />
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <TripRouteMapsLink {...tripRouteMapsProps(trip)} />
+                  </td>
+                  <td className="px-4 py-3">
                     <Badge
                       dot
                       variant={TRIP_STATUS_VARIANT[String(trip.rawStatus || trip.status || '').toLowerCase()] ?? 'neutral'}
@@ -429,6 +427,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               ))}
             </tbody>
           </table>
+          </div>
           {onTripsPageChange && (tripsTotal ?? 0) > 0 && (
             <Pagination
               currentPage={tripsPage}
