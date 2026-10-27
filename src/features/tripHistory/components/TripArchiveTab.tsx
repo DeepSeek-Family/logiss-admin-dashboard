@@ -14,6 +14,7 @@ import {
   BookingCopayCell,
   BookingPayerChargeCell,
 } from '@/features/bookings/components/BookingPricingColumns';
+import { RouteLocationLabel } from '@/features/bookings/components/RouteLocationLabel';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { ServiceDateFilter } from './ServiceDateFilter';
 
@@ -451,7 +452,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   <td className="px-3.5 py-3 min-w-[280px]">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                      <span className="text-xs font-semibold text-ink max-w-[120px] truncate" title={trip?.pickup || ''}>{trip?.pickup || '---'}</span>
+                      <RouteLocationLabel locationRaw={trip.pickupLocationRaw} displayFallback={trip?.pickup} />
 
                       {(trip?.stop || (trip?.stops && trip.stops.length > 0)) ? (
                         <div className="flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20">
@@ -465,7 +466,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                       )}
 
                       <MapPin size={13} className="text-urgent shrink-0" />
-                      <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate" title={trip?.dropoff || ''}>{trip?.dropoff || '---'}</span>
+                      <RouteLocationLabel locationRaw={trip.dropOffLocationRaw} displayFallback={trip?.dropoff} className="text-ink-2" />
                     </div>
                   </td>
 

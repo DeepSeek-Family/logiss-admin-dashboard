@@ -17,6 +17,7 @@ import {
   BookingCopayCell,
   BookingPayerChargeCell,
 } from './BookingPricingColumns';
+import { RouteLocationLabel } from './RouteLocationLabel';
 
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
@@ -449,7 +450,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       <td className="px-3.5 py-3 min-w-[280px]">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                          <span className="text-xs font-semibold text-ink max-w-[120px] truncate" title={booking?.pickup || ''}>{booking?.pickup || '---'}</span>
+                          <RouteLocationLabel locationRaw={booking.pickupLocationRaw} displayFallback={booking?.pickup} />
 
                           {/* Intermediate Stop Indicator */}
                           {(booking?.stop || (booking?.stops && booking.stops.length > 0)) ? (
@@ -464,7 +465,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           )}
 
                           <MapPin size={13} className="text-urgent shrink-0" />
-                          <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate" title={booking?.dropoff || ''}>{booking?.dropoff || '---'}</span>
+                          <RouteLocationLabel locationRaw={booking.dropOffLocationRaw} displayFallback={booking?.dropoff} className="text-ink-2" />
                         </div>
                       </td>
 
