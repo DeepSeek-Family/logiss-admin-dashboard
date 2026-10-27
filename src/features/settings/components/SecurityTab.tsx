@@ -101,12 +101,7 @@ export const SecurityTab = () => {
         </form>
       </Card>
 
-      <div className="flex items-start gap-3 p-4 bg-urgent-light/40 rounded-xl border border-urgent/10">
-        <AlertTriangle size={14} className="text-urgent mt-0.5 shrink-0" />
-        <p className="text-xs text-urgent/80 font-medium leading-relaxed">
-          Always sign out from shared or public devices. Every login from a new IP address is logged automatically.
-        </p>
-      </div>
+   
     </div>
   );
 };
