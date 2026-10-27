@@ -1,4 +1,10 @@
-import type { IBooking, IBookingDriver, IBookingUser, IMobilityRequirement } from '@/redux/api/bookingApi';
+import type {
+  IBooking,
+  IBookingDriver,
+  IBookingPricingLeg,
+  IBookingUser,
+  IMobilityRequirement,
+} from '@/redux/api/bookingApi';
 
 export type DriverAssignmentFilter = 'all' | 'assigned' | 'unassigned'
 
@@ -285,6 +291,54 @@ export const formatLocationString = (val: any): string => {
   return String(val);
 };
 
+const pricingNum = (value: unknown): number => {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+export const normalizePricingLegs = (raw: unknown): IBookingPricingLeg[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.filter((item) => item && typeof item === 'object') as IBookingPricingLeg[]
+}
+
+export const formatPricingZone = (zone?: string | null): string => {
+  const z = String(zone || '').trim().toLowerCase()
+  if (!z) return ''
+  if (z === 'inside') return 'Inside'
+  if (z === 'outside') return 'Outside'
+  return z.charAt(0).toUpperCase() + z.slice(1)
+}
+
+/** Primary zone label for table County column (from API pricingLegs). */
+export const pricingZonesDisplay = (legs: IBookingPricingLeg[]): string => {
+  if (!legs.length) return ''
+  if (legs.length === 1) return formatPricingZone(legs[0].zone)
+  return legs
+    .map((leg) => {
+      const legLabel =
+        String(leg.leg || '').toLowerCase() === 'return'
+          ? 'Return'
+          : String(leg.leg || '').toLowerCase() === 'outbound'
+            ? 'Out'
+            : 'Leg'
+      return `${legLabel}: ${formatPricingZone(leg.zone) || '—'}`
+    })
+    .join(' · ')
+}
+
+export const sumPricingLegs = (legs: IBookingPricingLeg[]) => ({
+  passengerCoPay: legs.reduce((sum, leg) => sum + pricingNum(leg.passengerCoPay), 0),
+  fundingSourceCharge: legs.reduce((sum, leg) => sum + pricingNum(leg.fundingSourceCharge), 0),
+  billingMileage: legs.reduce((sum, leg) => sum + pricingNum(leg.billingMileage), 0),
+})
+
+export const zoneBadgeTone = (zone?: string | null): string => {
+  const z = String(zone || '').trim().toLowerCase()
+  if (z === 'inside') return 'text-accent bg-accent/10 border-accent/25'
+  if (z === 'outside') return 'text-urgent bg-urgent/10 border-urgent/25'
+  return 'text-ink-3 bg-bg border-line-2'
+}
+
 export const parseStopsArray = (stopAddressVal: any): string[] => {
   if (stopAddressVal == null || stopAddressVal === '') return [];
   if (Array.isArray(stopAddressVal)) {
@@ -317,6 +371,18 @@ export const mapApiBooking = (b: IBooking) => {
   if (mappedStatus === 'pending') mappedStatus = 'pending_review';
 
   const tripType = b.tripType || 'one-way';
+  const pricingLegs = normalizePricingLegs((b as IBooking).pricingLegs)
+  const legTotals = sumPricingLegs(pricingLegs)
+  const primaryZone = pricingLegs[0]?.zone
+  const pricingZoneLabel = pricingZonesDisplay(pricingLegs)
+  const passengerCopay =
+    b.passengerCoPay != null ? pricingNum(b.passengerCoPay) : legTotals.passengerCoPay
+  const fundingSourceCharge =
+    b.organizationContribution != null
+      ? pricingNum(b.organizationContribution)
+      : legTotals.fundingSourceCharge || pricingNum(b.price)
+  const billingMileage =
+    legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined
 
   return {
     id: b._id,
@@ -365,13 +431,21 @@ export const mapApiBooking = (b: IBooking) => {
     notes: b.tripNote,
     internalPrivateNote: b.internalPrivateNote,
     privateNotes: b.internalPrivateNote,
-    price: b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
-    cost: b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
-    passengerCopay: b.passengerCoPay ?? 0,
-    fundingSourceCharge: b.organizationContribution ?? b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
+    price: passengerCopay,
+    cost: fundingSourceCharge,
+    copay: passengerCopay,
+    passengerCopay,
+    fundingSourceCharge,
     totalPrice: b.totalPrice,
     organizationContribution: b.organizationContribution,
     passengerCoPay: b.passengerCoPay,
+    pricingLegs,
+    pricingZoneLabel,
+    primaryPricingZone: primaryZone,
+    billingMileage,
+    billingMileageSource: b.billingMileageSource,
+    insideCounty:
+      primaryZone === 'inside' ? true : primaryZone === 'outside' ? false : undefined,
     recurringBatchId: b.recurringBatchId,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,

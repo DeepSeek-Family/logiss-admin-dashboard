@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
 import { Card, Avatar, Pagination, SearchInput, TripStatusBadge } from '@/shared/components/ui';
-import { formatShortDate, money, formatTripId, formatTime } from '@/utils/helpers';
-import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from '@/features/bookings/utils/helpers';
+import { formatShortDate, formatTripId, formatTime } from '@/utils/helpers';
+import {
+  isRoundTrip,
+  resolveMediaUrl,
+  formatPricingZone,
+  type DriverAssignmentFilter,
+} from '@/features/bookings/utils/helpers';
+import {
+  BookingZoneCell,
+  BookingMilesCell,
+  BookingCopayCell,
+  BookingPayerChargeCell,
+} from '@/features/bookings/components/BookingPricingColumns';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { ServiceDateFilter } from './ServiceDateFilter';
 
@@ -145,8 +156,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
       'Scheduled Pickup', 'Pickup Arrival', 'Drop-off Completed',
       'Trip Miles', 'Trip Reason', 'Vehicle/Service', 'Mobility',
       'No-Show', 'Cancelled',
-      'Payer', 'Inside County',
-      'Passenger Copay', 'Payer Charge', 'Type', 'Leg'
+      'Payer', 'Zone',
+      'Billing Miles', 'Passenger Copay', 'Payer Charge', 'Type', 'Leg'
     ];
 
     const rows = tripsToExport.map((trip: any) => {
@@ -170,7 +181,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
         trip.status === 'no_show' ? 'Yes' : 'No',
         trip.status === 'cancelled' ? 'Yes' : 'No',
         `"${trip.fundingSource || trip.paymentMethod || 'N/A'}"`,
-        trip.insideCounty === true ? 'Yes' : trip.insideCounty === false ? 'No' : 'N/A',
+        `"${trip.pricingZoneLabel || formatPricingZone(trip.primaryPricingZone) || (trip.insideCounty === true ? 'Inside' : trip.insideCounty === false ? 'Outside' : 'N/A')}"`,
+        trip.billingMileage != null && trip.billingMileage > 0 ? trip.billingMileage.toFixed(1) : 'N/A',
         trip.passengerCopay ?? trip.copay ?? 0,
         trip.fundingSourceCharge ?? (trip.costToCounty != null ? trip.costToCounty : (trip.cost || 0)),
         trip.type,
@@ -310,8 +322,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">Trip Reason</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Trip Type</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge (est.)</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Zone</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[72px]">Miles</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Passenger copay</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Payer charge</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Dispatcher/Admin Note</th>
               </tr>
@@ -509,20 +523,20 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     </div>
                   </td>
 
-                  <td className="px-3 py-2.5">
-                    <span className="text-xs font-medium text-ink-3">
-                      {trip.insideCounty === true ? 'In-County' : trip.insideCounty === false ? 'Out-of-County' : '—'}
-                    </span>
+                  <td className="px-3 py-2.5 min-w-[120px]">
+                    <BookingZoneCell row={trip} />
                   </td>
 
-                  <td className="px-3 py-2.5 text-right">
-                    <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-xs font-medium text-primary">{money(trip.fundingSourceCharge ?? trip.costToCounty ?? trip.cost ?? 0)}</span>
-                      <div className="flex items-center gap-1.5 opacity-80">
-                        <span className="text-xs text-ink-4">Copay: {money(trip.passengerCopay ?? trip.copay ?? 0)}</span>
-                        <span className="text-xs text-ink-4">Payer: {money(trip.fundingSourceCharge ?? trip.costToCounty ?? trip.cost ?? 0)}</span>
-                      </div>
-                    </div>
+                  <td className="px-3 py-2.5 text-right min-w-[72px]">
+                    <BookingMilesCell row={trip} />
+                  </td>
+
+                  <td className="px-3 py-2.5 text-right min-w-[100px]">
+                    <BookingCopayCell row={trip} />
+                  </td>
+
+                  <td className="px-3 py-2.5 text-right min-w-[100px]">
+                    <BookingPayerChargeCell row={trip} />
                   </td>
 
                   <td className="px-3 py-2.5">

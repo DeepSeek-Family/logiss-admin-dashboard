@@ -27,6 +27,18 @@ export interface IBookingDriver {
   id?: string
 }
 
+export interface IBookingPricingLeg {
+  leg?: string
+  zone?: string
+  priceMethod?: string
+  straightLineMileage?: number | null
+  calculatedRouteMileage?: number | null
+  billingMileage?: number | null
+  billingMileageSource?: string
+  fundingSourceCharge?: number
+  passengerCoPay?: number
+}
+
 export interface IBooking {
   _id: string
   userId?: IBookingUser | string
@@ -58,6 +70,10 @@ export interface IBooking {
   organizationContribution?: number
   isApproved?: string
   paymentStatus?: string
+  billingMileageSource?: string
+  pricingLegs?: IBookingPricingLeg[]
+  cancellationOutcome?: string
+  noShowOutcome?: string
   createdAt?: string
   updatedAt?: string
   __v?: number

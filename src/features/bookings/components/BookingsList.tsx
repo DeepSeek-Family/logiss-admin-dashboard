@@ -5,12 +5,18 @@ import {
   Accessibility, Bed, Disc, Info, User
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination, SearchInput } from '@/shared/components/ui';
-import { formatShortDate, money, formatTripId } from '@/utils/helpers';
+import { formatShortDate, formatTripId } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { DriverAssignSelect } from './DriverAssignSelect';
 import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from '../utils/helpers';
+import {
+  BookingZoneCell,
+  BookingMilesCell,
+  BookingCopayCell,
+  BookingPayerChargeCell,
+} from './BookingPricingColumns';
 
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
@@ -277,8 +283,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th> */}
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge (est.)</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Zone</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[72px]">Miles</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Passenger copay</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Payer charge</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Dispatcher/Admin Note</th>
                   </tr>
@@ -541,29 +549,20 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         </div>
                       </td>
 
-                      {/* County (editable) */}
-                      <td className="px-3 py-2.5">
-                        <select
-                          value={booking.insideCounty === true ? 'inside' : booking.insideCounty === false ? 'outside' : ''}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateTrip(booking.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${booking.insideCounty === false ? 'text-urgent bg-urgent/5' : booking.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
-                        >
-                          <option value="">—</option>
-                          <option value="inside">In-County</option>
-                          <option value="outside">Out-of-County</option>
-                        </select>
+                      <td className="px-3 py-2.5 min-w-[120px]">
+                        <BookingZoneCell row={booking} />
                       </td>
 
-                      {/* Charge (estimated) */}
-                      <td className="px-3 py-2.5 text-right">
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-xs font-medium text-primary">{money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
-                          <div className="flex items-center gap-1.5 opacity-80">
-                            <span className="text-xs text-ink-4">Copay: {money(booking.passengerCopay ?? booking.copay ?? 0)}</span>
-                            <span className="text-xs text-ink-4">Payer: {money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
-                          </div>
-                        </div>
+                      <td className="px-3 py-2.5 text-right min-w-[72px]">
+                        <BookingMilesCell row={booking} />
+                      </td>
+
+                      <td className="px-3 py-2.5 text-right min-w-[100px]">
+                        <BookingCopayCell row={booking} />
+                      </td>
+
+                      <td className="px-3 py-2.5 text-right min-w-[100px]">
+                        <BookingPayerChargeCell row={booking} />
                       </td>
 
                       {/* User Note (from rider app) */}
