@@ -1,5 +1,10 @@
 import { baseApi } from '../baseApi'
 import type { IBookingPagination } from './bookingApi'
+import {
+  FILE_EXPORT_FALLBACK_NAMES,
+  requestFileExport,
+  type FileExportType,
+} from '@/utils/fileExportDownload'
 
 export interface IPaymentUser {
   _id: string
@@ -46,11 +51,31 @@ export interface IGetPaymentsQueryParams {
   [key: string]: any
 }
 
+export interface IExportPaymentsArgs extends IGetPaymentsQueryParams {
+  type: FileExportType
+}
+
 export interface IGetPaymentsResponse {
   success: boolean
   message: string
   pagination?: IBookingPagination
   data: IPayment[]
+}
+
+const buildPaymentQueryParams = (params?: IGetPaymentsQueryParams | void) => {
+  const queryParams: Record<string, string | number> = {}
+  if (params && typeof params === 'object') {
+    if (params.page != null) queryParams.page = params.page
+    if (params.limit != null) queryParams.limit = params.limit
+    const searchTerm = params.searchTerm || params.search
+    if (searchTerm) queryParams.searchTerm = searchTerm
+    if (params.paymentStatus && params.paymentStatus !== 'all') {
+      queryParams.paymentStatus = params.paymentStatus
+    }
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+  }
+  return queryParams
 }
 
 const normalizePaymentsResponse = (response: any): IGetPaymentsResponse => {
@@ -73,25 +98,11 @@ const normalizePaymentsResponse = (response: any): IGetPaymentsResponse => {
 export const transitionApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPayments: builder.query<IGetPaymentsResponse, IGetPaymentsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          const searchTerm = params.searchTerm || params.search
-          if (searchTerm) queryParams.searchTerm = searchTerm
-          if (params.paymentStatus && params.paymentStatus !== 'all') {
-            queryParams.paymentStatus = params.paymentStatus
-          }
-          if (params.startDate) queryParams.startDate = params.startDate
-          if (params.endDate) queryParams.endDate = params.endDate
-        }
-        return {
-          url: '/payment',
-          method: 'GET',
-          params: queryParams,
-        }
-      },
+      query: (params) => ({
+        url: '/payment',
+        method: 'GET',
+        params: buildPaymentQueryParams(params),
+      }),
       transformResponse: normalizePaymentsResponse,
       providesTags: (result) =>
         result?.data
@@ -101,45 +112,14 @@ export const transitionApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Payments', id: 'LIST' }],
     }),
-    exportPayments: builder.query<string, IGetPaymentsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          const searchTerm = params.searchTerm || params.search
-          if (searchTerm) queryParams.searchTerm = searchTerm
-          if (params.paymentStatus && params.paymentStatus !== 'all') {
-            queryParams.paymentStatus = params.paymentStatus
-          }
-          if (params.startDate) queryParams.startDate = params.startDate
-          if (params.endDate) queryParams.endDate = params.endDate
-        }
-        return {
+    exportPayments: builder.mutation<null, IExportPaymentsArgs>({
+      queryFn: async ({ type, ...filters }, _api, _extraOptions, baseQuery) =>
+        requestFileExport(baseQuery as unknown as (args: Record<string, unknown>) => unknown, {
           url: '/payment/export',
-          method: 'GET',
-          params: queryParams,
-          responseHandler: 'text',
-        }
-      },
-    }),
-    exportPaymentsMutation: builder.mutation<string, IGetPaymentsQueryParams | void>({
-      query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          const searchTerm = params.searchTerm || params.search
-          if (searchTerm) queryParams.searchTerm = searchTerm
-          if (params.paymentStatus && params.paymentStatus !== 'all') {
-            queryParams.paymentStatus = params.paymentStatus
-          }
-          if (params.startDate) queryParams.startDate = params.startDate
-          if (params.endDate) queryParams.endDate = params.endDate
-        }
-        return {
-          url: '/payment/export',
-          method: 'GET',
-          params: queryParams,
-          responseHandler: 'text',
-        }
-      },
+          params: buildPaymentQueryParams(filters),
+          type,
+          fallbackFileName: FILE_EXPORT_FALLBACK_NAMES.payments[type],
+        }),
     }),
   }),
   overrideExisting: false,
@@ -148,7 +128,5 @@ export const transitionApi = baseApi.injectEndpoints({
 export const {
   useGetPaymentsQuery,
   useLazyGetPaymentsQuery,
-  useExportPaymentsQuery,
-  useLazyExportPaymentsQuery,
-  useExportPaymentsMutationMutation,
+  useExportPaymentsMutation,
 } = transitionApi

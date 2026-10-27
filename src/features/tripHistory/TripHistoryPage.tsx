@@ -1,12 +1,14 @@
 import { useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Loader2, Download, Map as MapIcon, Printer } from 'lucide-react';
-import { Card, Button, ConfirmationModal } from '@/shared/components/ui';
+import { Loader2, Map as MapIcon } from 'lucide-react';
+import { Card, Button, ConfirmationModal, ExportFormatMenu } from '@/shared/components/ui';
+import { parseExportErrorMessage, type FileExportType } from '@/utils/fileExportDownload';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useFleet } from '@/hooks/useFleet';
 import { toast } from 'react-hot-toast';
 import {
   useGetAllTripHistoryQuery,
-  useExportTripHistoryExcelMutation,
+  useExportTripHistoryMutation,
   useUpdateBookingMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
@@ -81,14 +83,23 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   });
 
   const [updateBookingMutation] = useUpdateBookingMutation();
-  const [exportTripHistoryExcel, { isLoading: isExporting }] = useExportTripHistoryExcelMutation();
+  const [exportTripHistory] = useExportTripHistoryMutation();
+  const [exportingType, setExportingType] = useState<FileExportType | null>(null);
 
-  const handleExportExcel = async () => {
+  const handleExport = async (type: FileExportType) => {
+    setExportingType(type);
     try {
-      await exportTripHistoryExcel(historyQueryParams).unwrap();
-      toast.success('Trip history exported');
-    } catch (e: any) {
-      toast.error(apiErrorMessage(e, 'Failed to export trip history'));
+      await exportTripHistory({ ...historyQueryParams, type }).unwrap();
+      toast.success(`Trip history exported as ${type.toUpperCase()}`);
+    } catch (e: unknown) {
+      const err = e as FetchBaseQueryError
+      if (err && typeof err === 'object' && 'status' in err) {
+        toast.error(await parseExportErrorMessage(err))
+      } else {
+        toast.error(apiErrorMessage(e, 'Failed to export trip history'))
+      }
+    } finally {
+      setExportingType(null);
     }
   };
   const { vehicles, loading: fleetLoading } = useFleet();
@@ -315,16 +326,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               <MapIcon size={15} />
               {showMap ? 'Hide Map' : 'Show Map'}
             </button>
-            <Button
-              variant="outline"
-              size="sm"
-              icon={isExporting ? Loader2 : Download}
-              onClick={handleExportExcel}
-              disabled={isExporting}
-              className={`shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9 ${isExporting ? '[&_svg]:animate-spin opacity-70 cursor-wait' : ''}`}
-            >
-              {isExporting ? 'Exporting...' : 'Export Excel'}
-            </Button>
+            <ExportFormatMenu exportingType={exportingType} onExport={handleExport} />
       
           </div>
         )}

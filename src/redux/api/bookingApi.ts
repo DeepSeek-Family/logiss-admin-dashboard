@@ -1,4 +1,9 @@
 import { baseApi } from '../baseApi'
+import {
+  FILE_EXPORT_FALLBACK_NAMES,
+  requestFileExport,
+  type FileExportType,
+} from '@/utils/fileExportDownload'
 
 export interface IBookingUser {
   _id: string
@@ -192,9 +197,17 @@ export interface IGetBookingsQueryParams {
   bookingStatus?: string
   serviceDate?: string
   driverId?: string
+  payerId?: string
+  sort?: string
   /** When true, only bookings without a driver (`/booking/approved?unassign=true`). */
   unassign?: boolean
   [key: string]: any
+}
+
+export type TripHistoryExportType = FileExportType
+
+export interface IExportTripHistoryArgs extends IGetBookingsQueryParams {
+  type: FileExportType
 }
 
 const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
@@ -208,31 +221,24 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
       queryParams.searchTerm = searchVal
     }
 
-    const payerVal = params.payerSource || params.payers
-    if (payerVal && payerVal !== 'all') {
-      queryParams.payerSource = payerVal
+    if (params.payerId && params.payerId !== 'all') {
+      queryParams.payerId = params.payerId
+    } else {
+      const payerVal = params.payerSource || params.payers
+      if (payerVal && payerVal !== 'all') {
+        queryParams.payerSource = payerVal
+      }
     }
 
     if (params.serviceDate) queryParams.serviceDate = params.serviceDate
     if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
     if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
     if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
+    if (params.sort) queryParams.sort = params.sort
     if (params.unassign === true) queryParams.unassign = 'true'
     else if (params.unassign === false) queryParams.unassign = 'false'
   }
   return queryParams
-}
-
-
-const downloadBlob = (blob: Blob, fileName: string) => {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
 
 const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
@@ -301,25 +307,14 @@ export const bookingApi = baseApi.injectEndpoints({
           : [{ type: 'bookings', id: 'LIST' }],
     }),
 
-    exportTripHistoryExcel: builder.mutation<null, IGetBookingsQueryParams | void>({
-      // Blob is downloaded here instead of being returned, since Redux state must stay serializable.
-      queryFn: async (params, _api, _extraOptions, baseQuery) => {
-        const result = await baseQuery({
+    exportTripHistory: builder.mutation<null, IExportTripHistoryArgs>({
+      queryFn: async ({ type, ...filters }, _api, _extraOptions, baseQuery) =>
+        requestFileExport(baseQuery as unknown as (args: Record<string, unknown>) => unknown, {
           url: '/booking/history/excel',
-          method: 'GET',
-          params: buildQueryParams(params),
-          responseHandler: (response) => response.blob(),
-          cache: 'no-cache',
-        })
-        if (result.error) return { error: result.error }
-
-        const disposition = result.meta?.response?.headers.get('content-disposition') || ''
-        const fileName =
-          /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] ||
-          `Trip_History_${new Date().toISOString().split('T')[0]}.xlsx`
-        downloadBlob(result.data as Blob, decodeURIComponent(fileName))
-        return { data: null }
-      },
+          params: buildQueryParams(filters),
+          type,
+          fallbackFileName: FILE_EXPORT_FALLBACK_NAMES.tripHistory[type],
+        }),
     }),
 
     getAllPayers: builder.query<IPayersListResponse, void>({
@@ -416,7 +411,7 @@ export const {
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
   useGetAllTripHistoryQuery,
-  useExportTripHistoryExcelMutation,
+  useExportTripHistoryMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
 } = bookingApi
