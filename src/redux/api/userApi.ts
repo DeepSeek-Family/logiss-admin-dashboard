@@ -1,4 +1,28 @@
 import { baseApi } from '../baseApi'
+import type { IRider } from './ridersApi'
+
+export interface IUserDetail extends IRider {
+  totalRiderAmount?: number
+  totalOrganizationAmount?: number
+  totalAmount?: number
+  isPushNotificationEnabled?: boolean
+}
+
+export interface IAuthUserDetailResponse {
+  success: boolean
+  message?: string
+  data: IUserDetail
+}
+
+const normalizeAuthUserDetail = (response: unknown): IAuthUserDetailResponse => {
+  const body = response as Record<string, unknown> | null | undefined
+  const data = (body?.data ?? body) as IUserDetail
+  return {
+    success: body?.success !== false,
+    message: body?.message as string | undefined,
+    data,
+  }
+}
 
 export interface IBannedUser {
   _id: string
@@ -25,6 +49,14 @@ const unwrapBannedUser = (response: unknown): IBannedUser | undefined => {
 
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getAuthUserById: builder.query<IAuthUserDetailResponse, string>({
+      query: (id) => ({
+        url: `/auth/user/${id}`,
+        method: 'GET',
+      }),
+      transformResponse: normalizeAuthUserDetail,
+      providesTags: (_result, _error, id) => [{ type: 'User', id }],
+    }),
     toggleUserBanned: builder.mutation<IToggleUserBannedResponse, string>({
       query: (id) => ({
         url: `/user/banned/${id}`,
@@ -51,4 +83,4 @@ export const userApi = baseApi.injectEndpoints({
   overrideExisting: false,
 })
 
-export const { useToggleUserBannedMutation } = userApi
+export const { useGetAuthUserByIdQuery, useToggleUserBannedMutation } = userApi

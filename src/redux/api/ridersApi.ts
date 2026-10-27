@@ -47,6 +47,10 @@ export interface IRider {
   fcmToken?: string | null
   createdAt?: string
   updatedAt?: string
+  totalRiderAmount?: number
+  totalOrganizationAmount?: number
+  totalAmount?: number
+  isPushNotificationEnabled?: boolean
 }
 
 export interface IGetRidersQueryParams {

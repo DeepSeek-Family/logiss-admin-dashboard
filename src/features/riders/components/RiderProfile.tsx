@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
-import { displayDob, calculateAge } from '../utils/helpers';
+import { displayDob, calculateAge, formatRiderCurrency } from '../utils/helpers';
 import { RouteTimeline, TRIP_STATUS_VARIANT } from './RouteTimeline';
 
 interface RiderProfileProps {
@@ -26,12 +26,13 @@ interface RiderProfileProps {
   onEditRider?: () => void;
   onToggleBan?: () => void;
   banToggleLoading?: boolean;
+  detailLoading?: boolean;
 }
 
 export const RiderProfile: React.FC<RiderProfileProps> = ({
   selectedRider, trips, tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10,
   onTripsPageChange, role, onBack,
-  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider, onToggleBan, banToggleLoading
+  profileTab, setProfileTab, copiedPhone, onCopyPhone, onEditRider,   onToggleBan, banToggleLoading, detailLoading
 }) => {
   const isBanned = selectedRider?.status === 'banned' || selectedRider?.isBanned;
   const TABS = [
@@ -114,9 +115,17 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
         <div className="flex items-center gap-6 shrink-0">
           <div className="flex items-center gap-6 text-center">
             <div>
-              <p className="text-2xl font-bold text-ink">{tripsTotal ?? (trips.length || selectedRider?.totalTrips || 0)}</p>
+              <p className="text-2xl font-bold text-ink">
+                {selectedRider?.totalTrips ?? tripsTotal ?? trips.length ?? 0}
+              </p>
               <p className="text-xs text-ink-4 mt-0.5">Total trips</p>
             </div>
+            {selectedRider?.totalAmount != null && (
+              <div>
+                <p className="text-2xl font-bold text-primary">{formatRiderCurrency(selectedRider.totalAmount)}</p>
+                <p className="text-xs text-ink-4 mt-0.5">Total spend</p>
+              </div>
+            )}
             {calculateAge(selectedRider?.dateOfBirth) !== null ? (
               <div>
                 <p className="text-2xl font-bold text-primary">{calculateAge(selectedRider?.dateOfBirth)} yrs</p>
@@ -195,10 +204,16 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
       {/* ── OVERVIEW ─────────────────────────────── */}
       {profileTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          {detailLoading ? (
+            <div className="lg:col-span-5 flex items-center justify-center py-16 text-sm text-ink-4 gap-2">
+              <Loader2 size={18} className="animate-spin text-primary" />
+              Loading rider details…
+            </div>
+          ) : null}
 
           {/* LEFT — Contact & Mobility (3 cols) */}
-          <div className={`${selectedRider?.defaultPickup || selectedRider?.defaultDropoff ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white border border-line-2 rounded-2xl p-6`}>
-            <h3 className="text-base font-bold text-ink mb-5">Contact & Mobility</h3>
+          <div className={`${selectedRider?.defaultPickup || selectedRider?.defaultDropoff ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white border border-line-2 rounded-2xl p-6 ${detailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+            <h3 className="text-base font-bold text-ink mb-5">Contact & account</h3>
 
             {/* Email full width */}
             <div className="pb-4 border-b border-line-2">
@@ -247,17 +262,55 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
               </div>
               <div className="pt-4 border-b border-line-2 pb-4">
                 <p className="text-xs text-ink-4 mb-0.5">County / Payer</p>
-                <p className="text-sm font-medium text-ink">{selectedRider?.payerName || selectedRider?.county || '—'}</p>
+                <p className="text-sm font-medium text-ink">
+                  {selectedRider?.payerName || selectedRider?.county || selectedRider?.countyName || selectedRider?.countyId || '—'}
+                </p>
               </div>
-              <div className="pt-4">
+              <div className="pt-4 border-b border-line-2 pb-4">
                 <p className="text-xs text-ink-4 mb-0.5">Auth ID</p>
                 <p className="text-sm font-medium text-ink">{selectedRider?.authorizationId || selectedRider?.authId || '—'}</p>
+              </div>
+              <div className="pt-4 border-b border-line-2 pb-4">
+                <p className="text-xs text-ink-4 mb-0.5">Verified</p>
+                <p className="text-sm font-medium text-ink">{selectedRider?.verified ? 'Yes' : 'No'}</p>
+              </div>
+              <div className="pt-4 border-b border-line-2 pb-4">
+                <p className="text-xs text-ink-4 mb-0.5">Application status</p>
+                <p className="text-sm font-medium text-ink capitalize">
+                  {String(selectedRider?.rawStatus || selectedRider?.applicationStatus || '—').replace(/_/g, ' ')}
+                </p>
               </div>
               <div className="pt-4">
                 <p className="text-xs text-ink-4 mb-0.5">Member since</p>
                 <p className="text-sm font-medium text-ink">{formatShortDate(selectedRider?.joinedDate || selectedRider?.createdAt) || '—'}</p>
               </div>
+              <div className="pt-4">
+                <p className="text-xs text-ink-4 mb-0.5">Last updated</p>
+                <p className="text-sm font-medium text-ink">{formatShortDate(selectedRider?.updatedAt) || '—'}</p>
+              </div>
             </div>
+
+            {(selectedRider?.totalRiderAmount != null ||
+              selectedRider?.totalOrganizationAmount != null ||
+              selectedRider?.totalAmount != null) && (
+              <div className="mt-5 pt-5 border-t border-line-2">
+                <h3 className="text-base font-bold text-ink mb-4">Trip spend summary</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-xl bg-bg border border-line-2 p-4">
+                    <p className="text-xs text-ink-4 mb-1">Passenger copay total</p>
+                    <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalRiderAmount)}</p>
+                  </div>
+                  <div className="rounded-xl bg-bg border border-line-2 p-4">
+                    <p className="text-xs text-ink-4 mb-1">Organization total</p>
+                    <p className="text-lg font-bold text-ink">{formatRiderCurrency(selectedRider?.totalOrganizationAmount)}</p>
+                  </div>
+                  <div className="rounded-xl bg-primary/5 border border-primary/15 p-4">
+                    <p className="text-xs text-ink-4 mb-1">Combined total</p>
+                    <p className="text-lg font-bold text-primary">{formatRiderCurrency(selectedRider?.totalAmount)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Emergency contact */}
             {(selectedRider?.emergencyContact?.name || selectedRider?.emergencyContact?.phone) && (
