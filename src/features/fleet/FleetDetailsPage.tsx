@@ -140,17 +140,40 @@ const FleetDetails = (_props: { role?: string | null }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h4 className="type-th mb-4 flex items-center gap-2"><Truck size={14} className="text-primary" /> Vehicle Information</h4>
-          <DetailRow label="Manufacturer" value={vehicle.manufacturer || '—'} />
-          <DetailRow label="Model" value={vehicle.model || '—'} />
-          <DetailRow label="Year" value={vehicle.year || '—'} />
-          <DetailRow label="License Plate" value={vehicle.licensePlateNumber || '—'} />
-          <DetailRow label="VIN Number" value={<span className="font-mono">{vehicle.vinNumber || '—'}</span>} />
-          <DetailRow label="Configuration" value={formatConfiguration(vehicle.configurationType)} />
-          <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? '—'} />
-          <DetailRow label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} />
-        </Card>
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h4 className="type-th mb-4 flex items-center gap-2"><Truck size={14} className="text-primary" /> Vehicle Information</h4>
+            <DetailRow label="Manufacturer" value={vehicle.manufacturer || '—'} />
+            <DetailRow label="Model" value={vehicle.model || '—'} />
+            <DetailRow label="Year" value={vehicle.year || '—'} />
+            <DetailRow label="License Plate" value={vehicle.licensePlateNumber || '—'} />
+            <DetailRow label="VIN Number" value={<span className="font-mono">{vehicle.vinNumber || '—'}</span>} />
+            <DetailRow label="Configuration" value={formatConfiguration(vehicle.configurationType)} />
+            <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? '—'} />
+            <DetailRow label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} />
+          </Card>
+
+          <Card className="p-6">
+            <h4 className="type-th mb-4 flex items-center gap-2"><Shield size={14} className="text-primary" /> Insurance & Service</h4>
+            <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || '—'} />
+            <DetailRow label="Policy Number" value={vehicle.policyNumber || '—'} />
+            <DetailRow
+              label="Insurance Expiration"
+              value={<span className={insuranceExpired ? 'text-urgent' : ''}>{formatDate(vehicle.insuranceExpirationDate)}</span>}
+            />
+            <DetailRow
+              label="Next Service Date"
+              value={<span className={serviceOverdue ? 'text-urgent' : ''}>{formatDate(vehicle.nextServiceDate)}</span>}
+            />
+          </Card>
+
+          <Card className="p-6">
+            <h4 className="type-th mb-4 flex items-center gap-2"><FileText size={14} className="text-primary" /> Record</h4>
+            <DetailRow label="Status" value={vehicle.isActive === false ? 'Inactive' : 'Active'} />
+            <DetailRow label="Created" value={formatDateTime(vehicle.createdAt)} />
+            <DetailRow label="Last Updated" value={formatDateTime(vehicle.updatedAt)} />
+          </Card>
+        </div>
 
         <div className="space-y-6">
           {assignedDriver && (
@@ -198,26 +221,7 @@ const FleetDetails = (_props: { role?: string | null }) => {
             onAssigned={() => refetch()}
           />
 
-          <Card className="p-6">
-            <h4 className="type-th mb-4 flex items-center gap-2"><Shield size={14} className="text-primary" /> Insurance & Service</h4>
-            <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || '—'} />
-            <DetailRow label="Policy Number" value={vehicle.policyNumber || '—'} />
-            <DetailRow
-              label="Insurance Expiration"
-              value={<span className={insuranceExpired ? 'text-urgent' : ''}>{formatDate(vehicle.insuranceExpirationDate)}</span>}
-            />
-            <DetailRow
-              label="Next Service Date"
-              value={<span className={serviceOverdue ? 'text-urgent' : ''}>{formatDate(vehicle.nextServiceDate)}</span>}
-            />
-          </Card>
-
-          <Card className="p-6">
-            <h4 className="type-th mb-4 flex items-center gap-2"><FileText size={14} className="text-primary" /> Record</h4>
-            <DetailRow label="Status" value={vehicle.isActive === false ? 'Inactive' : 'Active'} />
-            <DetailRow label="Created" value={formatDateTime(vehicle.createdAt)} />
-            <DetailRow label="Last Updated" value={formatDateTime(vehicle.updatedAt)} />
-          </Card>
+          
         </div>
       </div>
     </div>
