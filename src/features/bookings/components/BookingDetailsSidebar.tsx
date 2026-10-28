@@ -5,12 +5,15 @@ import {
 import { Avatar, Badge, Button, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
 import { tripTypeLabel, formatTime, formatShortDate, formatTripId } from '@/utils/helpers';
 import { isRoundTrip, resolveMediaUrl, parseLatLng, extractBookingStopsCoords } from '../utils/helpers';
+import { createDirectionalRoutePolyline, getDrivingRoutePath } from '@/utils/googleDrivingRoute';
 
 const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const routeDrawGenRef = useRef(0);
 
   useEffect(() => {
     let active = true;
+    const drawGen = ++routeDrawGenRef.current;
     loadGoogleMapsScript()
       .then(() => {
         if (!active || !mapRef.current || !(window as any).google?.maps) return;
@@ -87,13 +90,10 @@ const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
         }
 
         if (path.length > 1) {
-          new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: '#2969CD',
-            strokeOpacity: 0.85,
-            strokeWeight: 4,
-            map,
+          const waypointPath = [...path];
+          void getDrivingRoutePath(google, waypointPath).then((routePath) => {
+            if (!active || drawGen !== routeDrawGenRef.current) return;
+            createDirectionalRoutePolyline(google, map, routePath, '#2969CD');
           });
         }
 

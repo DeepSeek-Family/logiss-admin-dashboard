@@ -8,6 +8,7 @@ import {
 import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput, loadGoogleMapsScript } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money, formatTripId } from '../../../utils/helpers';
 import { isMongoId, parseLatLng, extractBookingStopsCoords } from '../../bookings/utils/helpers';
+import { createDirectionalRoutePolyline, getDrivingRoutePath } from '@/utils/googleDrivingRoute';
 import { PRICING_METHOD_LABELS, quoteFares, quotePenalty, type PricingMethod } from '@/hooks/usePricing';
 
 const TripRouteGoogleMap: React.FC<{
@@ -16,9 +17,11 @@ const TripRouteGoogleMap: React.FC<{
   stopsLoc?: any[];
 }> = ({ pickupLoc, dropoffLoc, stopsLoc = [] }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const routeDrawGenRef = useRef(0);
 
   useEffect(() => {
     let active = true;
+    const drawGen = ++routeDrawGenRef.current;
     loadGoogleMapsScript().then(() => {
       if (!active || !mapRef.current || !(window as any).google?.maps) return;
 
@@ -90,15 +93,14 @@ const TripRouteGoogleMap: React.FC<{
         },
       });
 
-      // Polyline route path
-      new (window as any).google.maps.Polyline({
-        path: routePath,
-        geodesic: true,
-        strokeColor: '#2969CD',
-        strokeOpacity: 0.85,
-        strokeWeight: 4,
-        map,
-      });
+      if (routePath.length > 1) {
+        const waypointPath = [...routePath];
+        const google = (window as any).google;
+        void getDrivingRoutePath(google, waypointPath).then((drivingPath) => {
+          if (!active || drawGen !== routeDrawGenRef.current) return;
+          createDirectionalRoutePolyline(google, map, drivingPath, '#2969CD');
+        });
+      }
 
       map.fitBounds(bounds, { top: 30, bottom: 30, left: 30, right: 30 });
     }).catch(err => console.warn('Google Maps load failed', err));

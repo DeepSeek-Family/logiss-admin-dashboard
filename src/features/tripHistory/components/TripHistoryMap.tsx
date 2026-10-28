@@ -3,6 +3,7 @@ import { Plus, Minus, MapPin, Navigation, Truck, ExternalLink, X, MousePointerCl
 import { Card, Avatar, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
 import { formatTime, formatShortDate, money } from '@/utils/helpers';
 import { parseLatLng, extractBookingStopsCoords } from '@/features/bookings/utils/helpers';
+import { createDirectionalRoutePolyline, getDrivingRoutePath } from '@/utils/googleDrivingRoute';
 
 interface TripHistoryMapProps {
   trips: any[];
@@ -30,6 +31,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const polylinesRef = useRef<any[]>([]);
+  const routeDrawGenRef = useRef(0);
   const infoWindowRef = useRef<any>(null);
 
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -191,15 +193,13 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
         }
 
         if (path.length > 1) {
-          const polyline = new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: '#2969CD',
-            strokeOpacity: 0.9,
-            strokeWeight: 5,
-            map,
+          const waypointPath = [...path];
+          const drawGen = ++routeDrawGenRef.current;
+          void getDrivingRoutePath(google, waypointPath).then((routePath) => {
+            if (drawGen !== routeDrawGenRef.current || !mapInstanceRef.current) return;
+            const polyline = createDirectionalRoutePolyline(google, map, routePath);
+            polylinesRef.current.push(polyline);
           });
-          polylinesRef.current.push(polyline);
         }
       } else {
         // Plot non-selected trips
@@ -322,7 +322,9 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
             <div className="absolute inset-0 bg-bg flex flex-col items-center justify-center p-4 text-center z-10">
               <MapPin size={24} className="text-urgent opacity-40 mb-2" />
               <p className="text-xs font-semibold text-ink">Google Maps Unavailable</p>
-              <p className="text-[11px] text-ink-4 mt-0.5">Check VITE_GOOGLE_MAPS API key in .env</p>
+              <p className="text-[11px] text-ink-4 mt-0.5">
+                Check VITE_GOOGLE_MAPS — enable Maps JS, Places, Geocoding &amp; Directions APIs
+              </p>
             </div>
           )}
 
