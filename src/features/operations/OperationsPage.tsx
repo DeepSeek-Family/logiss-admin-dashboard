@@ -87,7 +87,7 @@ const Operations = ({ role }: { role?: string | null }) => {
         <StatCard label="Action Required" value={pendingTrips.length + openReports.length} sub="Needs attention" icon={AlertTriangle} accent="warning" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <button onClick={() => navigate('/bookings')} className="flex items-center gap-3 bg-warning-light/60 hover:bg-warning-light border border-warning/20 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
           <div className="w-9 h-9 bg-warning/20 rounded-lg flex items-center justify-center flex-shrink-0"><Clock size={18} className="text-warning-dark" /></div>
           <div><p className="text-xs font-medium text-ink">Review Bookings</p><p className="text-xs font-medium text-warning-dark">{pendingTrips.length} awaiting</p></div>
@@ -107,7 +107,7 @@ const Operations = ({ role }: { role?: string | null }) => {
           <div className="w-9 h-9 bg-urgent/10 rounded-lg flex items-center justify-center flex-shrink-0"><FileWarning size={18} className="text-urgent" /></div>
           <div><p className="text-xs font-medium text-ink">Open Reports</p><p className="text-xs font-medium text-urgent">{openReports.length} reports</p></div>
         </button>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

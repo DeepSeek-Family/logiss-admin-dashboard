@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Map as MapIcon } from 'lucide-react';
 import { Card, Button, ConfirmationModal, ExportFormatMenu } from '@/shared/components/ui';
@@ -56,9 +56,18 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [payerFilter, setPayerFilter] = useState('all');
   const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [serviceDate, setServiceDate] = useState('');
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyItemsPerPage, setHistoryItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter]);
 
   const historyQueryParams = useMemo(() => {
-    const params: IGetBookingsQueryParams = {};
+    const params: IGetBookingsQueryParams = {
+      page: historyPage,
+      limit: historyItemsPerPage,
+    };
     const searchTerm = historySearch.trim();
     if (searchTerm) params.searchTerm = searchTerm;
     if (serviceDate) params.serviceDate = serviceDate;
@@ -67,7 +76,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     const unassign = assignFilterToUnassignQuery(assignFilter);
     if (unassign !== undefined) params.unassign = unassign;
     return params;
-  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter]);
+  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyPage, historyItemsPerPage]);
 
   const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
     refetchOnMountOrArgChange: true,
@@ -194,6 +203,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
   const trips = apiTrips;
   const scheduleTrips = apiScheduleTrips;
+  const historyPagination = historyResponse?.pagination;
+  const historyTotalPages = historyPagination?.totalPage ?? 1;
+  const historyTotalItems = historyPagination?.total ?? trips.length;
   const loading = historyLoading && trips.length === 0;
 
   const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -356,6 +368,15 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               setServiceDate={setServiceDate}
               isFetching={historyFetching}
               inlineDateFilter={!showMap}
+              currentPage={historyPage}
+              onPageChange={setHistoryPage}
+              itemsPerPage={historyItemsPerPage}
+              onItemsPerPageChange={(size) => {
+                setHistoryItemsPerPage(size);
+                setHistoryPage(1);
+              }}
+              totalPages={Math.max(1, historyTotalPages)}
+              totalItems={historyTotalItems}
             />
           </div>
           {showMap && (
