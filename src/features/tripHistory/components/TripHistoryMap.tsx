@@ -195,10 +195,18 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
         if (path.length > 1) {
           const waypointPath = [...path];
           const drawGen = ++routeDrawGenRef.current;
+          const initialLine = createDirectionalRoutePolyline(google, map, waypointPath);
+          if (initialLine) polylinesRef.current.push(initialLine);
           void getDrivingRoutePath(google, waypointPath).then((routePath) => {
             if (drawGen !== routeDrawGenRef.current || !mapInstanceRef.current) return;
+            if (routePath.length <= waypointPath.length) return;
+            polylinesRef.current.forEach((p) => p.setMap(null));
+            polylinesRef.current = [];
             const polyline = createDirectionalRoutePolyline(google, map, routePath);
-            polylinesRef.current.push(polyline);
+            if (polyline) polylinesRef.current.push(polyline);
+            const routeBounds = new google.maps.LatLngBounds();
+            routePath.forEach((pt) => routeBounds.extend(pt));
+            map.fitBounds(routeBounds, { top: 40, bottom: 40, left: 40, right: 40 });
           });
         }
       } else {
@@ -323,7 +331,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
               <MapPin size={24} className="text-urgent opacity-40 mb-2" />
               <p className="text-xs font-semibold text-ink">Google Maps Unavailable</p>
               <p className="text-[11px] text-ink-4 mt-0.5">
-                Check VITE_GOOGLE_MAPS — enable Maps JS, Places, Geocoding &amp; Directions APIs
+                Check VITE_GOOGLE_MAPS — enable Maps JS, Places, Geocoding &amp; Routes APIs
               </p>
             </div>
           )}

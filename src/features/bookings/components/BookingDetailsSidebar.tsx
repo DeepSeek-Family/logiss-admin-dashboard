@@ -92,13 +92,20 @@ const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
 
         if (path.length > 1) {
           const waypointPath = [...path];
+          let routeLine = createDirectionalRoutePolyline(google, map, waypointPath, '#2969CD');
           void getDrivingRoutePath(google, waypointPath).then((routePath) => {
             if (!active || drawGen !== routeDrawGenRef.current) return;
-            createDirectionalRoutePolyline(google, map, routePath, '#2969CD');
+            if (routePath.length > waypointPath.length) {
+              routeLine?.setMap(null);
+              routeLine = createDirectionalRoutePolyline(google, map, routePath, '#2969CD');
+              const routeBounds = new google.maps.LatLngBounds();
+              routePath.forEach((pt) => routeBounds.extend(pt));
+              map.fitBounds(routeBounds, { top: 25, bottom: 25, left: 25, right: 25 });
+              return;
+            }
+            map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
           });
-        }
-
-        if (path.length > 0) {
+        } else if (path.length > 0) {
           map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
         }
       })

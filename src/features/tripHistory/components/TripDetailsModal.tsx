@@ -96,9 +96,16 @@ const TripRouteGoogleMap: React.FC<{
       if (routePath.length > 1) {
         const waypointPath = [...routePath];
         const google = (window as any).google;
+        let routeLine = createDirectionalRoutePolyline(google, map, waypointPath, '#2969CD');
         void getDrivingRoutePath(google, waypointPath).then((drivingPath) => {
           if (!active || drawGen !== routeDrawGenRef.current) return;
-          createDirectionalRoutePolyline(google, map, drivingPath, '#2969CD');
+          if (drivingPath.length > waypointPath.length) {
+            routeLine?.setMap(null);
+            routeLine = createDirectionalRoutePolyline(google, map, drivingPath, '#2969CD');
+            const routeBounds = new google.maps.LatLngBounds();
+            drivingPath.forEach((pt) => routeBounds.extend(pt));
+            map.fitBounds(routeBounds, { top: 30, bottom: 30, left: 30, right: 30 });
+          }
         });
       }
 
