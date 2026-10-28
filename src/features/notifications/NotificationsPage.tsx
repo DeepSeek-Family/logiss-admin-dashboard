@@ -26,8 +26,8 @@ const mapApiNotification = (n: {
   icon: Megaphone,
   color: 'text-primary',
   bg: 'bg-primary-light',
-  category: n.category || 'Notification',
-  title: n.title || n.category || 'Notification',
+  category: n.category || '',
+  title: n.title || '',
   message: n.message || n.text || '',
   time: n.createdAt || new Date().toISOString(),
   action: null as string | null,
@@ -49,9 +49,7 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
 
   const {
     notifications: liveBroadcasts,
-    markRead: markLiveRead,
     markAllRead: markAllLiveRead,
-    remove: removeLive,
     clear: clearLive,
   } = useNotifications();
 
@@ -100,14 +98,6 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
     } catch (e: unknown) {
       toast.error(apiErrorMessage(e, 'Failed to mark notifications as read'));
     }
-  };
-
-  const markRead = (id: string | number) => {
-    if (liveBroadcasts.some((n) => n.id === id)) markLiveRead(id as number);
-  };
-
-  const deleteItem = (id: string | number) => {
-    if (liveBroadcasts.some((n) => n.id === id)) removeLive(id as number);
   };
 
   const clearAll = () => clearLive();
@@ -167,11 +157,7 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
         </div>
       )}
 
-      <NotificationList
-        filtered={combined}
-        onMarkRead={markRead}
-        onDelete={deleteItem}
-      />
+      <NotificationList filtered={combined} />
 
       {totalItems > 0 && (
         <Pagination
