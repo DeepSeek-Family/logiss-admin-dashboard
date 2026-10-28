@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Search, MapPin, ArrowRight, Repeat, MoveRight, Filter, DollarSign, ClipboardList, Download, X, Accessibility, Bed, Disc, Info, User, Loader2 } from 'lucide-react';
 import { Card, Avatar, Pagination, SearchInput, TripStatusBadge } from '@/shared/components/ui';
 import { formatShortDate, formatTripId, formatTime } from '@/utils/helpers';
@@ -44,6 +44,12 @@ interface TripArchiveTabProps {
   /** Render Date inside the filter bar (true when the map is hidden); the page
    *  header renders them instead when the map is shown. */
   inlineDateFilter?: boolean;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  itemsPerPage: number;
+  onItemsPerPageChange: (size: number) => void;
+  totalPages: number;
+  totalItems: number;
 }
 
 // Normalize "8:32 AM" / "13:05" → "HH:MM"; '' if unparseable.
@@ -117,22 +123,22 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   setServiceDate,
   isFetching,
   inlineDateFilter = true,
+  currentPage,
+  onPageChange,
+  itemsPerPage,
+  onItemsPerPageChange,
+  totalPages,
+  totalItems,
 }) => {
   const { data: payersResponse } = useGetAllPayersQuery();
   const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Reset to page 1 when the header-controlled Date changes.
-  React.useEffect(() => { setCurrentPage(1); }, [serviceDate]);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Anything past the booking stage belongs here — i.e. not pending_review, OR already
   // has a driver assigned (so a driver-assigned trip always shows in Trip History).
-  // Search, date, driver and payer are filtered server-side.
+  // Search, date, driver, payer and pagination are filtered server-side.
   const filteredTrips = (trips || []).filter((t: any) => t?.status !== 'pending_review' || t?.driverId);
 
-  const totalPages = Math.ceil(filteredTrips.length / itemsPerPage);
-  const paginatedTrips = filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedTrips = filteredTrips;
 
   const toggleSelectAll = () => {
     if (selectedIds.length === paginatedTrips.length) setSelectedIds([]);
@@ -220,7 +226,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               defaultValue={search}
               onSearchChange={(debouncedVal) => {
                 setSearch(debouncedVal);
-                setCurrentPage(1);
+                onPageChange(1);
               }}
             />
             {isFetching && (
@@ -236,7 +242,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 value={assignFilter}
                 onChange={(e) => {
                   setAssignFilter(e.target.value as DriverAssignmentFilter);
-                  setCurrentPage(1);
+                  onPageChange(1);
                 }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
@@ -252,7 +258,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               <span className="text-xs text-ink-4">Payer</span>
               <select
                 value={payerFilter}
-                onChange={(e) => { setPayerFilter(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => { setPayerFilter(e.target.value); onPageChange(1); }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
                 <option value="all">All Payers</option>
@@ -316,7 +322,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[70px] text-center">Seats</th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[140px]">Program</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-center min-w-[135px]">Status</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Driver</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[280px]">Route</th>
@@ -327,6 +332,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[72px]">Miles</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Passenger copay</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Payer charge</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[140px]">Program</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Dispatcher/Admin Note</th>
               </tr>
@@ -433,12 +439,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     <span className="text-xs font-semibold text-ink tabular-nums">{trip.passengerSeats ?? '—'}</span>
                   </td>
 
-                  <td className="px-3.5 py-3 min-w-[140px]">
-                    <span className="text-xs font-medium text-ink-3 block max-w-[130px] truncate" title={trip.programContext || ''}>
-                      {trip.programContext || '—'}
-                    </span>
-                  </td>
-
                   <td className="px-3.5 py-3 text-center min-w-[135px]">
                     <TripStatusBadge status={trip.status} />
                   </td>
@@ -540,6 +540,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     <BookingPayerChargeCell row={trip} />
                   </td>
 
+                  <td className="px-3.5 py-3 min-w-[140px]">
+                    <span className="text-xs font-medium text-ink-3 block max-w-[130px] truncate" title={trip.programContext || ''}>
+                      {trip.programContext || '—'}
+                    </span>
+                  </td>
+
                   <td className="px-3 py-2.5">
                     <span className="text-xs text-ink-3 block max-w-[150px] truncate" title={trip.tripNote || trip.notes || ''}>
                       {trip.tripNote || trip.notes || '—'}
@@ -566,10 +572,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={filteredTrips.length}
+          totalItems={totalItems}
           itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
+          onPageChange={onPageChange}
+          onItemsPerPageChange={onItemsPerPageChange}
         />
       </Card>
     </>
