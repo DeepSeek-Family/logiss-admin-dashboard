@@ -83,6 +83,32 @@ const Drivers = ({ role }: { role?: string | null }) => {
     [fleetVehicles]
   );
 
+  const totalItems = pagination?.total ?? drivers.length;
+  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
+
+  const historyDriver = historyResponse?.data?.[0]?.driverId;
+  const selectedDriver = selectedDriverId
+    ? drivers.find((d: any) => d.id === selectedDriverId) ||
+      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
+        ? mapApiDriver(historyDriver as IDriverUser)
+        : null)
+    : null;
+
+  const assignedVehicleForSelected = useMemo(() => {
+    if (!selectedDriver?.id) return null;
+    if (assignedVehicles[selectedDriver.id]) return assignedVehicles[selectedDriver.id];
+    const match = fleetVehicles.find(
+      (v) => String(v.assignedDriverId || v.driverId) === String(selectedDriver.id),
+    );
+    if (!match) return null;
+    return {
+      id: String(match.id),
+      name: [match.make, match.model].filter(Boolean).join(' ').trim() || 'Vehicle',
+      type: match.type || 'Van',
+      plate: match.plate || '—',
+    };
+  }, [selectedDriver?.id, assignedVehicles, fleetVehicles]);
+
   if (isLoading && drivers.length === 0) {
     return (
       <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
@@ -109,35 +135,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
       </div>
     );
   }
-
-  // `searchTerm` is applied server-side.
-  const totalItems = pagination?.total ?? drivers.length;
-  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
-
-  // When opened from a URL, the driver may not be on the current list page; fall back to the
-  // driver embedded in their trip history (`driverId`).
-  const historyDriver = historyResponse?.data?.[0]?.driverId;
-  const selectedDriver = selectedDriverId
-    ? drivers.find((d: any) => d.id === selectedDriverId) ||
-      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
-        ? mapApiDriver(historyDriver as IDriverUser)
-        : null)
-    : null;
-
-  const assignedVehicleForSelected = useMemo(() => {
-    if (!selectedDriver?.id) return null;
-    if (assignedVehicles[selectedDriver.id]) return assignedVehicles[selectedDriver.id];
-    const match = fleetVehicles.find(
-      (v) => String(v.assignedDriverId || v.driverId) === String(selectedDriver.id),
-    );
-    if (!match) return null;
-    return {
-      id: String(match.id),
-      name: [match.make, match.model].filter(Boolean).join(' ').trim() || 'Vehicle',
-      type: match.type || 'Van',
-      plate: match.plate || '—',
-    };
-  }, [selectedDriver?.id, assignedVehicles, fleetVehicles]);
 
   if (selectedDriverId && !selectedDriver && historyLoading) {
     return (
