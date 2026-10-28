@@ -236,27 +236,22 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <div className="h-4 w-px bg-primary/20" />
 
             {activeTab === 'confirmed' && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-[220px]">
                 <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      selectedTrips.forEach((id) =>
-                        updateTrip(id, { driverId: e.target.value, status: 'assigned' }),
-                      );
-                      setSelectedTrips([]);
-                    }
+                <DriverAssignSelect
+                  drivers={drivers}
+                  allTrips={trips}
+                  allowUnassign={false}
+                  placeholder="Search driver…"
+                  onAssign={(driverId) => {
+                    if (!driverId) return;
+                    selectedTrips.forEach((id) =>
+                      updateTrip(id, { driverId, status: 'assigned' }),
+                    );
+                    setSelectedTrips([]);
                   }}
-                  className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
-                >
-                  <option value="">Driver…</option>
-                  {(drivers || []).map((d: any) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
+                  className="bg-white border border-line rounded-lg py-1.5 px-2.5 text-xs font-medium text-ink outline-none focus:ring-2 focus:ring-primary/15 min-w-[180px]"
+                />
               </div>
             )}
 
@@ -315,7 +310,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[140px]">Program</th>
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Auth ID</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-center min-w-[135px]">Status</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Driver</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[220px]">Driver</th>
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Run</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[280px]">Route</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">Trip Reason</th>
@@ -473,7 +468,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         </select>
                       </td>
 
-                      <td className="px-3.5 py-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3.5 py-3 min-w-[220px]" onClick={(e) => e.stopPropagation()}>
                         <DriverAssignSelect
                           trip={booking}
                           drivers={drivers}
@@ -483,7 +478,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           onAssign={(driverId) =>
                             updateTrip(booking.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })
                           }
-                          className={`${INLINE_INPUT} max-w-[150px] ${booking.driverId ? '' : 'text-ink-4'}`}
+                          className={`${INLINE_INPUT} w-[210px] ${booking.driverId ? '' : 'text-ink-4'}`}
                         />
                       </td>
 

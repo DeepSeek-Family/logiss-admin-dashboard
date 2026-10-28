@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Clock, MapPin, Phone, ChevronRight,
@@ -142,14 +142,37 @@ const Bookings = ({ role }: { role?: string | null }) => {
     });
   };
 
-  const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(undefined, {
-    skip: activeTab !== 'confirmed',
-    refetchOnMountOrArgChange: true,
-  });
+  const [debouncedDriverSearch, setDebouncedDriverSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedDriverSearch(driverSearch.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [driverSearch]);
+
+  const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(
+    { page: 1, limit: 200 },
+    {
+      skip: activeTab !== 'confirmed',
+      refetchOnMountOrArgChange: true,
+    },
+  );
+
+  const { data: searchedDriversResponse, isFetching: searchingDrivers } = useGetDriversQuery(
+    { page: 1, limit: 50, searchTerm: debouncedDriverSearch },
+    {
+      skip: activeTab !== 'confirmed' || !debouncedDriverSearch,
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   const apiDrivers = useMemo(
     () => (apiDriversResponse?.data || []).map(mapApiDriver),
     [apiDriversResponse]
+  );
+
+  const searchedApiDrivers = useMemo(
+    () => (searchedDriversResponse?.data || []).map(mapApiDriver),
+    [searchedDriversResponse]
   );
 
   const refresh = () => {
@@ -275,7 +298,6 @@ const Bookings = ({ role }: { role?: string | null }) => {
         id: b.driverId,
         name: b.driverName,
         initials: (b.driverName || '').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase(),
-        onDuty: true,
         vehicle: { type: 'Van', plate: '' },
       }));
     extra.forEach((d: any) => {
@@ -494,10 +516,16 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const assignedDriver = selectedBooking?.driverId ? mergedDrivers.find((d: any) => d.id === selectedBooking.driverId) : null;
 
   const driverQuery = driverSearch.toLowerCase().trim();
-  const smartDrivers = (mergedDrivers || [])
+  const smartDrivers = [...(mergedDrivers || [])]
+    .concat(
+      searchedApiDrivers.filter(
+        (d) => !(mergedDrivers || []).some((x: any) => String(x.id) === String(d.id)),
+      ),
+    )
     .filter((d: any) => {
       if (driverQuery) {
-        return (d?.name || '').toLowerCase().includes(driverQuery) || (d?.id || '').toLowerCase().includes(driverQuery);
+        const hay = [d?.name, d?.id, d?.phone, d?.contact, d?.email].filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(driverQuery);
       }
       return isVehicleMatch(d, selectedBooking);
     })
@@ -684,6 +712,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
           handleDispatch={() => handleDispatch(selectedBookingId)}
           driverSearch={driverSearch}
           setDriverSearch={setDriverSearch}
+          driversSearching={searchingDrivers}
           onEditDetails={(id) => setEditTripId(id)}
         />
       )}
