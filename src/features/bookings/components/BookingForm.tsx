@@ -8,7 +8,8 @@ import {
   DollarSign, Activity, Mail, Tag, Lock, HeartPulse,
   ChevronDown, Check, Loader2
 } from 'lucide-react';
-import { Card, Badge, Avatar, Button, MultiDatePicker, GoogleAddressInput } from '@/shared/components/ui';
+import { Card, Badge, Avatar, Button, MultiDatePicker, GoogleAddressInput, EntitySearchSelect } from '@/shared/components/ui';
+import { driverToSelectItem } from '@/features/fleet/utils/entitySelectMappers';
 import { money } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 import {
@@ -231,25 +232,19 @@ export const BookingForm = () => {
   const riderDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [isDriverDropdownOpen, setIsDriverDropdownOpen] = useState(false);
-  const driverDropdownRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (driverDropdownRef.current && !driverDropdownRef.current.contains(event.target as Node)) {
-        setIsDriverDropdownOpen(false);
-      }
       if (riderDropdownRef.current && !riderDropdownRef.current.contains(event.target as Node)) {
         setIsRiderDropdownOpen(false);
       }
     };
-    if (isDriverDropdownOpen || isRiderDropdownOpen) {
+    if (isRiderDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDriverDropdownOpen, isRiderDropdownOpen]);
+  }, [isRiderDropdownOpen]);
 
   // Recurring Booking state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -371,6 +366,11 @@ export const BookingForm = () => {
       String(d.id).toLowerCase().includes(q)
     );
   }, [driverOptions, driverSearch]);
+
+  const driverSelectItems = useMemo(
+    () => filteredDriverOptions.map((d) => driverToSelectItem(d)),
+    [filteredDriverOptions],
+  );
 
   const filteredRiders = useMemo(() => {
     if (!existingSearch.trim()) {
@@ -741,7 +741,6 @@ export const BookingForm = () => {
     setDriverSearch('');
     setDebouncedDriverSearch('');
     setIsRiderDropdownOpen(false);
-    setIsDriverDropdownOpen(false);
     prevDayRef.current = '';
   };
 
@@ -1198,156 +1197,29 @@ export const BookingForm = () => {
           <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible relative z-30">
             <SectionHeader title="7. Driver Allocation" icon={Car} />
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-ink-3">Driver <span className="text-urgent">*</span></p>
-                {selectedDriver && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDriver(null)}
-                    className="text-xs text-urgent hover:underline font-medium"
-                  >
-                    Clear selection
-                  </button>
-                )}
-              </div>
-
-              {/* Searchable Dropdown */}
-              <div className="relative" ref={driverDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDriverDropdownOpen(prev => !prev);
-                    if (!isDriverDropdownOpen) {
-                      setDriverSearch('');
-                      setDebouncedDriverSearch('');
-                    }
-                  }}
-                  className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all ${
-                    isDriverDropdownOpen
-                      ? 'border-primary ring-2 ring-primary/20 bg-white shadow-sm'
-                      : selectedDriver
-                      ? 'border-primary/40 bg-primary/5 hover:border-primary'
-                      : 'border-line-2 bg-bg/50 hover:bg-white hover:border-line'
-                  }`}
-                >
-                  {selectedDriver ? (
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar initials={selectedDriver.initials} size="sm" src={resolveMediaUrl(selectedDriver.profile)} online={selectedDriver.onDuty} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-semibold text-ink truncate">{selectedDriver.name}</p>
-                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">
-                            Assigned
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-ink-4 truncate">
-                          {selectedDriver.phone || selectedDriver.email || selectedDriver.vehicle?.plate || 'Active Driver'}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2.5 text-ink-4">
-                      <User size={15} className="text-ink-3" />
-                      <span className="text-xs">Select a driver from list...</span>
-                    </div>
-                  )}
-
-                  <ChevronDown
-                    size={16}
-                    className={`text-ink-4 transition-transform duration-200 shrink-0 ${isDriverDropdownOpen ? 'rotate-180 text-primary' : ''}`}
-                  />
-                </button>
-
-                {/* Dropdown popup */}
-                {isDriverDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-line-2 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                    {/* Search inside dropdown */}
-                    <div className="p-2.5 border-b border-line-2 bg-bg/20">
-                      <div className="relative">
-                        <input
-                          autoFocus
-                          type="text"
-                          className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-line-2 rounded-lg text-ink placeholder:text-ink-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
-                          placeholder="Search drivers by name, phone..."
-                          value={driverSearch}
-                          onChange={e => setDriverSearch(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              setDebouncedDriverSearch(driverSearch.trim());
-                            }
-                          }}
-                        />
-                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4" />
-                        {driverSearch && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDriverSearch('');
-                              setDebouncedDriverSearch('');
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Options list */}
-                    <div className="max-h-56 overflow-y-auto p-1 space-y-1 custom-scrollbar">
-                      {driversLoading || driversFetching ? (
-                        <div className="py-6 text-center text-xs text-ink-4 flex items-center justify-center gap-2">
-                          <Loader2 size={15} className="animate-spin text-primary" />
-                          Searching drivers...
-                        </div>
-                      ) : filteredDriverOptions.length === 0 ? (
-                        <div className="py-6 text-center text-xs text-ink-4">
-                          {driverSearch.trim() ? `No drivers found matching "${driverSearch}"` : 'No drivers available'}
-                        </div>
-                      ) : (
-                        filteredDriverOptions.map((d) => {
-                          const isSelected = selectedDriver?.id === d.id || selectedDriver?._id === d.id;
-                          return (
-                            <button
-                              key={d.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedDriver(d);
-                                setIsDriverDropdownOpen(false);
-                                setDriverSearch('');
-                                setDebouncedDriverSearch('');
-                              }}
-                              className={`w-full p-2.5 rounded-lg flex items-center justify-between gap-3 text-left transition-colors ${
-                                isSelected
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'hover:bg-bg text-ink'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <Avatar initials={d.initials} size="sm" src={resolveMediaUrl(d.profile)} online={d.onDuty} />
-                                <div className="min-w-0">
-                                  <p className={`text-xs truncate ${isSelected ? 'font-semibold text-primary' : 'font-medium text-ink'}`}>
-                                    {d.name}
-                                  </p>
-                                  <p className="text-[11px] text-ink-4 truncate">
-                                    {d.phone || d.email || d.vehicle?.plate || 'Active Driver'}
-                                  </p>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shrink-0">
-                                  <Check size={10} className="text-white" />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <EntitySearchSelect
+                label="Driver"
+                required
+                entityKind="person"
+                triggerIcon={User}
+                items={driverSelectItems}
+                valueId={selectedDriver?.id ? String(selectedDriver.id) : null}
+                onChange={(id) => {
+                  if (!id) {
+                    setSelectedDriver(null);
+                    return;
+                  }
+                  const d = driverOptions.find((x) => String(x.id) === id);
+                  setSelectedDriver(d || null);
+                }}
+                placeholder="Select a driver from list..."
+                searchPlaceholder="Search drivers by name, phone..."
+                searchValue={driverSearch}
+                onSearchValueChange={setDriverSearch}
+                loading={driversLoading || driversFetching}
+                selectedBadge="Assigned"
+                emptyListText="No drivers available"
+              />
 
               {!selectedDriver && (
                 <p className="text-xs font-medium text-urgent px-1">A driver is required to create this booking</p>

@@ -1,6 +1,7 @@
 import { baseApi } from '../baseApi'
 import type { IBooking, IBookingPagination } from './bookingApi'
 import { buildDriverFormData, type ICreateDriverInput } from '@/features/drivers/utils/createDriverForm'
+import type { ApiVehicleRecord } from '@/features/fleet/utils/vehicleHelpers'
 
 export type { ICreateDriverInput }
 
@@ -13,6 +14,16 @@ export interface IDriverData {
   licenseClass?: DriverLicenseClass | string
   expirationDate?: string
   licenseImage?: string | string[]
+}
+
+export interface IVehicleAssignRecord {
+  _id?: string
+  driverId?: string
+  vehicleId?: ApiVehicleRecord | string
+  assignedAt?: string
+  assignedBy?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface IDriverUser {
@@ -41,6 +52,7 @@ export interface IDriverUser {
   isPushNotificationEnabled?: boolean
   createdAt?: string
   updatedAt?: string
+  vehicleAssign?: IVehicleAssignRecord | null
 }
 
 export interface IListQueryParams {

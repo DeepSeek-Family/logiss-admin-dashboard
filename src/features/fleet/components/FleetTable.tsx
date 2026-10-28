@@ -1,5 +1,5 @@
 import { ChevronRight, Truck, ShieldAlert, ClipboardCheck } from 'lucide-react';
-import { Card, Badge, Pagination, SearchInput } from '@/shared/components/ui';
+import { Card, Badge, Pagination, SearchInput, Avatar } from '@/shared/components/ui';
 
 const VEHICLE_PLACEHOLDER = '/vehicle-placeholder.svg';
 
@@ -57,7 +57,7 @@ export const FleetTable = ({
         <table className="w-full text-left border-collapse">
           <thead className="bg-bg/40 border-b border-line-2 sticky top-0 z-10">
             <tr>
-              {['Vehicle', 'Vehicle Type', 'Status', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
+              {['Vehicle', 'Driver', 'Vehicle Type', 'Status', 'Mileage', 'Next Service', 'Compliance', ''].map(h => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -84,6 +84,25 @@ export const FleetTable = ({
                         </div>
                       </div>
                     </div>
+                  </td>
+
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    {v.assignedDriver ? (
+                      <div className="flex items-center gap-2.5 min-w-[140px]">
+                        <Avatar
+                          initials={v.assignedDriver.initials}
+                          src={v.assignedDriver.image}
+                          size="sm"
+                          online={v.assignedDriver.onDuty}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-ink truncate">{v.assignedDriver.name}</p>
+                          <p className="text-xs text-ink-4 truncate">{v.assignedDriver.phone || v.assignedDriver.email || '—'}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-ink-4">Unassigned</span>
+                    )}
                   </td>
 
                   <td className="px-6 py-4">
@@ -130,7 +149,7 @@ export const FleetTable = ({
             })}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-8 py-24 text-center">
+                <td colSpan={8} className="px-8 py-24 text-center">
                   <div className="w-20 h-20 bg-bg rounded-[32px] flex items-center justify-center text-ink-4 mx-auto mb-6 shadow-inner border-2 border-dashed border-line group">
                     <Truck size={40} className="group-hover:text-primary transition-colors" />
                   </div>

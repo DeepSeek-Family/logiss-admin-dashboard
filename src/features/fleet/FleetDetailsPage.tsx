@@ -2,11 +2,14 @@ import { useEffect, type ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, ChevronLeft, Hash, Loader2, Gauge, Users,
-  CalendarClock, Shield, RefreshCw, Truck, FileText,
+  CalendarClock, Shield, RefreshCw, Truck, FileText, User, Mail, Phone,
 } from 'lucide-react';
-import { Card, Badge, Button, StatCard } from '@/shared/components/ui';
+import { Card, Badge, Button, StatCard, Avatar } from '@/shared/components/ui';
 import { useGetVehicleByIdQuery } from '@/redux/api/vehiclesMangeApi';
+import type { IDriverUser } from '@/redux/api/driversApi';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { mapDriverBase } from '@/features/drivers/utils/helpers';
+import { VehicleDriverAssignCard } from '@/features/fleet/components/VehicleDriverAssignCard';
 
 const formatDate = (iso?: string) => {
   if (!iso) return '—';
@@ -86,6 +89,11 @@ const FleetDetails = (_props: { role?: string | null }) => {
   const insuranceExpired = isPast(vehicle.insuranceExpirationDate);
   const serviceOverdue = isPast(vehicle.nextServiceDate);
 
+  const assignedDriver =
+    vehicle.driver && typeof vehicle.driver === 'object' && vehicle.driver._id
+      ? mapDriverBase(vehicle.driver as IDriverUser)
+      : null;
+
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-500">
       {/* Header */}
@@ -132,19 +140,19 @@ const FleetDetails = (_props: { role?: string | null }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h4 className="type-th mb-4 flex items-center gap-2"><Truck size={14} className="text-primary" /> Vehicle Information</h4>
-          <DetailRow label="Manufacturer" value={vehicle.manufacturer || '—'} />
-          <DetailRow label="Model" value={vehicle.model || '—'} />
-          <DetailRow label="Year" value={vehicle.year || '—'} />
-          <DetailRow label="License Plate" value={vehicle.licensePlateNumber || '—'} />
-          <DetailRow label="VIN Number" value={<span className="font-mono">{vehicle.vinNumber || '—'}</span>} />
-          <DetailRow label="Configuration" value={formatConfiguration(vehicle.configurationType)} />
-          <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? '—'} />
-          <DetailRow label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} />
-        </Card>
-
         <div className="space-y-6">
+          <Card className="p-6">
+            <h4 className="type-th mb-4 flex items-center gap-2"><Truck size={14} className="text-primary" /> Vehicle Information</h4>
+            <DetailRow label="Manufacturer" value={vehicle.manufacturer || '—'} />
+            <DetailRow label="Model" value={vehicle.model || '—'} />
+            <DetailRow label="Year" value={vehicle.year || '—'} />
+            <DetailRow label="License Plate" value={vehicle.licensePlateNumber || '—'} />
+            <DetailRow label="VIN Number" value={<span className="font-mono">{vehicle.vinNumber || '—'}</span>} />
+            <DetailRow label="Configuration" value={formatConfiguration(vehicle.configurationType)} />
+            <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? '—'} />
+            <DetailRow label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} />
+          </Card>
+
           <Card className="p-6">
             <h4 className="type-th mb-4 flex items-center gap-2"><Shield size={14} className="text-primary" /> Insurance & Service</h4>
             <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || '—'} />
@@ -165,6 +173,55 @@ const FleetDetails = (_props: { role?: string | null }) => {
             <DetailRow label="Created" value={formatDateTime(vehicle.createdAt)} />
             <DetailRow label="Last Updated" value={formatDateTime(vehicle.updatedAt)} />
           </Card>
+        </div>
+
+        <div className="space-y-6">
+          {assignedDriver && (
+            <Card className="p-6">
+              <h4 className="type-th mb-4 flex items-center gap-2">
+                <User size={14} className="text-primary" /> Assigned driver
+              </h4>
+              <div className="flex items-start gap-4">
+                <Avatar initials={assignedDriver.initials} src={assignedDriver.image} size="lg" online={assignedDriver.isOnDuty} />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div>
+                    <p className="text-base font-bold text-ink">{assignedDriver.name}</p>
+                    <p className="text-xs text-ink-4 mt-0.5">{assignedDriver.id}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 text-sm">
+                    {assignedDriver.phone && (
+                      <span className="inline-flex items-center gap-2 text-ink-3">
+                        <Phone size={14} className="shrink-0" /> {assignedDriver.phone}
+                      </span>
+                    )}
+                    {assignedDriver.email && (
+                      <span className="inline-flex items-center gap-2 text-ink-3">
+                        <Mail size={14} className="shrink-0" /> {assignedDriver.email}
+                      </span>
+                    )}
+                  </div>
+                  <Badge variant={assignedDriver.isOnDuty ? 'accent' : 'neutral'}>
+                    {assignedDriver.isOnDuty ? 'On duty' : 'Off duty'}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    className="mt-2 h-9 text-xs"
+                    onClick={() => navigate(`/drivers?driverId=${assignedDriver.id}`)}
+                  >
+                    View driver profile
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <VehicleDriverAssignCard
+            vehicleId={vehicle._id}
+            vehicle={vehicle as unknown as Record<string, unknown>}
+            onAssigned={() => refetch()}
+          />
+
+          
         </div>
       </div>
     </div>

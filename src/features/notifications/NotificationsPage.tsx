@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react';
 import { Megaphone, Loader2, AlertTriangle } from 'lucide-react';
 import { Pagination } from '@/shared/components/ui';
 import { NotificationList } from '@/features/notifications';
-import { useGetNotificationsQuery } from '@/redux/api/notificationsApi';
+import {
+  useGetNotificationsQuery,
+  useGetUnreadNotificationCountQuery,
+  useMarkAllNotificationsReadMutation,
+} from '@/redux/api/notificationsApi';
+import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { toast } from 'react-hot-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 const mapApiNotification = (n: {
   _id: string;
@@ -35,6 +41,11 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
     { page: currentPage, limit: itemsPerPage },
     { refetchOnMountOrArgChange: true },
   );
+
+  const { data: apiUnreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] = useMarkAllNotificationsReadMutation();
 
   const {
     notifications: liveBroadcasts,
@@ -74,13 +85,21 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
     );
   }, [liveItems, apiItems]);
 
-  const unreadCount = combined.filter((n) => !n.read).length;
+  const localUnread = combined.filter((n) => !n.read).length;
+  const unreadCount = Math.max(apiUnreadCount, localUnread);
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPage ?? 1;
   const totalItems = pagination?.total ?? combined.length;
 
-  const markAllRead = () => {
-    markAllLiveRead();
+  const markAllRead = async () => {
+    try {
+      await markAllNotificationsRead().unwrap();
+      markAllLiveRead();
+      toast.success('All notifications marked as read');
+      refetch();
+    } catch (e: unknown) {
+      toast.error(apiErrorMessage(e, 'Failed to mark notifications as read'));
+    }
   };
 
   const markRead = (id: string | number) => {
@@ -116,13 +135,14 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
           <p className="text-sm text-ink-4 mt-0.5">Fleet, trip, and system alerts</p>
         </div>
         <div className="flex gap-2">
-          {unreadCount > 0 && (
+          {(apiUnreadCount > 0 || localUnread > 0) && (
             <button
               type="button"
-              onClick={markAllRead}
-              className="text-xs text-primary hover:underline font-semibold"
+              onClick={() => void markAllRead()}
+              disabled={isMarkingAllRead}
+              className="text-xs text-primary hover:underline font-semibold disabled:opacity-50"
             >
-              Mark broadcasts read
+              {isMarkingAllRead ? 'Marking…' : 'Mark all as read'}
             </button>
           )}
           {liveBroadcasts.length > 0 && (

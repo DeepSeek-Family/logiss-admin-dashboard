@@ -30,7 +30,8 @@ import {
 } from 'lucide-react';
 import { Avatar, Badge, Button } from '@/shared/components/ui';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useGetUnreadNotificationCountQuery } from '@/redux/api/notificationsApi';
+import { AUTH_TOKEN_KEY, LEGACY_AUTH_TOKEN_KEY } from '@/constants/auth-storage';
 import { ROUTES } from '@/constants/routes';
 import { can } from '@/features/userAccess/permissions';
 import toast from 'react-hot-toast';
@@ -146,6 +147,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const location = useLocation();
   const page = location.pathname;
 
+  const authToken = useSelector((state: any) => state.auth?.token as string | null | undefined);
+
   const currentUser = useSelector((state: any) => state.auth?.user) || (() => {
     try {
       const u = typeof localStorage !== 'undefined' ? localStorage.getItem('logiss-user') : null;
@@ -163,7 +166,15 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const mainScrollRef = React.useRef<HTMLElement>(null);
   /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
   const routeOutletKey = location.pathname;
-  const { unreadCount } = useNotifications();
+  const hasAuthToken =
+    Boolean(authToken) ||
+    (typeof localStorage !== 'undefined' &&
+      Boolean(localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)));
+
+  const { data: unreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
+    skip: !hasAuthToken,
+    refetchOnMountOrArgChange: true,
+  });
 
   React.useEffect(() => {
     mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
@@ -338,10 +349,10 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               className={`relative p-2 rounded-lg transition-colors ${page === ROUTES.notifications ? 'bg-primary-light text-primary' : 'text-ink-3 hover:bg-bg'}`}
             >
               <Bell size={20} />
-              {unreadCount > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
-              ) : (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-urgent border-2 border-white rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               )}
             </button>
 

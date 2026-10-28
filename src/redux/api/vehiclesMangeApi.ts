@@ -1,4 +1,5 @@
 import { baseApi } from "../baseApi";
+import type { IDriverUser } from "./driversApi";
 
 export interface Vehicle {
   _id: string;
@@ -15,6 +16,9 @@ export interface Vehicle {
   policyNumber: string;
   insuranceExpirationDate: string;
   isActive?: boolean;
+  driverId?: string | IDriverUser;
+  driver?: IDriverUser | null;
+  assignedDriverId?: string;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -40,6 +44,17 @@ export interface SingleVehicleResponse {
 export interface IVehicleAssignPayload {
   driverId: string;
   vehicleId: string;
+}
+
+/** PATCH `/vehicle-assign/:id` — send `driverId` and/or `vehicleId` to update. */
+export interface IVehicleAssignUpdateBody {
+  driverId?: string;
+  vehicleId?: string;
+}
+
+export interface IVehicleAssignUpdateArgs {
+  id: string;
+  body: IVehicleAssignUpdateBody;
 }
 
 export interface IVehicleAssignResponse {
@@ -94,7 +109,15 @@ const vehicleManageApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Vehicles'],
+      invalidatesTags: ['Vehicles', 'Drivers'],
+    }),
+    updateVehicleAssign: builder.mutation<IVehicleAssignResponse, IVehicleAssignUpdateArgs>({
+      query: ({ id, body }) => ({
+        url: `/vehicle-assign/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Vehicles', 'Drivers'],
     }),
   }),
   overrideExisting: false,
@@ -107,4 +130,5 @@ export const {
   useUpdateVehicleMutation,
   useDeleteVehicleMutation,
   useAssignVehicleDriverMutation,
+  useUpdateVehicleAssignMutation,
 } = vehicleManageApi;

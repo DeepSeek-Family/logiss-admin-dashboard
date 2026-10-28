@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { UserPlus, AlertTriangle, Car, X, Check, Loader2 } from 'lucide-react';
+import { UserPlus, AlertTriangle, Loader2 } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
 import {
   useCreateDriverMutation,
@@ -38,9 +38,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
     setHistoryPage(1);
   };
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [assignSuccess, setAssignSuccess] = useState(false);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [vehicleAssignLoading, setVehicleAssignLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [assignedVehicles, setAssignedVehicles] = useState<Record<string, any>>({});
@@ -85,6 +83,41 @@ const Drivers = ({ role }: { role?: string | null }) => {
     [fleetVehicles]
   );
 
+  const totalItems = pagination?.total ?? drivers.length;
+  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
+
+  const historyDriver = historyResponse?.data?.[0]?.driverId;
+  const selectedDriver = selectedDriverId
+    ? drivers.find((d: any) => d.id === selectedDriverId) ||
+      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
+        ? mapApiDriver(historyDriver as IDriverUser)
+        : null)
+    : null;
+
+  const assignedVehicleForSelected = useMemo(() => {
+    if (!selectedDriver?.id) return null;
+    if (assignedVehicles[selectedDriver.id]) return assignedVehicles[selectedDriver.id];
+    const fromApi = selectedDriver.assignedVehicle;
+    if (fromApi?.id) {
+      return {
+        id: fromApi.id,
+        name: fromApi.name || fromApi.make,
+        type: fromApi.type,
+        plate: fromApi.plate,
+      };
+    }
+    const match = fleetVehicles.find(
+      (v) => String(v.assignedDriverId || v.driverId) === String(selectedDriver.id),
+    );
+    if (!match) return null;
+    return {
+      id: String(match.id),
+      name: [match.make, match.model].filter(Boolean).join(' ').trim() || 'Vehicle',
+      type: match.type || 'Van',
+      plate: match.plate || '—',
+    };
+  }, [selectedDriver?.id, selectedDriver?.assignedVehicle, assignedVehicles, fleetVehicles]);
+
   if (isLoading && drivers.length === 0) {
     return (
       <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
@@ -111,20 +144,6 @@ const Drivers = ({ role }: { role?: string | null }) => {
       </div>
     );
   }
-
-  // `searchTerm` is applied server-side.
-  const totalItems = pagination?.total ?? drivers.length;
-  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
-
-  // When opened from a URL, the driver may not be on the current list page; fall back to the
-  // driver embedded in their trip history (`driverId`).
-  const historyDriver = historyResponse?.data?.[0]?.driverId;
-  const selectedDriver = selectedDriverId
-    ? drivers.find((d: any) => d.id === selectedDriverId) ||
-      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
-        ? mapApiDriver(historyDriver as IDriverUser)
-        : null)
-    : null;
 
   if (selectedDriverId && !selectedDriver && historyLoading) {
     return (
@@ -161,94 +180,28 @@ const Drivers = ({ role }: { role?: string | null }) => {
     return <Badge variant={variant} className="w-fit">{label}</Badge>;
   };
 
+  const handleAssignVehicleToDriver = async (vehicleId: string) => {
+    if (!selectedDriver?.id) return;
+    const vehicle = assignableVehicles.find((v) => v.id === vehicleId);
+    if (!vehicle) return;
+    setVehicleAssignLoading(true);
+    try {
+      await handleAssign(vehicleId, selectedDriver.id, {
+        assignmentId: selectedDriver.vehicleAssignId,
+      });
+      setAssignedVehicles((prev) => ({ ...prev, [selectedDriver.id]: vehicle }));
+      refetch();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to assign vehicle'));
+      throw err;
+    } finally {
+      setVehicleAssignLoading(false);
+    }
+  };
+
   if (selectedDriver) {
     return (
       <>
-        {showAssignModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl border border-line-2 shadow-xl w-full max-w-sm mx-4 p-6 animate-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <Car size={18} className="text-primary" />
-                  <h3 className="text-base font-bold text-ink">Assign Vehicle</h3>
-                </div>
-                <button onClick={() => { setShowAssignModal(false); setSelectedVehicleId(null); }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 hover:bg-bg transition-colors">
-                  <X size={16} />
-                </button>
-              </div>
-              <p className="text-xs text-ink-4 mb-4">Select a vehicle to assign to <span className="font-semibold text-ink">{selectedDriver.name}</span></p>
-              <div className="space-y-2 mb-5">
-                {fleetLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-ink-4">
-                    <Loader2 size={18} className="animate-spin text-primary" />
-                    Loading vehicles…
-                  </div>
-                ) : assignableVehicles.length === 0 ? (
-                  <p className="text-sm text-ink-4 py-4 text-center">No vehicles available from the fleet.</p>
-                ) : (
-                  assignableVehicles.map((v) => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => setSelectedVehicleId(v.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                        selectedVehicleId === v.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-line-2 hover:border-primary/30 hover:bg-bg'
-                      }`}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-bg border border-line-2 flex items-center justify-center shrink-0">
-                        <Car size={14} className="text-ink-3" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-ink">{v.name}</p>
-                        <p className="text-xs text-ink-4">
-                          {v.type} · {v.plate}
-                        </p>
-                      </div>
-                      {selectedVehicleId === v.id && <Check size={15} className="text-primary shrink-0" />}
-                    </button>
-                  ))
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 h-9 text-sm"
-                  onClick={() => { setShowAssignModal(false); setSelectedVehicleId(null); }}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  className="flex-1 h-9 text-sm"
-                  onClick={async () => {
-                    const vehicle = assignableVehicles.find((v) => v.id === selectedVehicleId);
-                    if (!vehicle || !selectedDriver || !selectedVehicleId) return;
-                    try {
-                      await handleAssign(selectedVehicleId, selectedDriver.id);
-                      setAssignedVehicles((prev) => ({ ...prev, [selectedDriver.id]: vehicle }));
-                      setShowAssignModal(false);
-                      setSelectedVehicleId(null);
-                      setAssignSuccess(true);
-                      setTimeout(() => setAssignSuccess(false), 3000);
-                    } catch (err) {
-                      toast.error(apiErrorMessage(err, 'Failed to assign vehicle'));
-                    }
-                  }}
-                  disabled={!selectedVehicleId || fleetLoading}
-                >
-                  Confirm
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {assignSuccess && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
-            <Check size={15} /> Vehicle assigned successfully
-          </div>
-        )}
-
         <DriverProfile
           selectedDriver={selectedDriver}
           setSelectedDriverId={setSelectedDriverId}
@@ -260,9 +213,12 @@ const Drivers = ({ role }: { role?: string | null }) => {
           tripsTotalPages={historyPagination?.totalPage || 1}
           tripsPerPage={HISTORY_LIMIT}
           onTripsPageChange={setHistoryPage}
-          onAssignVehicle={() => { setShowAssignModal(true); setSelectedVehicleId(null); }}
           onViewFleet={() => navigate('/fleet')}
-          assignedVehicle={assignedVehicles[selectedDriver.id] || null}
+          assignedVehicle={assignedVehicleForSelected}
+          assignableVehicles={assignableVehicles}
+          fleetLoading={fleetLoading}
+          onAssignVehicleConfirm={handleAssignVehicleToDriver}
+          vehicleAssignLoading={vehicleAssignLoading}
           onToggleBan={() => void handleToggleDriverBan()}
           banToggleLoading={isBanToggling}
         />
