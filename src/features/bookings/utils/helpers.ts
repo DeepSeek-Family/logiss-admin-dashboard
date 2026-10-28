@@ -1,6 +1,13 @@
-import type { IBooking, IBookingDriver, IBookingUser, IMobilityRequirement } from '@/redux/api/bookingApi';
+import type {
+  IBooking,
+  IBookingDriver,
+  IBookingPricingLeg,
+  IBookingUser,
+  IMobilityRequirement,
+} from '@/redux/api/bookingApi';
 
-export type DriverAssignmentFilter = 'all' | 'assigned' | 'unassigned'
+/** Empty string = no `unassign` query param until the user picks a filter. */
+export type DriverAssignmentFilter = '' | 'all' | 'assigned' | 'unassigned'
 
 /** Maps UI filter to `unassign` query param for approved/schedule/history lists. */
 export const assignFilterToUnassignQuery = (
@@ -285,6 +292,74 @@ export const formatLocationString = (val: any): string => {
   return String(val);
 };
 
+const pricingNum = (value: unknown): number => {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+export const normalizePricingLegs = (raw: unknown): IBookingPricingLeg[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.filter((item) => item && typeof item === 'object') as IBookingPricingLeg[]
+}
+
+export const formatPricingZone = (zone?: string | null): string => {
+  const z = String(zone || '').trim().toLowerCase()
+  if (!z) return ''
+  if (z === 'inside') return 'Inside'
+  if (z === 'outside') return 'Outside'
+  return z.charAt(0).toUpperCase() + z.slice(1)
+}
+
+/** Primary zone label for table County column (from API pricingLegs). */
+export const pricingZonesDisplay = (legs: IBookingPricingLeg[]): string => {
+  if (!legs.length) return ''
+  if (legs.length === 1) return formatPricingZone(legs[0].zone)
+  return legs
+    .map((leg) => {
+      const legLabel =
+        String(leg.leg || '').toLowerCase() === 'return'
+          ? 'Return'
+          : String(leg.leg || '').toLowerCase() === 'outbound'
+            ? 'Out'
+            : 'Leg'
+      return `${legLabel}: ${formatPricingZone(leg.zone) || '—'}`
+    })
+    .join(' · ')
+}
+
+export const sumPricingLegs = (legs: IBookingPricingLeg[]) => ({
+  passengerCoPay: legs.reduce((sum, leg) => sum + pricingNum(leg.passengerCoPay), 0),
+  fundingSourceCharge: legs.reduce((sum, leg) => sum + pricingNum(leg.fundingSourceCharge), 0),
+  billingMileage: legs.reduce((sum, leg) => sum + pricingNum(leg.billingMileage), 0),
+})
+
+export const zoneBadgeTone = (zone?: string | null): string => {
+  const z = String(zone || '').trim().toLowerCase()
+  if (z === 'inside') return 'text-accent bg-accent/10 border-accent/25'
+  if (z === 'outside') return 'text-urgent bg-urgent/10 border-urgent/25'
+  return 'text-ink-3 bg-bg border-line-2'
+}
+
+/** Payer display name from populated `countyId.payersId` (e.g. "Dhaka City"). */
+export const countyPayerNameFromBooking = (booking: {
+  countyId?: IBooking['countyId']
+}): string => {
+  const county = booking.countyId
+  if (!county || typeof county !== 'object') return ''
+  const payersId = county.payersId
+  if (payersId && typeof payersId === 'object') {
+    const name = payersId.name || payersId.title || payersId.payerName
+    if (name && String(name).trim()) return String(name).trim()
+  }
+  return ''
+}
+
+export const payerSourceObjectLabel = (payer: unknown): string => {
+  if (!payer || typeof payer !== 'object') return ''
+  const p = payer as { name?: string; title?: string; payerName?: string }
+  return String(p.name || p.title || p.payerName || '').trim()
+}
+
 export const parseStopsArray = (stopAddressVal: any): string[] => {
   if (stopAddressVal == null || stopAddressVal === '') return [];
   if (Array.isArray(stopAddressVal)) {
@@ -306,6 +381,9 @@ export const mapApiBooking = (b: IBooking) => {
       : null;
   const rawMobilityId = mobilityObj?._id || (typeof b.mobilityRequirements === 'string' && isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : undefined);
   const payerObj = typeof b.payerSource === 'object' && b.payerSource ? b.payerSource : null;
+  const countyPayerName = countyPayerNameFromBooking(b);
+  const payerSourceName = payerSourceObjectLabel(payerObj);
+  const fundingSourceLabel = countyPayerName || payerSourceName || b.programContext || '';
 
   const riderName = personName(userObj) || 'Rider';
   const driverName = personName(driverObj) || undefined;
@@ -317,6 +395,18 @@ export const mapApiBooking = (b: IBooking) => {
   if (mappedStatus === 'pending') mappedStatus = 'pending_review';
 
   const tripType = b.tripType || 'one-way';
+  const pricingLegs = normalizePricingLegs((b as IBooking).pricingLegs)
+  const legTotals = sumPricingLegs(pricingLegs)
+  const primaryZone = pricingLegs[0]?.zone
+  const pricingZoneLabel = pricingZonesDisplay(pricingLegs)
+  const passengerCopay =
+    b.passengerCoPay != null ? pricingNum(b.passengerCoPay) : legTotals.passengerCoPay
+  const fundingSourceCharge =
+    b.organizationContribution != null
+      ? pricingNum(b.organizationContribution)
+      : legTotals.fundingSourceCharge || pricingNum(b.price)
+  const billingMileage =
+    legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined
 
   return {
     id: b._id,
@@ -356,8 +446,16 @@ export const mapApiBooking = (b: IBooking) => {
     reason: b.tripReason,
     passengerSeats: b.passengerSeats || 1,
     programContext: b.programContext,
-    fundingSource: payerObj?.name || b.programContext || '',
+    countyPayerName,
+    fundingSource: fundingSourceLabel,
+    paymentMethod: fundingSourceLabel,
     fundingSourceId: payerObj?._id || (typeof b.payerSource === 'string' ? b.payerSource : undefined),
+    countyId:
+      typeof b.countyId === 'object' && b.countyId?._id
+        ? b.countyId._id
+        : typeof b.countyId === 'string'
+          ? b.countyId
+          : undefined,
     isRecurring: Boolean(b.recurringBooking),
     recurringDays: b.selectedDate || [],
     endDate: b.endDate,
@@ -365,13 +463,21 @@ export const mapApiBooking = (b: IBooking) => {
     notes: b.tripNote,
     internalPrivateNote: b.internalPrivateNote,
     privateNotes: b.internalPrivateNote,
-    price: b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
-    cost: b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
-    passengerCopay: b.passengerCoPay ?? 0,
-    fundingSourceCharge: b.organizationContribution ?? b.totalPrice ?? b.price ?? mobilityObj?.price ?? 0,
+    price: passengerCopay,
+    cost: fundingSourceCharge,
+    copay: passengerCopay,
+    passengerCopay,
+    fundingSourceCharge,
     totalPrice: b.totalPrice,
     organizationContribution: b.organizationContribution,
     passengerCoPay: b.passengerCoPay,
+    pricingLegs,
+    pricingZoneLabel,
+    primaryPricingZone: primaryZone,
+    billingMileage,
+    billingMileageSource: b.billingMileageSource,
+    insideCounty:
+      primaryZone === 'inside' ? true : primaryZone === 'outside' ? false : undefined,
     recurringBatchId: b.recurringBatchId,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
@@ -539,7 +645,7 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     const s = String(patch.status).toLowerCase();
     if (s === 'approved') {
       payload.isApproved = 'approved';
-      payload.bookingStatus = 'assigned';
+      payload.bookingStatus = 'confirmed';
     } else if (s === 'rejected' || s === 'cancelled') {
       payload.isApproved = 'rejected';
       payload.bookingStatus = 'cancelled';

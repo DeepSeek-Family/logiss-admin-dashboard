@@ -2,15 +2,22 @@ import React, { useState } from 'react';
 import {
   List, ArrowRight, MapPin, Repeat, MoveRight,
   Check, Trash2, CheckCircle2, ClipboardList, Pencil, X,
-  Accessibility, Bed, Disc, Info, User
+  Accessibility, Bed, Disc, Info, User, Loader2
 } from 'lucide-react';
 import { Avatar, Badge, Button, Pagination, SearchInput } from '@/shared/components/ui';
-import { formatShortDate, money, formatTripId } from '@/utils/helpers';
+import { formatShortDate, formatTripId } from '@/utils/helpers';
 import { DollarSign } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
 import { DriverAssignSelect } from './DriverAssignSelect';
 import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from '../utils/helpers';
+import {
+  BookingZoneCell,
+  BookingMilesCell,
+  BookingCopayCell,
+  BookingPayerChargeCell,
+} from './BookingPricingColumns';
+import { RouteLocationLabel } from './RouteLocationLabel';
 
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
@@ -53,6 +60,12 @@ const STATUS_STYLE: Record<string, string> = {
   cancelled: 'text-ink-3 bg-bg',
   no_show: 'text-urgent bg-urgent/5',
 };
+
+const PENDING_TAB_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) =>
+  ['pending_review', 'cancelled', 'no_show'].includes(o.value),
+);
+
+const APPROVE_BEFORE_DRIVER_TOOLTIP = 'Please approve this booking first';
 
 const InlineTime: React.FC<{ value?: string; onCommit: (v: string) => void }> = ({ value, onCommit }) => (
   <input
@@ -114,18 +127,20 @@ interface BookingsListProps {
   /** Locate this booking's vehicle on the side map. */
   onRowSelect?: (id: string | null) => void;
   selectedMapId?: string | null;
+  isFetching?: boolean;
 }
 
 export const BookingsList: React.FC<BookingsListProps> = ({
   activeTab, setActiveTab, bookingSearch, setBookingSearch, fundingFilter, setFundingFilter,
-  assignFilter = 'all', setAssignFilter,
+  assignFilter = '', setAssignFilter,
   pendingCount, confirmedCount,
 
   filteredTrips, paginatedBookings, selectedTrips, toggleSelectAll, toggleSelectTrip,
   openBooking, selectedBookingId, handleApprove, setIsAssigning,
   currentPage, totalPages, itemsPerPage, setItemsPerPage, setCurrentPage, trips, drivers,
   totalItems,
-  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId
+  setSelectedTrips, handleBulkAction, updateTrip, onEditTrip, onRowSelect, selectedMapId,
+  isFetching,
 }) => {
   const { data: payersResponse } = useGetAllPayersQuery();
   const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
@@ -137,13 +152,31 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('pending'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          <List size={16} /> Pending Review <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{pendingCount ?? (trips || []).filter((t: any) => t.status === 'pending_review' || t.status === 'pending').length}</span>
+          <List size={16} /> Pending Review{' '}
+          {pendingCount != null && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                activeTab === 'pending' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'
+              }`}
+            >
+              {pendingCount}
+            </span>
+          )}
         </button>
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'confirmed' ? 'border-primary text-primary' : 'border-transparent text-ink-4 hover:text-ink hover:border-line-2'}`}
           onClick={() => { setActiveTab('confirmed'); setCurrentPage(1); openBooking(''); setSelectedTrips([]); }}
         >
-          Ready to Assign <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'}`}>{confirmedCount ?? (trips || []).filter((t: any) => t.status === 'confirmed' || t.status === 'assigned').length}</span>
+          Ready to Assign{' '}
+          {confirmedCount != null && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                activeTab === 'confirmed' ? 'bg-primary text-white' : 'bg-line-2 text-ink-3'
+              }`}
+            >
+              {confirmedCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -152,12 +185,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           className="w-full sm:w-72"
           placeholder="Search rider or ID..."
           paramName="searchTerm"
-          defaultValue={bookingSearch}
+          value={bookingSearch}
           onSearchChange={(debouncedVal) => {
             setBookingSearch(debouncedVal);
             setCurrentPage(1);
           }}
         />
+        {isFetching && (
+          <Loader2 className="text-primary animate-spin shrink-0" size={18} aria-label="Updating results" />
+        )}
         <div className="flex items-center gap-2">
           <DollarSign size={12} className="text-ink-4" />
           <span className="text-xs text-ink-4">Payer</span>
@@ -183,7 +219,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
               className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
             >
-              <option value="all">All</option>
+              <option value="">All</option>
               <option value="unassigned">Unassigned</option>
               <option value="assigned">Assigned</option>
             </select>
@@ -199,18 +235,30 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">{selectedTrips.length} selected</span>
             <div className="h-4 w-px bg-primary/20" />
 
-            {/* Bulk assign driver — moves the booking into Trip History once assigned */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
-              <select
-                value=""
-                onChange={(e) => { if (e.target.value) { selectedTrips.forEach(id => updateTrip(id, { driverId: e.target.value, status: 'assigned' })); setSelectedTrips([]); } }}
-                className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
-              >
-                <option value="">Driver…</option>
-                {(drivers || []).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            </div>
+            {activeTab === 'confirmed' && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-ink-4 whitespace-nowrap">Assign</span>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      selectedTrips.forEach((id) =>
+                        updateTrip(id, { driverId: e.target.value, status: 'assigned' }),
+                      );
+                      setSelectedTrips([]);
+                    }
+                  }}
+                  className="bg-white border border-line rounded-lg py-1.5 pl-2.5 pr-7 text-xs font-medium text-ink outline-none cursor-pointer appearance-none focus:ring-2 focus:ring-primary/15"
+                >
+                  <option value="">Driver…</option>
+                  {(drivers || []).map((d: any) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {activeTab === 'pending' && (
               <button
@@ -277,8 +325,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">Perform</th> */}
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[110px]">Arrival Time</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Payer</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[100px]">County</th>
-                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[110px]">Charge (est.)</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Zone</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[72px]">Miles</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Passenger copay</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">Payer charge</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[160px]">Dispatcher/Admin Note</th>
                   </tr>
@@ -417,17 +467,22 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           onChange={(e) => updateTrip(booking.id, { status: e.target.value })}
                           className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || 'text-ink-3 bg-bg'}`}
                         >
-                          {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} className="text-ink bg-white">{o.label}</option>)}
+                          {(activeTab === 'pending' ? PENDING_TAB_STATUS_OPTIONS : STATUS_OPTIONS).map(o => (
+                            <option key={o.value} value={o.value} className="text-ink bg-white">{o.label}</option>
+                          ))}
                         </select>
                       </td>
 
-                      {/* Driver (inline assign — smart suggestions + force-assign) */}
-                      <td className="px-3.5 py-3 min-w-[160px]">
+                      <td className="px-3.5 py-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
                         <DriverAssignSelect
                           trip={booking}
                           drivers={drivers}
                           allTrips={trips}
-                          onAssign={(driverId) => updateTrip(booking.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })}
+                          disabled={activeTab === 'pending'}
+                          disabledTitle={APPROVE_BEFORE_DRIVER_TOOLTIP}
+                          onAssign={(driverId) =>
+                            updateTrip(booking.id, driverId ? { driverId, status: 'assigned' } : { driverId: '' })
+                          }
                           className={`${INLINE_INPUT} max-w-[150px] ${booking.driverId ? '' : 'text-ink-4'}`}
                         />
                       </td>
@@ -441,7 +496,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       <td className="px-3.5 py-3 min-w-[280px]">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full border-2 border-primary shrink-0" />
-                          <span className="text-xs font-semibold text-ink max-w-[120px] truncate" title={booking?.pickup || ''}>{booking?.pickup || '---'}</span>
+                          <RouteLocationLabel locationRaw={booking.pickupLocationRaw} displayFallback={booking?.pickup} />
 
                           {/* Intermediate Stop Indicator */}
                           {(booking?.stop || (booking?.stops && booking.stops.length > 0)) ? (
@@ -456,7 +511,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           )}
 
                           <MapPin size={13} className="text-urgent shrink-0" />
-                          <span className="text-xs font-semibold text-ink-2 max-w-[120px] truncate" title={booking?.dropoff || ''}>{booking?.dropoff || '---'}</span>
+                          <RouteLocationLabel locationRaw={booking.dropOffLocationRaw} displayFallback={booking?.dropoff} className="text-ink-2" />
                         </div>
                       </td>
 
@@ -541,29 +596,20 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                         </div>
                       </td>
 
-                      {/* County (editable) */}
-                      <td className="px-3 py-2.5">
-                        <select
-                          value={booking.insideCounty === true ? 'inside' : booking.insideCounty === false ? 'outside' : ''}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateTrip(booking.id, { insideCounty: e.target.value === 'inside' ? true : e.target.value === 'outside' ? false : undefined })}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${booking.insideCounty === false ? 'text-urgent bg-urgent/5' : booking.insideCounty === true ? 'text-accent bg-accent/5' : 'text-ink-4 bg-bg'}`}
-                        >
-                          <option value="">—</option>
-                          <option value="inside">In-County</option>
-                          <option value="outside">Out-of-County</option>
-                        </select>
+                      <td className="px-3 py-2.5 min-w-[120px]">
+                        <BookingZoneCell row={booking} />
                       </td>
 
-                      {/* Charge (estimated) */}
-                      <td className="px-3 py-2.5 text-right">
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-xs font-medium text-primary">{money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
-                          <div className="flex items-center gap-1.5 opacity-80">
-                            <span className="text-xs text-ink-4">Copay: {money(booking.passengerCopay ?? booking.copay ?? 0)}</span>
-                            <span className="text-xs text-ink-4">Payer: {money(booking.fundingSourceCharge ?? booking.costToCounty ?? booking.cost ?? 0)}</span>
-                          </div>
-                        </div>
+                      <td className="px-3 py-2.5 text-right min-w-[72px]">
+                        <BookingMilesCell row={booking} />
+                      </td>
+
+                      <td className="px-3 py-2.5 text-right min-w-[100px]">
+                        <BookingCopayCell row={booking} />
+                      </td>
+
+                      <td className="px-3 py-2.5 text-right min-w-[100px]">
+                        <BookingPayerChargeCell row={booking} />
                       </td>
 
                       {/* User Note (from rider app) */}

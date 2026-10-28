@@ -1,45 +1,19 @@
 import { useState, useMemo } from 'react';
-import { Download } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx';
 
 import {
   TransactionsTable,
   mapApiPayment,
-  type MappedPayment,
 } from '@/features/transactions';
 import { Can } from '@/features/userAccess';
-import { useGetPaymentsQuery, useLazyExportPaymentsQuery } from '@/redux/api/transitionApi';
+import { useGetPaymentsQuery, useExportPaymentsMutation } from '@/redux/api/transitionApi';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { ExportFormatMenu } from '@/shared/components/ui';
+import { parseExportErrorMessage, type FileExportType } from '@/utils/fileExportDownload';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
-
-const exportToExcel = (rows: MappedPayment[], filename: string) => {
-  const excelData = rows.map((t) => ({
-    'Transaction ID': t.id,
-    'TXN Number': t.txnNumber,
-    'Booking ID': t.tripId,
-    Date: t.date ? new Date(t.date).toLocaleString() : '',
-    Rider: t.rider.name,
-    Email: t.rider.email,
-    Contact: t.rider.contact,
-    Amount: Number(t.amount.toFixed(2)),
-    Status: t.status,
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(excelData);
-  const headers = Object.keys(excelData[0] || {});
-  worksheet['!cols'] = headers.map((h) => {
-    const maxLen = excelData.reduce((len, r) => Math.max(len, String((r as any)[h] ?? '').length), h.length);
-    return { wch: Math.min(Math.max(maxLen + 3, 12), 45) };
-  });
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
-  XLSX.writeFile(workbook, filename);
-};
 
 export const Transactions = ({ role }: { role?: string | null }) => {
   const [searchParams] = useSearchParams();
@@ -52,19 +26,23 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   const startDate = fromParam && YMD.test(fromParam) ? fromParam : '';
   const endDate = toParam && YMD.test(toParam) ? toParam : '';
 
-  const filterParams = useMemo(() => ({
-    searchTerm: search.trim() || undefined,
-    paymentStatus: filter !== 'all' ? filter : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-  }), [search, filter, startDate, endDate]);
+  const listFilterParams = useMemo(
+    () => ({
+      searchTerm: search.trim() || undefined,
+      paymentStatus: filter !== 'all' ? filter : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    }),
+    [search, filter, startDate, endDate],
+  );
 
   const { data: paymentsResponse, isFetching, isError, error, refetch } = useGetPaymentsQuery(
-    { ...filterParams, page: currentPage, limit: itemsPerPage },
+    { ...listFilterParams, page: currentPage, limit: itemsPerPage },
     { refetchOnMountOrArgChange: true },
   );
 
-  const [triggerExport, { isLoading: isExporting }] = useLazyExportPaymentsQuery();
+  const [exportPayments] = useExportPaymentsMutation();
+  const [exportingType, setExportingType] = useState<FileExportType | null>(null);
 
   const payments = useMemo(
     () => (paymentsResponse?.data || []).map(mapApiPayment),
@@ -75,46 +53,21 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   const totalItems = pagination?.total ?? payments.length;
   const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
 
-  const exportLedger = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    const range = startDate || endDate
-      ? `${startDate || 'start'}_to_${endDate || 'end'}`
-      : today;
-    const filename = `LOGISS_Transactions_${range}.xlsx`;
-
+  const handleExport = async (type: FileExportType) => {
+    setExportingType(type);
     try {
-      const result = await triggerExport(filterParams).unwrap();
-
-      if (result && typeof result === 'string') {
-        const clean = result.trim();
-        let wb: XLSX.WorkBook | null = null;
-
-        try {
-          if (clean.startsWith('UEsDB') || clean.startsWith('PK')) {
-            wb = XLSX.read(clean, { type: 'base64' });
-          } else if (clean.includes(',') || clean.includes('\n')) {
-            wb = XLSX.read(clean, { type: 'string' });
-          }
-        } catch {
-          wb = null;
-        }
-
-        if (wb && wb.SheetNames && wb.SheetNames.length > 0) {
-          XLSX.writeFile(wb, filename);
-          toast.success('Payment export downloaded as Excel successfully.');
-          return;
-        }
+      await exportPayments({ ...listFilterParams, type }).unwrap();
+      toast.success(`Payments exported as ${type.toUpperCase()}`);
+    } catch (e: unknown) {
+      const err = e as FetchBaseQueryError
+      if (err && typeof err === 'object' && 'status' in err) {
+        toast.error(await parseExportErrorMessage(err))
+      } else {
+        toast.error(apiErrorMessage(e, 'Failed to export payments'))
       }
-    } catch {
-      // Fall back to exporting the rows currently loaded.
+    } finally {
+      setExportingType(null);
     }
-
-    if (payments.length === 0) {
-      toast.error('No transactions to export.');
-      return;
-    }
-    exportToExcel(payments, filename);
-    toast.success('Payment export downloaded as Excel successfully.');
   };
 
   return (
@@ -129,9 +82,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
 
         <div className="flex items-center gap-2 flex-wrap">
           <Can role={role} perm="/finance">
-            <Button variant="outline" size="sm" icon={Download} onClick={exportLedger} disabled={isExporting}>
-              {isExporting ? 'Exporting...' : 'Export Excel'}
-            </Button>
+            <ExportFormatMenu exportingType={exportingType} onExport={handleExport} />
           </Can>
         </div>
       </div>

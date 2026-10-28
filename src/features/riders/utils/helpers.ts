@@ -28,6 +28,11 @@ export const displayDob = (iso?: string | null): string => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 }
 
+export const formatRiderCurrency = (value?: number | null): string => {
+  if (value == null || Number.isNaN(Number(value))) return '—'
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value))
+}
+
 export const calculateAge = (iso?: string | null): number | null => {
   if (!iso) return null
   const dob = new Date(iso)
@@ -93,9 +98,14 @@ export const mapApiRider = (rider: IRider) => {
     program: '',
     mobility: '',
     totalTrips: rider.trip ?? 0,
+    totalRiderAmount: rider.totalRiderAmount,
+    totalOrganizationAmount: rider.totalOrganizationAmount,
+    totalAmount: rider.totalAmount,
+    isPushNotificationEnabled: rider.isPushNotificationEnabled,
     rating: undefined as number | undefined,
     status: mapRiderStatus(rider),
     rawStatus: rider.applicationStatus,
+    applicationStatus: rider.applicationStatus,
     verified: Boolean(rider.verified),
     isBanned: Boolean(rider.isBanned),
     dateOfBirth: rider.dateOfBirth,

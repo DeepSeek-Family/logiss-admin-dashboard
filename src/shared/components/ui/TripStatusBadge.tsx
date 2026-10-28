@@ -10,6 +10,8 @@ export const TripStatusBadge = ({ status, className = '' }: { status: string; cl
     en_route: { variant: 'solid_primary', label: 'En Route', dot: true },
     arrived: { variant: 'warning', label: 'Arrived' },
     in_trip: { variant: 'solid_accent', label: 'In Trip', dot: true },
+    in_progress: { variant: 'solid_accent', label: 'In Progress', dot: true },
+    'in-progress': { variant: 'solid_accent', label: 'In Progress', dot: true },
     completed: { variant: 'accent', label: 'Completed' },
     cancelled: { variant: 'neutral', label: 'Cancelled' },
     no_show: { variant: 'urgent', label: 'No Show' },

@@ -104,7 +104,7 @@ const statusAccent = (status: string) => {
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading, onFilterChange }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
   const initialized = useRef(false);
 
@@ -292,7 +292,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
           title="Filter by driver assignment"
         >
-          <option value="all">All assignments</option>
+          <option value="">All assignments</option>
           <option value="unassigned">Unassigned only</option>
           <option value="assigned">Assigned only</option>
         </select>

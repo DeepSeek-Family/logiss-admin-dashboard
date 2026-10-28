@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
   Phone, Mail, Car, ShieldCheck,
-  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban
+  ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban, Clock
 } from 'lucide-react';
+import { DriverWorkHistoryTab } from './DriverWorkHistoryTab';
 import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
 import { resolveMediaUrl } from '@/utils/imageUrl';
-import { RouteTimeline, TRIP_STATUS_VARIANT } from '@/features/riders/components/RouteTimeline';
+import { TripRouteRow, TripRouteMapsLink, tripRouteMapsProps, TRIP_STATUS_VARIANT } from '@/features/riders/components/RouteTimeline';
 
 interface DriverProfileProps {
   selectedDriver: any;
@@ -31,7 +32,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10, onTripsPageChange,
   onAssignVehicle, onViewFleet, assignedVehicle, onToggleBan, banToggleLoading
 }) => {
-  const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'docs'>('overview');
+  const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'work' | 'docs'>('overview');
   const [preview, setPreview] = useState<string | null>(null);
   const licenseImages: string[] =
     selectedDriver?.licenseImages?.length
@@ -56,6 +57,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   const TABS = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'trips', label: 'Trip history', icon: Repeat },
+    { id: 'work', label: 'Work history', icon: Clock },
     { id: 'docs', label: 'License', icon: ShieldCheck },
   ];
 
@@ -263,24 +265,24 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
             <table className="w-full text-left">
               <thead className="bg-bg border-b border-line-2">
                 <tr>
-                  {['Trip ID', 'Date & Time', 'Rider', 'Route', 'Status'].map(h => (
-                    <th key={h} className="px-5 py-3 type-th">{h}</th>
+                  {['Trip ID', 'Date & Time', 'Rider', 'Route', 'View map', 'Status'].map(h => (
+                    <th key={h} className="px-4 py-3 type-th whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-2">
                 {tripsLoading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-sm text-ink-4">
+                    <td colSpan={6} className="text-center py-16 text-sm text-ink-4">
                       <Loader2 size={20} className="mx-auto mb-2 animate-spin text-primary" />
                       Loading trip history
                     </td>
                   </tr>
                 ) : trips.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
+                  <tr><td colSpan={6} className="text-center py-16 text-sm text-ink-4">No trip history</td></tr>
                 ) : trips.map((trip: any) => (
-                  <tr key={trip.id} className="align-top hover:bg-bg/50 transition-colors">
-                    <td className="px-5 py-4">
+                  <tr key={trip.id} className="align-middle hover:bg-bg/50 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
                         #{String(trip.id || '').slice(-6)}
                       </span>
@@ -303,16 +305,13 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <RouteTimeline
-                        points={[
-                          { kind: 'pickup', raw: trip.pickupLocationRaw ?? trip.pickup },
-                          { kind: 'stop', raw: trip.stopAddressRaw },
-                          { kind: 'dropoff', raw: trip.dropOffLocationRaw ?? trip.dropoff },
-                        ]}
-                      />
+                    <td className="px-4 py-3">
+                      <TripRouteRow trip={trip} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <TripRouteMapsLink {...tripRouteMapsProps(trip)} />
+                    </td>
+                    <td className="px-4 py-3">
                       <Badge
                         dot
                         variant={TRIP_STATUS_VARIANT[String(trip.rawStatus || trip.status || '').toLowerCase()] ?? 'neutral'}
@@ -336,6 +335,11 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
             />
           )}
         </div>
+      )}
+
+      {/* ── WORK HISTORY TAB ─────────────────────── */}
+      {profileTab === 'work' && selectedDriver?.id && (
+        <DriverWorkHistoryTab driverId={String(selectedDriver.id)} />
       )}
 
       {/* ── LICENSE TAB ──────────────────────────── */}

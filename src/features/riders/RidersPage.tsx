@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from '@/redux/api/ridersApi';
-import { useToggleUserBannedMutation } from '@/redux/api/userApi';
+import { useGetAuthUserByIdQuery, useToggleUserBannedMutation } from '@/redux/api/userApi';
 import { mapApiBooking, apiErrorMessage } from '@/features/bookings/utils/helpers';
 import { mapApiRider } from '@/features/riders/utils/helpers';
 import toast from 'react-hot-toast';
@@ -53,6 +53,15 @@ const Riders = ({ role }: { role?: string | null }) => {
     { id: selectedRiderId || '', page: historyPage, limit: historyLimit },
     { skip: !selectedRiderId, refetchOnMountOrArgChange: true },
   );
+
+  const {
+    data: userDetailResponse,
+    isLoading: userDetailLoading,
+    isFetching: userDetailFetching,
+  } = useGetAuthUserByIdQuery(selectedRiderId || '', {
+    skip: !selectedRiderId,
+    refetchOnMountOrArgChange: true,
+  });
 
   const riders = useMemo(() => {
     return (ridersResponse?.data || []).map((rider) => {
@@ -116,6 +125,36 @@ const Riders = ({ role }: { role?: string | null }) => {
     setOverrides((prev) => ({ ...prev, [riderId]: { ...(prev[riderId] || {}), ...updatedFields } }));
   };
 
+  const historyUser = historyResponse?.data?.[0]?.userId;
+  const selectedRider = useMemo(() => {
+    if (!selectedRiderId) return null;
+
+    const fromList = riders.find((r) => r.id === selectedRiderId);
+    const fromHistory =
+      historyUser && typeof historyUser === 'object' && historyUser._id === selectedRiderId
+        ? mapApiRider(historyUser as IRider)
+        : null;
+    const fromDetail = userDetailResponse?.data
+      ? mapApiRider(userDetailResponse.data)
+      : null;
+
+    const merged = {
+      ...(fromList || fromHistory || {}),
+      ...(fromDetail || {}),
+      ...(overrides[selectedRiderId] || {}),
+    };
+
+    if (!merged.id && !merged._id) return null;
+    return merged;
+  }, [selectedRiderId, riders, historyUser, userDetailResponse, overrides]);
+
+  const detailBootLoading =
+    Boolean(selectedRiderId) && (userDetailLoading || userDetailFetching) && !userDetailResponse;
+
+  const totalItems = pagination?.total ?? riders.length;
+  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedRiders = riders;
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
@@ -149,21 +188,7 @@ const Riders = ({ role }: { role?: string | null }) => {
     );
   }
 
-  // `searchTerm` is applied server-side.
-  const totalItems = pagination?.total ?? riders.length;
-  const totalPages = pagination?.totalPage || Math.ceil(totalItems / itemsPerPage) || 1;
-  const paginatedRiders = riders;
-  // When opened from a URL, the rider may not be on the current list page; fall back to the
-  // rider embedded in their trip history (`userId`).
-  const historyUser = historyResponse?.data?.[0]?.userId;
-  const selectedRider = selectedRiderId
-    ? riders.find((r: any) => r.id === selectedRiderId) ||
-      (historyUser && typeof historyUser === 'object' && historyUser._id === selectedRiderId
-        ? { ...mapApiRider(historyUser as IRider), ...(overrides[selectedRiderId] || {}) }
-        : null)
-    : null;
-
-  if (selectedRiderId && !selectedRider && historyLoading) {
+  if (selectedRiderId && !selectedRider && (historyLoading || detailBootLoading)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <Loader2 size={28} className="text-primary animate-spin" />
@@ -196,6 +221,7 @@ const Riders = ({ role }: { role?: string | null }) => {
 
         <RiderProfile
           selectedRider={selectedRider}
+          detailLoading={detailBootLoading}
           trips={riderTrips}
           tripsLoading={historyLoading}
           tripsTotal={historyPagination?.total ?? riderTrips.length}

@@ -108,8 +108,8 @@ const NAV_CONFIG: NavConfigGroup[] = [
       { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
       { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
+      { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
     ]
   },
@@ -119,8 +119,8 @@ const NAV_CONFIG: NavConfigGroup[] = [
     items: [
       { id: ROUTES.fleet, label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.riders, label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.drivers, label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
       { id: ROUTES.applications, label: 'Applications', icon: FileCheck, roles: ['admin'] },
+      { id: ROUTES.drivers, label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
     ]
   },
   {
@@ -161,13 +161,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
-  const routeOutletKey = `${location.pathname}${location.search}`;
+  /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
+  const routeOutletKey = location.pathname;
   const { unreadCount } = useNotifications();
 
   React.useEffect(() => {
     mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
     setProfileOpen(false);
-  }, [routeOutletKey]);
+  }, [location.pathname]);
   // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
   /*
   const { data: bookingsMeta } = useGetAllBookingsQuery({ page: 1, limit: 10 });

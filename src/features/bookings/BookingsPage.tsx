@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Clock, MapPin, Phone, ChevronRight,
@@ -46,12 +46,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
     () => searchParams.get('searchTerm') || searchParams.get('search') || '',
   );
   const [fundingFilter, setFundingFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('all');
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [driverSearch, setDriverSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const listParams = useMemo(() => {
+  const baseListParams = useMemo(() => {
     const params: Record<string, any> = {
       page: currentPage,
       limit: itemsPerPage,
@@ -63,25 +63,39 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (fundingFilter && fundingFilter !== 'all') {
       params.payerSource = fundingFilter;
     }
-    if (activeTab === 'confirmed') {
-      const unassign = assignFilterToUnassignQuery(assignFilter);
-      if (unassign !== undefined) params.unassign = unassign;
+    return params;
+  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
+
+  const confirmedListParams = useMemo(() => {
+    const params = { ...baseListParams };
+    const unassign = assignFilterToUnassignQuery(assignFilter);
+    if (unassign !== undefined) {
+      params.unassign = unassign;
     }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter, activeTab, assignFilter]);
+  }, [baseListParams, assignFilter]);
 
-  // Inactive tab only needs its badge total, so it gets fixed params and never refetches on search/filter.
-  const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
+  /** Inactive tab: pagination total only (`limit=1`), not the full list. */
+  const tabBadgeCountParams = useMemo(() => ({ page: 1, limit: 1 }), []);
 
-  const { data: pendingResponse, isLoading: pendingLoading, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
-    activeTab === 'pending' ? listParams : countOnlyParams,
-    { refetchOnMountOrArgChange: true }
+  const pendingQueryParams =
+    activeTab === 'pending' ? baseListParams : tabBadgeCountParams;
+
+  const confirmedQueryParams =
+    activeTab === 'confirmed' ? confirmedListParams : tabBadgeCountParams;
+
+  const { data: pendingResponse, isLoading: pendingLoading, isFetching: pendingFetching, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
+    pendingQueryParams,
+    { refetchOnMountOrArgChange: true },
   );
 
-  const { data: assignedResponse, isLoading: assignedLoading, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
-    activeTab === 'confirmed' ? listParams : countOnlyParams,
-    { refetchOnMountOrArgChange: true }
+  const { data: assignedResponse, isLoading: assignedLoading, isFetching: assignedFetching, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
+    confirmedQueryParams,
+    { refetchOnMountOrArgChange: true },
   );
+
+  const stalePendingRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
+  const staleAssignedRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
 
   const [updateBookingMutation] = useUpdateBookingMutation();
   const [showMap, setShowMap] = useState(false);
@@ -129,6 +143,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(undefined, {
+    skip: activeTab !== 'confirmed',
     refetchOnMountOrArgChange: true,
   });
 
@@ -138,9 +153,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
   );
 
   const refresh = () => {
-    refetchPendingBookings();
-    refetchAssignedBookings();
-    refetchDrivers();
+    void refetchPendingBookings();
+    void refetchAssignedBookings();
+    void refetchDrivers();
   };
 
   const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
@@ -151,6 +166,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
       : '';
     const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
     const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+    const isPendingReview =
+      existingTrip?.status === 'pending_review' ||
+      existingTrip?.status === 'pending' ||
+      activeTab === 'pending';
+
+    if (isDriverAssign && isPendingReview) {
+      toast.error('Approve the booking before assigning a driver');
+      return;
+    }
 
     const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
     const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
@@ -201,27 +225,41 @@ const Bookings = ({ role }: { role?: string | null }) => {
     }
   };
 
-  const pendingBookings = useMemo(
-    () => (pendingResponse?.data || []).map(mapApiBooking),
-    [pendingResponse]
-  );
+  const pendingBookings = useMemo(() => {
+    if (activeTab !== 'pending') return [];
+    if (pendingResponse?.data) {
+      const mapped = pendingResponse.data.map(mapApiBooking);
+      stalePendingRowsRef.current = mapped;
+      return mapped;
+    }
+    return stalePendingRowsRef.current;
+  }, [pendingResponse, activeTab]);
 
-  const assignedBookings = useMemo(
-    () => (assignedResponse?.data || []).map(mapApiBooking),
-    [assignedResponse]
-  );
+  const assignedBookings = useMemo(() => {
+    if (activeTab !== 'confirmed') return [];
+    if (assignedResponse?.data) {
+      const mapped = assignedResponse.data.map(mapApiBooking);
+      staleAssignedRowsRef.current = mapped;
+      return mapped;
+    }
+    return staleAssignedRowsRef.current;
+  }, [assignedResponse, activeTab]);
 
   const bookingsList = useMemo(
     () => [...pendingBookings, ...assignedBookings],
     [pendingBookings, assignedBookings]
   );
 
-  const pendingCount = pendingResponse?.pagination?.total ?? pendingBookings.length;
-  const confirmedCount = assignedResponse?.pagination?.total ?? assignedBookings.length;
+  const pendingCount = pendingResponse?.pagination?.total;
+  const confirmedCount = assignedResponse?.pagination?.total;
 
   const currentTabBookings = activeTab === 'pending' ? pendingBookings : assignedBookings;
   const currentPagination = activeTab === 'pending' ? pendingResponse?.pagination : assignedResponse?.pagination;
-  const loading = activeTab === 'pending' ? pendingLoading : assignedLoading;
+  const loading =
+    activeTab === 'pending'
+      ? pendingLoading && pendingBookings.length === 0
+      : assignedLoading && assignedBookings.length === 0;
+  const listFetching = activeTab === 'pending' ? pendingFetching : assignedFetching;
   const isError = activeTab === 'pending' ? pendingError : assignedError;
 
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
@@ -264,7 +302,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
               selectedTrips.map(id =>
                 updateBookingMutation({
                   id,
-                  payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+                  payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
                 }).unwrap()
               )
             );
@@ -407,7 +445,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
         try {
           await updateBookingMutation({
             id: targetId,
-            payload: { isApproved: 'approved', bookingStatus: 'assigned' },
+            payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
           }).unwrap();
           toast.success('Booking approved — moved to Ready to Assign');
           refresh();
@@ -613,6 +651,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
             onEditTrip={(id) => setEditTripId(id)}
             onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
             selectedMapId={mapTripId}
+            isFetching={listFetching}
           />
         </div>
         {showMap && (

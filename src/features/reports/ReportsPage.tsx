@@ -1,21 +1,19 @@
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  ChevronDown,
-  Search,
-  ShieldAlert,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertTriangle, Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Button, Pagination } from "@/shared/components/ui";
 import { Loader } from "@/shared/Lodder";
 import { useGetAllReportsQuery } from "@/redux/apivtwo/dashboardOnvording";
-import { tripTypeLabel } from "@/utils/helpers";
 import { DetailPanel, ReportCard } from "@/features/reports";
-import { statusLabel } from "./utils/helpers";
+
+const REPORT_STATUS_TABS = [
+  { id: "all", label: "All reports" },
+  { id: "pending", label: "Pending" },
+  { id: "approved", label: "Solved" },
+  { id: "rejected", label: "Rejected" },
+] as const;
 
 const Reports = ({ role: _role }: { role?: string | null }) => {
   const [activeTab, setActiveTab] = useState("all");
-  const [tripType, setTripType] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,7 +25,6 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
       limit: number;
       search?: string;
       reportStatus?: string;
-      tripType?: string;
     } = {
       page: currentPage,
       limit: itemsPerPage,
@@ -35,9 +32,8 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
     const q = search.trim();
     if (q) params.search = q;
     if (activeTab !== "all") params.reportStatus = activeTab;
-    if (tripType !== "all") params.tripType = tripType;
     return params;
-  }, [currentPage, itemsPerPage, search, activeTab, tripType]);
+  }, [currentPage, itemsPerPage, search, activeTab]);
 
   const countOnlyParams = useMemo(() => ({ page: 1, limit: 1 }), []);
 
@@ -52,42 +48,50 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
   const { data: allCountResponse } = useGetAllReportsQuery(countOnlyParams, {
     refetchOnMountOrArgChange: true,
   });
+  const { data: pendingCountResponse } = useGetAllReportsQuery(
+    { ...countOnlyParams, reportStatus: "pending" },
+    { refetchOnMountOrArgChange: true },
+  );
+  const { data: approvedCountResponse } = useGetAllReportsQuery(
+    { ...countOnlyParams, reportStatus: "approved" },
+    { refetchOnMountOrArgChange: true },
+  );
+  const { data: rejectedCountResponse } = useGetAllReportsQuery(
+    { ...countOnlyParams, reportStatus: "rejected" },
+    { refetchOnMountOrArgChange: true },
+  );
 
   const reports = reportsResponse?.data ?? [];
   const pagination = reportsResponse?.pagination;
   const totalPages = pagination?.totalPage ?? 1;
   const totalItems = pagination?.total ?? reports.length;
 
-  const statusTabs = useMemo(() => {
-    const statuses = new Set<string>();
-    reports.forEach((report) => {
-      if (report.reportStatus) statuses.add(report.reportStatus);
-    });
-    const allTotal = allCountResponse?.pagination?.total;
-    return [
-      {
-        id: "all",
-        label: "All reports",
-        count: activeTab === "all" ? totalItems : allTotal,
-      },
-      ...Array.from(statuses).map((id) => ({
-        id,
-        label: statusLabel(id),
-        count: activeTab === id ? totalItems : undefined,
-      })),
-    ];
-  }, [reports, activeTab, totalItems, allCountResponse?.pagination?.total]);
+  const tabCounts = useMemo(
+    () => ({
+      all: allCountResponse?.pagination?.total,
+      pending: pendingCountResponse?.pagination?.total,
+      approved: approvedCountResponse?.pagination?.total,
+      rejected: rejectedCountResponse?.pagination?.total,
+    }),
+    [
+      allCountResponse?.pagination?.total,
+      pendingCountResponse?.pagination?.total,
+      approvedCountResponse?.pagination?.total,
+      rejectedCountResponse?.pagination?.total,
+    ],
+  );
 
-  const tripTypes = useMemo(() => {
-    const types = new Set<string>();
-    reports.forEach((report) => {
-      const trip = report.tripId;
-      if (trip && typeof trip !== "string" && trip.tripType) {
-        types.add(trip.tripType);
-      }
-    });
-    return Array.from(types);
-  }, [reports]);
+  const statusTabs = useMemo(
+    () =>
+      REPORT_STATUS_TABS.map((tab) => ({
+        ...tab,
+        count:
+          activeTab === tab.id
+            ? totalItems
+            : tabCounts[tab.id as keyof typeof tabCounts],
+      })),
+    [activeTab, totalItems, tabCounts],
+  );
 
   const selectedReport =
     reports.find((report) => report._id === selectedReportId) ??
@@ -148,8 +152,8 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
 
         <div className="flex overflow-hidden flex-1 min-h-0">
           <div className="w-[320px] shrink-0 border-r border-line-2 flex flex-col overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line-2">
-              <div className="flex-1 flex items-center gap-1.5 bg-bg border border-line-2 rounded-lg px-2.5 py-1.5">
+            <div className="px-3 py-2.5 border-b border-line-2">
+              <div className="flex w-full items-center gap-1.5 bg-bg border border-line-2 rounded-lg px-2.5 py-1.5">
                 <Search size={12} className="text-ink-4 shrink-0" />
                 <input
                   type="text"
@@ -160,29 +164,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
                     setCurrentPage(1);
                     resetListSelection();
                   }}
-                  className="bg-transparent text-xs outline-none w-full text-ink placeholder:text-ink-4"
-                />
-              </div>
-              <div className="relative">
-                <select
-                  value={tripType}
-                  onChange={(e) => {
-                    setTripType(e.target.value);
-                    setCurrentPage(1);
-                    resetListSelection();
-                  }}
-                  className="appearance-none pl-2.5 pr-6 py-1.5 text-xs font-medium bg-bg border border-line-2 rounded-lg text-ink-3 outline-none cursor-pointer"
-                >
-                  <option value="all">All types</option>
-                  {tripTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {tripTypeLabel(type)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={10}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none"
+                  className="bg-transparent text-xs outline-none w-full min-w-0 text-ink placeholder:text-ink-4"
                 />
               </div>
             </div>

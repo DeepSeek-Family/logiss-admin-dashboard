@@ -409,6 +409,94 @@ export async function geocodeAddress(address: string): Promise<[number, number] 
   }
 }
 
+const reverseGeocodeCache = new Map<string, string | null>();
+let reverseGeocodeChain: Promise<void> = Promise.resolve();
+let lastReverseGeocodeAt = 0;
+
+const reverseGeocodeKey = (lat: number, lng: number) =>
+  `${lat.toFixed(5)},${lng.toFixed(5)}`;
+
+const shortenLabel = (text: string, max = 52) =>
+  text.length <= max ? text : `${text.slice(0, max - 1).trim()}…`;
+
+const formatNominatimReverse = (payload: Record<string, unknown> | null): string => {
+  if (!payload) return '';
+  const address = payload.address as Record<string, string> | undefined;
+  if (address) {
+    const parts = [
+      address.house_number,
+      address.road || address.pedestrian || address.footway,
+      address.neighbourhood || address.suburb,
+      address.city || address.town || address.village || address.county,
+      address.state,
+    ].filter(Boolean);
+    if (parts.length) return shortenLabel(parts.join(', '));
+  }
+  const display = payload.display_name;
+  return typeof display === 'string' ? shortenLabel(display) : '';
+};
+
+async function reverseGeocodeGoogle(lat: number, lng: number): Promise<string | null> {
+  const g = (typeof window !== 'undefined' ? (window as any).google : null)?.maps;
+  if (!g?.Geocoder) return null;
+  return new Promise((resolve) => {
+    const geocoder = new g.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results: any[] | null, status: string) => {
+      if (status !== 'OK' || !results?.[0]?.formatted_address) {
+        resolve(null);
+        return;
+      }
+      resolve(shortenLabel(String(results[0].formatted_address)));
+    });
+  });
+}
+
+/** Resolve [lng, lat] or stored coords to a short place name (cached, throttled). */
+export async function reverseGeocodeLngLat(lng: number, lat: number): Promise<string | null> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const key = reverseGeocodeKey(lat, lng);
+  if (reverseGeocodeCache.has(key)) return reverseGeocodeCache.get(key) ?? null;
+
+  const run = async (): Promise<string | null> => {
+    const waitMs = Math.max(0, 1100 - (Date.now() - lastReverseGeocodeAt));
+    if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
+    lastReverseGeocodeAt = Date.now();
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lng))}`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Accept-Language': 'en',
+        },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as Record<string, unknown>;
+        const label = formatNominatimReverse(data);
+        if (label) {
+          reverseGeocodeCache.set(key, label);
+          return label;
+        }
+      }
+    } catch {
+      /* try Google fallback */
+    }
+
+    try {
+      const googleLabel = await reverseGeocodeGoogle(lat, lng);
+      reverseGeocodeCache.set(key, googleLabel);
+      return googleLabel;
+    } catch {
+      reverseGeocodeCache.set(key, null);
+      return null;
+    }
+  };
+
+  const resultPromise = reverseGeocodeChain.then(run);
+  reverseGeocodeChain = resultPromise.then(() => undefined).catch(() => undefined);
+  return resultPromise;
+}
+
 /**
  * Extract 5-digit US ZIP code from an address string.
  */

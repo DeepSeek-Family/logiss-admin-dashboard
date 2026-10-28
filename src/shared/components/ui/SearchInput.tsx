@@ -36,6 +36,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   callbacksRef.current = { onSearchChange, onChange };
   const lastEmittedRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -50,41 +51,43 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     callbacksRef.current.onChange?.(value);
   };
 
-  // Sync internal text if URL parameter changes externally
+  // Sync internal text if URL or parent value changes externally (not while the user is typing).
   useEffect(() => {
+    if (document.activeElement === inputRef.current) return;
+
     const currentUrlValue = searchParams.get(paramName) || searchParams.get('search') || '';
     if (controlledValue !== undefined) {
       setText(controlledValue);
     } else if (currentUrlValue !== text) {
       setText(currentUrlValue);
     }
-  }, [searchParams, paramName, controlledValue]);
+  }, [searchParams, paramName, controlledValue, text]);
 
-  // Debounced effect for URL and callback triggers
+  // Debounced effect for URL and callback triggers (do not depend on `searchParams` — avoids re-fire on every URL replace).
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!mountedRef.current) return;
 
       const trimmed = text.trim();
-      const currentParam = searchParams.get(paramName) || '';
 
-      if (trimmed !== currentParam) {
-        setSearchParams(
-          (prev) => {
-            const next = new URLSearchParams(prev);
-            if (paramName !== 'search') next.delete('search');
-            if (paramName !== 'searchTerm') next.delete('searchTerm');
+      setSearchParams(
+        (prev) => {
+          const currentParam = prev.get(paramName) || prev.get('search') || '';
+          if (trimmed === currentParam) return prev;
 
-            if (trimmed) {
-              next.set(paramName, trimmed);
-            } else {
-              next.delete(paramName);
-            }
-            return next;
-          },
-          { replace: true }
-        );
-      }
+          const next = new URLSearchParams(prev);
+          if (paramName !== 'search') next.delete('search');
+          if (paramName !== 'searchTerm') next.delete('searchTerm');
+
+          if (trimmed) {
+            next.set(paramName, trimmed);
+          } else {
+            next.delete(paramName);
+          }
+          return next;
+        },
+        { replace: true },
+      );
 
       if (mountedRef.current) {
         emit(trimmed);
@@ -92,7 +95,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [text, debounceMs, paramName, setSearchParams, searchParams]);
+  }, [text, debounceMs, paramName, setSearchParams]);
 
   const handleClear = () => {
     setText('');
@@ -116,6 +119,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         size={16}
       />
       <input
+        ref={inputRef}
         type="text"
         placeholder={placeholder}
         value={text}

@@ -107,6 +107,60 @@ export interface IDriverTripHistoryResponse {
   data: IBooking[]
 }
 
+export interface IDutyDuration {
+  hours: number
+  minutes: number
+  seconds: number
+  totalMs: number
+  formatted: string
+}
+
+export interface IDutySession {
+  startTime: string
+  endTime: string | null
+  duration: IDutyDuration
+}
+
+export interface IDriverDutyLog {
+  _id: string
+  driverId: IDriverUser | string
+  date: string
+  isOnDuty: boolean
+  firstStartTime: string
+  lastEndTime: string | null
+  sessions: IDutySession[]
+  totalDuration: IDutyDuration
+}
+
+export interface IDriverDutyLogsQueryParams {
+  driverId: string
+  from?: string
+  to?: string
+  page?: number
+  limit?: number
+}
+
+export interface IDriverDutyLogsResponse {
+  success: boolean
+  message: string
+  pagination?: IBookingPagination
+  data: IDriverDutyLog[]
+}
+
+const normalizeDriverDutyLogsResponse = (response: any): IDriverDutyLogsResponse => {
+  const list = Array.isArray(response?.data)
+    ? response.data
+    : Array.isArray(response?.data?.data)
+      ? response.data.data
+      : []
+  return {
+    success: response?.success !== false,
+    message: response?.message || '',
+    pagination: response?.pagination || response?.data?.pagination,
+    data: list,
+  }
+}
+
 const normalizeDriverTripHistoryResponse = (response: any): IDriverTripHistoryResponse => {
   const list = Array.isArray(response?.data)
     ? response.data
@@ -170,6 +224,24 @@ export const driversApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Drivers', id: 'LIST' }],
     }),
+    getDriverDutyLogs: builder.query<IDriverDutyLogsResponse, IDriverDutyLogsQueryParams>({
+      query: ({ driverId, from, to, page, limit }) => {
+        const queryParams: Record<string, string | number> = { driverId }
+        if (from) queryParams.from = from
+        if (to) queryParams.to = to
+        if (page != null) queryParams.page = page
+        if (limit != null) queryParams.limit = limit
+        return {
+          url: '/driver-duty/logs',
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      transformResponse: normalizeDriverDutyLogsResponse,
+      providesTags: (_result, _error, arg) => [
+        { type: 'Drivers', id: `DUTY-${arg.driverId}` },
+      ],
+    }),
     getDriverTripHistory: builder.query<IDriverTripHistoryResponse, IDriverTripHistoryQueryParams>({
       query: ({ id, page, limit }) => {
         const queryParams: Record<string, string | number> = {}
@@ -217,6 +289,7 @@ export const driversApi = baseApi.injectEndpoints({
 export const {
   useGetDriverApplicationsQuery,
   useGetDriversQuery,
+  useGetDriverDutyLogsQuery,
   useGetDriverTripHistoryQuery,
   useUpdateApplicationStatusMutation,
   useCreateDriverMutation,

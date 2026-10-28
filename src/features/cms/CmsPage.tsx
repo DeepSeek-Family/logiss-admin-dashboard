@@ -313,25 +313,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
         <div className="flex gap-3">
 
-          <Button
-
-            variant="outline"
-
-            icon={RotateCcw}
-
-            onClick={() => {
-
-              if (activePage === 'org') handleResetOrg();
-
-            }}
-
-            disabled={activePage !== 'org' || supportBootLoading || isSaving}
-
-          >
-
-            Reset Changes
-
-          </Button>
+      
 
           <Button
 
@@ -426,7 +408,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                 </div>
                 <h3 className="text-lg font-semibold text-ink">Editor: {activePageData?.label}</h3>
               </div>
-              <Badge variant="accent" dot>Global Live Settings</Badge>
+              {/* <Badge variant="accent" dot>Global Live Settings</Badge> */}
 
             </div>
 

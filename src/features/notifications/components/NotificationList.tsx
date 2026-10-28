@@ -1,4 +1,5 @@
-import { Bell, Trash2, CheckCheck } from 'lucide-react';
+import { Bell, Trash2, CheckCheck, CheckCircle2, MapPin, Truck, Shield } from 'lucide-react';
+import { Card } from '@/shared/components/ui';
 import { timeAgo } from '@/utils/helpers';
 
 interface NotificationListProps {
@@ -11,14 +12,52 @@ const urgentTypes = ['critical', 'warning'];
 
 export const NotificationList = ({ filtered, onMarkRead, onDelete }: NotificationListProps) => {
   if (filtered.length === 0) {
+    const alertHints = [
+      { icon: Truck, label: 'Fleet updates' },
+      { icon: MapPin, label: 'Trip alerts' },
+      { icon: Shield, label: 'System notices' },
+    ];
+
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-bg border border-line-2 flex items-center justify-center mb-4">
-          <Bell size={24} className="text-ink-4 opacity-40" />
+      <Card className="relative overflow-hidden border border-line-2/70 bg-white shadow-sm ring-1 ring-ink/[0.03]">
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/[0.07] blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-primary/[0.04] blur-3xl" />
         </div>
-        <p className="text-sm font-semibold text-ink">You're all caught up</p>
-        <p className="text-xs text-ink-4 mt-1">No notifications to show.</p>
-      </div>
+
+        <div className="relative flex flex-col items-center px-6 py-14 sm:py-16 text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 scale-[1.35] rounded-full border border-primary/10 bg-primary/[0.04]" />
+            <div className="absolute inset-0 scale-[1.15] rounded-full border border-primary/15" />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 via-white to-primary/5 shadow-sm ring-1 ring-primary/10">
+              <Bell size={32} className="text-primary" strokeWidth={1.75} />
+              <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-2 ring-white">
+                <CheckCircle2 size={16} className="text-accent" strokeWidth={2.25} />
+              </span>
+            </div>
+          </div>
+
+          <h2 className="text-lg font-semibold tracking-tight text-ink sm:text-xl">
+            You&apos;re all caught up
+          </h2>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-3">
+            No notifications right now. When trips change, drivers update, or the system sends an alert,
+            it will appear here instantly.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+            {alertHints.map(({ icon: HintIcon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line-2/80 bg-bg/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-4"
+              >
+                <HintIcon size={12} className="text-primary/80" strokeWidth={2} />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </Card>
     );
   }
 
