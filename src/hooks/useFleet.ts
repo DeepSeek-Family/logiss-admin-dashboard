@@ -5,8 +5,12 @@ import {
   useUpdateVehicleMutation,
   useDeleteVehicleMutation,
   useAssignVehicleDriverMutation,
+  useUpdateVehicleAssignMutation,
 } from '@/redux/api/vehiclesMangeApi';
 import toast from 'react-hot-toast';
+import { driverFullName, driverInitials } from '@/features/drivers/utils/helpers';
+import { resolveMediaUrl } from '@/utils/imageUrl';
+import { submitVehicleAssign } from '@/features/fleet/utils/submitVehicleAssign';
 
 export const formatConfigurationType = (val: string): 'ambulatory_van' | 'wheelchair_van' | 'stretcher_van' => {
   if (!val) return 'wheelchair_van';
@@ -48,10 +52,34 @@ export const normalizeVehicle = (v: any) => {
     status: 'valid'
   };
 
+  const driverRef =
+    (typeof v.driver === 'object' && v.driver ? v.driver : null) ||
+    (typeof v.driverId === 'object' && v.driverId ? v.driverId : null);
+
   const assignedDriverId =
     v.assignedDriverId ||
-    v.driverId ||
-    (typeof v.driver === 'object' && v.driver ? v.driver._id : typeof v.driver === 'string' ? v.driver : null);
+    (typeof v.driverId === 'string' ? v.driverId : null) ||
+    driverRef?._id ||
+    (typeof v.driver === 'string' ? v.driver : null);
+
+  const formatServiceDate = (iso?: string) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  };
+
+  const assignedDriver = driverRef
+    ? {
+        id: String(driverRef._id || ''),
+        name: driverFullName(driverRef),
+        phone: driverRef.contact || '',
+        email: driverRef.email || '',
+        initials: driverInitials(driverRef),
+        image: resolveMediaUrl(driverRef.profile),
+        onDuty: Boolean(driverRef.isOnDuty),
+      }
+    : null;
 
   return {
     ...v,
@@ -59,6 +87,9 @@ export const normalizeVehicle = (v: any) => {
     _id: id,
     assignedDriverId,
     driverId: assignedDriverId,
+    assignedDriver,
+    assignedDriverName: assignedDriver?.name || '',
+    driver: driverRef,
     make,
     manufacturer: make,
     model,
@@ -78,7 +109,8 @@ export const normalizeVehicle = (v: any) => {
     insurance,
     carrierProvider: v.carrierProvider || insurance.provider,
     policyNumber: v.policyNumber || insurance.policyNumber,
-    insuranceExpirationDate: v.insuranceExpirationDate || insurance.expires
+    insuranceExpirationDate: v.insuranceExpirationDate || insurance.expires,
+    nextService: v.nextService || formatServiceDate(v.nextServiceDate),
   };
 };
 
@@ -94,6 +126,7 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
   const [updateVehicleApi] = useUpdateVehicleMutation();
   const [deleteVehicleApi] = useDeleteVehicleMutation();
   const [assignVehicleDriver] = useAssignVehicleDriverMutation();
+  const [updateVehicleAssign] = useUpdateVehicleAssignMutation();
 
   const vehicles = useMemo(() => {
     if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
@@ -133,8 +166,23 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
     }
   }, [addNewVehicles, refetch]);
 
-  const handleAssign = useCallback(async (vehicleId: string, driverId: string) => {
-    const result = await assignVehicleDriver({ vehicleId, driverId }).unwrap();
+  const handleAssign = useCallback(async (
+    vehicleId: string,
+    driverId: string,
+    options?: { assignmentId?: string; patchDriverOnly?: boolean },
+  ) => {
+    const result = await submitVehicleAssign(
+      {
+        create: (body) => assignVehicleDriver(body).unwrap(),
+        update: (args) => updateVehicleAssign(args).unwrap(),
+      },
+      {
+        driverId,
+        vehicleId,
+        assignmentId: options?.assignmentId,
+        patchDriverOnly: options?.patchDriverOnly,
+      },
+    );
     toast.success(result.message || 'Driver assigned to vehicle');
     const { data: refetched } = await refetch();
     const raw = refetched?.data?.find((v: { _id?: string; id?: string }) => (v._id || v.id) === vehicleId);
@@ -142,7 +190,7 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
       return normalizeVehicle({ ...raw, driverId, assignedDriverId: driverId });
     }
     return normalizeVehicle({ id: vehicleId, _id: vehicleId, driverId, assignedDriverId: driverId });
-  }, [assignVehicleDriver, refetch]);
+  }, [assignVehicleDriver, updateVehicleAssign, refetch]);
 
   const updateStatus = useCallback(async (id: string, status: string) => {
     try {

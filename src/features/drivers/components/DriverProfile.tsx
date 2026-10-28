@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Phone, Mail, Car, ShieldCheck,
   ExternalLink, User, Repeat, ChevronLeft, Loader2, FileText, Ban, Clock
@@ -43,6 +44,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   onToggleBan,
   banToggleLoading,
 }) => {
+  const navigate = useNavigate();
   const canAssignVehicle = (role === 'admin' || role === 'dispatcher') && Boolean(onAssignVehicleConfirm);
   const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'work' | 'docs'>('overview');
   const [preview, setPreview] = useState<string | null>(null);
@@ -60,10 +62,32 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   };
   const appStatus = String(selectedDriver?.applicationStatus || 'pending').toLowerCase();
 
-  // Use assigned vehicle if admin just assigned one, else fall back to driver data
+  const apiAssigned = selectedDriver?.assignedVehicle;
   const currentVehicle = assignedVehicle
-    ? { make: assignedVehicle.name, type: assignedVehicle.type, plate: assignedVehicle.plate }
-    : selectedDriver?.vehicle;
+    ? {
+        id: assignedVehicle.id,
+        make: assignedVehicle.name,
+        type: assignedVehicle.type,
+        plate: assignedVehicle.plate,
+        year: apiAssigned?.year,
+        vin: apiAssigned?.vin,
+        maxPassengers: apiAssigned?.maxPassengers,
+        configurationType: apiAssigned?.configurationType,
+      }
+    : apiAssigned
+      ? {
+          id: apiAssigned.id,
+          make: apiAssigned.make,
+          type: apiAssigned.type,
+          plate: apiAssigned.plate,
+          year: apiAssigned.year,
+          vin: apiAssigned.vin,
+          maxPassengers: apiAssigned.maxPassengers,
+          configurationType: apiAssigned.configurationType,
+        }
+      : selectedDriver?.vehicle
+        ? { make: selectedDriver.vehicle.make, type: selectedDriver.vehicle.type, plate: selectedDriver.vehicle.plate }
+        : null;
 
 
   const TABS = [
@@ -248,11 +272,45 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                       {currentVehicle.plate}
                     </span>
                   )}
-                  {assignedVehicle && (
+                  {(assignedVehicle || apiAssigned) && (
                     <p className="text-[10px] text-accent mt-1">✓ Assigned</p>
                   )}
                 </div>
               </div>
+
+              {currentVehicle && (currentVehicle.year || currentVehicle.vin || currentVehicle.maxPassengers) && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-4 pt-4 border-t border-line-2 text-sm">
+                  {currentVehicle.year != null && (
+                    <div>
+                      <p className="text-xs text-ink-4">Year</p>
+                      <p className="font-medium text-ink">{currentVehicle.year}</p>
+                    </div>
+                  )}
+                  {currentVehicle.maxPassengers != null && (
+                    <div>
+                      <p className="text-xs text-ink-4">Capacity</p>
+                      <p className="font-medium text-ink">{currentVehicle.maxPassengers} passengers</p>
+                    </div>
+                  )}
+                  {currentVehicle.vin && currentVehicle.vin !== '—' && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-ink-4">VIN</p>
+                      <p className="font-medium text-ink font-mono text-xs">{currentVehicle.vin}</p>
+                    </div>
+                  )}
+                  {currentVehicle.id && onViewFleet && (
+                    <div className="col-span-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/fleet/${currentVehicle.id}`)}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Open vehicle details
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {canAssignVehicle && (
                 <VehicleSearchPicker

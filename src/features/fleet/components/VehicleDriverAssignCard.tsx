@@ -2,14 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { User, Check } from 'lucide-react';
 import { Card, Button, EntitySearchSelect } from '@/shared/components/ui';
 import { useGetDriversQuery } from '@/redux/api/driversApi';
-import { useAssignVehicleDriverMutation } from '@/redux/api/vehiclesMangeApi';
+import {
+  useAssignVehicleDriverMutation,
+  useUpdateVehicleAssignMutation,
+} from '@/redux/api/vehiclesMangeApi';
 import { mapApiDriver } from '@/features/drivers/utils/helpers';
 import { driverToSelectItem } from '@/features/fleet/utils/entitySelectMappers';
+import { resolveVehicleAssignId, submitVehicleAssign } from '@/features/fleet/utils/submitVehicleAssign';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
 import toast from 'react-hot-toast';
 
 const resolveAssignedDriverId = (vehicle: Record<string, unknown> | undefined): string => {
   if (!vehicle) return '';
+  const driver = vehicle.driver;
+  if (driver && typeof driver === 'object' && driver !== null && '_id' in driver) {
+    return String((driver as { _id?: string })._id || '');
+  }
   const driverId = vehicle.driverId;
   if (driverId && typeof driverId === 'object' && driverId !== null && '_id' in driverId) {
     return String((driverId as { _id?: string })._id || '');
@@ -41,7 +49,9 @@ export const VehicleDriverAssignCard = ({
     { page: 1, limit: 200 },
     { refetchOnMountOrArgChange: true },
   );
-  const [assignVehicleDriver, { isLoading: assigning }] = useAssignVehicleDriverMutation();
+  const [assignVehicleDriver, { isLoading: creating }] = useAssignVehicleDriverMutation();
+  const [updateVehicleAssign, { isLoading: updating }] = useUpdateVehicleAssignMutation();
+  const assigning = creating || updating;
 
   const drivers = useMemo(
     () => (driversResponse?.data || []).map(mapApiDriver),
@@ -50,17 +60,36 @@ export const VehicleDriverAssignCard = ({
 
   const driverItems = useMemo(() => drivers.map(driverToSelectItem), [drivers]);
 
+  const assignmentId = useMemo(
+    () =>
+      resolveVehicleAssignId({
+        vehicleId,
+        currentDriverId: assignedFromApi || undefined,
+        drivers: driversResponse?.data,
+        vehicleRecord: vehicle,
+      }),
+    [vehicleId, assignedFromApi, driversResponse?.data, vehicle],
+  );
+
   const handleAssign = async () => {
     if (!selectedDriverId) {
       toast.error('Select a driver first');
       return;
     }
     try {
-      await assignVehicleDriver({
-        driverId: selectedDriverId,
-        vehicleId,
-      }).unwrap();
-      toast.success('Driver assigned to this vehicle');
+      const result = await submitVehicleAssign(
+        {
+          create: (body) => assignVehicleDriver(body).unwrap(),
+          update: (args) => updateVehicleAssign(args).unwrap(),
+        },
+        {
+          driverId: selectedDriverId,
+          vehicleId,
+          assignmentId,
+          patchDriverOnly: Boolean(assignmentId),
+        },
+      );
+      toast.success(result.message || 'Driver assigned to this vehicle');
       onAssigned?.();
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Failed to assign driver'));

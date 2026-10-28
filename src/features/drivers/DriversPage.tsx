@@ -97,6 +97,15 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const assignedVehicleForSelected = useMemo(() => {
     if (!selectedDriver?.id) return null;
     if (assignedVehicles[selectedDriver.id]) return assignedVehicles[selectedDriver.id];
+    const fromApi = selectedDriver.assignedVehicle;
+    if (fromApi?.id) {
+      return {
+        id: fromApi.id,
+        name: fromApi.name || fromApi.make,
+        type: fromApi.type,
+        plate: fromApi.plate,
+      };
+    }
     const match = fleetVehicles.find(
       (v) => String(v.assignedDriverId || v.driverId) === String(selectedDriver.id),
     );
@@ -107,7 +116,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
       type: match.type || 'Van',
       plate: match.plate || '—',
     };
-  }, [selectedDriver?.id, assignedVehicles, fleetVehicles]);
+  }, [selectedDriver?.id, selectedDriver?.assignedVehicle, assignedVehicles, fleetVehicles]);
 
   if (isLoading && drivers.length === 0) {
     return (
@@ -177,7 +186,9 @@ const Drivers = ({ role }: { role?: string | null }) => {
     if (!vehicle) return;
     setVehicleAssignLoading(true);
     try {
-      await handleAssign(vehicleId, selectedDriver.id);
+      await handleAssign(vehicleId, selectedDriver.id, {
+        assignmentId: selectedDriver.vehicleAssignId,
+      });
       setAssignedVehicles((prev) => ({ ...prev, [selectedDriver.id]: vehicle }));
       refetch();
     } catch (err) {

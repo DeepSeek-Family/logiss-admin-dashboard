@@ -2,6 +2,7 @@ import type { IDriverUser } from '@/redux/api/driversApi'
 import { formatShortDate } from '@/utils/helpers'
 import { isMongoId } from '@/features/bookings/utils/helpers'
 import { imageUrl, resolveMediaUrl } from '@/utils/imageUrl'
+import { vehicleFromDriverAssign } from '@/features/fleet/utils/vehicleHelpers'
 
 export const driverFullName = (driver?: Pick<IDriverUser, 'firstName' | 'middleName' | 'lastName'> | null): string => {
   if (!driver) return ''
@@ -90,6 +91,11 @@ export const mapApiDriver = (driver: IDriverUser) => {
   else if (onDuty) status = 'available'
   else if (appStatus === 'pending') status = 'off_duty'
 
+  const assignedVehicle = vehicleFromDriverAssign(driver)
+  const vehicle = assignedVehicle
+    ? { make: assignedVehicle.make, plate: assignedVehicle.plate, type: assignedVehicle.type }
+    : undefined
+
   return {
     ...base,
     onDuty,
@@ -98,7 +104,9 @@ export const mapApiDriver = (driver: IDriverUser) => {
     tripsToday: 0,
     rating: undefined as number | undefined,
     pendingDocUpdates: appStatus === 'pending' && !driver.isAdminVerifiedDriver ? 1 : 0,
-    vehicle: undefined as { make?: string; plate?: string; type?: string } | undefined,
+    assignedVehicle,
+    vehicle,
+    vehicleAssignId: driver.vehicleAssign?._id || undefined,
   }
 }
 
