@@ -14,4 +14,5 @@ export * from './SearchInput';
 export * from './ConfirmationModal';
 export * from './GoogleAddressInput';
 export * from './ExportFormatMenu';
+export * from './EntitySearchSelect';
 

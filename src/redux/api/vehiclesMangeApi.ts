@@ -15,6 +15,8 @@ export interface Vehicle {
   policyNumber: string;
   insuranceExpirationDate: string;
   isActive?: boolean;
+  driverId?: string | { _id?: string; firstName?: string; lastName?: string };
+  assignedDriverId?: string;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -94,7 +96,7 @@ const vehicleManageApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Vehicles'],
+      invalidatesTags: ['Vehicles', 'Drivers'],
     }),
   }),
   overrideExisting: false,

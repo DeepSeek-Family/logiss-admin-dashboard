@@ -134,7 +134,8 @@ export const useFleet = (params?: { searchTerm?: string; search?: string; [key: 
   }, [addNewVehicles, refetch]);
 
   const handleAssign = useCallback(async (vehicleId: string, driverId: string) => {
-    await assignVehicleDriver({ vehicleId, driverId }).unwrap();
+    const result = await assignVehicleDriver({ vehicleId, driverId }).unwrap();
+    toast.success(result.message || 'Driver assigned to vehicle');
     const { data: refetched } = await refetch();
     const raw = refetched?.data?.find((v: { _id?: string; id?: string }) => (v._id || v.id) === vehicleId);
     if (raw) {

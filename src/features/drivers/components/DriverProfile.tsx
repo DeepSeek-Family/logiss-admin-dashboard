@@ -8,6 +8,7 @@ import { Avatar, Badge, Button, Pagination } from '@/shared/components/ui';
 import { formatShortDate, formatTime, tripTypeLabel } from '@/utils/helpers';
 import { resolveMediaUrl } from '@/utils/imageUrl';
 import { TripRouteRow, TripRouteMapsLink, tripRouteMapsProps, TRIP_STATUS_VARIANT } from '@/features/riders/components/RouteTimeline';
+import { VehicleSearchPicker, type AssignableVehicle } from './VehicleSearchPicker';
 
 interface DriverProfileProps {
   selectedDriver: any;
@@ -20,9 +21,12 @@ interface DriverProfileProps {
   tripsTotalPages?: number;
   tripsPerPage?: number;
   onTripsPageChange?: (page: number) => void;
-  onAssignVehicle?: () => void;
   onViewFleet?: () => void;
   assignedVehicle?: { id: string; name: string; type: string; plate: string } | null;
+  assignableVehicles?: AssignableVehicle[];
+  fleetLoading?: boolean;
+  onAssignVehicleConfirm?: (vehicleId: string) => Promise<void>;
+  vehicleAssignLoading?: boolean;
   onToggleBan?: () => void;
   banToggleLoading?: boolean;
 }
@@ -30,8 +34,16 @@ interface DriverProfileProps {
 export const DriverProfile: React.FC<DriverProfileProps> = ({
   selectedDriver, setSelectedDriverId, role, trips,
   tripsLoading, tripsTotal, tripsPage = 1, tripsTotalPages = 1, tripsPerPage = 10, onTripsPageChange,
-  onAssignVehicle, onViewFleet, assignedVehicle, onToggleBan, banToggleLoading
+  onViewFleet,
+  assignedVehicle,
+  assignableVehicles = [],
+  fleetLoading,
+  onAssignVehicleConfirm,
+  vehicleAssignLoading,
+  onToggleBan,
+  banToggleLoading,
 }) => {
+  const canAssignVehicle = (role === 'admin' || role === 'dispatcher') && Boolean(onAssignVehicleConfirm);
   const [profileTab, setProfileTab] = useState<'overview' | 'trips' | 'work' | 'docs'>('overview');
   const [preview, setPreview] = useState<string | null>(null);
   const licenseImages: string[] =
@@ -151,12 +163,6 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                 {banToggleLoading ? 'Updating…' : selectedDriver?.isBanned ? 'Unban driver' : 'Ban driver'}
               </Button>
             )}
-            {/* {role === 'admin' && (
-              <Button variant="primary" className="h-9 text-sm"
-                onClick={onAssignVehicle}>
-                {assignedVehicle ? 'Reassign Vehicle' : 'Assign Vehicle'}
-              </Button>
-            )} */}
           </div>
         </div>
       </div>
@@ -217,12 +223,16 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
           {/* RIGHT — Vehicle + Counties (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
             {/* Vehicle card */}
-            <div className="bg-white border border-line-2 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white border border-line-2 rounded-2xl p-6 relative z-20 overflow-visible">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-ink">Current vehicle</h3>
-                {role === 'admin' && (
-                  <button onClick={onViewFleet} className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
-                    View vehicle <ExternalLink size={11} />
+                {onViewFleet && (
+                  <button
+                    type="button"
+                    onClick={onViewFleet}
+                    className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                  >
+                    Fleet <ExternalLink size={11} />
                   </button>
                 )}
               </div>
@@ -239,10 +249,20 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     </span>
                   )}
                   {assignedVehicle && (
-                    <p className="text-[10px] text-accent mt-1">✓ Just assigned</p>
+                    <p className="text-[10px] text-accent mt-1">✓ Assigned</p>
                   )}
                 </div>
               </div>
+
+              {canAssignVehicle && (
+                <VehicleSearchPicker
+                  vehicles={assignableVehicles}
+                  loading={fleetLoading}
+                  assignedVehicle={assignedVehicle}
+                  assigning={vehicleAssignLoading}
+                  onAssign={onAssignVehicleConfirm!}
+                />
+              )}
             </div>
 
             {/* Service counties */}

@@ -7,6 +7,7 @@ import {
 import { Card, Badge, Button, StatCard } from '@/shared/components/ui';
 import { useGetVehicleByIdQuery } from '@/redux/api/vehiclesMangeApi';
 import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { VehicleDriverAssignCard } from '@/features/fleet/components/VehicleDriverAssignCard';
 
 const formatDate = (iso?: string) => {
   if (!iso) return '—';
@@ -145,6 +146,12 @@ const FleetDetails = (_props: { role?: string | null }) => {
         </Card>
 
         <div className="space-y-6">
+          <VehicleDriverAssignCard
+            vehicleId={vehicle._id}
+            vehicle={vehicle as unknown as Record<string, unknown>}
+            onAssigned={() => refetch()}
+          />
+
           <Card className="p-6">
             <h4 className="type-th mb-4 flex items-center gap-2"><Shield size={14} className="text-primary" /> Insurance & Service</h4>
             <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || '—'} />
