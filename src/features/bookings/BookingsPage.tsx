@@ -155,7 +155,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const refresh = () => {
     void refetchPendingBookings();
     void refetchAssignedBookings();
-    void refetchDrivers();
+    // Drivers query is skipped on the pending tab — refetch throws if not started.
+    if (activeTab === 'confirmed') {
+      void refetchDrivers();
+    }
   };
 
   const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
