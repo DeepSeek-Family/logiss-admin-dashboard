@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
   X, TrendingUp, Calendar, Navigation, User, Truck, CreditCard, Shield,
-  MapPin, Phone, MessageSquare, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
+  MapPin, Phone, Car, XCircle, Lock, Pencil, Plus, Trash2, Link2, Camera
 } from 'lucide-react';
 import { Badge, Avatar, TripStatusBadge, Button, GoogleAddressInput, loadGoogleMapsScript } from '@/shared/components/ui';
 import { formatTime, formatDateTime, tripTypeLabel, money, formatTripId } from '../../../utils/helpers';
@@ -715,8 +715,19 @@ export const TripDetailsModal = ({ trip, drivers, onClose, onUpdate, startInEdit
                       <div className="flex items-center justify-between"><span className="text-xs text-ink-4">Driver Rating</span><span className="text-xs text-ink">★ {driver.rating}</span></div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" icon={Phone}>Call</Button>
-                      <Button variant="outline" size="sm" icon={MessageSquare}>Message</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Phone}
+                        disabled={!String(driver.phone || driver.contact || '').trim()}
+                        onClick={() => {
+                          const raw = String(driver.phone || driver.contact || '').trim();
+                          const tel = raw.replace(/[^\d+]/g, '');
+                          if (tel) window.open(`tel:${tel}`);
+                        }}
+                      >
+                        Call
+                      </Button>
                     </div>
                   </div>
                 ) : (
