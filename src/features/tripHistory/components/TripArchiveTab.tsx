@@ -319,6 +319,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Date</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[105px]">Pickup Time</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Appt</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Driver Arrived</th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">Driver Pickup</th>
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[70px] text-center">Seats</th>
@@ -379,6 +381,18 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                   <td className="px-3.5 py-3 whitespace-nowrap min-w-[95px]">
                     <span className="text-xs font-medium text-ink whitespace-nowrap">
                       {displayTime(trip?.appointmentTime)}
+                    </span>
+                  </td>
+
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
+                    <span className="text-xs font-medium text-ink whitespace-nowrap">
+                      {displayTime(trip?.driverArrivedAt)}
+                    </span>
+                  </td>
+
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
+                    <span className="text-xs font-medium text-ink whitespace-nowrap">
+                      {displayTime(trip?.driverPicupAt)}
                     </span>
                   </td>
 

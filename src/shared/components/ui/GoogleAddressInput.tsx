@@ -4,9 +4,11 @@ const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS || '';
 
 let googleMapsScriptPromise: Promise<void> | null = null;
 
+const mapsApiReady = () => Boolean((window as any).google?.maps?.Map || (window as any).google?.maps?.places);
+
 export const loadGoogleMapsScript = (): Promise<void> => {
   if (typeof window === 'undefined') return Promise.resolve();
-  if ((window as any).google?.maps?.places) return Promise.resolve();
+  if (mapsApiReady()) return Promise.resolve();
   if (googleMapsScriptPromise) return googleMapsScriptPromise;
 
   googleMapsScriptPromise = new Promise((resolve, reject) => {
@@ -15,18 +17,45 @@ export const loadGoogleMapsScript = (): Promise<void> => {
       resolve();
       return;
     }
-    const existingScript = document.getElementById('google-maps-script');
+
+    const ready = () => {
+      if (mapsApiReady()) {
+        resolve();
+        return;
+      }
+      const started = Date.now();
+      const tick = () => {
+        if (mapsApiReady()) {
+          resolve();
+          return;
+        }
+        if (Date.now() - started > 8000) {
+          reject(new Error('Google Maps failed to initialize'));
+          return;
+        }
+        window.setTimeout(tick, 50);
+      };
+      tick();
+    };
+
+    const existingScript = document.getElementById('google-maps-script') as HTMLScriptElement | null;
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve());
+      if (mapsApiReady()) {
+        resolve();
+        return;
+      }
+      existingScript.addEventListener('load', ready);
       existingScript.addEventListener('error', (e) => reject(e));
+      ready();
       return;
     }
+
     const script = document.createElement('script');
     script.id = 'google-maps-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&libraries=places`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = ready;
     script.onerror = (err) => reject(err);
     document.head.appendChild(script);
   });

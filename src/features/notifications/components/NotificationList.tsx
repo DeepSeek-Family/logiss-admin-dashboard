@@ -1,16 +1,47 @@
-import { Bell, Trash2, CheckCheck, CheckCircle2, MapPin, Truck, Shield } from 'lucide-react';
+import { Bell, CheckCircle2, MapPin, Truck, Shield } from 'lucide-react';
 import { Card } from '@/shared/components/ui';
 import { timeAgo } from '@/utils/helpers';
 
 interface NotificationListProps {
   filtered: any[];
-  onMarkRead: (id: string | number) => void;
-  onDelete: (id: string | number) => void;
 }
 
 const urgentTypes = ['critical', 'warning'];
 
-export const NotificationList = ({ filtered, onMarkRead, onDelete }: NotificationListProps) => {
+const isGenericNotificationLabel = (value?: string) => {
+  const text = (value || '').trim();
+  return !text || /^notification$/i.test(text);
+};
+
+/** Top row = one uppercase badge; body = message (no duplicate "Notification" headline). */
+const notificationDisplay = (notif: { title?: string; category?: string; message?: string }) => {
+  const message = (notif.message || '').trim();
+  const title = (notif.title || '').trim();
+  const category = (notif.category || '').trim();
+
+  const badge =
+    !isGenericNotificationLabel(category)
+      ? category
+      : !isGenericNotificationLabel(title)
+        ? title
+        : 'Notification';
+
+  const body =
+    message ||
+    (!isGenericNotificationLabel(title) ? title : '') ||
+    (!isGenericNotificationLabel(category) ? category : '');
+
+  const headline =
+    message &&
+    !isGenericNotificationLabel(title) &&
+    title.toLowerCase() !== message.toLowerCase()
+      ? title
+      : null;
+
+  return { badge, headline, body };
+};
+
+export const NotificationList = ({ filtered }: NotificationListProps) => {
   if (filtered.length === 0) {
     const alertHints = [
       { icon: Truck, label: 'Fleet updates' },
@@ -67,17 +98,19 @@ export const NotificationList = ({ filtered, onMarkRead, onDelete }: Notificatio
   const today = filtered.filter(n => new Date(n.time).getTime() >= todayStart);
   const earlier = filtered.filter(n => new Date(n.time).getTime() < todayStart);
 
-  const renderItem = (notif: any) => (
+  const renderItem = (notif: any) => {
+    const { badge, headline, body } = notificationDisplay(notif);
+
+    return (
     <div
       key={notif.id}
-      className={`group flex gap-4 px-5 py-4 rounded-2xl border transition-all cursor-pointer ${
+      className={`flex gap-4 px-5 py-4 rounded-2xl border transition-colors ${
         notif.read
-          ? 'border-line-2/60 bg-white hover:bg-bg'
+          ? 'border-line-2/60 bg-white'
           : urgentTypes.includes(notif.type)
-            ? 'border-urgent/20 bg-urgent/[0.03] hover:bg-urgent/[0.06]'
-            : 'border-primary/10 bg-primary/[0.03] hover:bg-primary/[0.05]'
+            ? 'border-urgent/20 bg-urgent/[0.03]'
+            : 'border-primary/10 bg-primary/[0.03]'
       }`}
-      onClick={() => onMarkRead(notif.id)}
     >
       {/* Icon */}
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${notif.bg}`}>
@@ -94,48 +127,40 @@ export const NotificationList = ({ filtered, onMarkRead, onDelete }: Notificatio
               }`} />
             )}
             <span className={`text-xs font-bold uppercase tracking-wide ${notif.color}`}>
-              {notif.category}
+              {badge}
             </span>
           </div>
           <span className="text-xs text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
         </div>
 
-        <p className={`text-sm leading-snug ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`}>
-          {notif.title}
-        </p>
-        <p className="text-xs text-ink-4 leading-relaxed mt-1 line-clamp-2">{notif.message}</p>
+        {headline && (
+          <p className={`text-sm leading-snug ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`}>
+            {headline}
+          </p>
+        )}
+        {body && (
+          <p
+            className={`leading-snug line-clamp-3 ${
+              headline
+                ? 'text-xs text-ink-4 mt-1'
+                : `text-sm ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`
+            }`}
+          >
+            {body}
+          </p>
+        )}
 
-        {(notif.action || !notif.read) && (
+        {notif.action && (
           <div className="flex items-center gap-3 mt-2">
-            {notif.action && (
-              <button
-                className={`text-xs font-semibold flex items-center gap-1 ${notif.color} hover:opacity-70 transition-opacity`}
-                onClick={e => e.stopPropagation()}
-              >
-                {notif.action} →
-              </button>
-            )}
-            {!notif.read && (
-              <button
-                className="text-xs text-ink-4 hover:text-ink flex items-center gap-1 transition-colors"
-                onClick={e => { e.stopPropagation(); onMarkRead(notif.id); }}
-              >
-                <CheckCheck size={12} /> Mark read
-              </button>
-            )}
+            <span className={`text-xs font-semibold flex items-center gap-1 ${notif.color}`}>
+              {notif.action} →
+            </span>
           </div>
         )}
       </div>
-
-      {/* Delete */}
-      <button
-        className="text-ink-4 hover:text-urgent transition-colors opacity-0 group-hover:opacity-100 shrink-0 p-1 mt-0.5"
-        onClick={e => { e.stopPropagation(); onDelete(notif.id); }}
-      >
-        <Trash2 size={13} />
-      </button>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">

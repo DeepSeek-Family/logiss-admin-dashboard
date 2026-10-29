@@ -81,6 +81,14 @@ export const mapDriverBase = (driver: IDriverUser) => {
   }
 }
 
+export const isDriverOnDuty = (
+  driver?: { isOnDuty?: boolean; onDuty?: boolean } | null,
+): boolean => Boolean(driver?.isOnDuty ?? driver?.onDuty)
+
+export const driverDutyStatusLabel = (
+  driver?: { isOnDuty?: boolean; onDuty?: boolean } | null,
+): string => (isDriverOnDuty(driver) ? 'Ready for duty' : 'Off duty')
+
 export const mapApiDriver = (driver: IDriverUser) => {
   const base = mapDriverBase(driver)
   const appStatus = String(driver.applicationStatus || '').toLowerCase()

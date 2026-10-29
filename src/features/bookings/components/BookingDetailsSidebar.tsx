@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  XCircle, Navigation, Users, Edit2, Search, MapPin 
+  XCircle, Navigation, Users, Edit2, Search, MapPin, Loader2
 } from 'lucide-react';
 import { Avatar, Badge, Button, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
 import { tripTypeLabel, formatTime, formatShortDate, formatTripId } from '@/utils/helpers';
+import { driverDutyStatusLabel, isDriverOnDuty } from '@/features/drivers/utils/helpers';
 import { isRoundTrip, resolveMediaUrl, parseLatLng, extractBookingStopsCoords } from '../utils/helpers';
 import { createDirectionalRoutePolyline, getDrivingRoutePath } from '@/utils/googleDrivingRoute';
 
@@ -91,13 +92,20 @@ const SidebarBookingGoogleMap: React.FC<{ booking: any }> = ({ booking }) => {
 
         if (path.length > 1) {
           const waypointPath = [...path];
+          let routeLine = createDirectionalRoutePolyline(google, map, waypointPath, '#2969CD');
           void getDrivingRoutePath(google, waypointPath).then((routePath) => {
             if (!active || drawGen !== routeDrawGenRef.current) return;
-            createDirectionalRoutePolyline(google, map, routePath, '#2969CD');
+            if (routePath.length > waypointPath.length) {
+              routeLine?.setMap(null);
+              routeLine = createDirectionalRoutePolyline(google, map, routePath, '#2969CD');
+              const routeBounds = new google.maps.LatLngBounds();
+              routePath.forEach((pt) => routeBounds.extend(pt));
+              map.fitBounds(routeBounds, { top: 25, bottom: 25, left: 25, right: 25 });
+              return;
+            }
+            map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
           });
-        }
-
-        if (path.length > 0) {
+        } else if (path.length > 0) {
           map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
         }
       })
@@ -123,6 +131,7 @@ interface BookingDetailsSidebarProps {
   handleDispatch: () => void;
   driverSearch: string;
   setDriverSearch: (val: string) => void;
+  driversSearching?: boolean;
   /** Open the full edit modal to change ride details before completion. */
   onEditDetails?: (id: string) => void;
 }
@@ -139,6 +148,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
   handleDispatch,
   driverSearch,
   setDriverSearch,
+  driversSearching,
   onEditDetails,
 }) => {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -292,26 +302,33 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                 <div className="border border-accent/20 bg-accent-light/10 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar initials={assignedDriver.initials} size="sm" online={assignedDriver.onDuty} />
+                      <Avatar initials={assignedDriver.initials} size="sm" online={isDriverOnDuty(assignedDriver)} />
                       <div>
                         <p className="text-sm font-semibold text-ink">{assignedDriver.name}</p>
-                        <p className="text-xs text-ink-4">{assignedDriver.phone}</p>
+                        <p className={`text-xs font-medium ${isDriverOnDuty(assignedDriver) ? 'text-accent' : 'text-ink-4'}`}>
+                          {driverDutyStatusLabel(assignedDriver)}
+                        </p>
+                        {assignedDriver.phone ? (
+                          <p className="text-xs text-ink-4">{assignedDriver.phone}</p>
+                        ) : null}
                       </div>
                     </div>
                     <button onClick={() => setIsAssigning(true)} className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
                       <Edit2 size={10} /> Change
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-line-2">
-                    <div>
-                      <p className="text-xs text-ink-4 mb-0.5">Vehicle</p>
-                      <p className="text-xs font-medium text-ink">{assignedDriver.vehicle.type}</p>
+                  {(assignedDriver.vehicle?.type || assignedDriver.vehicle?.plate) && (
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-line-2">
+                      <div>
+                        <p className="text-xs text-ink-4 mb-0.5">Vehicle</p>
+                        <p className="text-xs font-medium text-ink">{assignedDriver.vehicle?.type || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-ink-4 mb-0.5">Plate</p>
+                        <p className="text-xs text-ink">{assignedDriver.vehicle?.plate || '—'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-ink-4 mb-0.5">Plate</p>
-                      <p className="text-xs text-ink">{assignedDriver.vehicle.plate}</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ) : !isAssigning ? (
                 <div
@@ -340,11 +357,14 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                     <input
                       type="text"
                       autoFocus
-                      placeholder="Search any driver by name or ID..."
+                      placeholder="Search any driver by name..."
                       value={driverSearch}
                       onChange={(e) => setDriverSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium text-ink placeholder:text-ink-4 focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+                      className="w-full pl-8 pr-8 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium text-ink placeholder:text-ink-4 focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
                     />
+                    {driversSearching ? (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" size={13} />
+                    ) : null}
                   </div>
                   <div className="space-y-2 pr-1 max-h-72 overflow-y-auto custom-scrollbar">
                     {smartDrivers.length > 0 ? smartDrivers.map((driver: any) => (
@@ -353,12 +373,11 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                         className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${driver.hasConflict ? 'border-line-2 opacity-60 bg-bg/50' : 'border-line-2 bg-white hover:border-primary/30 hover:bg-primary-tint/10'}`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Avatar initials={driver.initials} size="sm" online={driver.onDuty} />
+                          <Avatar initials={driver.initials} size="sm" online={isDriverOnDuty(driver)} />
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-ink whitespace-nowrap">{driver.name}</p>
-                            <p className="text-xs text-ink-4 mt-0.5 whitespace-nowrap">
-                              {driver.vehicle.type} · {driver.rating} ★ ·{' '}
-                              <span className={driver.onDuty ? 'text-accent' : 'text-ink-4'}>{driver.onDuty ? 'On duty' : 'Off duty'}</span>
+                            <p className={`text-xs mt-0.5 font-medium whitespace-nowrap ${isDriverOnDuty(driver) ? 'text-accent' : 'text-ink-4'}`}>
+                              {driverDutyStatusLabel(driver)}
                             </p>
                           </div>
                         </div>
@@ -366,7 +385,12 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                           {driver.hasConflict ? 'Busy' : 'Assign'}
                         </Button>
                       </div>
-                    )) : (
+                    )) : driversSearching ? (
+                      <div className="py-6 flex flex-col items-center justify-center text-ink-4 border border-dashed border-line-2 rounded-xl">
+                        <Loader2 size={20} className="animate-spin text-primary mb-2" />
+                        <p className="text-xs font-medium">Searching drivers…</p>
+                      </div>
+                    ) : (
                       <div className="py-6 flex flex-col items-center justify-center text-ink-4 border border-dashed border-line-2 rounded-xl">
                         <Search size={24} className="opacity-20 mb-2" />
                         <p className="text-xs font-medium">No drivers found</p>
