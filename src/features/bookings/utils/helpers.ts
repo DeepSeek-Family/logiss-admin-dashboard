@@ -436,6 +436,8 @@ export const mapApiBooking = (b: IBooking) => {
     pickupTime,
     requestedPickup: pickupTime,
     appointmentTime,
+    driverArrivedAt: b.driverArrivedAt || '',
+    driverPicupAt: b.driverPicupAt || '',
     returnTime,
     returnPickup: returnTime,
     driverId: driverObj?._id || driverObj?.id || (typeof b.driverId === 'string' ? b.driverId : undefined),

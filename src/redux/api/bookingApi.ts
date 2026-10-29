@@ -97,6 +97,8 @@ export interface IBooking {
   noShowOutcome?: string
   createdAt?: string
   updatedAt?: string
+  driverArrivedAt?: string
+  driverPicupAt?: string
   __v?: number
 }
 
