@@ -212,6 +212,8 @@ export interface IGetBookingsQueryParams {
   status?: string
   bookingStatus?: string
   serviceDate?: string
+  startDate?: string
+  endDate?: string
   driverId?: string
   payerId?: string
   sort?: string
@@ -239,14 +241,16 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
 
     if (params.payerId && params.payerId !== 'all') {
       queryParams.payerId = params.payerId
-    } else {
-      const payerVal = params.payerSource || params.payers
-      if (payerVal && payerVal !== 'all') {
-        queryParams.payerSource = payerVal
-      }
+    }
+
+    const payerVal = params.payerSource || params.payers
+    if (payerVal && payerVal !== 'all') {
+      queryParams.payerSource = payerVal
     }
 
     if (params.serviceDate) queryParams.serviceDate = params.serviceDate
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
     if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
     if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
     if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
@@ -326,7 +330,7 @@ export const bookingApi = baseApi.injectEndpoints({
     exportTripHistory: builder.mutation<null, IExportTripHistoryArgs>({
       queryFn: async ({ type, ...filters }, _api, _extraOptions, baseQuery) =>
         requestFileExport(baseQuery as unknown as (args: Record<string, unknown>) => unknown, {
-          url: '/booking/history/excel',
+          url: '/booking/history/export',
           params: buildQueryParams(filters),
           type,
           fallbackFileName: FILE_EXPORT_FALLBACK_NAMES.tripHistory[type],

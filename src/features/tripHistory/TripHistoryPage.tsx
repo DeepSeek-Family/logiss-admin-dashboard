@@ -24,11 +24,16 @@ import {
   type DriverAssignmentFilter,
 } from '@/features/bookings/utils/helpers';
 
-import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap, ServiceDateFilter } from '@/features/tripHistory';
+import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap, ServiceDateFilter, TripHistoryRangeFilters } from '@/features/tripHistory';
 import { env } from '@/config/env';
 
 const formatYmd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const DATE_RANGE_ERROR = 'End date must be on or after start date';
+
+const isInvalidDateRange = (startDate: string, endDate: string) =>
+  Boolean(startDate && endDate && endDate < startDate);
 
 const TripHistory = ({ role }: { role?: string | null }) => {
   const [searchParams] = useSearchParams();
@@ -56,12 +61,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [payerFilter, setPayerFilter] = useState('all');
   const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
   const [serviceDate, setServiceDate] = useState('');
+  const [historyStartDate, setHistoryStartDate] = useState('');
+  const [historyEndDate, setHistoryEndDate] = useState('');
+  const [historyPayerId, setHistoryPayerId] = useState('');
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItemsPerPage, setHistoryItemsPerPage] = useState(10);
 
+  const dateRangeError = isInvalidDateRange(historyStartDate, historyEndDate) ? DATE_RANGE_ERROR : null;
+
   useEffect(() => {
     setHistoryPage(1);
-  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter]);
+  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyStartDate, historyEndDate, historyPayerId]);
 
   const historyQueryParams = useMemo(() => {
     const params: IGetBookingsQueryParams = {
@@ -73,12 +83,16 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     if (serviceDate) params.serviceDate = serviceDate;
     if (driverFilter !== 'all') params.driverId = driverFilter;
     if (payerFilter !== 'all') params.payerSource = payerFilter;
+    if (historyStartDate) params.startDate = historyStartDate;
+    if (historyEndDate) params.endDate = historyEndDate;
+    if (historyPayerId) params.payerId = historyPayerId;
     const unassign = assignFilterToUnassignQuery(assignFilter);
     if (unassign !== undefined) params.unassign = unassign;
     return params;
-  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyPage, historyItemsPerPage]);
+  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyStartDate, historyEndDate, historyPayerId, historyPage, historyItemsPerPage]);
 
   const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
+    skip: Boolean(dateRangeError),
     refetchOnMountOrArgChange: true,
   });
   const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(scheduleQueryParams, {
@@ -96,6 +110,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [exportingType, setExportingType] = useState<FileExportType | null>(null);
 
   const handleExport = async (type: FileExportType) => {
+    if (dateRangeError) {
+      toast.error(dateRangeError);
+      return;
+    }
     setExportingType(type);
     try {
       await exportTripHistory({ ...historyQueryParams, type }).unwrap();
@@ -325,6 +343,16 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
         {activeTab === 'trips' && (
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <TripHistoryRangeFilters
+              startDate={historyStartDate}
+              endDate={historyEndDate}
+              payerId={historyPayerId}
+              onStartDateChange={setHistoryStartDate}
+              onEndDateChange={setHistoryEndDate}
+              onPayerIdChange={setHistoryPayerId}
+              dateRangeError={dateRangeError}
+            />
+
             {/* Date moves up here only when the map is shown (filter bar gets narrow) */}
             {showMap && <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />}
 
