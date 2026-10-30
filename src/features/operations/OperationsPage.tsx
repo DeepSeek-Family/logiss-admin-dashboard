@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Truck, Users, BarChart3, AlertTriangle, Loader2 } from "lucide-react";
+import { StatCard } from "@/shared/components/ui";
+import { useTrips } from "@/hooks/useTrips";
 import {
-  Truck, Users, BarChart3, AlertTriangle,
-  Clock, CalendarDays, FileWarning, Loader2
-} from 'lucide-react';
-import { StatCard } from '@/shared/components/ui';
-import { useTrips } from '@/hooks/useTrips';
-import { useDrivers } from '@/hooks/useDrivers';
-import { useGetAllReportsQuery } from '@/redux/apivtwo/dashboardOnvording';
+  useGetAllReportsQuery,
+  useGetRecentPendingBookingsQuery,
+} from "@/redux/apivtwo/dashboardOnvording";
+import { useGetAllActiveDriversQuery } from "@/redux/api/driversApi";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { ROUTES } from "@/constants/routes";
 
-import {
-  ActiveTripsTable,
-  PendingBookingsPanel,
-  OpenReportsPanel
-} from '@/features/operations';
+import { ActiveTripsTable, PendingBookingsPanel, OpenReportsPanel } from "@/features/operations";
+
+const canViewDashboardWidgets = (role?: string | null) =>
+  !role || role === "admin" || role === "dispatcher";
 
 const Operations = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
@@ -21,24 +22,42 @@ const Operations = ({ role }: { role?: string | null }) => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { trips, loading: tripsLoading } = useTrips();
-  const { drivers, loading: driversLoading } = useDrivers();
   const { data: reportsData, isLoading: reportsLoading } = useGetAllReportsQuery({
     page: 1,
     limit: 100,
   });
-  const reports = reportsData?.data ?? [];
-
-  const loading = tripsLoading || reportsLoading || driversLoading;
-  const showInitialLoader = loading && !(trips?.length || drivers?.length || reports?.length);
-
-  // All trips relevant to today
-  const activeTrips = (trips || []).filter((t: any) =>
-    ['in_trip', 'assigned', 'pending_review', 'en_route', 'arrived'].includes(t?.status)
+  const {
+    data: activeDriversRes,
+    isLoading: activeDriversLoading,
+    isError: activeDriversError,
+    error: activeDriversErr,
+    refetch: refetchActiveDrivers,
+  } = useGetAllActiveDriversQuery(
+    { page: currentPage, limit: itemsPerPage, sort: "-createdAt" },
+    { skip: !canViewDashboardWidgets(role), refetchOnMountOrArgChange: true },
   );
-  const pendingTrips = (trips || []).filter((t: any) => t?.status === 'pending_review');
+  const {
+    data: pendingBookingsRes,
+    isLoading: pendingBookingsLoading,
+    isError: pendingBookingsError,
+    error: pendingBookingsErr,
+    refetch: refetchPendingBookings,
+  } = useGetRecentPendingBookingsQuery(undefined, {
+    skip: !canViewDashboardWidgets(role),
+    refetchOnMountOrArgChange: true,
+  });
+  const reports = reportsData?.data ?? [];
+  const activeDuties = activeDriversRes?.data ?? [];
+  const onDutyTotal = activeDriversRes?.pagination?.total ?? 0;
+  const recentPendingBookings = pendingBookingsRes?.data ?? [];
+
+  const loading = tripsLoading || reportsLoading || activeDriversLoading;
+  const showInitialLoader = loading && !(trips?.length || activeDuties.length || reports?.length);
+
+  const pendingTrips = (trips || []).filter((t: any) => t?.status === "pending_review");
   const openReports = (reports || []).filter((r) => {
-    const s = String(r?.reportStatus || '').toLowerCase();
-    return s === 'open' || s === 'pending' || s === 'reviewing';
+    const s = String(r?.reportStatus || "").toLowerCase();
+    return s === "open" || s === "pending" || s === "reviewing";
   });
 
   const todayKey = new Date().toISOString().slice(0, 10);
@@ -46,16 +65,11 @@ const Operations = ({ role }: { role?: string | null }) => {
     const d = t?.serviceDate || t?.scheduledTime;
     return d && String(d).slice(0, 10) === todayKey;
   }).length;
-  const onDuty = (drivers || []).filter((d: any) => d?.onDuty || d?.isOnDuty).length;
   const completedToday = (trips || []).filter((t: any) => {
     const d = t?.serviceDate || t?.scheduledTime;
-    return t?.status === 'completed' && d && String(d).slice(0, 10) === todayKey;
+    return t?.status === "completed" && d && String(d).slice(0, 10) === todayKey;
   }).length;
-  const completionRate =
-    tripsToday > 0 ? Math.round((completedToday / tripsToday) * 100) : 0;
-
-  const totalPages = Math.ceil(activeTrips.length / itemsPerPage);
-  const paginatedActiveTrips = activeTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const completionRate = tripsToday > 0 ? Math.round((completedToday / tripsToday) * 100) : 0;
 
   if (showInitialLoader) {
     return (
@@ -75,63 +89,74 @@ const Operations = ({ role }: { role?: string | null }) => {
           <h1 className="type-page-title">Fleet Operations</h1>
           <p className="text-sm text-ink-3 font-medium mt-1 tracking-normal flex items-center gap-2">
             Managing {trips.length} active and scheduled assignments
-            {loading ? <Loader2 size={14} className="animate-spin text-primary" aria-label="Refreshing" /> : null}
+            {loading ? (
+              <Loader2 size={14} className="animate-spin text-primary" aria-label="Refreshing" />
+            ) : null}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Trips Today" value={tripsToday} sub={`${pendingTrips.length} pending`} icon={Truck} accent="primary" />
-        <StatCard label="On Duty Now" value={`${onDuty}/${drivers.length}`} sub="Active fleet" icon={Users} accent="accent" />
-        <StatCard label="Completed Today" value={`${completionRate}%`} sub={`${completedToday} of ${tripsToday || '—'} trips`} icon={BarChart3} accent="accent" />
-        <StatCard label="Action Required" value={pendingTrips.length + openReports.length} sub="Needs attention" icon={AlertTriangle} accent="warning" />
+        <StatCard
+          label="Trips Today"
+          value={tripsToday}
+          sub={`${pendingTrips.length} pending`}
+          icon={Truck}
+          accent="primary"
+        />
+        <StatCard
+          label="On Duty Now"
+          value={onDutyTotal}
+          sub="Active fleet"
+          icon={Users}
+          accent="accent"
+        />
+        <StatCard
+          label="Completed Today"
+          value={`${completionRate}%`}
+          sub={`${completedToday} of ${tripsToday || "—"} trips`}
+          icon={BarChart3}
+          accent="accent"
+        />
+        <StatCard
+          label="Action Required"
+          value={pendingTrips.length + openReports.length}
+          sub="Needs attention"
+          icon={AlertTriangle}
+          accent="warning"
+        />
       </div>
-
-      {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <button onClick={() => navigate('/bookings')} className="flex items-center gap-3 bg-warning-light/60 hover:bg-warning-light border border-warning/20 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
-          <div className="w-9 h-9 bg-warning/20 rounded-lg flex items-center justify-center flex-shrink-0"><Clock size={18} className="text-warning-dark" /></div>
-          <div><p className="text-xs font-medium text-ink">Review Bookings</p><p className="text-xs font-medium text-warning-dark">{pendingTrips.length} awaiting</p></div>
-        </button>
-
-        <button onClick={() => navigate('/live')} className="flex items-center gap-3 bg-accent-light/40 hover:bg-accent-light/70 border border-accent/20 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
-          <div className="w-9 h-9 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-accent pulse-dot" /></div>
-          <div><p className="text-xs font-medium text-ink">Live Map</p><p className="text-xs font-medium text-accent">Real-time tracking</p></div>
-        </button>
-
-        <button onClick={() => navigate('/schedule')} className="flex items-center gap-3 bg-primary-tint/40 hover:bg-primary-tint/70 border border-primary/10 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0"><CalendarDays size={18} className="text-primary" /></div>
-          <div><p className="text-xs font-medium text-ink">Scheduled</p><p className="text-xs font-medium text-primary">Plan the day</p></div>
-        </button>
-
-        <button onClick={() => navigate('/reports')} className="flex items-center gap-3 bg-urgent-light/40 hover:bg-urgent-light/70 border border-urgent/20 rounded-xl px-4 py-3 transition-all hover:translate-y-[-2px] text-left">
-          <div className="w-9 h-9 bg-urgent/10 rounded-lg flex items-center justify-center flex-shrink-0"><FileWarning size={18} className="text-urgent" /></div>
-          <div><p className="text-xs font-medium text-ink">Open Reports</p><p className="text-xs font-medium text-urgent">{openReports.length} reports</p></div>
-        </button>
-      </div> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ActiveTripsTable
-            paginatedActiveTrips={paginatedActiveTrips}
-            activeTripsCount={activeTrips.length}
+            duties={activeDuties}
+            pagination={activeDriversRes?.pagination}
             currentPage={currentPage}
-            totalPages={totalPages}
             itemsPerPage={itemsPerPage}
+            isLoading={activeDriversLoading}
+            isError={activeDriversError}
+            errorMessage={apiErrorMessage(activeDriversErr, "Failed to load on-duty drivers")}
+            onRetry={refetchActiveDrivers}
             onPageChange={setCurrentPage}
-            onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
-            onRowClick={() => navigate('/live')}
+            onItemsPerPageChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(1);
+            }}
           />
         </div>
 
         <div className="space-y-4">
           <PendingBookingsPanel
-            pendingTrips={pendingTrips}
-            onReviewClick={() => navigate('/bookings')}
+            bookings={recentPendingBookings}
+            isLoading={pendingBookingsLoading}
+            isError={pendingBookingsError}
+            errorMessage={apiErrorMessage(pendingBookingsErr, "Failed to load pending bookings")}
+            onRetry={refetchPendingBookings}
+            onReviewClick={() => navigate(`${ROUTES.bookings}?tab=pending`)}
+            onRowClick={() => navigate(`${ROUTES.bookings}?tab=pending`)}
           />
-          <OpenReportsPanel
-            openReports={openReports}
-            onReviewClick={() => navigate('/reports')}
-          />
+          <OpenReportsPanel openReports={openReports} onReviewClick={() => navigate("/reports")} />
         </div>
       </div>
     </div>

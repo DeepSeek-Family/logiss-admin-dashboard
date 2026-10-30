@@ -1,5 +1,5 @@
-import { AlertTriangle } from 'lucide-react';
-import { Button } from './Button';
+import { AlertTriangle } from "lucide-react";
+import { Button } from "./Button";
 
 interface QueryFeedbackProps {
   title?: string;
@@ -8,7 +8,7 @@ interface QueryFeedbackProps {
 }
 
 export const QueryFeedback = ({
-  title = 'Something went wrong',
+  title = "Something went wrong",
   message,
   onRetry,
 }: QueryFeedbackProps) => (

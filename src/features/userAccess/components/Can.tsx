@@ -1,5 +1,5 @@
-import React from 'react';
-import { can } from '../permissions';
+import React from "react";
+import { can } from "../permissions";
 
 interface CanProps {
   /** Current session role (admin | dispatcher | facility). */
@@ -22,5 +22,4 @@ export const Can = ({ role, perm, fallback = null, children }: CanProps) => (
 );
 
 /** Hook form for imperative checks inside handlers/conditionals. */
-export const useCan = (role: string | null | undefined) =>
-  (perm: string) => can(role, perm);
+export const useCan = (role: string | null | undefined) => (perm: string) => can(role, perm);

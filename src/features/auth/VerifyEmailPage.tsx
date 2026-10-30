@@ -9,9 +9,7 @@ const VerifyEmailPage = () => {
 
   const queryEmail = searchParams.get("email");
   const storedEmail =
-    typeof sessionStorage !== "undefined"
-      ? sessionStorage.getItem("recovery_email")
-      : null;
+    typeof sessionStorage !== "undefined" ? sessionStorage.getItem("recovery_email") : null;
   const email = queryEmail || storedEmail || "";
 
   const handleSuccess = () => {

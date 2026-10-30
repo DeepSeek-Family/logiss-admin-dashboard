@@ -1,6 +1,6 @@
-import { Search, ChevronRight, ChevronDown, UserCheck, UserX, Ban } from 'lucide-react';
-import { Card, Avatar, Badge, Pagination, SearchInput } from '@/shared/components/ui';
-import { displayDob, calculateAge } from '@/features/riders/utils/helpers';
+import { Search, ChevronRight, ChevronDown, UserCheck, UserX, Ban } from "lucide-react";
+import { Card, Avatar, Badge, Pagination, SearchInput } from "@/shared/components/ui";
+import { displayDob, calculateAge } from "@/features/riders/utils/helpers";
 
 interface RidersTableProps {
   search: string;
@@ -31,7 +31,7 @@ export const RidersTable = ({
   onRiderClick,
   updateRiderStatus,
   openStatusId,
-  setOpenStatusId
+  setOpenStatusId,
 }: RidersTableProps) => {
   return (
     <Card className="overflow-hidden">
@@ -52,7 +52,16 @@ export const RidersTable = ({
         <table className="w-full text-left">
           <thead className="bg-bg/10 border-b border-line-2/50">
             <tr>
-              {['Rider', 'IDs', 'County / Payer', 'Status', 'Date of Birth', 'Contact', 'Trips', ''].map(h => (
+              {[
+                "Rider",
+                "IDs",
+                "County / Payer",
+                "Status",
+                "Date of Birth",
+                "Contact",
+                "Trips",
+                "",
+              ].map((h) => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>
@@ -60,13 +69,19 @@ export const RidersTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-line-2/50">
-            {paginatedRiders.map(rider => (
-              <tr key={rider.id} className="hover:bg-bg/30 transition-colors group cursor-pointer" onClick={() => onRiderClick(rider.id)}>
+            {paginatedRiders.map((rider) => (
+              <tr
+                key={rider.id}
+                className="hover:bg-bg/30 transition-colors group cursor-pointer"
+                onClick={() => onRiderClick(rider.id)}
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0 w-10 h-10">
                       <Avatar initials={rider.initials} src={rider.image} size="md" />
-                      {rider.status === 'active' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>}
+                      {rider.status === "active" && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white"></span>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink truncate">{rider.name}</p>
@@ -80,7 +95,8 @@ export const RidersTable = ({
                       <span className="text-ink-4 mr-0.5">ID:</span> {rider.passengerId || rider.id}
                     </span>
                     <span className="text-xs text-primary">
-                      <span className="text-primary-dark/60 mr-0.5">AUTH:</span> {rider.authorizationId || rider.authId || '---'}
+                      <span className="text-primary-dark/60 mr-0.5">AUTH:</span>{" "}
+                      {rider.authorizationId || rider.authId || "---"}
                     </span>
                   </div>
                 </td>
@@ -91,36 +107,64 @@ export const RidersTable = ({
                         {rider.payerName || rider.county}
                       </span>
                     )}
-                    {rider.source && <Badge variant="outline" className="font-medium text-primary border-primary/20 bg-primary/5 w-fit">{rider.source}</Badge>}
-                    {!rider.payerName && !rider.county && !rider.source && <span className="text-xs text-ink-4">—</span>}
+                    {rider.source && (
+                      <Badge
+                        variant="outline"
+                        className="font-medium text-primary border-primary/20 bg-primary/5 w-fit"
+                      >
+                        {rider.source}
+                      </Badge>
+                    )}
+                    {!rider.payerName && !rider.county && !rider.source && (
+                      <span className="text-xs text-ink-4">—</span>
+                    )}
                   </div>
                 </td>
-                <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="relative">
                     <button
                       onClick={() => setOpenStatusId(openStatusId === rider.id ? null : rider.id)}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 transition-all ${
-                        rider.status === 'active'
-                          ? 'text-accent bg-accent-light/35'
-                          : rider.status === 'suspended'
-                          ? 'text-warning border-warning/15 bg-warning-light/40'
-                          : rider.status === 'banned'
-                          ? 'text-urgent bg-urgent-light/45'
-                          : 'text-ink-4 bg-bg'
+                        rider.status === "active"
+                          ? "text-accent bg-accent-light/35"
+                          : rider.status === "suspended"
+                            ? "text-warning border-warning/15 bg-warning-light/40"
+                            : rider.status === "banned"
+                              ? "text-urgent bg-urgent-light/45"
+                              : "text-ink-4 bg-bg"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${rider.status === 'active' ? 'bg-accent' : rider.status === 'suspended' ? 'bg-warning' : rider.status === 'banned' ? 'bg-urgent' : 'bg-ink-4'}`} />
-                      {(rider.status || 'inactive').toUpperCase()}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${rider.status === "active" ? "bg-accent" : rider.status === "suspended" ? "bg-warning" : rider.status === "banned" ? "bg-urgent" : "bg-ink-4"}`}
+                      />
+                      {(rider.status || "inactive").toUpperCase()}
                       <ChevronDown size={10} />
                     </button>
                     {openStatusId === rider.id && (
                       <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-xl w-44 py-1 animate-in fade-in duration-150">
-                        <p className="px-3 py-2 type-th border-b border-line-2 mb-1">Change Status</p>
+                        <p className="px-3 py-2 type-th border-b border-line-2 mb-1">
+                          Change Status
+                        </p>
                         {[
-                          { value: 'active', label: 'Set Active', icon: UserCheck, color: 'text-accent hover:bg-accent-light/30' },
-                          { value: 'suspended', label: 'Suspend Rider', icon: UserX, color: 'text-warning hover:bg-warning-light/40' },
-                          { value: 'banned', label: 'Ban Rider', icon: Ban, color: 'text-urgent hover:bg-urgent-light/40' },
-                        ].map(opt => (
+                          {
+                            value: "active",
+                            label: "Set Active",
+                            icon: UserCheck,
+                            color: "text-accent hover:bg-accent-light/30",
+                          },
+                          {
+                            value: "suspended",
+                            label: "Suspend Rider",
+                            icon: UserX,
+                            color: "text-warning hover:bg-warning-light/40",
+                          },
+                          {
+                            value: "banned",
+                            label: "Ban Rider",
+                            icon: Ban,
+                            color: "text-urgent hover:bg-urgent-light/40",
+                          },
+                        ].map((opt) => (
                           <button
                             key={opt.value}
                             disabled={rider.status === opt.value}
@@ -155,13 +199,18 @@ export const RidersTable = ({
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-xs font-medium text-ink-3">{rider?.phone || '---'}</span>
+                  <span className="text-xs font-medium text-ink-3">{rider?.phone || "---"}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm font-medium text-ink">{(rider?.totalTrips || 0).toLocaleString()}</span>
+                  <span className="text-sm font-medium text-ink">
+                    {(rider?.totalTrips || 0).toLocaleString()}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <ChevronRight size={16} className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight
+                    size={16}
+                    className="text-ink-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
                 </td>
               </tr>
             ))}
@@ -183,7 +232,10 @@ export const RidersTable = ({
         totalItems={filteredCount}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
-        onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
+        onItemsPerPageChange={(size) => {
+          setItemsPerPage(size);
+          setCurrentPage(1);
+        }}
       />
     </Card>
   );

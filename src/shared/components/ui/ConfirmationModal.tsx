@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { AlertTriangle, CheckCircle2, Loader2, X } from 'lucide-react';
-import { Button } from './Button';
+import React, { useEffect } from "react";
+import { AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
+import { Button } from "./Button";
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ export interface ConfirmationModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+  variant?: "primary" | "urgent" | "accent" | "warning";
   isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
@@ -18,45 +18,45 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'primary',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "primary",
   isLoading = false,
   onConfirm,
   onClose,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
+      if (e.key === "Escape" && isOpen && !isLoading) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, isLoading, onClose]);
 
   if (!isOpen) return null;
 
   const variantStyles = {
     primary: {
-      iconBg: 'bg-primary/10 text-primary border-primary/20',
+      iconBg: "bg-primary/10 text-primary border-primary/20",
       icon: CheckCircle2,
-      btnVariant: 'primary' as const,
+      btnVariant: "primary" as const,
     },
     accent: {
-      iconBg: 'bg-accent/10 text-accent border-accent/20',
+      iconBg: "bg-accent/10 text-accent border-accent/20",
       icon: CheckCircle2,
-      btnVariant: 'accent' as const,
+      btnVariant: "accent" as const,
     },
     warning: {
-      iconBg: 'bg-amber-50 text-amber-600 border-amber-200',
+      iconBg: "bg-amber-50 text-amber-600 border-amber-200",
       icon: AlertTriangle,
-      btnVariant: 'primary' as const,
+      btnVariant: "primary" as const,
     },
     urgent: {
-      iconBg: 'bg-urgent/10 text-urgent border-urgent/20',
+      iconBg: "bg-urgent/10 text-urgent border-urgent/20",
       icon: AlertTriangle,
-      btnVariant: 'danger' as const,
+      btnVariant: "danger" as const,
     },
   };
 
@@ -90,13 +90,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-line-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isLoading}
-            onClick={onClose}
-          >
+          <Button type="button" variant="outline" size="sm" disabled={isLoading} onClick={onClose}>
             {cancelText}
           </Button>
           <Button

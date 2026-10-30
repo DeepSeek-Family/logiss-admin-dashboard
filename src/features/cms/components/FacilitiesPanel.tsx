@@ -1,37 +1,36 @@
-import { useState } from 'react';
-import { Plus, Pencil, Check, X, Building2, Loader2, AlertTriangle } from 'lucide-react';
-import { Badge, Button } from '@/shared/components/ui';
+import { useState } from "react";
+import { Plus, Pencil, Check, X, Building2, Loader2, AlertTriangle } from "lucide-react";
+import { Badge, Button } from "@/shared/components/ui";
 import {
   useGetFacilitiesQuery,
   useCreateFacilityMutation,
   useUpdateFacilityMutation,
   type FacilityType,
   type IFacility,
-} from '@/redux/api/coverageApi';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
-import toast from 'react-hot-toast';
+} from "@/redux/api/coverageApi";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import toast from "react-hot-toast";
 
-const actionBtn = 'h-10 rounded-xl px-4 text-sm';
+const actionBtn = "h-10 rounded-xl px-4 text-sm";
 const controlClass =
-  'h-10 box-border w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
+  "h-10 box-border w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all";
 
 const TYPE_OPTIONS: { label: string; value: FacilityType }[] = [
-  { label: 'Hospital', value: 'hospital' },
-  { label: 'Clinic', value: 'clinic' },
-  { label: 'Program', value: 'program' },
-  { label: 'Nursing home', value: 'nursingHome' },
-  { label: 'Other', value: 'other' },
+  { label: "Hospital", value: "hospital" },
+  { label: "Clinic", value: "clinic" },
+  { label: "Program", value: "program" },
+  { label: "Nursing home", value: "nursingHome" },
+  { label: "Other", value: "other" },
 ];
 
-const typeLabel = (type: string) =>
-  TYPE_OPTIONS.find(o => o.value === type)?.label || type;
+const typeLabel = (type: string) => TYPE_OPTIONS.find((o) => o.value === type)?.label || type;
 
 const typeBadgeVariant: Record<string, string> = {
-  hospital: 'primary',
-  nursingHome: 'accent',
-  program: 'warning',
-  clinic: 'bg',
-  other: 'bg',
+  hospital: "primary",
+  nursingHome: "accent",
+  program: "warning",
+  clinic: "bg",
+  other: "bg",
 };
 
 interface FacilitiesPanelProps {
@@ -43,14 +42,14 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
   const [createFacility, { isLoading: isCreating }] = useCreateFacilityMutation();
   const [updateFacility, { isLoading: isUpdating }] = useUpdateFacilityMutation();
 
-  const items = (data?.data || []).filter(f => !f.isDeleted);
+  const items = (data?.data || []).filter((f) => !f.isDeleted);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editType, setEditType] = useState<FacilityType>('hospital');
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState<FacilityType>("hospital");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState<FacilityType>('hospital');
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<FacilityType>("hospital");
 
   const startEdit = (f: IFacility) => {
     setEditingId(f._id);
@@ -66,10 +65,10 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
         id: editingId,
         body: { name: editName.trim(), type: editType },
       }).unwrap();
-      toast.success('Facility updated');
+      toast.success("Facility updated");
       setEditingId(null);
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to update facility'));
+      toast.error(apiErrorMessage(err, "Failed to update facility"));
     }
   };
 
@@ -77,12 +76,12 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
     if (!newName.trim()) return;
     try {
       await createFacility({ name: newName.trim(), type: newType }).unwrap();
-      toast.success('Facility created');
-      setNewName('');
-      setNewType('hospital');
+      toast.success("Facility created");
+      setNewName("");
+      setNewType("hospital");
       setShowAddForm(false);
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to create facility'));
+      toast.error(apiErrorMessage(err, "Failed to create facility"));
     }
   };
 
@@ -99,8 +98,12 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
     return (
       <div className="py-16 flex flex-col items-center gap-3 text-center">
         <AlertTriangle className="text-urgent opacity-60" size={32} />
-        <p className="text-sm text-ink-3">{apiErrorMessage(error, 'Failed to load facilities')}</p>
-        <button type="button" onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
+        <p className="text-sm text-ink-3">{apiErrorMessage(error, "Failed to load facilities")}</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+        >
           Retry
         </button>
       </div>
@@ -118,7 +121,10 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
             variant="primary"
             size="md"
             className={actionBtn}
-            onClick={() => { setShowAddForm(true); setEditingId(null); }}
+            onClick={() => {
+              setShowAddForm(true);
+              setEditingId(null);
+            }}
             disabled={busy}
           >
             <Plus size={16} /> Add
@@ -128,34 +134,58 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
 
       {showAddForm && canEdit && (
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-          <p className="text-xs font-bold text-primary uppercase tracking-wider">New Facility / Program</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-wider">
+            New Facility / Program
+          </p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[200px]">
-              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">Name</label>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">
+                Name
+              </label>
               <input
                 type="text"
                 value={newName}
-                onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addItem()}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addItem()}
                 placeholder="e.g. Chippenham Medical Center"
                 autoFocus
                 className={controlClass}
               />
             </div>
             <div className="w-52">
-              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">Type</label>
-              <select value={newType} onChange={e => setNewType(e.target.value as FacilityType)} className={controlClass}>
-                {TYPE_OPTIONS.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+              <label className="text-xs font-semibold text-ink-4 uppercase mb-1.5 block">
+                Type
+              </label>
+              <select
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as FacilityType)}
+                className={controlClass}
+              >
+                {TYPE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button type="button" onClick={() => { setShowAddForm(false); setNewName(''); }} className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-ink-3 border border-line-2 rounded-xl bg-white">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddForm(false);
+                setNewName("");
+              }}
+              className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-ink-3 border border-line-2 rounded-xl bg-white"
+            >
               <X size={16} /> Cancel
             </button>
-            <button type="button" onClick={addItem} disabled={!newName.trim() || busy} className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-white bg-primary rounded-xl disabled:opacity-40">
+            <button
+              type="button"
+              onClick={addItem}
+              disabled={!newName.trim() || busy}
+              className="h-10 flex items-center gap-1.5 px-4 text-sm font-semibold text-white bg-primary rounded-xl disabled:opacity-40"
+            >
               <Check size={16} /> Add
             </button>
           </div>
@@ -176,18 +206,21 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
           </div>
         )}
 
-        {items.map(f => (
+        {items.map((f) => (
           <div
             key={f._id}
-            className={`grid grid-cols-12 items-center px-4 py-3 group transition-colors ${editingId === f._id ? 'bg-primary/5' : 'hover:bg-bg/50'} ${f.status === false ? 'opacity-50' : ''}`}
+            className={`grid grid-cols-12 items-center px-4 py-3 group transition-colors ${editingId === f._id ? "bg-primary/5" : "hover:bg-bg/50"} ${f.status === false ? "opacity-50" : ""}`}
           >
             <div className="col-span-7 pr-4">
               {editingId === f._id ? (
                 <input
                   type="text"
                   value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingId(null); }}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEdit();
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
                   autoFocus
                   className="w-full text-sm font-medium text-ink border border-primary rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/10"
                 />
@@ -202,32 +235,50 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
               {editingId === f._id ? (
                 <select
                   value={editType}
-                  onChange={e => setEditType(e.target.value as FacilityType)}
+                  onChange={(e) => setEditType(e.target.value as FacilityType)}
                   className="text-xs font-medium text-ink border border-line-2 rounded-lg px-2 py-1 bg-white focus:outline-none focus:border-primary"
                 >
-                  {TYPE_OPTIONS.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                  {TYPE_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <Badge variant={typeBadgeVariant[f.type] as any} className="text-xs">{typeLabel(f.type)}</Badge>
+                <Badge variant={typeBadgeVariant[f.type] as any} className="text-xs">
+                  {typeLabel(f.type)}
+                </Badge>
               )}
             </div>
             <div className="col-span-2 flex items-center justify-end gap-1">
-              {canEdit && (editingId === f._id ? (
-                <>
-                  <button type="button" onClick={saveEdit} disabled={busy} className="p-1.5 text-accent hover:bg-accent/10 rounded-lg transition-colors">
-                    <Check size={14} />
+              {canEdit &&
+                (editingId === f._id ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      disabled={busy}
+                      className="p-1.5 text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="p-1.5 text-ink-4 hover:bg-bg rounded-lg transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startEdit(f)}
+                    className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Pencil size={13} />
                   </button>
-                  <button type="button" onClick={() => setEditingId(null)} className="p-1.5 text-ink-4 hover:bg-bg rounded-lg transition-colors">
-                    <X size={14} />
-                  </button>
-                </>
-              ) : (
-                <button type="button" onClick={() => startEdit(f)} className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                  <Pencil size={13} />
-                </button>
-              ))}
+                ))}
             </div>
           </div>
         ))}

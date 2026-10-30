@@ -1,4 +1,4 @@
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 import {
   AUTH_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
@@ -7,8 +7,8 @@ import {
   USER_STORAGE_KEY,
   LEGACY_AUTH_TOKEN_KEY,
   REDIRECT_AFTER_LOGIN_KEY,
-} from '@/constants/auth-storage';
-import { ROUTES } from '@/constants/routes';
+} from "@/constants/auth-storage";
+import { ROUTES } from "@/constants/routes";
 
 /**
  * Checks whether a given JWT token is expired.
@@ -29,7 +29,7 @@ export function isTokenExpired(token: string | null | undefined): boolean {
  */
 export function clearAuthStorage(): void {
   try {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const keysToRemove = [
       AUTH_TOKEN_KEY,
@@ -45,15 +45,15 @@ export function clearAuthStorage(): void {
       window.sessionStorage.removeItem(key);
     });
   } catch (err) {
-    console.error('Error clearing auth storage:', err);
+    console.error("Error clearing auth storage:", err);
   }
 }
 
 /**
  * Safely redirects the browser to the login page without triggering redirect loops.
  */
-export function redirectToLogin(reason?: 'expired' | 'forbidden' | 'logout'): void {
-  if (typeof window === 'undefined') return;
+export function redirectToLogin(reason?: "expired" | "forbidden" | "logout"): void {
+  if (typeof window === "undefined") return;
 
   const currentPath = window.location.pathname;
 
@@ -70,7 +70,7 @@ export function redirectToLogin(reason?: 'expired' | 'forbidden' | 'logout'): vo
   // Save the intended destination for post-login return only if it's a private app route
   if (
     currentPath &&
-    currentPath !== '/' &&
+    currentPath !== "/" &&
     currentPath !== ROUTES.login &&
     currentPath !== ROUTES.forgotPassword &&
     currentPath !== ROUTES.verifyEmail &&
@@ -79,7 +79,7 @@ export function redirectToLogin(reason?: 'expired' | 'forbidden' | 'logout'): vo
     try {
       window.sessionStorage.setItem(
         REDIRECT_AFTER_LOGIN_KEY,
-        window.location.pathname + window.location.search
+        window.location.pathname + window.location.search,
       );
     } catch {
       /* ignore */
@@ -108,13 +108,13 @@ export function handleAuthSessionExpired(options?: {
   const now = Date.now();
   if (now - lastExpiredToastTime > TOAST_COOLDOWN_MS) {
     lastExpiredToastTime = now;
-    toast.error(options?.reason || 'Your session has expired. Please log in again.', {
-      id: 'auth-session-expired',
+    toast.error(options?.reason || "Your session has expired. Please log in again.", {
+      id: "auth-session-expired",
       duration: 4000,
     });
   }
 
-  redirectToLogin('expired');
+  redirectToLogin("expired");
 }
 
 /**
@@ -131,36 +131,37 @@ export function handleForbiddenAccess(options?: {
   if (now - lastForbiddenToastTime > TOAST_COOLDOWN_MS) {
     lastForbiddenToastTime = now;
     toast.error(
-      options?.message || 'Access forbidden (403): You do not have permission. Redirecting to login...',
+      options?.message ||
+        "Access forbidden (403): You do not have permission. Redirecting to login...",
       {
-        id: 'auth-forbidden-access',
+        id: "auth-forbidden-access",
         duration: 4000,
-      }
+      },
     );
   }
 
-  redirectToLogin('forbidden');
+  redirectToLogin("forbidden");
 }
 
 /**
  * Sets up a listener for storage events to synchronize logout/token removal across tabs.
  */
 export function initCrossTabAuthSync(onLogout: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === "undefined") return () => {};
 
   const handleStorageChange = (e: StorageEvent) => {
     if (e.key === AUTH_TOKEN_KEY || e.key === ROLE_STORAGE_KEY) {
       if (!e.newValue) {
         onLogout();
         if (window.location.pathname !== ROUTES.login) {
-          redirectToLogin('logout');
+          redirectToLogin("logout");
         }
       }
     }
   };
 
-  window.addEventListener('storage', handleStorageChange);
+  window.addEventListener("storage", handleStorageChange);
   return () => {
-    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener("storage", handleStorageChange);
   };
 }

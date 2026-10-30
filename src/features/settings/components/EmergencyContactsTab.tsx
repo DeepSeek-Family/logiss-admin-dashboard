@@ -1,5 +1,5 @@
-import { AlertTriangle, Phone, Bell, MapPin } from 'lucide-react';
-import { Card } from '@/shared/components/ui';
+import { AlertTriangle, Phone, Bell, MapPin } from "lucide-react";
+import { Card } from "@/shared/components/ui";
 
 export const EmergencyContactsTab = () => {
   return (
@@ -7,7 +7,9 @@ export const EmergencyContactsTab = () => {
       <Card className="p-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-ink">Organization Contact Channels</h3>
-          <p className="text-xs text-ink-4 mt-1 font-medium">Platform-wide support and emergency communication parameters.</p>
+          <p className="text-xs text-ink-4 mt-1 font-medium">
+            Platform-wide support and emergency communication parameters.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 mt-6">
@@ -18,7 +20,9 @@ export const EmergencyContactsTab = () => {
             <div className="flex-1">
               <p className="text-xs font-medium text-urgent mb-1">Emergency Operational Hotline</p>
               <p className="text-xl font-semibold text-ink">(804) 555-9110</p>
-              <p className="text-xs font-medium text-urgent/60 mt-1">Direct Priority Access · 24/7 Monitoring</p>
+              <p className="text-xs font-medium text-urgent/60 mt-1">
+                Direct Priority Access · 24/7 Monitoring
+              </p>
             </div>
           </div>
 

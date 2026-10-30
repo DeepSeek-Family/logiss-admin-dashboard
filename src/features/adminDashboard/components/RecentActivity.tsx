@@ -1,15 +1,15 @@
-import { Activity, Truck } from 'lucide-react';
-import { Card, Badge, Button, Avatar, TripStatusBadge } from '@/shared/components/ui';
-import { useGetActiveTripsQuery } from '@/redux/apivtwo/dashboardOnvording';
-import { Loader } from '@/shared/Lodder';
-import { timeAgo } from '@/utils/helpers';
+import { Activity, Truck } from "lucide-react";
+import { Card, Badge, Button, Avatar, TripStatusBadge } from "@/shared/components/ui";
+import { useGetActiveTripsQuery } from "@/redux/apivtwo/dashboardOnvording";
+import { Loader } from "@/shared/Lodder";
+import { timeAgo } from "@/utils/helpers";
 import {
   activeTripBadgeStatus,
   activeTripPassengerInitials,
   activeTripPassengerName,
   activeTripScheduleLabel,
   activeTripSubtitle,
-} from '@/features/adminDashboard/utils/activeTripHelpers';
+} from "@/features/adminDashboard/utils/activeTripHelpers";
 
 interface RecentActivityProps {
   onNavigate: (path: string) => void;
@@ -44,7 +44,7 @@ export const RecentActivity = ({ onNavigate }: RecentActivityProps) => {
         </h3>
         <button
           type="button"
-          onClick={() => onNavigate('/operations')}
+          onClick={() => onNavigate("/operations")}
           className="text-xs font-medium text-primary hover:underline"
         >
           View operations
@@ -67,13 +67,13 @@ export const RecentActivity = ({ onNavigate }: RecentActivityProps) => {
       ) : (
         <div className="space-y-4">
           {preview.map((trip) => {
-            const when = timeAgo(trip.updatedAt || trip.createdAt || '');
+            const when = timeAgo(trip.updatedAt || trip.createdAt || "");
             const status = activeTripBadgeStatus(trip.bookingStatus);
             return (
               <div
                 key={trip._id}
                 className="flex items-center justify-between p-3 bg-bg hover:bg-line-2 transition-colors rounded-xl cursor-pointer shadow-sm border border-transparent hover:border-line-2"
-                onClick={() => onNavigate('/operations')}
+                onClick={() => onNavigate("/operations")}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar initials={activeTripPassengerInitials(trip)} size="xs" />
@@ -83,7 +83,7 @@ export const RecentActivity = ({ onNavigate }: RecentActivityProps) => {
                     </p>
                     <p className="text-xs text-ink-4 truncate">
                       {activeTripSubtitle(trip)} · {activeTripScheduleLabel(trip)}
-                      {when ? ` · ${when}` : ''}
+                      {when ? ` · ${when}` : ""}
                     </p>
                   </div>
                 </div>

@@ -1,23 +1,49 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Phone,
   MessageSquare,
   AlertTriangle,
-  ChevronRight, Truck, Plus, Minus, Battery, Wifi,
-  Loader2, ExternalLink, MoveRight, MapPin, X, Repeat, Search,
-  Star, Mail, ShieldCheck, CalendarClock,
-  Maximize2, Navigation, Clock, ChevronLeft, User, Check
-} from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { Card, Avatar, Badge, Button, TripStatusBadge } from '@/shared/components/ui';
-import { useTrips } from '@/hooks/useTrips';
-import { useDrivers } from '@/hooks/useDrivers';
-import { tripTypeLabel, formatTime } from '@/utils/helpers';
-import { EmergencyProtocolModal, LiveTripRiderProfile, LiveTripDriverProfile, QuickDispatchModal, TripFocusMode, TripMap } from '@/features/liveTrips';
+  ChevronRight,
+  Truck,
+  Plus,
+  Minus,
+  Battery,
+  Wifi,
+  Loader2,
+  ExternalLink,
+  MoveRight,
+  MapPin,
+  X,
+  Repeat,
+  Search,
+  Star,
+  Mail,
+  ShieldCheck,
+  CalendarClock,
+  Maximize2,
+  Navigation,
+  Clock,
+  ChevronLeft,
+  User,
+  Check,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import { Card, Avatar, Badge, Button, TripStatusBadge } from "@/shared/components/ui";
+import { useTrips } from "@/hooks/useTrips";
+import { useDrivers } from "@/hooks/useDrivers";
+import { tripTypeLabel, formatTime } from "@/utils/helpers";
+import {
+  EmergencyProtocolModal,
+  LiveTripRiderProfile,
+  LiveTripDriverProfile,
+  QuickDispatchModal,
+  TripFocusMode,
+  TripMap,
+} from "@/features/liveTrips";
 const LiveTrips = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
-  const [selectedTripId, setSelectedTripId] = useState<string>('LOGISS-2847');
+  const [selectedTripId, setSelectedTripId] = useState<string>("LOGISS-2847");
   const [selectedDriverProfile, setSelectedDriverProfile] = useState<any>(null);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [isFullView, setIsFullView] = useState(false);
@@ -29,18 +55,24 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
   const loading = tripsLoading || driversLoading;
 
   const activeTrips = (trips || []).filter((t: any) =>
-    ['en_route', 'arrived', 'in_trip', 'assigned'].includes(t?.status || '')
+    ["en_route", "arrived", "in_trip", "assigned"].includes(t?.status || ""),
   );
 
-  const selectedTrip = (trips || []).find((t: any) => t?.id === selectedTripId) || (activeTrips.length > 0 ? activeTrips[0] : null);
-  const selectedDriver = selectedTrip ? (drivers || []).find((d: any) => d?.id === selectedTrip.driverId) : null;
+  const selectedTrip =
+    (trips || []).find((t: any) => t?.id === selectedTripId) ||
+    (activeTrips.length > 0 ? activeTrips[0] : null);
+  const selectedDriver = selectedTrip
+    ? (drivers || []).find((d: any) => d?.id === selectedTrip.driverId)
+    : null;
 
-  const [driverSearch, setDriverSearch] = useState('');
+  const [driverSearch, setDriverSearch] = useState("");
   const [selectedRiderProfile, setSelectedRiderProfile] = useState<any>(null);
 
-  const filteredDrivers = (drivers || []).filter((d: any) =>
-    d?.onDuty &&
-    (d?.name?.toLowerCase().includes(driverSearch.toLowerCase()) || d?.id?.toLowerCase().includes(driverSearch.toLowerCase()))
+  const filteredDrivers = (drivers || []).filter(
+    (d: any) =>
+      d?.onDuty &&
+      (d?.name?.toLowerCase().includes(driverSearch.toLowerCase()) ||
+        d?.id?.toLowerCase().includes(driverSearch.toLowerCase())),
   );
 
   // Sort: Put the original driver at the top if they match search or if no search
@@ -53,7 +85,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
   const handleQuickDispatch = (driverId: string) => {
     toast.success(`Trip ${dispatchModalTrip.tripId} dispatched to driver`);
     setDispatchModalTrip(null);
-    setDriverSearch('');
+    setDriverSearch("");
   };
 
   if (loading && trips.length === 0) {
@@ -70,12 +102,20 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       {/* Side Profile Drawer for Rider */}
-      <LiveTripRiderProfile profile={selectedRiderProfile} onClose={() => setSelectedRiderProfile(null)} />
+      <LiveTripRiderProfile
+        profile={selectedRiderProfile}
+        onClose={() => setSelectedRiderProfile(null)}
+      />
 
       {/* Side Profile Drawer for Driver */}
-      <LiveTripDriverProfile profile={selectedDriverProfile} onClose={() => setSelectedDriverProfile(null)} />
+      <LiveTripDriverProfile
+        profile={selectedDriverProfile}
+        onClose={() => setSelectedDriverProfile(null)}
+      />
 
-      {showEmergencyModal && <EmergencyProtocolModal onClose={() => setShowEmergencyModal(false)} />}
+      {showEmergencyModal && (
+        <EmergencyProtocolModal onClose={() => setShowEmergencyModal(false)} />
+      )}
 
       <QuickDispatchModal
         dispatchModalTrip={dispatchModalTrip}
@@ -88,7 +128,6 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
         setSelectedDriverProfile={setSelectedDriverProfile}
       />
 
-
       <div>
         <h1 className="type-page-title">Deployment Console</h1>
         <p className="text-sm text-ink-4 mt-0.5">{activeTrips.length} active assignments</p>
@@ -97,41 +136,53 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Trip List */}
         <div className="lg:col-span-4 flex flex-col gap-5 overflow-y-auto pr-1 h-[calc(100vh-200px)] scrollbar-hide">
-
           <section className="space-y-2">
             <p className="text-xs text-ink-4 px-1 mb-1">Active Trips</p>
-            {activeTrips.length > 0 ? activeTrips.map((trip: any) => (
-              <Card
-                key={trip.id}
-                hover
-                onClick={() => setSelectedTripId(trip.id)}
-                className={`p-4 cursor-pointer transition-all ${selectedTripId === trip.id ? 'border-primary ring-1 ring-primary/10 shadow-sm' : ''} ${trip.isUrgent ? 'border-l-2 border-l-urgent' : ''}`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-ink-4">#{trip.id}</span>
-                    {trip.isUrgent && <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded">Urgent</span>}
+            {activeTrips.length > 0 ? (
+              activeTrips.map((trip: any) => (
+                <Card
+                  key={trip.id}
+                  hover
+                  onClick={() => setSelectedTripId(trip.id)}
+                  className={`p-4 cursor-pointer transition-all ${selectedTripId === trip.id ? "border-primary ring-1 ring-primary/10 shadow-sm" : ""} ${trip.isUrgent ? "border-l-2 border-l-urgent" : ""}`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-ink-4">#{trip.id}</span>
+                      {trip.isUrgent && (
+                        <span className="bg-urgent text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                          Urgent
+                        </span>
+                      )}
+                    </div>
+                    <TripStatusBadge status={trip.status} />
                   </div>
-                  <TripStatusBadge status={trip.status} />
-                </div>
 
-                <div className="flex items-center gap-2 mb-3">
-                  <Avatar initials={trip?.rider?.initials || '?'} size="xs" />
-                  <span className="text-sm font-medium text-ink truncate">{trip?.rider?.name || 'Unknown'}</span>
-                </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Avatar initials={trip?.rider?.initials || "?"} size="xs" />
+                    <span className="text-sm font-medium text-ink truncate">
+                      {trip?.rider?.name || "Unknown"}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between text-xs text-ink-4">
-                  <div className="flex items-center gap-1.5">
-                    <Truck size={11} className="shrink-0" />
-                    <span className="truncate">{(drivers || []).find((d: any) => d.id === trip?.driverId)?.name || 'Unassigned'}</span>
+                  <div className="flex items-center justify-between text-xs text-ink-4">
+                    <div className="flex items-center gap-1.5">
+                      <Truck size={11} className="shrink-0" />
+                      <span className="truncate">
+                        {(drivers || []).find((d: any) => d.id === trip?.driverId)?.name ||
+                          "Unassigned"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span>{trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
+                      <span className="text-primary font-medium">
+                        {trip.appointmentTime || "—"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span>{trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
-                    <span className="text-primary font-medium">{trip.appointmentTime || '—'}</span>
-                  </div>
-                </div>
-              </Card>
-            )) : (
+                </Card>
+              ))
+            ) : (
               <div className="p-8 text-center bg-bg rounded-xl border border-line-2">
                 <p className="text-xs text-ink-4">No active trips</p>
               </div>
@@ -150,9 +201,13 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
 
         {/* Right Column: Map & Detail */}
         <div className="lg:col-span-8 flex flex-col gap-5 overflow-hidden">
-
           {/* Map */}
-          <TripMap drivers={drivers} trips={trips} selectedDriver={selectedDriver} setSelectedTripId={setSelectedTripId} />
+          <TripMap
+            drivers={drivers}
+            trips={trips}
+            selectedDriver={selectedDriver}
+            setSelectedTripId={setSelectedTripId}
+          />
 
           {/* Trip Detail Card */}
           {selectedTrip && (
@@ -163,7 +218,8 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   <span className="text-xs text-ink-4">#{selectedTrip.id}</span>
                   <TripStatusBadge status={selectedTrip.status} />
                   <span className="text-xs text-ink-4">
-                    Pickup {selectedTrip.requestedPickup || formatTime(selectedTrip.scheduledTime) || '—'}
+                    Pickup{" "}
+                    {selectedTrip.requestedPickup || formatTime(selectedTrip.scheduledTime) || "—"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -174,7 +230,14 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   >
                     <Maximize2 size={14} />
                   </button>
-                  <Button variant="danger" size="sm" icon={AlertTriangle} onClick={() => setShowEmergencyModal(true)}>Emergency</Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    icon={AlertTriangle}
+                    onClick={() => setShowEmergencyModal(true)}
+                  >
+                    Emergency
+                  </Button>
                 </div>
               </div>
 
@@ -187,8 +250,12 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   <Avatar initials={selectedTrip.rider.initials} size="sm" className="shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-ink-4 mb-0.5">Passenger</p>
-                    <p className="text-sm font-medium text-ink truncate">{selectedTrip.rider.name}</p>
-                    <Badge variant="primary" className="text-xs mt-1">{selectedTrip.mobility}</Badge>
+                    <p className="text-sm font-medium text-ink truncate">
+                      {selectedTrip.rider.name}
+                    </p>
+                    <Badge variant="primary" className="text-xs mt-1">
+                      {selectedTrip.mobility}
+                    </Badge>
                   </div>
                 </div>
 
@@ -196,11 +263,19 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   className="flex items-center gap-3 p-3 rounded-xl bg-bg hover:bg-bg/80 cursor-pointer transition-all group"
                   onClick={() => setSelectedDriverProfile(selectedDriver)}
                 >
-                  <Avatar initials={selectedDriver?.initials || '??'} size="sm" className="shrink-0" />
+                  <Avatar
+                    initials={selectedDriver?.initials || "??"}
+                    size="sm"
+                    className="shrink-0"
+                  />
                   <div className="min-w-0">
                     <p className="text-xs text-ink-4 mb-0.5">Driver</p>
-                    <p className="text-sm font-medium text-ink truncate">{selectedDriver?.name || 'Unassigned'}</p>
-                    <span className="text-xs text-ink-4">{selectedDriver?.vehicle?.plate || '---'}</span>
+                    <p className="text-sm font-medium text-ink truncate">
+                      {selectedDriver?.name || "Unassigned"}
+                    </p>
+                    <span className="text-xs text-ink-4">
+                      {selectedDriver?.vehicle?.plate || "---"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -210,13 +285,14 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                 <span className="truncate text-ink">{selectedTrip.pickup}</span>
 
-                {Array.isArray(selectedTrip.stops) && selectedTrip.stops.map((s: string, i: number) => (
-                  <span key={i} className="flex items-center gap-2 min-w-0">
-                    <MoveRight size={11} className="text-ink-4/50 shrink-0" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                    <span className="truncate text-ink">{s}</span>
-                  </span>
-                ))}
+                {Array.isArray(selectedTrip.stops) &&
+                  selectedTrip.stops.map((s: string, i: number) => (
+                    <span key={i} className="flex items-center gap-2 min-w-0">
+                      <MoveRight size={11} className="text-ink-4/50 shrink-0" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+                      <span className="truncate text-ink">{s}</span>
+                    </span>
+                  ))}
 
                 <MoveRight size={11} className="text-ink-4/50 shrink-0" />
                 <MapPin size={11} className="text-urgent shrink-0" />
@@ -225,11 +301,15 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                 <div className="ml-auto flex items-center gap-4 shrink-0 pl-3 border-l border-line-2">
                   <div className="text-right">
                     <p className="text-ink-4 leading-none mb-0.5">Appt</p>
-                    <p className="text-sm font-semibold text-primary leading-none">{selectedTrip.appointmentTime || '09:45 AM'}</p>
+                    <p className="text-sm font-semibold text-primary leading-none">
+                      {selectedTrip.appointmentTime || "09:45 AM"}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-ink-4 leading-none mb-0.5">Pickup</p>
-                    <p className="text-sm font-semibold text-ink leading-none">{selectedTrip.requestedPickup || '08:30 AM'}</p>
+                    <p className="text-sm font-semibold text-ink leading-none">
+                      {selectedTrip.requestedPickup || "08:30 AM"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -246,19 +326,32 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               <div className="relative pl-4 space-y-2.5">
                 <div className="absolute left-[5px] top-1 bottom-1 border-l border-dashed border-line-2" />
                 {[
-                  { time: '08:30 AM', event: 'Assigned', status: 'done' },
-                  { time: '08:45 AM', event: 'Patient Loaded', status: 'done' },
-                  { time: '09:10 AM', event: 'At Pharmacy Stop', status: 'current' },
-                  { time: '—', event: 'En Route to Destination', status: 'upcoming' },
-                  { time: '—', event: 'Completed', status: 'upcoming' },
+                  { time: "08:30 AM", event: "Assigned", status: "done" },
+                  { time: "08:45 AM", event: "Patient Loaded", status: "done" },
+                  { time: "09:10 AM", event: "At Pharmacy Stop", status: "current" },
+                  { time: "—", event: "En Route to Destination", status: "upcoming" },
+                  { time: "—", event: "Completed", status: "upcoming" },
                 ].map((log, i) => (
                   <div key={i} className="relative flex items-center gap-3">
-                    <div className={`absolute -left-[17px] w-2.5 h-2.5 rounded-full border-2 border-white z-10 ${
-                      log.status === 'done' ? 'bg-accent' :
-                      log.status === 'current' ? 'bg-primary ring-2 ring-primary/20' : 'bg-line-2'
-                    }`} />
-                    <span className={`text-xs flex-1 ${log.status === 'upcoming' ? 'text-ink-4' : 'text-ink'}`}>{log.event}</span>
-                    <span className={`text-xs ${log.status === 'upcoming' ? 'text-ink-4' : 'text-primary'}`}>{log.time}</span>
+                    <div
+                      className={`absolute -left-[17px] w-2.5 h-2.5 rounded-full border-2 border-white z-10 ${
+                        log.status === "done"
+                          ? "bg-accent"
+                          : log.status === "current"
+                            ? "bg-primary ring-2 ring-primary/20"
+                            : "bg-line-2"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs flex-1 ${log.status === "upcoming" ? "text-ink-4" : "text-ink"}`}
+                    >
+                      {log.event}
+                    </span>
+                    <span
+                      className={`text-xs ${log.status === "upcoming" ? "text-ink-4" : "text-primary"}`}
+                    >
+                      {log.time}
+                    </span>
                   </div>
                 ))}
               </div>

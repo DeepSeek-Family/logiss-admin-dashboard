@@ -1,21 +1,28 @@
-import React from 'react';
-import { Card } from './Card';
+import React from "react";
+import { Card } from "./Card";
 
 interface StatCardProps {
   label: string;
   value: string | number;
   sub?: string;
   icon?: React.ElementType;
-  accent?: 'primary' | 'accent' | 'warning' | 'urgent';
+  accent?: "primary" | "accent" | "warning" | "urgent";
   trend?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Icon, accent = 'primary', trend }) => {
+export const StatCard: React.FC<StatCardProps> = ({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  accent = "primary",
+  trend,
+}) => {
   const accents = {
-    primary: 'text-primary bg-primary-light',
-    accent: 'text-accent bg-accent-light',
-    warning: 'text-warning bg-warning-light',
-    urgent: 'text-urgent bg-urgent-light',
+    primary: "text-primary bg-primary-light",
+    accent: "text-accent bg-accent-light",
+    warning: "text-warning bg-warning-light",
+    urgent: "text-urgent bg-urgent-light",
   };
 
   return (

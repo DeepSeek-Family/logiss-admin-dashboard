@@ -1,1 +1,1 @@
-export { default } from '@/features/notifications/PushNotificationsPage';
+export { default } from "@/features/notifications/PushNotificationsPage";

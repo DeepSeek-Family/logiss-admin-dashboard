@@ -49,8 +49,8 @@ const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
             </div>
             <p className="text-xs text-ink-4 mb-4 leading-relaxed">
               Vehicles <strong className="text-ink">VEH-001</strong> and{" "}
-              <strong className="text-ink">VEH-005</strong> require immediate
-              inspection based on mileage milestones.
+              <strong className="text-ink">VEH-005</strong> require immediate inspection based on
+              mileage milestones.
             </p>
             <Button
               variant="outline"

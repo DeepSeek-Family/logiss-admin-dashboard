@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   useGetDispatchersQuery,
   useCreateDispatcherMutation,
-} from '@/redux/api/dispatcherManagementApi';
-import { useToggleUserBannedMutation } from '@/redux/api/userApi';
+} from "@/redux/api/dispatcherManagementApi";
+import { useToggleUserBannedMutation } from "@/redux/api/userApi";
 
 export interface User {
   id: string;
@@ -14,7 +14,7 @@ export interface User {
   email?: string;
   contact?: string;
   role: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   lastLogin?: string;
   permissions?: string[];
 }
@@ -32,16 +32,16 @@ export const useUsers = () => {
   const [error, setError] = useState<string | null>(null);
 
   const users: User[] = (apiResponse?.data || []).map((d) => ({
-    id: d._id || d.id || '',
-    name: [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Dispatcher User',
+    id: d._id || d.id || "",
+    name: [d.firstName, d.lastName].filter(Boolean).join(" ") || "Dispatcher User",
     firstName: d.firstName,
     middleName: d.middleName,
     lastName: d.lastName,
     email: d.email,
     contact: d.contact,
-    role: (d.role || 'dispatcher').toLowerCase(),
-    status: d.isBanned ? 'inactive' : 'active',
-    lastLogin: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Active',
+    role: (d.role || "dispatcher").toLowerCase(),
+    status: d.isBanned ? "inactive" : "active",
+    lastLogin: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : "Active",
     permissions: d.accessScope || [],
   }));
 
@@ -60,24 +60,24 @@ export const useUsers = () => {
     role?: string;
   }) => {
     try {
-      const firstName = (userData.firstName || '').trim() || 'User';
-      const lastName = (userData.lastName || '').trim() || firstName;
+      const firstName = (userData.firstName || "").trim() || "User";
+      const lastName = (userData.lastName || "").trim() || firstName;
 
       const rawPermissions: string[] = userData.permissions?.length
         ? userData.permissions
-        : ['/dashboard', '/operations', '/bookings', '/drivers', '/riders'];
+        : ["/dashboard", "/operations", "/bookings", "/drivers", "/riders"];
 
-      const accessScope = rawPermissions.map((p: string) => (p.startsWith('/') ? p : `/${p}`));
+      const accessScope = rawPermissions.map((p: string) => (p.startsWith("/") ? p : `/${p}`));
 
-      const roleText = (userData.role || '').trim();
+      const roleText = (userData.role || "").trim();
 
       const payload = {
         firstName,
         middleName: roleText,
         lastName,
-        email: userData.email || '',
-        password: userData.password || 'Password@123',
-        contact: userData.contact || '+8801609502136',
+        email: userData.email || "",
+        password: userData.password || "Password@123",
+        contact: userData.contact || "+8801609502136",
         accessScope,
       };
 
@@ -85,7 +85,7 @@ export const useUsers = () => {
       refetch();
       return result;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to invite user';
+      const message = err instanceof Error ? err.message : "Failed to invite user";
       setError(message);
       throw err;
     }

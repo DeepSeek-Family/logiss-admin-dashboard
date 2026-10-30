@@ -44,19 +44,11 @@ export const LoginForm = ({
           <div
             className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedRole === "admin" ? "bg-accent-light text-accent" : "bg-primary-light text-primary"}`}
           >
-            {selectedRole === "admin" ? (
-              <ShieldAlert size={20} />
-            ) : (
-              <Navigation size={20} />
-            )}
+            {selectedRole === "admin" ? <ShieldAlert size={20} /> : <Navigation size={20} />}
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-ink capitalize">
-              {selectedRole} Login
-            </h2>
-            <p className="text-xs text-ink-4">
-              Accessing {selectedRole} Portal
-            </p>
+            <h2 className="text-2xl font-semibold text-ink capitalize">{selectedRole} Login</h2>
+            <p className="text-xs text-ink-4">Accessing {selectedRole} Portal</p>
           </div>
         </div>
         <p className="text-ink-3 text-sm font-medium">
@@ -66,14 +58,9 @@ export const LoginForm = ({
 
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs font-medium text-ink-4 mb-2">
-            Email Address
-          </label>
+          <label className="block text-xs font-medium text-ink-4 mb-2">Email Address</label>
           <div className="relative">
-            <Mail
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
-              size={18}
-            />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
             <input
               type="email"
               required
@@ -86,9 +73,7 @@ export const LoginForm = ({
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-medium text-ink-4">
-              Password
-            </label>
+            <label className="block text-xs font-medium text-ink-4">Password</label>
             <Link
               to={ROUTES.forgotPassword}
               onClick={(e) => {
@@ -103,10 +88,7 @@ export const LoginForm = ({
             </Link>
           </div>
           <div className="relative">
-            <Lock
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
-              size={18}
-            />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, X } from "lucide-react";
 
 export interface SearchInputProps {
   placeholder?: string;
@@ -14,9 +14,9 @@ export interface SearchInputProps {
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
-  placeholder = 'Search...',
-  paramName = 'searchTerm',
-  className = '',
+  placeholder = "Search...",
+  paramName = "searchTerm",
+  className = "",
   debounceMs = 500,
   defaultValue,
   value: controlledValue,
@@ -24,10 +24,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   onSearchChange,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlValue = searchParams.get(paramName) || searchParams.get('search') || '';
-  
+  const urlValue = searchParams.get(paramName) || searchParams.get("search") || "";
+
   const [text, setText] = useState<string>(
-    controlledValue !== undefined ? controlledValue : (defaultValue !== undefined ? defaultValue : urlValue)
+    controlledValue !== undefined
+      ? controlledValue
+      : defaultValue !== undefined
+        ? defaultValue
+        : urlValue,
   );
 
   // Callbacks are read via ref and only fired when the value changes, so parents passing
@@ -55,7 +59,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   useEffect(() => {
     if (document.activeElement === inputRef.current) return;
 
-    const currentUrlValue = searchParams.get(paramName) || searchParams.get('search') || '';
+    const currentUrlValue = searchParams.get(paramName) || searchParams.get("search") || "";
     if (controlledValue !== undefined) {
       setText(controlledValue);
     } else if (currentUrlValue !== text) {
@@ -72,12 +76,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
       setSearchParams(
         (prev) => {
-          const currentParam = prev.get(paramName) || prev.get('search') || '';
+          const currentParam = prev.get(paramName) || prev.get("search") || "";
           if (trimmed === currentParam) return prev;
 
           const next = new URLSearchParams(prev);
-          if (paramName !== 'search') next.delete('search');
-          if (paramName !== 'searchTerm') next.delete('searchTerm');
+          if (paramName !== "search") next.delete("search");
+          if (paramName !== "searchTerm") next.delete("searchTerm");
 
           if (trimmed) {
             next.set(paramName, trimmed);
@@ -98,18 +102,18 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   }, [text, debounceMs, paramName, setSearchParams]);
 
   const handleClear = () => {
-    setText('');
+    setText("");
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete(paramName);
-        next.delete('search');
-        next.delete('searchTerm');
+        next.delete("search");
+        next.delete("searchTerm");
         return next;
       },
-      { replace: true }
+      { replace: true },
     );
-    emit('');
+    emit("");
   };
 
   return (

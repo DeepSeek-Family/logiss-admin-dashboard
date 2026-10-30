@@ -1,16 +1,9 @@
 import { Flag, AlertTriangle } from "lucide-react";
 import { Card, Badge, Button } from "@/shared/components/ui";
-import {
-  useGetAllReportsQuery,
-  type IIncidentReport,
-} from "@/redux/apivtwo/dashboardOnvording";
+import { useGetAllReportsQuery, type IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
 import { Loader } from "@/shared/Lodder";
 import { timeAgo } from "@/utils/helpers";
-import {
-  reportCardSubtitle,
-  reportCategory,
-  statusLabel,
-} from "@/features/reports/utils/helpers";
+import { reportCardSubtitle, reportCategory, statusLabel } from "@/features/reports/utils/helpers";
 
 interface ActiveIncidentsProps {
   onNavigate: (path: string) => void;
@@ -43,10 +36,7 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
   const reports = reportsResponse?.data ?? [];
 
   const preview = [...reports]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, PREVIEW_LIMIT);
 
   return (

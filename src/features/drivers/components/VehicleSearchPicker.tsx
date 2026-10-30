@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Car, Check } from 'lucide-react';
-import { Button, EntitySearchSelect } from '@/shared/components/ui';
-import { vehicleToSelectItem, type AssignableVehicle } from '@/features/fleet/utils/entitySelectMappers';
+import { useEffect, useMemo, useState } from "react";
+import { Car, Check } from "lucide-react";
+import { Button, EntitySearchSelect } from "@/shared/components/ui";
+import {
+  vehicleToSelectItem,
+  type AssignableVehicle,
+} from "@/features/fleet/utils/entitySelectMappers";
 
 export type { AssignableVehicle };
 
@@ -52,7 +55,7 @@ export const VehicleSearchPicker = ({
         disabled={!pickedId || assigning || loading}
         onClick={() => pickedId && void onAssign(pickedId)}
       >
-        {assigning ? 'Saving…' : assignedVehicle ? 'Update assignment' : 'Confirm assignment'}
+        {assigning ? "Saving…" : assignedVehicle ? "Update assignment" : "Confirm assignment"}
       </Button>
     </div>
   );

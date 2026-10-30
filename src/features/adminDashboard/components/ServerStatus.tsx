@@ -1,5 +1,5 @@
-import { Activity } from 'lucide-react';
-import { Card } from '@/shared/components/ui';
+import { Activity } from "lucide-react";
+import { Card } from "@/shared/components/ui";
 
 export const ServerStatus = () => {
   return (

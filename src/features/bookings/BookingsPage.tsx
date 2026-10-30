@@ -1,38 +1,73 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Clock, MapPin, Phone, ChevronRight,
-  CheckCircle2, User, Users, CalendarClock,
-  AlertOctagon, Navigation, Repeat, MoveRight, ArrowRight,
-  Check, Trash2, XCircle, Plus, Loader2, Edit2, ExternalLink, List, Map as MapIcon
-} from 'lucide-react';
-import { Card, Avatar, Badge, Button, TripStatusBadge, Pagination, ConfirmationModal } from '@/shared/components/ui';
-import { ManualTripModal } from '@/components/ManualTripModal';
-import { quoteFares, quotePenalty, findFundingPolicy } from '@/hooks/usePricing';
-import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from '@/utils/helpers';
-import { CancelTripModal } from '@/features/reports';
-import { toast } from 'react-hot-toast';
-import { BookingDetailsSidebar, BookingsList, hasTimeConflict, isVehicleMatch } from '@/features/bookings';
+  Clock,
+  MapPin,
+  Phone,
+  ChevronRight,
+  CheckCircle2,
+  User,
+  Users,
+  CalendarClock,
+  AlertOctagon,
+  Navigation,
+  Repeat,
+  MoveRight,
+  ArrowRight,
+  Check,
+  Trash2,
+  XCircle,
+  Plus,
+  Loader2,
+  Edit2,
+  ExternalLink,
+  List,
+  Map as MapIcon,
+} from "lucide-react";
+import {
+  Card,
+  Avatar,
+  Badge,
+  Button,
+  TripStatusBadge,
+  Pagination,
+  ConfirmationModal,
+} from "@/shared/components/ui";
+import { ManualTripModal } from "@/components/ManualTripModal";
+import { quoteFares, quotePenalty, findFundingPolicy } from "@/hooks/usePricing";
+import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from "@/utils/helpers";
+import { CancelTripModal } from "@/features/reports";
+import { toast } from "react-hot-toast";
+import {
+  BookingDetailsSidebar,
+  BookingsList,
+  hasTimeConflict,
+  isVehicleMatch,
+} from "@/features/bookings";
 import {
   mapApiBooking,
   mapPatchToApiPayload,
   apiErrorMessage,
   assignFilterToUnassignQuery,
   type DriverAssignmentFilter,
-} from '@/features/bookings/utils/helpers';
-import { TripHistoryMap, TripDetailsModal } from '@/features/tripHistory';
-import { useGetAllBookingsQuery, useGetAllAssignedBookingsQuery, useUpdateBookingMutation } from '@/redux/api/bookingApi';
-import { useGetDriversQuery } from '@/redux/api/driversApi';
-import { mapApiDriver } from '@/features/drivers/utils/helpers';
+} from "@/features/bookings/utils/helpers";
+import { TripHistoryMap, TripDetailsModal } from "@/features/tripHistory";
+import {
+  useGetAllBookingsQuery,
+  useGetAllAssignedBookingsQuery,
+  useUpdateBookingMutation,
+} from "@/redux/api/bookingApi";
+import { useGetDriversQuery } from "@/redux/api/driversApi";
+import { mapApiDriver } from "@/features/drivers/utils/helpers";
 
 const Bookings = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') === 'confirmed' ? 'confirmed' : 'pending';
+  const activeTab = searchParams.get("tab") === "confirmed" ? "confirmed" : "pending";
   const setActiveTab = (tab: string) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      next.set('tab', tab);
+      next.set("tab", tab);
       return next;
     });
   };
@@ -43,11 +78,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
   const [bookingSearch, setBookingSearch] = useState(
-    () => searchParams.get('searchTerm') || searchParams.get('search') || '',
+    () => searchParams.get("searchTerm") || searchParams.get("search") || "",
   );
-  const [fundingFilter, setFundingFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
-  const [driverSearch, setDriverSearch] = useState('');
+  const [fundingFilter, setFundingFilter] = useState("all");
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
+  const [driverSearch, setDriverSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -60,7 +95,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (searchTerm) {
       params.searchTerm = searchTerm;
     }
-    if (fundingFilter && fundingFilter !== 'all') {
+    if (fundingFilter && fundingFilter !== "all") {
       params.payerSource = fundingFilter;
     }
     return params;
@@ -78,21 +113,26 @@ const Bookings = ({ role }: { role?: string | null }) => {
   /** Inactive tab: pagination total only (`limit=1`), not the full list. */
   const tabBadgeCountParams = useMemo(() => ({ page: 1, limit: 1 }), []);
 
-  const pendingQueryParams =
-    activeTab === 'pending' ? baseListParams : tabBadgeCountParams;
+  const pendingQueryParams = activeTab === "pending" ? baseListParams : tabBadgeCountParams;
 
   const confirmedQueryParams =
-    activeTab === 'confirmed' ? confirmedListParams : tabBadgeCountParams;
+    activeTab === "confirmed" ? confirmedListParams : tabBadgeCountParams;
 
-  const { data: pendingResponse, isLoading: pendingLoading, isFetching: pendingFetching, isError: pendingError, refetch: refetchPendingBookings } = useGetAllBookingsQuery(
-    pendingQueryParams,
-    { refetchOnMountOrArgChange: true },
-  );
+  const {
+    data: pendingResponse,
+    isLoading: pendingLoading,
+    isFetching: pendingFetching,
+    isError: pendingError,
+    refetch: refetchPendingBookings,
+  } = useGetAllBookingsQuery(pendingQueryParams, { refetchOnMountOrArgChange: true });
 
-  const { data: assignedResponse, isLoading: assignedLoading, isFetching: assignedFetching, isError: assignedError, refetch: refetchAssignedBookings } = useGetAllAssignedBookingsQuery(
-    confirmedQueryParams,
-    { refetchOnMountOrArgChange: true },
-  );
+  const {
+    data: assignedResponse,
+    isLoading: assignedLoading,
+    isFetching: assignedFetching,
+    isError: assignedError,
+    refetch: refetchAssignedBookings,
+  } = useGetAllAssignedBookingsQuery(confirmedQueryParams, { refetchOnMountOrArgChange: true });
 
   const stalePendingRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
   const staleAssignedRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
@@ -107,13 +147,13 @@ const Bookings = ({ role }: { role?: string | null }) => {
     title: string;
     message: string;
     confirmText?: string;
-    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    variant?: "primary" | "urgent" | "accent" | "warning";
     isLoading?: boolean;
     onConfirm: () => void | Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
     onConfirm: () => {},
   });
 
@@ -121,15 +161,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
     title: string;
     message: string;
     confirmText?: string;
-    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    variant?: "primary" | "urgent" | "accent" | "warning";
     onConfirm: () => void | Promise<void>;
   }) => {
     setConfirmModal({
       isOpen: true,
       title: params.title,
       message: params.message,
-      confirmText: params.confirmText || 'Confirm',
-      variant: params.variant || 'primary',
+      confirmText: params.confirmText || "Confirm",
+      variant: params.variant || "primary",
       isLoading: false,
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isLoading: true }));
@@ -142,7 +182,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     });
   };
 
-  const [debouncedDriverSearch, setDebouncedDriverSearch] = useState('');
+  const [debouncedDriverSearch, setDebouncedDriverSearch] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedDriverSearch(driverSearch.trim()), 350);
@@ -152,7 +192,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(
     { page: 1, limit: 200 },
     {
-      skip: activeTab !== 'confirmed',
+      skip: activeTab !== "confirmed",
       refetchOnMountOrArgChange: true,
     },
   );
@@ -160,60 +200,70 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const { data: searchedDriversResponse, isFetching: searchingDrivers } = useGetDriversQuery(
     { page: 1, limit: 50, searchTerm: debouncedDriverSearch },
     {
-      skip: activeTab !== 'confirmed' || !debouncedDriverSearch,
+      skip: activeTab !== "confirmed" || !debouncedDriverSearch,
       refetchOnMountOrArgChange: true,
     },
   );
 
   const apiDrivers = useMemo(
     () => (apiDriversResponse?.data || []).map(mapApiDriver),
-    [apiDriversResponse]
+    [apiDriversResponse],
   );
 
   const searchedApiDrivers = useMemo(
     () => (searchedDriversResponse?.data || []).map(mapApiDriver),
-    [searchedDriversResponse]
+    [searchedDriversResponse],
   );
 
   const refresh = () => {
     void refetchPendingBookings();
     void refetchAssignedBookings();
     // Drivers query is skipped on the pending tab — refetch throws if not started.
-    if (activeTab === 'confirmed') {
+    if (activeTab === "confirmed") {
       void refetchDrivers();
     }
   };
 
-  const handleUpdateBooking = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
-    const existingTrip = bookingsList.find((t: any) => String(t.id) === String(id) || String(t._id) === String(id));
+  const handleUpdateBooking = async (
+    id: string,
+    patch: Record<string, any>,
+    skipConfirm?: boolean,
+  ) => {
+    const existingTrip = bookingsList.find(
+      (t: any) => String(t.id) === String(id) || String(t._id) === String(id),
+    );
     const driverObj = existingTrip?.driverId as any;
     const existingDriverId = driverObj
-      ? (typeof driverObj === 'object' ? driverObj._id || driverObj.id : String(driverObj))
-      : '';
-    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
-    const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+      ? typeof driverObj === "object"
+        ? driverObj._id || driverObj.id
+        : String(driverObj)
+      : "";
+    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || "") : undefined;
+    const isDriverAssign =
+      patchDriverId !== undefined && patchDriverId !== String(existingDriverId || "");
     const isPendingReview =
-      existingTrip?.status === 'pending_review' ||
-      existingTrip?.status === 'pending' ||
-      activeTab === 'pending';
+      existingTrip?.status === "pending_review" ||
+      existingTrip?.status === "pending" ||
+      activeTab === "pending";
 
     if (isDriverAssign && isPendingReview) {
-      toast.error('Approve the booking before assigning a driver');
+      toast.error("Approve the booking before assigning a driver");
       return;
     }
 
-    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
+    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || "";
     const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
-    const isStatusUpdate = patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
+    const isStatusUpdate =
+      patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
 
     const executeUpdate = async () => {
       const payload = mapPatchToApiPayload(patch);
       try {
         await updateBookingMutation({ id, payload }).unwrap();
-        toast.success('Booking updated successfully');
+        toast.success("Booking updated successfully");
         refresh();
       } catch (e: any) {
-        toast.error(apiErrorMessage(e, 'Failed to update booking'));
+        toast.error(apiErrorMessage(e, "Failed to update booking"));
       }
     };
 
@@ -223,15 +273,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
     }
 
     if (isDriverAssign) {
-      const driver = mergedDrivers.find(d => String(d.id) === String(patch.driverId));
-      const driverName = driver?.name || (patch.driverId ? 'Selected Driver' : 'Unassigned');
+      const driver = mergedDrivers.find((d) => String(d.id) === String(patch.driverId));
+      const driverName = driver?.name || (patch.driverId ? "Selected Driver" : "Unassigned");
       openConfirm({
-        title: 'Confirm Driver Assignment',
+        title: "Confirm Driver Assignment",
         message: patch.driverId
           ? `Are you sure you want to assign driver "${driverName}" to Booking #${id}?`
           : `Are you sure you want to unassign driver from Booking #${id}?`,
-        confirmText: 'Assign Driver',
-        variant: 'primary',
+        confirmText: "Assign Driver",
+        variant: "primary",
         onConfirm: executeUpdate,
       });
       return;
@@ -239,12 +289,14 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
     if (isStatusUpdate) {
       const statusVal = patch.status || patch.bookingStatus || patch.isApproved;
-      const isUrgent = ['cancelled', 'rejected', 'no_show'].includes(String(statusVal).toLowerCase());
+      const isUrgent = ["cancelled", "rejected", "no_show"].includes(
+        String(statusVal).toLowerCase(),
+      );
       openConfirm({
-        title: 'Confirm Status Change',
+        title: "Confirm Status Change",
         message: `Are you sure you want to change status of Booking #${id} to "${statusVal}"?`,
-        confirmText: 'Update Status',
-        variant: isUrgent ? 'urgent' : 'warning',
+        confirmText: "Update Status",
+        variant: isUrgent ? "urgent" : "warning",
         onConfirm: executeUpdate,
       });
       return;
@@ -252,7 +304,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const pendingBookings = useMemo(() => {
-    if (activeTab !== 'pending') return [];
+    if (activeTab !== "pending") return [];
     if (pendingResponse?.data) {
       const mapped = pendingResponse.data.map(mapApiBooking);
       stalePendingRowsRef.current = mapped;
@@ -262,7 +314,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   }, [pendingResponse, activeTab]);
 
   const assignedBookings = useMemo(() => {
-    if (activeTab !== 'confirmed') return [];
+    if (activeTab !== "confirmed") return [];
     if (assignedResponse?.data) {
       const mapped = assignedResponse.data.map(mapApiBooking);
       staleAssignedRowsRef.current = mapped;
@@ -273,20 +325,21 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const bookingsList = useMemo(
     () => [...pendingBookings, ...assignedBookings],
-    [pendingBookings, assignedBookings]
+    [pendingBookings, assignedBookings],
   );
 
   const pendingCount = pendingResponse?.pagination?.total;
   const confirmedCount = assignedResponse?.pagination?.total;
 
-  const currentTabBookings = activeTab === 'pending' ? pendingBookings : assignedBookings;
-  const currentPagination = activeTab === 'pending' ? pendingResponse?.pagination : assignedResponse?.pagination;
+  const currentTabBookings = activeTab === "pending" ? pendingBookings : assignedBookings;
+  const currentPagination =
+    activeTab === "pending" ? pendingResponse?.pagination : assignedResponse?.pagination;
   const loading =
-    activeTab === 'pending'
+    activeTab === "pending"
       ? pendingLoading && pendingBookings.length === 0
       : assignedLoading && assignedBookings.length === 0;
-  const listFetching = activeTab === 'pending' ? pendingFetching : assignedFetching;
-  const isError = activeTab === 'pending' ? pendingError : assignedError;
+  const listFetching = activeTab === "pending" ? pendingFetching : assignedFetching;
+  const isError = activeTab === "pending" ? pendingError : assignedError;
 
   const editTrip = editTripId ? bookingsList.find((t: any) => t?.id === editTripId) : null;
 
@@ -297,8 +350,13 @@ const Bookings = ({ role }: { role?: string | null }) => {
       .map((b: any) => ({
         id: b.driverId,
         name: b.driverName,
-        initials: (b.driverName || '').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase(),
-        vehicle: { type: 'Van', plate: '' },
+        initials: (b.driverName || "")
+          .split(" ")
+          .map((p: string) => p[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase(),
+        vehicle: { type: "Van", plate: "" },
       }));
     extra.forEach((d: any) => {
       if (!merged.some((x: any) => String(x.id) === String(d.id))) merged.push(d);
@@ -309,69 +367,70 @@ const Bookings = ({ role }: { role?: string | null }) => {
   // Search and payer filtering are applied server-side via listParams.
   const filteredTrips = currentTabBookings;
 
-  const totalPages = currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
+  const totalPages =
+    currentPagination?.totalPage || Math.ceil(filteredTrips.length / itemsPerPage) || 1;
   const paginatedBookings = filteredTrips;
 
   const handleBulkAction = async (action: string) => {
     if (selectedTrips.length === 0) return;
 
-    if (action === 'approve') {
+    if (action === "approve") {
       openConfirm({
-        title: 'Approve Selected Bookings',
+        title: "Approve Selected Bookings",
         message: `Are you sure you want to approve ${selectedTrips.length} selected bookings?`,
-        confirmText: 'Approve All',
-        variant: 'accent',
+        confirmText: "Approve All",
+        variant: "accent",
         onConfirm: async () => {
           try {
             await Promise.all(
-              selectedTrips.map(id =>
+              selectedTrips.map((id) =>
                 updateBookingMutation({
                   id,
-                  payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
-                }).unwrap()
-              )
+                  payload: { isApproved: "approved", bookingStatus: "confirmed" },
+                }).unwrap(),
+              ),
             );
             toast.success(`${selectedTrips.length} bookings approved successfully`);
             setSelectedTrips([]);
             refresh();
           } catch (e: any) {
-            toast.error(apiErrorMessage(e, 'Failed to approve bookings'));
+            toast.error(apiErrorMessage(e, "Failed to approve bookings"));
           }
         },
       });
-    } else if (action === 'dispatch') {
-      const tripsToDispatch = selectedTrips.filter(id => {
+    } else if (action === "dispatch") {
+      const tripsToDispatch = selectedTrips.filter((id) => {
         const t = bookingsList.find((trip: any) => trip.id === id);
         return t && t.driverId;
       });
       if (tripsToDispatch.length === 0) {
-        toast.error('No selected trips have a driver assigned.');
+        toast.error("No selected trips have a driver assigned.");
         return;
       }
       openConfirm({
-        title: 'Dispatch Selected Trips',
+        title: "Dispatch Selected Trips",
         message: `Are you sure you want to dispatch ${tripsToDispatch.length} selected trips to Live Trips?`,
-        confirmText: 'Dispatch All',
-        variant: 'accent',
+        confirmText: "Dispatch All",
+        variant: "accent",
         onConfirm: async () => {
           try {
             await Promise.all(
-              tripsToDispatch.map(id =>
+              tripsToDispatch.map((id) =>
                 updateBookingMutation({
                   id,
-                  payload: { bookingStatus: 'en_route' },
-                }).unwrap()
-              )
+                  payload: { bookingStatus: "en_route" },
+                }).unwrap(),
+              ),
             );
             toast.success(`${tripsToDispatch.length} trips dispatched to Live Trips`);
             setSelectedTrips([]);
             refresh();
           } catch (e: any) {
-            toast.error(apiErrorMessage(e, 'Failed to dispatch trips'));
+            toast.error(apiErrorMessage(e, "Failed to dispatch trips"));
           }
         },
       });
-    } else if (action === 'cancel') {
+    } else if (action === "cancel") {
       setShowBulkCancelModal(true);
     }
   };
@@ -380,36 +439,36 @@ const Bookings = ({ role }: { role?: string | null }) => {
     const pageIds = paginatedBookings.map((t: any) => t.id);
     const allSelected = pageIds.every((id: string) => selectedTrips.includes(id));
     if (allSelected) {
-      setSelectedTrips(prev => prev.filter(id => !pageIds.includes(id)));
+      setSelectedTrips((prev) => prev.filter((id) => !pageIds.includes(id)));
     } else {
-      setSelectedTrips(prev => [...new Set([...prev, ...pageIds])]);
+      setSelectedTrips((prev) => [...new Set([...prev, ...pageIds])]);
     }
   };
 
   const toggleSelectTrip = (id: string) => {
-    setSelectedTrips(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+    setSelectedTrips((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
   };
 
   const handleAssign = async (driverId: string) => {
     if (!selectedBookingId) return;
-    const driver = mergedDrivers.find(d => String(d.id) === String(driverId));
-    const driverName = driver?.name || 'Selected Driver';
+    const driver = mergedDrivers.find((d) => String(d.id) === String(driverId));
+    const driverName = driver?.name || "Selected Driver";
     openConfirm({
-      title: 'Assign Driver',
+      title: "Assign Driver",
       message: `Are you sure you want to assign ${driverName} to Booking #${selectedBookingId}?`,
-      confirmText: 'Assign Driver',
-      variant: 'primary',
+      confirmText: "Assign Driver",
+      variant: "primary",
       onConfirm: async () => {
         try {
           await updateBookingMutation({
             id: selectedBookingId,
-            payload: { driverId, bookingStatus: 'assigned', isApproved: 'approved' },
+            payload: { driverId, bookingStatus: "assigned", isApproved: "approved" },
           }).unwrap();
-          toast.success('Driver assigned — ready to dispatch');
+          toast.success("Driver assigned — ready to dispatch");
           setIsAssigning(false);
           refresh();
         } catch (e: any) {
-          toast.error(apiErrorMessage(e, 'Failed to assign driver'));
+          toast.error(apiErrorMessage(e, "Failed to assign driver"));
         }
       },
     });
@@ -426,29 +485,29 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const handleDispatch = async (id?: any) => {
-    const targetId = typeof id === 'string' ? id : selectedBookingId;
+    const targetId = typeof id === "string" ? id : selectedBookingId;
     if (!targetId) return;
     const targetTrip = bookingsList.find((t: any) => t.id === targetId);
     if (!targetTrip?.driverId) {
-      toast.error('Cannot dispatch: No driver assigned');
+      toast.error("Cannot dispatch: No driver assigned");
       return;
     }
     openConfirm({
-      title: 'Dispatch Trip',
+      title: "Dispatch Trip",
       message: `Are you sure you want to dispatch Booking #${targetId} to Live Trips?`,
-      confirmText: 'Dispatch Trip',
-      variant: 'accent',
+      confirmText: "Dispatch Trip",
+      variant: "accent",
       onConfirm: async () => {
         try {
           await updateBookingMutation({
             id: targetId,
-            payload: { bookingStatus: 'en_route' },
+            payload: { bookingStatus: "en_route" },
           }).unwrap();
-          toast.success('Trip dispatched to Live Trips');
+          toast.success("Trip dispatched to Live Trips");
           if (targetId === selectedBookingId) closeBooking();
           refresh();
         } catch (e: any) {
-          toast.error(apiErrorMessage(e, 'Failed to dispatch trip'));
+          toast.error(apiErrorMessage(e, "Failed to dispatch trip"));
         }
       },
     });
@@ -459,24 +518,24 @@ const Bookings = ({ role }: { role?: string | null }) => {
   };
 
   const handleApprove = async (id?: any) => {
-    const targetId = typeof id === 'string' ? id : selectedBookingId;
+    const targetId = typeof id === "string" ? id : selectedBookingId;
     if (!targetId) return;
     openConfirm({
-      title: 'Approve Booking',
+      title: "Approve Booking",
       message: `Are you sure you want to approve Booking #${targetId}?`,
-      confirmText: 'Approve Booking',
-      variant: 'accent',
+      confirmText: "Approve Booking",
+      variant: "accent",
       onConfirm: async () => {
         try {
           await updateBookingMutation({
             id: targetId,
-            payload: { isApproved: 'approved', bookingStatus: 'confirmed' },
+            payload: { isApproved: "approved", bookingStatus: "confirmed" },
           }).unwrap();
-          toast.success('Booking approved — moved to Ready to Assign');
+          toast.success("Booking approved — moved to Ready to Assign");
           refresh();
         } catch (e: any) {
           console.error(e);
-          toast.error(apiErrorMessage(e, 'Failed to approve booking'));
+          toast.error(apiErrorMessage(e, "Failed to approve booking"));
         }
       },
     });
@@ -492,14 +551,14 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const applyCancelToTrip = (trip: any, reason: string) => {
     const isNoShow = /no.?show/i.test(reason);
     const penalty = quotePenalty({
-      kind: isNoShow ? 'no_show' : 'late_cancel',
+      kind: isNoShow ? "no_show" : "late_cancel",
       fundingSourceId: trip?.fundingSourceId,
       fundingSource: trip?.fundingSource,
       hoursBeforePickup: hoursUntilPickup(trip?.scheduledTime),
       tripDate: trip?.scheduledTime,
     });
     return {
-      status: isNoShow ? 'no_show' : 'cancelled',
+      status: isNoShow ? "no_show" : "cancelled",
       cancelReason: reason,
       passengerCopay: penalty.passengerCopay,
       copay: penalty.passengerCopay,
@@ -509,11 +568,17 @@ const Bookings = ({ role }: { role?: string | null }) => {
     };
   };
 
-  const selectedBooking = selectedBookingId ? bookingsList.find((t: any) => t?.id === selectedBookingId) : null;
-  const selectedCancelPolicy = selectedBooking
-    ? findFundingPolicy(selectedBooking.fundingSourceId || selectedBooking.fundingSource || undefined)
+  const selectedBooking = selectedBookingId
+    ? bookingsList.find((t: any) => t?.id === selectedBookingId)
     : null;
-  const assignedDriver = selectedBooking?.driverId ? mergedDrivers.find((d: any) => d.id === selectedBooking.driverId) : null;
+  const selectedCancelPolicy = selectedBooking
+    ? findFundingPolicy(
+        selectedBooking.fundingSourceId || selectedBooking.fundingSource || undefined,
+      )
+    : null;
+  const assignedDriver = selectedBooking?.driverId
+    ? mergedDrivers.find((d: any) => d.id === selectedBooking.driverId)
+    : null;
 
   const driverQuery = driverSearch.toLowerCase().trim();
   const smartDrivers = [...(mergedDrivers || [])]
@@ -524,18 +589,24 @@ const Bookings = ({ role }: { role?: string | null }) => {
     )
     .filter((d: any) => {
       if (driverQuery) {
-        const hay = [d?.name, d?.id, d?.phone, d?.contact, d?.email].filter(Boolean).join(' ').toLowerCase();
+        const hay = [d?.name, d?.id, d?.phone, d?.contact, d?.email]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
         return hay.includes(driverQuery);
       }
       return isVehicleMatch(d, selectedBooking);
     })
     .map((driver: any) => {
-      const activeTrips = bookingsList.filter((t: any) =>
-        t?.driverId === driver?.id &&
-        ['assigned', 'confirmed', 'in-progress', 'en_route'].includes(t?.status) &&
-        t?.id !== selectedBookingId
+      const activeTrips = bookingsList.filter(
+        (t: any) =>
+          t?.driverId === driver?.id &&
+          ["assigned", "confirmed", "in-progress", "en_route"].includes(t?.status) &&
+          t?.id !== selectedBookingId,
       );
-      const hasConflict = activeTrips.some((t: any) => hasTimeConflict(t, selectedBooking?.scheduledTime || null));
+      const hasConflict = activeTrips.some((t: any) =>
+        hasTimeConflict(t, selectedBooking?.scheduledTime || null),
+      );
       return { ...driver, hasConflict };
     });
 
@@ -556,7 +627,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm font-medium text-ink">Could not load bookings</p>
           <p className="text-xs text-ink-4">Check your connection and try again.</p>
-          <Button variant="primary" onClick={() => refresh()}>Retry</Button>
+          <Button variant="primary" onClick={() => refresh()}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -569,7 +642,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
           trips={bookingsList}
           onClose={() => setShowManualModal(false)}
           onSave={(newTrip) => {
-            toast.success('Manual booking created');
+            toast.success("Manual booking created");
             setShowManualModal(false);
             refresh();
           }}
@@ -585,19 +658,19 @@ const Bookings = ({ role }: { role?: string | null }) => {
           onConfirm={async (reason) => {
             try {
               await Promise.all(
-                selectedTrips.map(id =>
+                selectedTrips.map((id) =>
                   updateBookingMutation({
                     id,
-                    payload: { isApproved: 'rejected', bookingStatus: 'cancelled' },
-                  }).unwrap()
-                )
+                    payload: { isApproved: "rejected", bookingStatus: "cancelled" },
+                  }).unwrap(),
+                ),
               );
               toast.success(`${selectedTrips.length} bookings cancelled`);
               setSelectedTrips([]);
               setShowBulkCancelModal(false);
               refresh();
             } catch (e: any) {
-              toast.error(apiErrorMessage(e, 'Failed to cancel bookings'));
+              toast.error(apiErrorMessage(e, "Failed to cancel bookings"));
             }
           }}
         />
@@ -614,13 +687,13 @@ const Bookings = ({ role }: { role?: string | null }) => {
               try {
                 await updateBookingMutation({
                   id: selectedBookingId,
-                  payload: { isApproved: 'rejected', bookingStatus: 'cancelled' },
+                  payload: { isApproved: "rejected", bookingStatus: "cancelled" },
                 }).unwrap();
-                toast.success('Booking declined');
+                toast.success("Booking declined");
                 closeBooking();
                 refresh();
               } catch (e: any) {
-                toast.error(apiErrorMessage(e, 'Failed to decline booking'));
+                toast.error(apiErrorMessage(e, "Failed to decline booking"));
               }
             }
             setShowCancelModal(false);
@@ -631,18 +704,22 @@ const Bookings = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="type-page-title">Booking Requests</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Review, dispatch &amp; manage rides — with live map</p>
+          <p className="text-sm text-ink-4 mt-0.5">
+            Review, dispatch &amp; manage rides — with live map
+          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setShowMap(v => !v)}
-            title={showMap ? 'Hide map' : 'Show map'}
-            className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${showMap ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-ink-3 border-line hover:text-ink hover:bg-bg'}`}
+            onClick={() => setShowMap((v) => !v)}
+            title={showMap ? "Hide map" : "Show map"}
+            className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${showMap ? "bg-primary text-white border-primary shadow-md" : "bg-white text-ink-3 border-line hover:text-ink hover:bg-bg"}`}
           >
             <MapIcon size={15} />
-            {showMap ? 'Hide Map' : 'Show Map'}
+            {showMap ? "Hide Map" : "Show Map"}
           </button>
-          <Button variant="primary" icon={Plus} onClick={() => navigate('/create-booking')}>Manual Entry</Button>
+          <Button variant="primary" icon={Plus} onClick={() => navigate("/create-booking")}>
+            Manual Entry
+          </Button>
         </div>
       </div>
 
@@ -654,9 +731,15 @@ const Bookings = ({ role }: { role?: string | null }) => {
             bookingSearch={bookingSearch}
             setBookingSearch={setBookingSearch}
             fundingFilter={fundingFilter}
-            setFundingFilter={(v: string) => { setFundingFilter(v); setCurrentPage(1); }}
+            setFundingFilter={(v: string) => {
+              setFundingFilter(v);
+              setCurrentPage(1);
+            }}
             assignFilter={assignFilter}
-            setAssignFilter={(v: DriverAssignmentFilter) => { setAssignFilter(v); setCurrentPage(1); }}
+            setAssignFilter={(v: DriverAssignmentFilter) => {
+              setAssignFilter(v);
+              setCurrentPage(1);
+            }}
             pendingCount={pendingCount}
             confirmedCount={confirmedCount}
             filteredTrips={filteredTrips}
@@ -680,7 +763,10 @@ const Bookings = ({ role }: { role?: string | null }) => {
             handleBulkAction={handleBulkAction}
             updateTrip={handleUpdateBooking}
             onEditTrip={(id) => setEditTripId(id)}
-            onRowSelect={(id) => { setMapTripId(id); setShowMap(true); }}
+            onRowSelect={(id) => {
+              setMapTripId(id);
+              setShowMap(true);
+            }}
             selectedMapId={mapTripId}
             isFetching={listFetching}
           />

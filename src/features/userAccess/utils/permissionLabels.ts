@@ -1,6 +1,6 @@
-import { ALL_PERMISSIONS, PERMISSION_GROUPS, ROLE_PERMISSIONS } from '../permissions';
+import { ALL_PERMISSIONS, PERMISSION_GROUPS, ROLE_PERMISSIONS } from "../permissions";
 
-const normalizeKey = (key: string) => (key.startsWith('/') ? key : `/${key}`);
+const normalizeKey = (key: string) => (key.startsWith("/") ? key : `/${key}`);
 
 export interface ResolvedPermission {
   key: string;
@@ -22,7 +22,7 @@ export function resolvePermissions(keys: string[]): ResolvedPermission[] {
   });
 
   wanted.forEach((key) => {
-    resolved.push({ key, label: key.replace(/^\//, ''), group: 'Other' });
+    resolved.push({ key, label: key.replace(/^\//, ""), group: "Other" });
   });
 
   return resolved;
@@ -32,11 +32,11 @@ export function permissionsForUser(user: {
   role?: string;
   permissions?: string[];
 }): ResolvedPermission[] {
-  const role = (user.role || 'dispatcher').toLowerCase();
-  if (role === 'admin') {
+  const role = (user.role || "dispatcher").toLowerCase();
+  if (role === "admin") {
     return resolvePermissions(ALL_PERMISSIONS);
   }
-  if (role === 'facility') {
+  if (role === "facility") {
     return resolvePermissions(ROLE_PERMISSIONS.facility || []);
   }
   const scope = user.permissions?.length ? user.permissions : [];

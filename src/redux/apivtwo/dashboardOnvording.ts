@@ -39,21 +39,25 @@ export interface IIncidentReportTrip {
   price?: number;
 }
 
-export type ReportResolutionStatus = "approved" | "rejected";
+export type ReportResolutionStatus = "pending" | "approved" | "rejected";
 
 export interface IUpdateReportStatusBody {
-  reportStatus: ReportResolutionStatus;
+  assignedUserId?: string;
+  reportStatus?: ReportResolutionStatus;
+  internalNote?: string;
 }
 
 export interface IIncidentReport {
   _id: string;
   userId?: IReportUser | string;
+  assignedUserId?: IReportUser | string;
   reportStatus: string;
   /** API category label (e.g. "Reckless or unsafe driving") */
   documents: string;
   reportedBy?: IReportUser | string;
   tripId?: IIncidentReportTrip | string | null;
   reason?: string;
+  internalNote?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -126,6 +130,16 @@ const normalizeReportsListResponse = (response: unknown): IReportsListResponse =
     pagination,
     data: list,
   };
+};
+
+export const DASHBOARD_PENDING_BOOKINGS = "/dashboard/pending-bookings";
+
+export type RecentPendingBooking = IBooking;
+
+export type RecentPendingBookingsResponse = {
+  success: boolean;
+  message: string;
+  data: RecentPendingBooking[];
 };
 
 export interface IActiveTripsListResponse {
@@ -251,6 +265,27 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
             ]
           : [{ type: "ActiveTrips", id: "LIST" }],
     }),
+
+    getRecentPendingBookings: builder.query<RecentPendingBookingsResponse, void>({
+      query: () => ({
+        url: DASHBOARD_PENDING_BOOKINGS,
+        method: "GET",
+      }),
+      providesTags: (result) =>
+        result?.data?.length
+          ? [
+              ...result.data.map(({ _id }) => ({
+                type: "bookings" as const,
+                id: _id,
+              })),
+              { type: "bookings", id: "PENDING_RECENT" },
+              { type: "bookings", id: "LIST" },
+            ]
+          : [
+              { type: "bookings", id: "PENDING_RECENT" },
+              { type: "bookings", id: "LIST" },
+            ],
+    }),
   }),
 });
 
@@ -261,4 +296,5 @@ export const {
   useGetSingleReportQuery,
   useUpdateReportStatusMutation,
   useGetActiveTripsQuery,
+  useGetRecentPendingBookingsQuery,
 } = dashboardOnvordingApi;

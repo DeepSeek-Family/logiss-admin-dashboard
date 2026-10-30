@@ -1,5 +1,5 @@
-import type { EntitySearchSelectItem } from '@/shared/components/ui/EntitySearchSelect';
-import { resolveMediaUrl } from '@/utils/imageUrl';
+import type { EntitySearchSelectItem } from "@/shared/components/ui/EntitySearchSelect";
+import { resolveMediaUrl } from "@/utils/imageUrl";
 export type AssignableVehicle = {
   id: string;
   name: string;
@@ -18,7 +18,7 @@ export const driverToSelectItem = (driver: {
   onDuty?: boolean;
 }): EntitySearchSelectItem => ({
   id: String(driver.id),
-  title: driver.name || 'Driver',
+  title: driver.name || "Driver",
   subtitle: driver.phone || driver.email || undefined,
   initials: driver.initials,
   imageUrl: resolveMediaUrl(driver.profile || driver.image),

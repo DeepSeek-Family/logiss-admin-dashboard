@@ -1,28 +1,23 @@
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Check, Loader2 } from 'lucide-react';
-import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from '@/redux/api/ridersApi';
-import { useGetAuthUserByIdQuery, useToggleUserBannedMutation } from '@/redux/api/userApi';
-import { mapApiBooking, apiErrorMessage } from '@/features/bookings/utils/helpers';
-import { mapApiRider } from '@/features/riders/utils/helpers';
-import toast from 'react-hot-toast';
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from "@/redux/api/ridersApi";
+import { useGetAuthUserByIdQuery, useToggleUserBannedMutation } from "@/redux/api/userApi";
+import { mapApiBooking, apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { mapApiRider } from "@/features/riders/utils/helpers";
+import toast from "react-hot-toast";
 
-import {
-  RiderProfile,
-  RiderKpiStrip,
-  RidersTable,
-  EditRiderModal
-} from '@/features/riders';
+import { RiderProfile, RiderKpiStrip, RidersTable, EditRiderModal } from "@/features/riders";
 
 const Riders = ({ role }: { role?: string | null }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
-  const selectedRiderId = searchParams.get('riderId');
+  const [search, setSearch] = useState(searchParams.get("searchTerm") || "");
+  const selectedRiderId = searchParams.get("riderId");
   const setSelectedRiderId = (riderId: string | null) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (riderId) next.set('riderId', riderId);
-      else next.delete('riderId');
+      if (riderId) next.set("riderId", riderId);
+      else next.delete("riderId");
       return next;
     });
     setHistoryPage(1);
@@ -30,7 +25,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [historyPage, setHistoryPage] = useState(1);
   const historyLimit = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [profileTab, setProfileTab] = useState<'overview' | 'trips'>('overview');
+  const [profileTab, setProfileTab] = useState<"overview" | "trips">("overview");
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -38,19 +33,28 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [editSuccessToast, setEditSuccessToast] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, any>>({});
 
-  const listParams = useMemo(() => ({
-    page: currentPage,
-    limit: itemsPerPage,
-    ...(search.trim() ? { searchTerm: search.trim() } : {}),
-  }), [currentPage, itemsPerPage, search]);
+  const listParams = useMemo(
+    () => ({
+      page: currentPage,
+      limit: itemsPerPage,
+      ...(search.trim() ? { searchTerm: search.trim() } : {}),
+    }),
+    [currentPage, itemsPerPage, search],
+  );
 
-  const { data: ridersResponse, isLoading, isError, error, refetch } = useGetRidersQuery(listParams, {
+  const {
+    data: ridersResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetRidersQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
   const [toggleUserBanned, { isLoading: isBanToggling }] = useToggleUserBannedMutation();
 
   const { data: historyResponse, isFetching: historyLoading } = useGetRiderHistoryQuery(
-    { id: selectedRiderId || '', page: historyPage, limit: historyLimit },
+    { id: selectedRiderId || "", page: historyPage, limit: historyLimit },
     { skip: !selectedRiderId, refetchOnMountOrArgChange: true },
   );
 
@@ -58,7 +62,7 @@ const Riders = ({ role }: { role?: string | null }) => {
     data: userDetailResponse,
     isLoading: userDetailLoading,
     isFetching: userDetailFetching,
-  } = useGetAuthUserByIdQuery(selectedRiderId || '', {
+  } = useGetAuthUserByIdQuery(selectedRiderId || "", {
     skip: !selectedRiderId,
     refetchOnMountOrArgChange: true,
   });
@@ -85,7 +89,7 @@ const Riders = ({ role }: { role?: string | null }) => {
 
   const toggleRiderBan = async (riderId: string, riderName?: string) => {
     const rider = riders.find((r) => r.id === riderId);
-    const isBanned = rider?.status === 'banned' || rider?.isBanned;
+    const isBanned = rider?.status === "banned" || rider?.isBanned;
     try {
       const res = await toggleUserBanned(riderId).unwrap();
       setOverrides((prev) => {
@@ -96,21 +100,20 @@ const Riders = ({ role }: { role?: string | null }) => {
       toast.success(
         res.message ||
           (nextBanned
-            ? `${riderName || rider?.name || 'Rider'} has been banned`
-            : `${riderName || rider?.name || 'Rider'} is active again`),
+            ? `${riderName || rider?.name || "Rider"} has been banned`
+            : `${riderName || rider?.name || "Rider"} is active again`),
       );
       void refetch();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to update ban status'));
+      toast.error(apiErrorMessage(err, "Failed to update ban status"));
       throw err;
     }
   };
 
   const updateRiderStatus = async (riderId: string, status: string) => {
     const rider = riders.find((r) => r.id === riderId);
-    const isBanned = rider?.status === 'banned' || rider?.isBanned;
-    const needsBanToggle =
-      (status === 'banned' && !isBanned) || (status === 'active' && isBanned);
+    const isBanned = rider?.status === "banned" || rider?.isBanned;
+    const needsBanToggle = (status === "banned" && !isBanned) || (status === "active" && isBanned);
 
     if (needsBanToggle) {
       await toggleRiderBan(riderId, rider?.name);
@@ -118,11 +121,14 @@ const Riders = ({ role }: { role?: string | null }) => {
     }
 
     setOverrides((prev) => ({ ...prev, [riderId]: { ...(prev[riderId] || {}), status } }));
-    toast.success(`${rider?.name || 'Rider'} marked as ${status}`);
+    toast.success(`${rider?.name || "Rider"} marked as ${status}`);
   };
 
   const updateRider = (riderId: string, updatedFields: Record<string, any>) => {
-    setOverrides((prev) => ({ ...prev, [riderId]: { ...(prev[riderId] || {}), ...updatedFields } }));
+    setOverrides((prev) => ({
+      ...prev,
+      [riderId]: { ...(prev[riderId] || {}), ...updatedFields },
+    }));
   };
 
   const historyUser = historyResponse?.data?.[0]?.userId;
@@ -131,12 +137,10 @@ const Riders = ({ role }: { role?: string | null }) => {
 
     const fromList = riders.find((r) => r.id === selectedRiderId);
     const fromHistory =
-      historyUser && typeof historyUser === 'object' && historyUser._id === selectedRiderId
+      historyUser && typeof historyUser === "object" && historyUser._id === selectedRiderId
         ? mapApiRider(historyUser as IRider)
         : null;
-    const fromDetail = userDetailResponse?.data
-      ? mapApiRider(userDetailResponse.data)
-      : null;
+    const fromDetail = userDetailResponse?.data ? mapApiRider(userDetailResponse.data) : null;
 
     const merged = {
       ...(fromList || fromHistory || {}),
@@ -165,7 +169,9 @@ const Riders = ({ role }: { role?: string | null }) => {
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-bg rounded-2xl animate-pulse"></div>)}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-bg rounded-2xl animate-pulse"></div>
+          ))}
         </div>
         <div className="h-[400px] bg-bg rounded-2xl animate-pulse"></div>
       </div>
@@ -177,7 +183,11 @@ const Riders = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
         <h3 className="text-lg font-semibold text-ink mb-2">Failed to load riders</h3>
-        <p className="text-ink-3 text-sm mb-4">{(error as any)?.data?.message || (error as any)?.error || 'Unable to fetch riders from the API'}</p>
+        <p className="text-ink-3 text-sm mb-4">
+          {(error as any)?.data?.message ||
+            (error as any)?.error ||
+            "Unable to fetch riders from the API"}
+        </p>
         <button
           onClick={() => refetch()}
           className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
@@ -232,7 +242,7 @@ const Riders = ({ role }: { role?: string | null }) => {
           role={role}
           onBack={() => {
             setSelectedRiderId(null);
-            setProfileTab('overview');
+            setProfileTab("overview");
           }}
           profileTab={profileTab}
           setProfileTab={setProfileTab}
@@ -251,7 +261,9 @@ const Riders = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Rider Directory</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Manage patient profiles, mobility needs, and trip history</p>
+          <p className="text-sm text-ink-4 mt-0.5">
+            Manage patient profiles, mobility needs, and trip history
+          </p>
         </div>
       </div>
 

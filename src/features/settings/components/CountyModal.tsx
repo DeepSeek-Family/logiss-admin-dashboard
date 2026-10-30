@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { X, MapPin, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
-import { CountyConfig } from '@/hooks/usePricing';
-import { resolveFenceLists, parsePolygon, seedFencePolygon } from '@/utils/geofenceEngine';
-import { GeofenceDrawMap } from './GeofenceDrawMap';
+import { useState, useEffect } from "react";
+import { X, MapPin, CheckCircle2, AlertCircle, Plus } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { CountyConfig } from "@/hooks/usePricing";
+import { resolveFenceLists, parsePolygon, seedFencePolygon } from "@/utils/geofenceEngine";
+import { GeofenceDrawMap } from "./GeofenceDrawMap";
 
 interface CountyModalProps {
   isOpen: boolean;
   county: CountyConfig | null;
   onClose: () => void;
-  onSave: (data: Omit<CountyConfig, 'id'>) => void;
+  onSave: (data: Omit<CountyConfig, "id">) => void;
 }
 
 function parseZip(raw: string): string | null {
-  const digits = raw.replace(/\D/g, '');
+  const digits = raw.replace(/\D/g, "");
   if (digits.length === 5) return digits;
   if (digits.length === 9) return digits.slice(0, 5);
   return null;
@@ -21,26 +21,26 @@ function parseZip(raw: string): string | null {
 
 export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProps) => {
   const [form, setForm] = useState({
-    name: '',
-    state: 'VA',
+    name: "",
+    state: "VA",
     localFare: 10,
-    status: 'active' as 'active' | 'inactive',
+    status: "active" as "active" | "inactive",
     zipCodes: [] as string[],
     cities: [] as string[],
     polygon: [] as [number, number][],
   });
-  const [zipDraft, setZipDraft] = useState('');
-  const [cityDraft, setCityDraft] = useState('');
+  const [zipDraft, setZipDraft] = useState("");
+  const [cityDraft, setCityDraft] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (county) {
       const lists = resolveFenceLists(county);
       setForm({
-        name: county.name || '',
-        state: county.state || 'VA',
+        name: county.name || "",
+        state: county.state || "VA",
         localFare: county.localFare != null ? county.localFare : 10,
-        status: county.status || 'active',
+        status: county.status || "active",
         zipCodes: [...lists.zipCodes],
         cities: [...lists.cities],
         polygon: Array.isArray(county.polygon)
@@ -49,17 +49,17 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
       });
     } else {
       setForm({
-        name: '',
-        state: 'VA',
+        name: "",
+        state: "VA",
         localFare: 10,
-        status: 'active',
+        status: "active",
         zipCodes: [],
         cities: [],
         polygon: [],
       });
     }
-    setZipDraft('');
-    setCityDraft('');
+    setZipDraft("");
+    setCityDraft("");
     setErrors({});
   }, [county, isOpen]);
 
@@ -68,33 +68,33 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
   const addZip = () => {
     const zip = parseZip(zipDraft);
     if (!zip) {
-      setErrors(prev => ({ ...prev, zip: 'Enter a 5-digit ZIP' }));
+      setErrors((prev) => ({ ...prev, zip: "Enter a 5-digit ZIP" }));
       return;
     }
     if (form.zipCodes.includes(zip)) {
-      setZipDraft('');
-      setErrors(prev => ({ ...prev, zip: '' }));
+      setZipDraft("");
+      setErrors((prev) => ({ ...prev, zip: "" }));
       return;
     }
     setForm({ ...form, zipCodes: [...form.zipCodes, zip] });
-    setZipDraft('');
-    setErrors(prev => ({ ...prev, zip: '' }));
+    setZipDraft("");
+    setErrors((prev) => ({ ...prev, zip: "" }));
   };
 
   const addCity = () => {
     const city = cityDraft.trim();
     if (!city) {
-      setErrors(prev => ({ ...prev, city: 'Enter a city or town' }));
+      setErrors((prev) => ({ ...prev, city: "Enter a city or town" }));
       return;
     }
-    if (form.cities.some(c => c.toLowerCase() === city.toLowerCase())) {
-      setCityDraft('');
-      setErrors(prev => ({ ...prev, city: '' }));
+    if (form.cities.some((c) => c.toLowerCase() === city.toLowerCase())) {
+      setCityDraft("");
+      setErrors((prev) => ({ ...prev, city: "" }));
       return;
     }
     setForm({ ...form, cities: [...form.cities, city] });
-    setCityDraft('');
-    setErrors(prev => ({ ...prev, city: '' }));
+    setCityDraft("");
+    setErrors((prev) => ({ ...prev, city: "" }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,14 +102,14 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
     const newErrors: { [key: string]: string } = {};
 
     if (!form.name.trim()) {
-      newErrors.name = 'Area name is required';
+      newErrors.name = "Area name is required";
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    const zipCodes = form.zipCodes.map(z => parseZip(z) || z.trim()).filter(Boolean);
+    const zipCodes = form.zipCodes.map((z) => parseZip(z) || z.trim()).filter(Boolean);
     const uniqueZips = [...new Set(zipCodes)];
     const seenCities = new Set<string>();
     const cities: string[] = [];
@@ -127,7 +127,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
       state: form.state.trim().toUpperCase(),
       localFare: Number(form.localFare) || 0,
       status: form.status,
-      notes: county?.notes || '',
+      notes: county?.notes || "",
       zipCodes: uniqueZips,
       cities,
       polygon: parsePolygon(form.polygon),
@@ -143,7 +143,9 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <MapPin size={18} />
             </div>
-            <h2 className="type-section-title">{county ? 'Edit service area' : 'Add service area'}</h2>
+            <h2 className="type-section-title">
+              {county ? "Edit service area" : "Add service area"}
+            </h2>
           </div>
           <button
             type="button"
@@ -163,10 +165,10 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                 value={form.name}
                 onChange={(e) => {
                   setForm({ ...form, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: '' });
+                  if (errors.name) setErrors({ ...errors, name: "" });
                 }}
                 placeholder="Chesterfield County"
-                className={`input-base h-10 w-full ${errors.name ? 'border-urgent focus:ring-urgent/20' : ''}`}
+                className={`input-base h-10 w-full ${errors.name ? "border-urgent focus:ring-urgent/20" : ""}`}
               />
               {errors.name && (
                 <p className="text-xs text-urgent mt-1 flex items-center gap-1">
@@ -188,9 +190,9 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
           </div>
 
           <GeofenceDrawMap
-            key={county?.id || 'new'}
+            key={county?.id || "new"}
             polygon={form.polygon}
-            onChange={poly => setForm(f => ({ ...f, polygon: poly }))}
+            onChange={(poly) => setForm((f) => ({ ...f, polygon: poly }))}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -198,7 +200,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
               <label className="type-label block text-ink-3 mb-1.5">ZIP codes</label>
               {form.zipCodes.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto mb-2">
-                  {form.zipCodes.map(zip => (
+                  {form.zipCodes.map((zip) => (
                     <span
                       key={zip}
                       className="inline-flex items-center gap-0.5 h-7 pl-2 pr-0.5 rounded-lg bg-bg border border-line-2 text-xs font-medium text-ink"
@@ -208,7 +210,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                         type="button"
                         aria-label={`Remove ZIP ${zip}`}
                         onClick={() =>
-                          setForm({ ...form, zipCodes: form.zipCodes.filter(z => z !== zip) })
+                          setForm({ ...form, zipCodes: form.zipCodes.filter((z) => z !== zip) })
                         }
                         className="p-0.5 text-ink-4 hover:text-urgent rounded"
                       >
@@ -225,19 +227,24 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                   maxLength={5}
                   value={zipDraft}
                   onChange={(e) => {
-                    setZipDraft(e.target.value.replace(/\D/g, '').slice(0, 5));
-                    if (errors.zip) setErrors({ ...errors, zip: '' });
+                    setZipDraft(e.target.value.replace(/\D/g, "").slice(0, 5));
+                    if (errors.zip) setErrors({ ...errors, zip: "" });
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       addZip();
                     }
                   }}
                   placeholder="5-digit ZIP"
-                  className={`input-base h-10 w-full ${errors.zip ? 'border-urgent focus:ring-urgent/20' : ''}`}
+                  className={`input-base h-10 w-full ${errors.zip ? "border-urgent focus:ring-urgent/20" : ""}`}
                 />
-                <Button type="button" variant="outline" onClick={addZip} className="h-10 shrink-0 rounded-xl px-3 text-sm">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addZip}
+                  className="h-10 shrink-0 rounded-xl px-3 text-sm"
+                >
                   <Plus size={16} /> Add
                 </Button>
               </div>
@@ -252,7 +259,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
               <label className="type-label block text-ink-3 mb-1.5">Cities</label>
               {form.cities.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto mb-2">
-                  {form.cities.map(city => (
+                  {form.cities.map((city) => (
                     <span
                       key={city}
                       className="inline-flex items-center gap-0.5 h-7 pl-2 pr-0.5 rounded-lg bg-bg border border-line-2 text-xs font-medium text-ink"
@@ -264,7 +271,9 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                         onClick={() =>
                           setForm({
                             ...form,
-                            cities: form.cities.filter(c => c.toLowerCase() !== city.toLowerCase()),
+                            cities: form.cities.filter(
+                              (c) => c.toLowerCase() !== city.toLowerCase(),
+                            ),
                           })
                         }
                         className="p-0.5 text-ink-4 hover:text-urgent rounded"
@@ -281,18 +290,23 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
                   value={cityDraft}
                   onChange={(e) => {
                     setCityDraft(e.target.value);
-                    if (errors.city) setErrors({ ...errors, city: '' });
+                    if (errors.city) setErrors({ ...errors, city: "" });
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       addCity();
                     }
                   }}
                   placeholder="City or town"
-                  className={`input-base h-10 w-full ${errors.city ? 'border-urgent focus:ring-urgent/20' : ''}`}
+                  className={`input-base h-10 w-full ${errors.city ? "border-urgent focus:ring-urgent/20" : ""}`}
                 />
-                <Button type="button" variant="outline" onClick={addCity} className="h-10 shrink-0 rounded-xl px-3 text-sm">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addCity}
+                  className="h-10 shrink-0 rounded-xl px-3 text-sm"
+                >
                   <Plus size={16} /> Add
                 </Button>
               </div>
@@ -309,15 +323,17 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
             <button
               type="button"
               role="switch"
-              aria-checked={form.status === 'active'}
-              onClick={() => setForm({ ...form, status: form.status === 'active' ? 'inactive' : 'active' })}
+              aria-checked={form.status === "active"}
+              onClick={() =>
+                setForm({ ...form, status: form.status === "active" ? "inactive" : "active" })
+              }
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                form.status === 'active' ? 'bg-primary' : 'bg-line-2'
+                form.status === "active" ? "bg-primary" : "bg-line-2"
               }`}
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                  form.status === 'active' ? 'translate-x-5' : 'translate-x-0'
+                  form.status === "active" ? "translate-x-5" : "translate-x-0"
                 }`}
               />
             </button>
@@ -340,7 +356,7 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
               className="h-10 min-w-[7.5rem] rounded-xl px-4 text-sm"
             >
               <CheckCircle2 size={16} />
-              {county ? 'Save' : 'Add area'}
+              {county ? "Save" : "Add area"}
             </Button>
           </div>
         </form>

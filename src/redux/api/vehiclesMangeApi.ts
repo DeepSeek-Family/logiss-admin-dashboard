@@ -105,19 +105,19 @@ const vehicleManageApi = baseApi.injectEndpoints({
     }),
     assignVehicleDriver: builder.mutation<IVehicleAssignResponse, IVehicleAssignPayload>({
       query: (body) => ({
-        url: '/vehicle-assign',
-        method: 'POST',
+        url: "/vehicle-assign",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Vehicles', 'Drivers'],
+      invalidatesTags: ["Vehicles", "Drivers"],
     }),
     updateVehicleAssign: builder.mutation<IVehicleAssignResponse, IVehicleAssignUpdateArgs>({
       query: ({ id, body }) => ({
         url: `/vehicle-assign/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['Vehicles', 'Drivers'],
+      invalidatesTags: ["Vehicles", "Drivers"],
     }),
   }),
   overrideExisting: false,

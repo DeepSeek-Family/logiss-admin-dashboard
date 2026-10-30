@@ -1,22 +1,22 @@
-import { useState } from 'react';
-import { UserPlus, Loader2, Users } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { Button, EmptyState, QueryFeedback, ConfirmationModal } from '@/shared/components/ui';
-import { useUsers, type User } from '@/hooks/useUsers';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { useState } from "react";
+import { UserPlus, Loader2, Users } from "lucide-react";
+import toast from "react-hot-toast";
+import { Button, EmptyState, QueryFeedback, ConfirmationModal } from "@/shared/components/ui";
+import { useUsers, type User } from "@/hooks/useUsers";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 
 import {
   InviteUserModal,
   UsersTable,
   DEFAULT_DISPATCH_PERMISSIONS,
   type InviteData,
-} from '@/features/userAccess';
+} from "@/features/userAccess";
 
 const emptyInviteData = (): InviteData => ({
-  firstName: '',
-  lastName: '',
-  email: '',
-  role: '',
+  firstName: "",
+  lastName: "",
+  email: "",
+  role: "",
   permissions: [...DEFAULT_DISPATCH_PERMISSIONS],
 });
 
@@ -35,9 +35,9 @@ const UserAccess = ({ role }: { role?: string | null }) => {
       const result = await inviteUser(inviteData);
       setShowInviteModal(false);
       setInviteData(emptyInviteData());
-      toast.success(result?.message || 'Dispatcher added successfully');
+      toast.success(result?.message || "Dispatcher added successfully");
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to add dispatcher'));
+      toast.error(apiErrorMessage(err, "Failed to add dispatcher"));
     } finally {
       setInviteSubmitting(false);
     }
@@ -48,10 +48,10 @@ const UserAccess = ({ role }: { role?: string | null }) => {
     setRevokeLoading(true);
     try {
       await toggleStatus(revokeTarget.id);
-      toast.success('User banned — access revoked');
+      toast.success("User banned — access revoked");
       setRevokeTarget(null);
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to revoke access'));
+      toast.error(apiErrorMessage(err, "Failed to revoke access"));
     } finally {
       setRevokeLoading(false);
     }
@@ -72,7 +72,10 @@ const UserAccess = ({ role }: { role?: string | null }) => {
     return (
       <QueryFeedback
         title="Could not load staff"
-        message={apiErrorMessage(loadError, 'Unable to fetch dispatchers. Check your connection and try again.')}
+        message={apiErrorMessage(
+          loadError,
+          "Unable to fetch dispatchers. Check your connection and try again.",
+        )}
         onRetry={() => refetch()}
       />
     );
@@ -83,10 +86,12 @@ const UserAccess = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="type-page-title">User Management</h1>
-          <p className="text-ink-3 font-semibold mt-1 tracking-normal">Manage Admin, Driver &amp; Customer access</p>
+          <p className="text-ink-3 font-semibold mt-1 tracking-normal">
+            Manage Admin, Driver &amp; Customer access
+          </p>
         </div>
         <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>
-          Add Dispatcher
+          Add A Role
         </Button>
       </div>
 
@@ -97,7 +102,7 @@ const UserAccess = ({ role }: { role?: string | null }) => {
           description="Add a dispatcher to assign page permissions and manage dashboard access."
           action={
             <Button variant="primary" icon={UserPlus} onClick={() => setShowInviteModal(true)}>
-              Add Dispatcher
+              Add A Role
             </Button>
           }
         />
@@ -105,14 +110,14 @@ const UserAccess = ({ role }: { role?: string | null }) => {
         <UsersTable
           users={users}
           onRevokeAccess={(user) => {
-            if (user.status === 'active') setRevokeTarget(user);
+            if (user.status === "active") setRevokeTarget(user);
           }}
           onRestoreAccess={async (user) => {
             try {
               await toggleStatus(user.id);
-              toast.success('User unbanned — access restored');
+              toast.success("User unbanned — access restored");
             } catch (err) {
-              toast.error(apiErrorMessage(err, 'Failed to restore access'));
+              toast.error(apiErrorMessage(err, "Failed to restore access"));
             }
           }}
         />
@@ -133,8 +138,8 @@ const UserAccess = ({ role }: { role?: string | null }) => {
         title="Revoke access?"
         message={
           revokeTarget
-            ? `${[revokeTarget.firstName, revokeTarget.lastName].filter(Boolean).join(' ') || revokeTarget.name} will lose dashboard access. You can restore them later if needed.`
-            : ''
+            ? `${[revokeTarget.firstName, revokeTarget.lastName].filter(Boolean).join(" ") || revokeTarget.name} will lose dashboard access. You can restore them later if needed.`
+            : ""
         }
         confirmText="Revoke access"
         variant="urgent"

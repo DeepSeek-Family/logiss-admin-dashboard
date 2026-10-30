@@ -1,38 +1,34 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { UserPlus, AlertTriangle, Loader2 } from 'lucide-react';
-import { Badge, Button } from '@/shared/components/ui';
+import { useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { UserPlus, AlertTriangle, Loader2 } from "lucide-react";
+import { Badge, Button } from "@/shared/components/ui";
 import {
   useCreateDriverMutation,
   useGetDriversQuery,
   useGetDriverTripHistoryQuery,
   type IDriverUser,
-} from '@/redux/api/driversApi';
-import { useToggleUserBannedMutation } from '@/redux/api/userApi';
-import { mapApiDriver } from '@/features/drivers/utils/helpers';
-import { apiErrorMessage, mapApiBooking } from '@/features/bookings/utils/helpers';
-import toast from 'react-hot-toast';
-import { useFleet } from '@/hooks/useFleet';
+} from "@/redux/api/driversApi";
+import { useToggleUserBannedMutation } from "@/redux/api/userApi";
+import { mapApiDriver } from "@/features/drivers/utils/helpers";
+import { apiErrorMessage, mapApiBooking } from "@/features/bookings/utils/helpers";
+import toast from "react-hot-toast";
+import { useFleet } from "@/hooks/useFleet";
 
-import {
-  AddDriverModal,
-  DriverProfile,
-  DriversTable
-} from '@/features/drivers';
+import { AddDriverModal, DriverProfile, DriversTable } from "@/features/drivers";
 
 const HISTORY_LIMIT = 10;
 
 const Drivers = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
-  const selectedDriverId = searchParams.get('driverId');
+  const [search, setSearch] = useState(searchParams.get("searchTerm") || "");
+  const selectedDriverId = searchParams.get("driverId");
   const [historyPage, setHistoryPage] = useState(1);
   const setSelectedDriverId = (driverId: string | null) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (driverId) next.set('driverId', driverId);
-      else next.delete('driverId');
+      if (driverId) next.set("driverId", driverId);
+      else next.delete("driverId");
       return next;
     });
     setHistoryPage(1);
@@ -44,17 +40,26 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const [assignedVehicles, setAssignedVehicles] = useState<Record<string, any>>({});
   const { vehicles: fleetVehicles, loading: fleetLoading, handleAssign } = useFleet();
 
-  const listParams = useMemo(() => ({
-    page: currentPage,
-    limit: itemsPerPage,
-    ...(search.trim() ? { searchTerm: search.trim() } : {}),
-  }), [currentPage, itemsPerPage, search]);
+  const listParams = useMemo(
+    () => ({
+      page: currentPage,
+      limit: itemsPerPage,
+      ...(search.trim() ? { searchTerm: search.trim() } : {}),
+    }),
+    [currentPage, itemsPerPage, search],
+  );
 
-  const { data: driversResponse, isLoading, isError, error, refetch } = useGetDriversQuery(listParams, {
+  const {
+    data: driversResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetDriversQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
   const { data: historyResponse, isFetching: historyLoading } = useGetDriverTripHistoryQuery(
-    { id: selectedDriverId || '', page: historyPage, limit: HISTORY_LIMIT },
+    { id: selectedDriverId || "", page: historyPage, limit: HISTORY_LIMIT },
     { skip: !selectedDriverId, refetchOnMountOrArgChange: true },
   );
   const driverTrips = useMemo(
@@ -65,10 +70,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const [createDriver, { isLoading: isCreatingDriver }] = useCreateDriverMutation();
   const [toggleUserBanned, { isLoading: isBanToggling }] = useToggleUserBannedMutation();
 
-  const drivers = useMemo(
-    () => (driversResponse?.data || []).map(mapApiDriver),
-    [driversResponse],
-  );
+  const drivers = useMemo(() => (driversResponse?.data || []).map(mapApiDriver), [driversResponse]);
 
   const pagination = driversResponse?.pagination;
 
@@ -76,11 +78,11 @@ const Drivers = ({ role }: { role?: string | null }) => {
     () =>
       fleetVehicles.map((v) => ({
         id: String(v.id),
-        name: [v.make, v.model].filter(Boolean).join(' ').trim() || 'Vehicle',
-        type: v.type || 'Van',
-        plate: v.plate || '—',
+        name: [v.make, v.model].filter(Boolean).join(" ").trim() || "Vehicle",
+        type: v.type || "Van",
+        plate: v.plate || "—",
       })),
-    [fleetVehicles]
+    [fleetVehicles],
   );
 
   const totalItems = pagination?.total ?? drivers.length;
@@ -89,7 +91,9 @@ const Drivers = ({ role }: { role?: string | null }) => {
   const historyDriver = historyResponse?.data?.[0]?.driverId;
   const selectedDriver = selectedDriverId
     ? drivers.find((d: any) => d.id === selectedDriverId) ||
-      (historyDriver && typeof historyDriver === 'object' && (historyDriver as IDriverUser)._id === selectedDriverId
+      (historyDriver &&
+      typeof historyDriver === "object" &&
+      (historyDriver as IDriverUser)._id === selectedDriverId
         ? mapApiDriver(historyDriver as IDriverUser)
         : null)
     : null;
@@ -112,9 +116,9 @@ const Drivers = ({ role }: { role?: string | null }) => {
     if (!match) return null;
     return {
       id: String(match.id),
-      name: [match.make, match.model].filter(Boolean).join(' ').trim() || 'Vehicle',
-      type: match.type || 'Van',
-      plate: match.plate || '—',
+      name: [match.make, match.model].filter(Boolean).join(" ").trim() || "Vehicle",
+      type: match.type || "Van",
+      plate: match.plate || "—",
     };
   }, [selectedDriver?.id, selectedDriver?.assignedVehicle, assignedVehicles, fleetVehicles]);
 
@@ -137,8 +141,13 @@ const Drivers = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
         <h3 className="text-lg font-semibold text-ink mb-2">Failed to load drivers</h3>
-        <p className="text-ink-3 text-sm mb-4">{apiErrorMessage(error, 'Unable to fetch drivers')}</p>
-        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
+        <p className="text-ink-3 text-sm mb-4">
+          {apiErrorMessage(error, "Unable to fetch drivers")}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+        >
           Retry
         </button>
       </div>
@@ -159,25 +168,27 @@ const Drivers = ({ role }: { role?: string | null }) => {
     try {
       const res = await toggleUserBanned(selectedDriver.id).unwrap();
       const nextBanned = res.data?.isBanned ?? !selectedDriver.isBanned;
-      toast.success(
-        res.message || (nextBanned ? 'Driver banned' : 'Driver unbanned'),
-      );
+      toast.success(res.message || (nextBanned ? "Driver banned" : "Driver unbanned"));
       refetch();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to update ban status'));
+      toast.error(apiErrorMessage(err, "Failed to update ban status"));
     }
   };
 
   const getStatusBadge = (status: string) => {
     const config: { [key: string]: any } = {
-      available: { variant: 'accent', label: 'Available' },
-      in_trip: { variant: 'solid_accent', label: 'In Trip' },
-      break: { variant: 'warning', label: 'On Break' },
-      off_duty: { variant: 'neutral', label: 'Off Duty' },
-      banned: { variant: 'urgent', label: 'Banned' },
+      available: { variant: "accent", label: "Available" },
+      in_trip: { variant: "solid_accent", label: "In Trip" },
+      break: { variant: "warning", label: "On Break" },
+      off_duty: { variant: "neutral", label: "Off Duty" },
+      banned: { variant: "urgent", label: "Banned" },
     };
-    const { variant, label } = config[status] || { variant: 'neutral', label: status };
-    return <Badge variant={variant} className="w-fit">{label}</Badge>;
+    const { variant, label } = config[status] || { variant: "neutral", label: status };
+    return (
+      <Badge variant={variant} className="w-fit">
+        {label}
+      </Badge>
+    );
   };
 
   const handleAssignVehicleToDriver = async (vehicleId: string) => {
@@ -192,7 +203,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
       setAssignedVehicles((prev) => ({ ...prev, [selectedDriver.id]: vehicle }));
       refetch();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to assign vehicle'));
+      toast.error(apiErrorMessage(err, "Failed to assign vehicle"));
       throw err;
     } finally {
       setVehicleAssignLoading(false);
@@ -213,7 +224,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
           tripsTotalPages={historyPagination?.totalPage || 1}
           tripsPerPage={HISTORY_LIMIT}
           onTripsPageChange={setHistoryPage}
-          onViewFleet={() => navigate('/fleet')}
+          onViewFleet={() => navigate("/fleet")}
           assignedVehicle={assignedVehicleForSelected}
           assignableVehicles={assignableVehicles}
           fleetLoading={fleetLoading}
@@ -235,11 +246,11 @@ const Drivers = ({ role }: { role?: string | null }) => {
           onSave={async (payload) => {
             try {
               await createDriver(payload).unwrap();
-              toast.success('Driver account created');
+              toast.success("Driver account created");
               setShowAddModal(false);
               refetch();
             } catch (err) {
-              toast.error(apiErrorMessage(err, 'Failed to create driver'));
+              toast.error(apiErrorMessage(err, "Failed to create driver"));
               throw err;
             }
           }}
@@ -249,10 +260,14 @@ const Drivers = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Driver Network</h1>
-          <p className="text-sm font-medium text-ink-3 mt-1">Manage driver accounts and compliance</p>
+          <p className="text-sm font-medium text-ink-3 mt-1">
+            Manage driver accounts and compliance
+          </p>
         </div>
-        {role === 'admin' && (
-          <Button variant="primary" icon={UserPlus} onClick={() => setShowAddModal(true)}>Create Driver Account</Button>
+        {role === "admin" && (
+          <Button variant="primary" icon={UserPlus} onClick={() => setShowAddModal(true)}>
+            Create Driver Account
+          </Button>
         )}
       </div>
 

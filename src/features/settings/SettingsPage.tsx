@@ -1,4 +1,4 @@
-import { SecurityTab } from '@/features/settings';
+import { SecurityTab } from "@/features/settings";
 
 const Settings = () => {
   return (
