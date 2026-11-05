@@ -8,7 +8,9 @@ type GoogleMapsNs = {
           routes?: Array<{
             path?: unknown[];
             legs?: Array<{ path?: unknown[] }>;
-            createPolylines?: (opts?: Record<string, unknown>) => Array<{ setMap: (map: unknown | null) => void }>;
+            createPolylines?: (
+              opts?: Record<string, unknown>,
+            ) => Array<{ setMap: (map: unknown | null) => void }>;
           }>;
         }>;
       };
@@ -22,17 +24,22 @@ const routePathCache = new Map<string, LatLngPoint[]>();
 let googleRoutesBlocked = false;
 
 function cacheKey(points: LatLngPoint[]): string {
-  return points.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join('|');
+  return points.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join("|");
 }
 
 function toLatLngPoint(value: unknown): LatLngPoint | null {
-  if (!value || typeof value !== 'object') return null;
+  if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
-  const nested = v.location && typeof v.location === 'object' ? (v.location as Record<string, unknown>) : v;
+  const nested =
+    v.location && typeof v.location === "object" ? (v.location as Record<string, unknown>) : v;
   const latRaw =
-    typeof nested.lat === 'function' ? (nested.lat as () => number)() : nested.lat ?? nested.latitude;
+    typeof nested.lat === "function"
+      ? (nested.lat as () => number)()
+      : (nested.lat ?? nested.latitude);
   const lngRaw =
-    typeof nested.lng === 'function' ? (nested.lng as () => number)() : nested.lng ?? nested.longitude;
+    typeof nested.lng === "function"
+      ? (nested.lng as () => number)()
+      : (nested.lng ?? nested.longitude);
   const lat = Number(latRaw);
   const lng = Number(lngRaw);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -45,20 +52,20 @@ function pointsFromUnknown(list: unknown): LatLngPoint[] {
 }
 
 function formatRoutesError(err: unknown): string {
-  if (!err) return 'Unknown Routes error';
-  if (typeof err === 'string') return err;
+  if (!err) return "Unknown Routes error";
+  if (typeof err === "string") return err;
   const e = err as Record<string, unknown>;
   const status = e.status || e.code;
   const message = e.message || e.statusText;
-  return [status, message].filter(Boolean).join(': ') || String(err);
+  return [status, message].filter(Boolean).join(": ") || String(err);
 }
 
 function isRoutesPermissionDenied(err: unknown): boolean {
   const text = formatRoutesError(err).toUpperCase();
   return (
-    text.includes('PERMISSION_DENIED') ||
-    text.includes('REQUEST_DENIED') ||
-    text.includes('API_KEY_SERVICE_BLOCKED')
+    text.includes("PERMISSION_DENIED") ||
+    text.includes("REQUEST_DENIED") ||
+    text.includes("API_KEY_SERVICE_BLOCKED")
   );
 }
 
@@ -69,17 +76,17 @@ async function computeRoutePathViaMapsJs(
   intermediates: LatLngPoint[],
 ): Promise<LatLngPoint[] | null> {
   const importLibrary = google.maps.importLibrary;
-  if (typeof importLibrary !== 'function') return null;
+  if (typeof importLibrary !== "function") return null;
 
-  const lib = await importLibrary('routes');
+  const lib = await importLibrary("routes");
   const Route = lib?.Route;
   if (!Route?.computeRoutes) return null;
 
   const request: Record<string, unknown> = {
     origin,
     destination,
-    travelMode: 'DRIVING',
-    fields: ['path', 'legs'],
+    travelMode: "DRIVING",
+    fields: ["path", "legs"],
   };
   if (intermediates.length) {
     request.intermediates = intermediates.map((location) => ({ location }));
@@ -97,7 +104,7 @@ async function computeRoutePathViaMapsJs(
 }
 
 async function computeRoutePathViaOsrm(points: LatLngPoint[]): Promise<LatLngPoint[] | null> {
-  const coords = points.map((p) => `${p.lng},${p.lat}`).join(';');
+  const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
   const response = await fetch(
     `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
   );
@@ -151,7 +158,7 @@ export async function getDrivingRoutePath(
       return osrmPath;
     }
   } catch (err) {
-    console.warn('[Maps] Road-following fallback failed', err);
+    console.warn("[Maps] Road-following fallback failed", err);
   }
 
   return waypointPoints;
@@ -161,8 +168,8 @@ export function createDirectionalRoutePolyline(
   google: GoogleMapsNs,
   map: unknown,
   path: LatLngPoint[],
-  strokeColor = '#2969CD',
-): InstanceType<GoogleMapsNs['maps']['Polyline']> | null {
+  strokeColor = "#2969CD",
+): InstanceType<GoogleMapsNs["maps"]["Polyline"]> | null {
   if (path.length < 2) return null;
   return new google.maps.Polyline({
     path,

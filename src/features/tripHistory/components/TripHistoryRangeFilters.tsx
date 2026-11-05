@@ -1,9 +1,9 @@
-import React from 'react';
-import { DollarSign } from 'lucide-react';
-import { useGetAllPayersQuery } from '@/redux/api/bookingApi';
+import React from "react";
+import { DollarSign } from "lucide-react";
+import { useGetAllPayersQuery } from "@/redux/api/bookingApi";
 
 const DATE_INPUT =
-  'bg-white border rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer';
+  "bg-white border rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer";
 
 export interface TripHistoryRangeFiltersProps {
   startDate: string;
@@ -36,7 +36,7 @@ export const TripHistoryRangeFilters: React.FC<TripHistoryRangeFiltersProps> = (
           value={startDate}
           max={endDate || undefined}
           onChange={(e) => onStartDateChange(e.target.value)}
-          className={`${DATE_INPUT} ${dateRangeError ? 'border-urgent' : 'border-line'}`}
+          className={`${DATE_INPUT} ${dateRangeError ? "border-urgent" : "border-line"}`}
           aria-invalid={Boolean(dateRangeError)}
         />
       </div>
@@ -47,7 +47,7 @@ export const TripHistoryRangeFilters: React.FC<TripHistoryRangeFiltersProps> = (
           value={endDate}
           min={startDate || undefined}
           onChange={(e) => onEndDateChange(e.target.value)}
-          className={`${DATE_INPUT} ${dateRangeError ? 'border-urgent' : 'border-line'}`}
+          className={`${DATE_INPUT} ${dateRangeError ? "border-urgent" : "border-line"}`}
           aria-invalid={Boolean(dateRangeError)}
         />
       </div>

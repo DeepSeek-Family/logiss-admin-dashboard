@@ -1,84 +1,84 @@
-import { baseApi } from '../baseApi'
-import type { IBooking, IBookingPagination } from './bookingApi'
+import { baseApi } from "../baseApi";
+import type { IBooking, IBookingPagination } from "./bookingApi";
 
 export interface IRiderDriverData {
-  driverExperience?: string
-  licenseNumber?: string
-  licenseClass?: string
-  expirationDate?: string
-  licenseImage?: string
+  driverExperience?: string;
+  licenseNumber?: string;
+  licenseClass?: string;
+  expirationDate?: string;
+  licenseImage?: string;
 }
 
 export interface IPayer {
-  _id: string
-  name: string
-  type?: string
-  isActive?: boolean
+  _id: string;
+  name: string;
+  type?: string;
+  isActive?: boolean;
 }
 
 export interface IRiderCounty {
-  _id?: string
-  name?: string
-  payersId?: IPayer | string
+  _id?: string;
+  name?: string;
+  payersId?: IPayer | string;
 }
 
 export interface IRider {
-  _id: string
-  id?: string
-  firstName: string
-  middleName?: string
-  lastName: string
-  dateOfBirth?: string
-  role?: string
-  driverData?: IRiderDriverData
-  authorizationID?: string
-  accessScope?: string[]
-  isBanned?: boolean
-  isAdminVerifiedDriver?: boolean
-  county?: string | IRiderCounty | null
-  email?: string
-  contact?: string
-  applicationStatus?: string
-  isOnDuty?: boolean
-  trip?: number
-  profile?: string
-  verified?: boolean
-  deviceToken?: string | null
-  fcmToken?: string | null
-  createdAt?: string
-  updatedAt?: string
-  totalRiderAmount?: number
-  totalOrganizationAmount?: number
-  totalAmount?: number
-  isPushNotificationEnabled?: boolean
+  _id: string;
+  id?: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  dateOfBirth?: string;
+  role?: string;
+  driverData?: IRiderDriverData;
+  authorizationID?: string;
+  accessScope?: string[];
+  isBanned?: boolean;
+  isAdminVerifiedDriver?: boolean;
+  county?: string | IRiderCounty | null;
+  email?: string;
+  contact?: string;
+  applicationStatus?: string;
+  isOnDuty?: boolean;
+  trip?: number;
+  profile?: string;
+  verified?: boolean;
+  deviceToken?: string | null;
+  fcmToken?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  totalRiderAmount?: number;
+  totalOrganizationAmount?: number;
+  totalAmount?: number;
+  isPushNotificationEnabled?: boolean;
 }
 
 export interface IGetRidersQueryParams {
-  page?: number
-  limit?: number
-  search?: string
-  searchTerm?: string
-  [key: string]: any
+  page?: number;
+  limit?: number;
+  search?: string;
+  searchTerm?: string;
+  [key: string]: any;
 }
 
 export interface IGetRidersResponse {
-  success: boolean
-  message: string
-  pagination?: IBookingPagination
-  data: IRider[]
+  success: boolean;
+  message: string;
+  pagination?: IBookingPagination;
+  data: IRider[];
 }
 
 export interface IGetRiderHistoryQueryParams {
-  id: string
-  page?: number
-  limit?: number
+  id: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface IGetRiderHistoryResponse {
-  success: boolean
-  message: string
-  pagination?: IBookingPagination
-  data: IBooking[]
+  success: boolean;
+  message: string;
+  pagination?: IBookingPagination;
+  data: IBooking[];
 }
 
 const normalizeRidersResponse = (response: any): IGetRidersResponse => {
@@ -88,15 +88,15 @@ const normalizeRidersResponse = (response: any): IGetRidersResponse => {
       ? response.data
       : Array.isArray(response?.data?.data)
         ? response.data.data
-        : []
-  const pagination = response?.pagination || response?.data?.pagination
+        : [];
+  const pagination = response?.pagination || response?.data?.pagination;
   return {
     success: response?.success !== false,
-    message: response?.message || '',
+    message: response?.message || "",
     pagination,
     data: list,
-  }
-}
+  };
+};
 
 const normalizeRiderHistoryResponse = (response: any): IGetRiderHistoryResponse => {
   const list = Array.isArray(response)
@@ -105,61 +105,61 @@ const normalizeRiderHistoryResponse = (response: any): IGetRiderHistoryResponse 
       ? response.data
       : Array.isArray(response?.data?.data)
         ? response.data.data
-        : []
-  const pagination = response?.pagination || response?.data?.pagination
+        : [];
+  const pagination = response?.pagination || response?.data?.pagination;
   return {
     success: response?.success !== false,
-    message: response?.message || '',
+    message: response?.message || "",
     pagination,
     data: list,
-  }
-}
+  };
+};
 
 export const ridersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getRiders: builder.query<IGetRidersResponse, IGetRidersQueryParams | void>({
       query: (params) => {
-        const queryParams: Record<string, string | number> = {}
-        if (params && typeof params === 'object') {
-          if (params.page != null) queryParams.page = params.page
-          if (params.limit != null) queryParams.limit = params.limit
-          const searchVal = (params.searchTerm || params.search || '').trim()
-          if (searchVal) queryParams.searchTerm = searchVal
+        const queryParams: Record<string, string | number> = {};
+        if (params && typeof params === "object") {
+          if (params.page != null) queryParams.page = params.page;
+          if (params.limit != null) queryParams.limit = params.limit;
+          const searchVal = (params.searchTerm || params.search || "").trim();
+          if (searchVal) queryParams.searchTerm = searchVal;
         }
         return {
-          url: '/user/riders',
-          method: 'GET',
+          url: "/user/riders",
+          method: "GET",
           params: queryParams,
-        }
+        };
       },
       transformResponse: normalizeRidersResponse,
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'Riders' as const, id: _id })),
-              { type: 'Riders', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "Riders" as const, id: _id })),
+              { type: "Riders", id: "LIST" },
             ]
-          : [{ type: 'Riders', id: 'LIST' }],
+          : [{ type: "Riders", id: "LIST" }],
     }),
     getRiderHistory: builder.query<IGetRiderHistoryResponse, IGetRiderHistoryQueryParams>({
       query: ({ id, page, limit }) => {
-        const queryParams: Record<string, string | number> = {}
-        if (page != null) queryParams.page = page
-        if (limit != null) queryParams.limit = limit
+        const queryParams: Record<string, string | number> = {};
+        if (page != null) queryParams.page = page;
+        if (limit != null) queryParams.limit = limit;
         return {
           url: `/dashboard/rider/trip-history/${id}`,
-          method: 'GET',
+          method: "GET",
           params: queryParams,
-        }
+        };
       },
       transformResponse: normalizeRiderHistoryResponse,
       providesTags: (_result, _error, arg) => [
-        { type: 'Riders', id: `HISTORY-${arg.id}` },
-        { type: 'bookings', id: 'LIST' },
+        { type: "Riders", id: `HISTORY-${arg.id}` },
+        { type: "bookings", id: "LIST" },
       ],
     }),
   }),
   overrideExisting: false,
-})
+});
 
-export const { useGetRidersQuery, useGetRiderHistoryQuery } = ridersApi
+export const { useGetRidersQuery, useGetRiderHistoryQuery } = ridersApi;

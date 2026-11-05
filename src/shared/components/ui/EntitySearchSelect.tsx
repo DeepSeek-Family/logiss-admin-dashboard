@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { ChevronDown, Search, X, Check, Loader2, User, Car } from 'lucide-react';
-import { Avatar } from './Avatar';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { ChevronDown, Search, X, Check, Loader2, User, Car } from "lucide-react";
+import { Avatar } from "./Avatar";
 
 export type EntitySearchSelectItem = {
   id: string;
@@ -21,7 +21,7 @@ export interface EntitySearchSelectProps {
   placeholder?: string;
   searchPlaceholder?: string;
   triggerIcon?: LucideIcon;
-  entityKind?: 'person' | 'vehicle';
+  entityKind?: "person" | "vehicle";
   loading?: boolean;
   disabled?: boolean;
   selectedBadge?: string;
@@ -39,21 +39,21 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
   items,
   valueId,
   onChange,
-  placeholder = 'Select from list…',
-  searchPlaceholder = 'Search…',
+  placeholder = "Select from list…",
+  searchPlaceholder = "Search…",
   triggerIcon: TriggerIcon = User,
-  entityKind = 'person',
+  entityKind = "person",
   loading,
   disabled,
-  selectedBadge = 'Selected',
+  selectedBadge = "Selected",
   emptySearchText,
-  emptyListText = 'No items available',
+  emptyListText = "No items available",
   searchValue: controlledSearch,
   onSearchValueChange,
-  className = '',
+  className = "",
 }) => {
   const [open, setOpen] = useState(false);
-  const [internalSearch, setInternalSearch] = useState('');
+  const [internalSearch, setInternalSearch] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
 
   const search = controlledSearch !== undefined ? controlledSearch : internalSearch;
@@ -62,10 +62,7 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
     else setInternalSearch(v);
   };
 
-  const selected = useMemo(
-    () => items.find((i) => i.id === valueId) ?? null,
-    [items, valueId],
-  );
+  const selected = useMemo(() => items.find((i) => i.id === valueId) ?? null, [items, valueId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -73,7 +70,7 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
     return items.filter(
       (i) =>
         i.title.toLowerCase().includes(q) ||
-        (i.subtitle || '').toLowerCase().includes(q) ||
+        (i.subtitle || "").toLowerCase().includes(q) ||
         i.id.toLowerCase().includes(q),
     );
   }, [items, search]);
@@ -85,8 +82,8 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
       }
     };
     if (open) {
-      document.addEventListener('mousedown', onDocClick);
-      return () => document.removeEventListener('mousedown', onDocClick);
+      document.addEventListener("mousedown", onDocClick);
+      return () => document.removeEventListener("mousedown", onDocClick);
     }
   }, [open]);
 
@@ -94,14 +91,14 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
     if (item.imageUrl || item.initials) {
       return (
         <Avatar
-          initials={item.initials || '?'}
+          initials={item.initials || "?"}
           size="sm"
           src={item.imageUrl}
           online={item.online}
         />
       );
     }
-    const Icon = entityKind === 'vehicle' ? Car : User;
+    const Icon = entityKind === "vehicle" ? Car : User;
     return (
       <div className="w-8 h-8 rounded-full bg-bg border border-line-2 flex items-center justify-center shrink-0">
         <Icon size={14} className="text-ink-3" />
@@ -139,14 +136,14 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
           onClick={() => {
             if (disabled) return;
             setOpen((prev) => !prev);
-            if (!open) setSearch('');
+            if (!open) setSearch("");
           }}
           className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all disabled:opacity-60 ${
             open
-              ? 'border-primary ring-2 ring-primary/20 bg-white shadow-sm'
+              ? "border-primary ring-2 ring-primary/20 bg-white shadow-sm"
               : selected
-                ? 'border-primary/40 bg-primary/5 hover:border-primary'
-                : 'border-line-2 bg-bg/50 hover:bg-white hover:border-line'
+                ? "border-primary/40 bg-primary/5 hover:border-primary"
+                : "border-line-2 bg-bg/50 hover:bg-white hover:border-line"
           }`}
         >
           {selected ? (
@@ -175,7 +172,7 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
 
           <ChevronDown
             size={16}
-            className={`text-ink-4 transition-transform duration-200 shrink-0 ${open ? 'rotate-180 text-primary' : ''}`}
+            className={`text-ink-4 transition-transform duration-200 shrink-0 ${open ? "rotate-180 text-primary" : ""}`}
           />
         </button>
 
@@ -191,11 +188,14 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4" />
+                <Search
+                  size={14}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-4"
+                />
                 {search ? (
                   <button
                     type="button"
-                    onClick={() => setSearch('')}
+                    onClick={() => setSearch("")}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink"
                   >
                     <X size={12} />
@@ -226,17 +226,17 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
                       onClick={() => {
                         onChange(item.id, item);
                         setOpen(false);
-                        setSearch('');
+                        setSearch("");
                       }}
                       className={`w-full p-2.5 rounded-lg flex items-center justify-between gap-3 text-left transition-colors ${
-                        isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-bg text-ink'
+                        isSelected ? "bg-primary/10 text-primary" : "hover:bg-bg text-ink"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <ListLeading item={item} />
                         <div className="min-w-0">
                           <p
-                            className={`text-xs truncate ${isSelected ? 'font-semibold text-primary' : 'font-medium text-ink'}`}
+                            className={`text-xs truncate ${isSelected ? "font-semibold text-primary" : "font-medium text-ink"}`}
                           >
                             {item.title}
                           </p>

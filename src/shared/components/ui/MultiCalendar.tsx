@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type MultiCalendarProps = {
   selected?: Date[];
@@ -9,7 +9,13 @@ export type MultiCalendarProps = {
   initialMonth?: Date;
 };
 
-export function MultiCalendar({ selected = [], onSelect, className, disablePast = true, initialMonth }: MultiCalendarProps) {
+export function MultiCalendar({
+  selected = [],
+  onSelect,
+  className,
+  disablePast = true,
+  initialMonth,
+}: MultiCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(initialMonth || new Date());
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -29,14 +35,27 @@ export function MultiCalendar({ selected = [], onSelect, className, disablePast 
     return null;
   });
 
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
   const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   const toggleDate = (date: Date) => {
     if (!onSelect) return;
     const dateStr = date.toDateString();
-    const existingIndex = selected.findIndex(d => d.toDateString() === dateStr);
-    
+    const existingIndex = selected.findIndex((d) => d.toDateString() === dateStr);
+
     if (existingIndex >= 0) {
       onSelect(selected.filter((_, i) => i !== existingIndex));
     } else {
@@ -44,25 +63,35 @@ export function MultiCalendar({ selected = [], onSelect, className, disablePast 
     }
   };
 
-  const isSelected = (date: Date) => selected.some(d => d.toDateString() === date.toDateString());
+  const isSelected = (date: Date) => selected.some((d) => d.toDateString() === date.toDateString());
   const isToday = (date: Date) => date.toDateString() === new Date().toDateString();
 
   return (
-    <div className={`p-4 bg-white border border-line-2 rounded-xl shadow-sm select-none ${className || ''}`}>
+    <div
+      className={`p-4 bg-white border border-line-2 rounded-xl shadow-sm select-none ${className || ""}`}
+    >
       <div className="flex justify-between items-center mb-4">
-        <button type="button" onClick={() => setCurrentMonth(new Date(year, month - 1))} className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink">
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(new Date(year, month - 1))}
+          className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink"
+        >
           <ChevronLeft size={18} />
         </button>
         <span className="text-sm font-semibold text-ink">
           {monthNames[month]} {year}
         </span>
-        <button type="button" onClick={() => setCurrentMonth(new Date(year, month + 1))} className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink">
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(new Date(year, month + 1))}
+          className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink"
+        >
           <ChevronRight size={18} />
         </button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-2 text-center">
-        {dayNames.map(day => (
+        {dayNames.map((day) => (
           <div key={day} className="type-th">
             {day}
           </div>
@@ -72,10 +101,10 @@ export function MultiCalendar({ selected = [], onSelect, className, disablePast 
       <div className="grid grid-cols-7 gap-1">
         {days.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} className="h-8 w-8" />;
-          
+
           const isSel = isSelected(date);
           const isTod = isToday(date);
-          const isPast = disablePast && date < new Date(new Date().setHours(0,0,0,0));
+          const isPast = disablePast && date < new Date(new Date().setHours(0, 0, 0, 0));
 
           return (
             <button
@@ -85,9 +114,9 @@ export function MultiCalendar({ selected = [], onSelect, className, disablePast 
               disabled={isPast}
               className={`
                 h-8 w-8 rounded-md text-xs font-medium flex items-center justify-center transition-all
-                ${isSel ? 'bg-primary text-white shadow-md' : 'text-ink hover:bg-bg'}
-                ${isTod && !isSel ? 'border border-primary/30 text-primary' : ''}
-                ${isPast ? 'opacity-30 cursor-not-allowed hover:bg-transparent' : 'cursor-pointer'}
+                ${isSel ? "bg-primary text-white shadow-md" : "text-ink hover:bg-bg"}
+                ${isTod && !isSel ? "border border-primary/30 text-primary" : ""}
+                ${isPast ? "opacity-30 cursor-not-allowed hover:bg-transparent" : "cursor-pointer"}
               `}
             >
               {date.getDate()}

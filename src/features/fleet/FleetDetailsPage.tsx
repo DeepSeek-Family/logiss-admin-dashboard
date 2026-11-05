@@ -1,34 +1,57 @@
-import { useEffect, type ReactNode } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, type ReactNode } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle, ChevronLeft, Hash, Loader2, Gauge, Users,
-  CalendarClock, Shield, RefreshCw, Truck, FileText, User, Mail, Phone,
-} from 'lucide-react';
-import { Card, Badge, Button, StatCard, Avatar } from '@/shared/components/ui';
-import { useGetVehicleByIdQuery } from '@/redux/api/vehiclesMangeApi';
-import type { IDriverUser } from '@/redux/api/driversApi';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
-import { mapDriverBase } from '@/features/drivers/utils/helpers';
-import { VehicleDriverAssignCard } from '@/features/fleet/components/VehicleDriverAssignCard';
+  AlertTriangle,
+  ChevronLeft,
+  Hash,
+  Loader2,
+  Gauge,
+  Users,
+  CalendarClock,
+  Shield,
+  RefreshCw,
+  Truck,
+  FileText,
+  User,
+  Mail,
+  Phone,
+} from "lucide-react";
+import { Card, Badge, Button, StatCard, Avatar } from "@/shared/components/ui";
+import { useGetVehicleByIdQuery } from "@/redux/api/vehiclesMangeApi";
+import type { IDriverUser } from "@/redux/api/driversApi";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { mapDriverBase } from "@/features/drivers/utils/helpers";
+import { VehicleDriverAssignCard } from "@/features/fleet/components/VehicleDriverAssignCard";
 
 const formatDate = (iso?: string) => {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '—';
+  if (isNaN(d.getTime())) return "—";
   // Backend stores calendar dates as UTC midnight; format in UTC so the day doesn't shift.
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 };
 
 const formatDateTime = (iso?: string) => {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const d = new Date(iso);
   return isNaN(d.getTime())
-    ? '—'
-    : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    ? "—"
+    : d.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
 };
 
 const formatConfiguration = (val?: string) =>
-  val ? val.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '—';
+  val ? val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "—";
 
 const isPast = (iso?: string) => {
   if (!iso) return false;
@@ -51,10 +74,13 @@ const FleetDetails = (_props: { role?: string | null }) => {
     window.scrollTo(0, 0);
   }, []);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useGetVehicleByIdQuery(id as string, {
-    skip: !id,
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, isLoading, isError, error, refetch, isFetching } = useGetVehicleByIdQuery(
+    id as string,
+    {
+      skip: !id,
+      refetchOnMountOrArgChange: true,
+    },
+  );
   const vehicle = data?.data;
 
   if (isLoading) {
@@ -74,13 +100,23 @@ const FleetDetails = (_props: { role?: string | null }) => {
         <div className="w-20 h-20 bg-urgent-light text-urgent rounded-3xl flex items-center justify-center mb-6">
           <AlertTriangle size={40} />
         </div>
-        <h2 className="text-2xl font-semibold text-ink mb-2">{isError ? 'Failed to load vehicle' : 'Vehicle Not Found'}</h2>
+        <h2 className="text-2xl font-semibold text-ink mb-2">
+          {isError ? "Failed to load vehicle" : "Vehicle Not Found"}
+        </h2>
         <p className="text-ink-3 mb-8 max-w-sm">
-          {isError ? apiErrorMessage(error, 'Something went wrong while fetching this vehicle.') : `The vehicle with ID #${id} could not be located.`}
+          {isError
+            ? apiErrorMessage(error, "Something went wrong while fetching this vehicle.")
+            : `The vehicle with ID #${id} could not be located.`}
         </p>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/fleet')}>Back to Fleet</Button>
-          {isError && <Button variant="primary" icon={RefreshCw} onClick={() => refetch()}>Retry</Button>}
+          <Button variant="outline" onClick={() => navigate("/fleet")}>
+            Back to Fleet
+          </Button>
+          {isError && (
+            <Button variant="primary" icon={RefreshCw} onClick={() => refetch()}>
+              Retry
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -90,7 +126,7 @@ const FleetDetails = (_props: { role?: string | null }) => {
   const serviceOverdue = isPast(vehicle.nextServiceDate);
 
   const assignedDriver =
-    vehicle.driver && typeof vehicle.driver === 'object' && vehicle.driver._id
+    vehicle.driver && typeof vehicle.driver === "object" && vehicle.driver._id
       ? mapDriverBase(vehicle.driver as IDriverUser)
       : null;
 
@@ -99,77 +135,111 @@ const FleetDetails = (_props: { role?: string | null }) => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate('/fleet')}
+          onClick={() => navigate("/fleet")}
           className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-line-2 text-ink-3 hover:text-primary hover:border-primary/20 transition-all shadow-sm"
         >
           <ChevronLeft size={24} />
         </button>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="type-page-title">{vehicle.manufacturer} {vehicle.model}</h1>
-            <Badge variant={vehicle.isActive === false ? 'urgent' : 'accent'}>
-              {vehicle.isActive === false ? 'Inactive' : 'Active'}
+            <h1 className="type-page-title">
+              {vehicle.manufacturer} {vehicle.model}
+            </h1>
+            <Badge variant={vehicle.isActive === false ? "urgent" : "accent"}>
+              {vehicle.isActive === false ? "Inactive" : "Active"}
             </Badge>
             {isFetching && <Loader2 size={16} className="text-primary animate-spin" />}
           </div>
           <p className="text-xs text-ink-4 flex items-center gap-2 mt-1">
-            <Hash size={14} className="text-primary" /> {vehicle._id} ·{' '}
-            <span className="text-ink bg-bg px-2 py-0.5 rounded border border-line-2">{vehicle.licensePlateNumber || '—'}</span> · {vehicle.year || '—'}
+            <Hash size={14} className="text-primary" /> {vehicle._id} ·{" "}
+            <span className="text-ink bg-bg px-2 py-0.5 rounded border border-line-2">
+              {vehicle.licensePlateNumber || "—"}
+            </span>{" "}
+            · {vehicle.year || "—"}
           </p>
         </div>
       </div>
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} icon={Gauge} />
-        <StatCard label="Max Passengers" value={vehicle.maxPassengers ?? '—'} icon={Users} sub="Rider limit" />
+        <StatCard
+          label="Odometer"
+          value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`}
+          icon={Gauge}
+        />
+        <StatCard
+          label="Max Passengers"
+          value={vehicle.maxPassengers ?? "—"}
+          icon={Users}
+          sub="Rider limit"
+        />
         <StatCard
           label="Next Service"
           value={formatDate(vehicle.nextServiceDate)}
           icon={CalendarClock}
-          accent={serviceOverdue ? 'urgent' : 'primary'}
-          sub={serviceOverdue ? 'Overdue' : undefined}
+          accent={serviceOverdue ? "urgent" : "primary"}
+          sub={serviceOverdue ? "Overdue" : undefined}
         />
         <StatCard
           label="Insurance Expires"
           value={formatDate(vehicle.insuranceExpirationDate)}
           icon={Shield}
-          accent={insuranceExpired ? 'urgent' : 'accent'}
-          sub={insuranceExpired ? 'Expired' : 'Valid'}
+          accent={insuranceExpired ? "urgent" : "accent"}
+          sub={insuranceExpired ? "Expired" : "Valid"}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <Card className="p-6">
-            <h4 className="type-th mb-4 flex items-center gap-2"><Truck size={14} className="text-primary" /> Vehicle Information</h4>
-            <DetailRow label="Manufacturer" value={vehicle.manufacturer || '—'} />
-            <DetailRow label="Model" value={vehicle.model || '—'} />
-            <DetailRow label="Year" value={vehicle.year || '—'} />
-            <DetailRow label="License Plate" value={vehicle.licensePlateNumber || '—'} />
-            <DetailRow label="VIN Number" value={<span className="font-mono">{vehicle.vinNumber || '—'}</span>} />
-            <DetailRow label="Configuration" value={formatConfiguration(vehicle.configurationType)} />
-            <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? '—'} />
+            <h4 className="type-th mb-4 flex items-center gap-2">
+              <Truck size={14} className="text-primary" /> Vehicle Information
+            </h4>
+            <DetailRow label="Manufacturer" value={vehicle.manufacturer || "—"} />
+            <DetailRow label="Model" value={vehicle.model || "—"} />
+            <DetailRow label="Year" value={vehicle.year || "—"} />
+            <DetailRow label="License Plate" value={vehicle.licensePlateNumber || "—"} />
+            <DetailRow
+              label="VIN Number"
+              value={<span className="font-mono">{vehicle.vinNumber || "—"}</span>}
+            />
+            <DetailRow
+              label="Configuration"
+              value={formatConfiguration(vehicle.configurationType)}
+            />
+            <DetailRow label="Max Passengers" value={vehicle.maxPassengers ?? "—"} />
             <DetailRow label="Odometer" value={`${(vehicle.odometer ?? 0).toLocaleString()} mi`} />
           </Card>
 
           <Card className="p-6">
-            <h4 className="type-th mb-4 flex items-center gap-2"><Shield size={14} className="text-primary" /> Insurance & Service</h4>
-            <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || '—'} />
-            <DetailRow label="Policy Number" value={vehicle.policyNumber || '—'} />
+            <h4 className="type-th mb-4 flex items-center gap-2">
+              <Shield size={14} className="text-primary" /> Insurance & Service
+            </h4>
+            <DetailRow label="Carrier Provider" value={vehicle.carrierProvider || "—"} />
+            <DetailRow label="Policy Number" value={vehicle.policyNumber || "—"} />
             <DetailRow
               label="Insurance Expiration"
-              value={<span className={insuranceExpired ? 'text-urgent' : ''}>{formatDate(vehicle.insuranceExpirationDate)}</span>}
+              value={
+                <span className={insuranceExpired ? "text-urgent" : ""}>
+                  {formatDate(vehicle.insuranceExpirationDate)}
+                </span>
+              }
             />
             <DetailRow
               label="Next Service Date"
-              value={<span className={serviceOverdue ? 'text-urgent' : ''}>{formatDate(vehicle.nextServiceDate)}</span>}
+              value={
+                <span className={serviceOverdue ? "text-urgent" : ""}>
+                  {formatDate(vehicle.nextServiceDate)}
+                </span>
+              }
             />
           </Card>
 
           <Card className="p-6">
-            <h4 className="type-th mb-4 flex items-center gap-2"><FileText size={14} className="text-primary" /> Record</h4>
-            <DetailRow label="Status" value={vehicle.isActive === false ? 'Inactive' : 'Active'} />
+            <h4 className="type-th mb-4 flex items-center gap-2">
+              <FileText size={14} className="text-primary" /> Record
+            </h4>
+            <DetailRow label="Status" value={vehicle.isActive === false ? "Inactive" : "Active"} />
             <DetailRow label="Created" value={formatDateTime(vehicle.createdAt)} />
             <DetailRow label="Last Updated" value={formatDateTime(vehicle.updatedAt)} />
           </Card>
@@ -182,7 +252,12 @@ const FleetDetails = (_props: { role?: string | null }) => {
                 <User size={14} className="text-primary" /> Assigned driver
               </h4>
               <div className="flex items-start gap-4">
-                <Avatar initials={assignedDriver.initials} src={assignedDriver.image} size="lg" online={assignedDriver.isOnDuty} />
+                <Avatar
+                  initials={assignedDriver.initials}
+                  src={assignedDriver.image}
+                  size="lg"
+                  online={assignedDriver.isOnDuty}
+                />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div>
                     <p className="text-base font-bold text-ink">{assignedDriver.name}</p>
@@ -200,8 +275,8 @@ const FleetDetails = (_props: { role?: string | null }) => {
                       </span>
                     )}
                   </div>
-                  <Badge variant={assignedDriver.isOnDuty ? 'accent' : 'neutral'}>
-                    {assignedDriver.isOnDuty ? 'On duty' : 'Off duty'}
+                  <Badge variant={assignedDriver.isOnDuty ? "accent" : "neutral"}>
+                    {assignedDriver.isOnDuty ? "On duty" : "Off duty"}
                   </Badge>
                   <Button
                     variant="outline"
@@ -220,8 +295,6 @@ const FleetDetails = (_props: { role?: string | null }) => {
             vehicle={vehicle as unknown as Record<string, unknown>}
             onAssigned={() => refetch()}
           />
-
-          
         </div>
       </div>
     </div>

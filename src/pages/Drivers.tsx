@@ -1,1 +1,1 @@
-export { default } from '@/features/drivers/DriversPage';
+export { default } from "@/features/drivers/DriversPage";

@@ -1,7 +1,17 @@
-import React from 'react';
-import { Mail, Smartphone, Phone, Building2, MapPin, Headphones, Globe, Clock, ShieldCheck } from 'lucide-react';
+import React from "react";
+import {
+  Mail,
+  Smartphone,
+  Phone,
+  Building2,
+  MapPin,
+  Headphones,
+  Globe,
+  Clock,
+  ShieldCheck,
+} from "lucide-react";
 
-import type { OrgSettings } from '@/features/cms/utils/supportHelpers';
+import type { OrgSettings } from "@/features/cms/utils/supportHelpers";
 
 interface OrgSettingsFormProps {
   orgSettings: OrgSettings;
@@ -10,7 +20,7 @@ interface OrgSettingsFormProps {
 }
 
 const inputClass =
-  'w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-ink-4 shadow-2xs';
+  "w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-ink-4 shadow-2xs";
 
 const Field = ({
   label,
@@ -25,9 +35,7 @@ const Field = ({
 }) => (
   <div className="space-y-1">
     <div className="flex items-center justify-between">
-      <label className="text-sm">
-        {label}
-      </label>
+      <label className="text-sm">{label}</label>
       {helper && <span className="text-xs text-ink-4">{helper}</span>}
     </div>
     <div className="relative group">
@@ -40,12 +48,21 @@ const Field = ({
   </div>
 );
 
-export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, setOrgSettings, disabled = false }) => {
-  const set = (key: keyof OrgSettings) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setOrgSettings({ ...orgSettings, [key]: e.target.value });
+export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
+  orgSettings,
+  setOrgSettings,
+  disabled = false,
+}) => {
+  const set =
+    (key: keyof OrgSettings) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setOrgSettings({ ...orgSettings, [key]: e.target.value });
 
   return (
-    <fieldset disabled={disabled} className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300 disabled:opacity-60">
+    <fieldset
+      disabled={disabled}
+      className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300 disabled:opacity-60"
+    >
       {/* Left Column — Contact Channels */}
       <div className="space-y-5">
         <div className="flex items-center gap-2 pb-2.5 border-b border-line-2">
@@ -59,7 +76,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               type="email"
               className={inputClass}
               value={orgSettings.supportEmail}
-              onChange={set('supportEmail')}
+              onChange={set("supportEmail")}
               placeholder="support@logiss.com"
             />
           </Field>
@@ -70,17 +87,21 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               className={inputClass}
               placeholder="(804) 555-HELP"
               value={orgSettings.helplinePhone}
-              onChange={set('helplinePhone')}
+              onChange={set("helplinePhone")}
             />
           </Field>
 
-          <Field label="Dispatcher Direct Line" icon={Smartphone} helper="Internal dispatch terminal">
+          <Field
+            label="Dispatcher Direct Line"
+            icon={Smartphone}
+            helper="Internal dispatch terminal"
+          >
             <input
               type="tel"
               className={inputClass}
               placeholder="(804) 555-DISP"
               value={orgSettings.dispatcherPhone}
-              onChange={set('dispatcherPhone')}
+              onChange={set("dispatcherPhone")}
             />
           </Field>
 
@@ -90,7 +111,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               className={inputClass}
               placeholder="(804) 555-LOGI"
               value={orgSettings.emergencyPhone}
-              onChange={set('emergencyPhone')}
+              onChange={set("emergencyPhone")}
             />
           </Field>
 
@@ -100,7 +121,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               className={inputClass}
               placeholder="(804) 555-MAIN"
               value={orgSettings.generalPhone}
-              onChange={set('generalPhone')}
+              onChange={set("generalPhone")}
             />
           </Field>
         </div>
@@ -119,7 +140,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               type="text"
               className={inputClass}
               value={orgSettings.name}
-              onChange={set('name')}
+              onChange={set("name")}
               placeholder="Loggiskabir Dispatch Center"
             />
           </Field>
@@ -129,8 +150,8 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               <input
                 type="text"
                 className={inputClass}
-                value={orgSettings.timezone || 'Eastern Time (ET)'}
-                onChange={set('timezone')}
+                value={orgSettings.timezone || "Eastern Time (ET)"}
+                onChange={set("timezone")}
                 placeholder="Eastern Time (ET)"
               />
             </Field>
@@ -139,17 +160,15 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
               <input
                 type="text"
                 className={inputClass}
-                value={orgSettings.status || 'Operational'}
-                onChange={set('status')}
+                value={orgSettings.status || "Operational"}
+                onChange={set("status")}
                 placeholder="Operational"
               />
             </Field>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm text-ink">
-              Headquarters Address & Hub Location
-            </label>
+            <label className="block text-sm text-ink">Headquarters Address & Hub Location</label>
             <div className="relative group">
               <MapPin
                 size={16}
@@ -159,7 +178,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({ orgSettings, s
                 rows={3}
                 className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none placeholder:text-ink-4 shadow-2xs"
                 value={orgSettings.address}
-                onChange={set('address')}
+                onChange={set("address")}
                 placeholder="2200 Broad St, Suite 400, Richmond VA 23230"
               />
             </div>

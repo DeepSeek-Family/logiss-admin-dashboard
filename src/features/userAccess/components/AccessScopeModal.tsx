@@ -1,7 +1,7 @@
-import { createPortal } from 'react-dom';
-import { X, Check, LayoutGrid } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
-import { permissionsForUser } from '../utils/permissionLabels';
+import { createPortal } from "react-dom";
+import { X, Check, LayoutGrid } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { permissionsForUser } from "../utils/permissionLabels";
 
 interface AccessScopeModalProps {
   user: {
@@ -17,7 +17,7 @@ interface AccessScopeModalProps {
 
 export const AccessScopeModal = ({ user, onClose }: AccessScopeModalProps) => {
   const displayName =
-    [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || 'User';
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.name || "User";
   const items = permissionsForUser(user);
   const byGroup = items.reduce<Record<string, typeof items>>((acc, item) => {
     if (!acc[item.group]) acc[item.group] = [];
@@ -35,7 +35,10 @@ export const AccessScopeModal = ({ user, onClose }: AccessScopeModalProps) => {
       >
         <div className="px-6 py-5 border-b border-line-2 shrink-0 flex items-start justify-between gap-4">
           <div>
-            <h3 id="access-scope-title" className="text-lg font-semibold text-ink flex items-center gap-2">
+            <h3
+              id="access-scope-title"
+              className="text-lg font-semibold text-ink flex items-center gap-2"
+            >
               <LayoutGrid className="text-primary" size={20} />
               Page access
             </h3>
@@ -85,6 +88,6 @@ export const AccessScopeModal = ({ user, onClose }: AccessScopeModalProps) => {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };

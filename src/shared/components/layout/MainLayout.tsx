@@ -1,6 +1,6 @@
-import React, { Suspense } from 'react';
-import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { Suspense } from "react";
+import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   LayoutDashboard,
   Inbox,
@@ -27,15 +27,15 @@ import {
   Activity,
   Send,
   Loader2,
-} from 'lucide-react';
-import { Avatar, Badge, Button } from '@/shared/components/ui';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { useGetUnreadNotificationCountQuery } from '@/redux/api/notificationsApi';
-import { AUTH_TOKEN_KEY, LEGACY_AUTH_TOKEN_KEY } from '@/constants/auth-storage';
-import { ROUTES } from '@/constants/routes';
-import { can } from '@/features/userAccess/permissions';
-import toast from 'react-hot-toast';
-import { getDefaultRoute } from '@/routes/appRoutes';
+} from "lucide-react";
+import { Avatar, Badge, Button } from "@/shared/components/ui";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { useGetUnreadNotificationCountQuery } from "@/redux/api/notificationsApi";
+import { AUTH_TOKEN_KEY, LEGACY_AUTH_TOKEN_KEY } from "@/constants/auth-storage";
+import { ROUTES } from "@/constants/routes";
+import { can } from "@/features/userAccess/permissions";
+import toast from "react-hot-toast";
+import { getDefaultRoute } from "@/routes/appRoutes";
 // import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
 // import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
@@ -45,7 +45,7 @@ interface NavItemProps {
   label: string;
   badge?: React.ReactNode;
   active: boolean;
-  badgeVariant?: 'neutral' | 'white' | 'primary' | 'accent' | 'urgent';
+  badgeVariant?: "neutral" | "white" | "primary" | "accent" | "urgent";
 }
 
 const NavItem: React.FC<NavItemProps> = ({
@@ -54,25 +54,24 @@ const NavItem: React.FC<NavItemProps> = ({
   label,
   badge,
   active,
-  badgeVariant = 'neutral',
+  badgeVariant = "neutral",
 }) => (
   <Link
     to={to}
     className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group relative ${
       active
-        ? 'bg-primary text-white shadow-sm font-semibold'
-        : 'text-ink-2 hover:bg-bg hover:text-ink font-medium'
+        ? "bg-primary text-white shadow-sm font-semibold"
+        : "text-ink-2 hover:bg-bg hover:text-ink font-medium"
     }`}
   >
     <div className="flex items-center gap-3">
-      <Icon size={20} className={active ? 'text-white' : 'text-ink-3 group-hover:text-primary transition-colors'} />
-      <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>
-        {label}
-      </span>
+      <Icon
+        size={20}
+        className={active ? "text-white" : "text-ink-3 group-hover:text-primary transition-colors"}
+      />
+      <span className={`text-sm ${active ? "font-semibold" : "font-medium"}`}>{label}</span>
     </div>
-    {badge && (
-      <Badge variant={active ? 'white' : (badgeVariant as any)}>{badge}</Badge>
-    )}
+    {badge && <Badge variant={active ? "white" : (badgeVariant as any)}>{badge}</Badge>}
     {active && (
       <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full shadow-sm"></div>
     )}
@@ -103,38 +102,63 @@ interface NavConfigGroup {
 
 const NAV_CONFIG: NavConfigGroup[] = [
   {
-    group: 'Operations',
-    roles: ['admin', 'dispatcher'],
+    group: "Operations",
+    roles: ["admin", "dispatcher"],
     items: [
-      { id: ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
-      { id: ROUTES.operations, label: 'Operations', icon: Activity, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.bookings, label: 'Bookings', icon: Inbox, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.schedule, label: 'Scheduled', icon: CalendarDays, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.trips, label: 'Trip History', icon: Truck, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.reports, label: 'Incident Reports', icon: Flag, roles: ['admin', 'dispatcher'] },
-    ]
+      { id: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
+      {
+        id: ROUTES.operations,
+        label: "Operations",
+        icon: Activity,
+        roles: ["admin", "dispatcher"],
+      },
+      { id: ROUTES.bookings, label: "Bookings", icon: Inbox, roles: ["admin", "dispatcher"] },
+      {
+        id: ROUTES.schedule,
+        label: "Scheduled",
+        icon: CalendarDays,
+        roles: ["admin", "dispatcher"],
+      },
+      { id: ROUTES.trips, label: "Trip History", icon: Truck, roles: ["admin", "dispatcher"] },
+      { id: ROUTES.reports, label: "Incident Reports", icon: Flag, roles: ["admin", "dispatcher"] },
+    ],
   },
   {
-    group: 'Resources',
-    roles: ['admin', 'dispatcher'],
+    group: "Resources",
+    roles: ["admin", "dispatcher"],
     items: [
-      { id: ROUTES.fleet, label: 'Fleet Management', icon: Car, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.riders, label: 'Riders', icon: User, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.applications, label: 'Applications', icon: FileCheck, roles: ['admin'] },
-      { id: ROUTES.drivers, label: 'Drivers', icon: Users, roles: ['admin', 'dispatcher'] },
-    ]
+      { id: ROUTES.fleet, label: "Fleet Management", icon: Car, roles: ["admin", "dispatcher"] },
+      { id: ROUTES.riders, label: "Riders", icon: User, roles: ["admin", "dispatcher"] },
+      { id: ROUTES.applications, label: "Applications", icon: FileCheck, roles: ["admin"] },
+      { id: ROUTES.drivers, label: "Drivers", icon: Users, roles: ["admin", "dispatcher"] },
+    ],
   },
   {
-    group: 'Administration',
-    roles: ['admin', 'dispatcher'],
+    group: "Administration",
+    roles: ["admin", "dispatcher"],
     items: [
-      { id: ROUTES.transactions, label: 'Finance', icon: CreditCard, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.coverage, label: 'Service & Tariffs', icon: MapPin, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.staff, label: 'Dispatch Management', icon: UserPlus, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.cms, label: 'CMS & Content', icon: FileText, roles: ['admin', 'dispatcher'] },
-      { id: ROUTES.push, label: 'Push Notifications', icon: Send, roles: ['admin', 'dispatcher'] },
-    ]
-  }
+      {
+        id: ROUTES.transactions,
+        label: "Finance",
+        icon: CreditCard,
+        roles: ["admin", "dispatcher"],
+      },
+      {
+        id: ROUTES.coverage,
+        label: "Service & Tariffs",
+        icon: MapPin,
+        roles: ["admin", "dispatcher"],
+      },
+      {
+        id: ROUTES.staff,
+        label: "Dispatch Management",
+        icon: UserPlus,
+        roles: ["admin", "dispatcher"],
+      },
+      { id: ROUTES.cms, label: "CMS & Content", icon: FileText, roles: ["admin", "dispatcher"] },
+      { id: ROUTES.push, label: "Push Notifications", icon: Send, roles: ["admin", "dispatcher"] },
+    ],
+  },
 ];
 
 interface MainLayoutProps {
@@ -149,26 +173,28 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
   const authToken = useSelector((state: any) => state.auth?.token as string | null | undefined);
 
-  const currentUser = useSelector((state: any) => state.auth?.user) || (() => {
-    try {
-      const u = typeof localStorage !== 'undefined' ? localStorage.getItem('logiss-user') : null;
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
-  })();
+  const currentUser =
+    useSelector((state: any) => state.auth?.user) ||
+    (() => {
+      try {
+        const u = typeof localStorage !== "undefined" ? localStorage.getItem("logiss-user") : null;
+        return u ? JSON.parse(u) : null;
+      } catch {
+        return null;
+      }
+    })();
 
   const accessScope: string[] = currentUser?.accessScope || currentUser?.permissions || [];
 
   const [profileOpen, setProfileOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
   /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
   const routeOutletKey = location.pathname;
   const hasAuthToken =
     Boolean(authToken) ||
-    (typeof localStorage !== 'undefined' &&
+    (typeof localStorage !== "undefined" &&
       Boolean(localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)));
 
   const { data: unreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
@@ -177,7 +203,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   });
 
   React.useEffect(() => {
-    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     setProfileOpen(false);
   }, [location.pathname]);
   // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
@@ -229,41 +255,41 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
   React.useEffect(() => {
     const close = () => setProfileOpen(false);
-    if (profileOpen) window.addEventListener('click', close);
-    return () => window.removeEventListener('click', close);
+    if (profileOpen) window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
   }, [profileOpen]);
 
   const isNavItemVisible = React.useCallback(
     (item: NavConfigItem) => {
       if (!role) return false;
-      if (!item.roles.includes(role) && !(role === 'admin' && item.roles.includes('admin'))) {
-        if (role !== 'dispatcher' || !item.roles.includes('dispatcher')) return false;
+      if (!item.roles.includes(role) && !(role === "admin" && item.roles.includes("admin"))) {
+        if (role !== "dispatcher" || !item.roles.includes("dispatcher")) return false;
       }
-      const pathKey = item.id.startsWith('/') ? item.id : `/${item.id}`;
+      const pathKey = item.id.startsWith("/") ? item.id : `/${item.id}`;
       return can(role, pathKey, accessScope?.length ? accessScope : undefined);
     },
-    [role, accessScope]
+    [role, accessScope],
   );
 
   const pathForAccessCheck = React.useCallback((pathname: string) => {
-    if (pathname.startsWith('/fleet/')) return ROUTES.fleet;
-    if (pathname.startsWith('/coverage')) return ROUTES.coverage;
-    return pathname.split('?')[0];
+    if (pathname.startsWith("/fleet/")) return ROUTES.fleet;
+    if (pathname.startsWith("/coverage")) return ROUTES.coverage;
+    return pathname.split("?")[0];
   }, []);
 
   React.useEffect(() => {
-    if (!role || role === 'admin') return;
+    if (!role || role === "admin") return;
     const path = pathForAccessCheck(page);
-    if (path === ROUTES.profile || path === ROUTES.settings || path === ROUTES.notifications) return;
+    if (path === ROUTES.profile || path === ROUTES.settings || path === ROUTES.notifications)
+      return;
     if (can(role, path, accessScope?.length ? accessScope : undefined)) return;
 
-    toast.error('You do not have permission to view this page.', { id: 'page-access-denied' });
-    const fallback =
-      accessScope?.find(Boolean)?.startsWith('/')
-        ? accessScope.find(Boolean)!
-        : accessScope?.[0]
-          ? `/${accessScope[0].replace(/^\//, '')}`
-          : getDefaultRoute(role as 'dispatcher');
+    toast.error("You do not have permission to view this page.", { id: "page-access-denied" });
+    const fallback = accessScope?.find(Boolean)?.startsWith("/")
+      ? accessScope.find(Boolean)!
+      : accessScope?.[0]
+        ? `/${accessScope[0].replace(/^\//, "")}`
+        : getDefaultRoute(role as "dispatcher");
     navigate(fallback, { replace: true });
   }, [page, role, accessScope, navigate]);
 
@@ -277,9 +303,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
         <nav className="flex-1 px-4 py-2 overflow-y-auto scrollbar-hide space-y-6">
           <div className="space-y-1.5">
-            {NAV_CONFIG.flatMap(group => group.items)
+            {NAV_CONFIG.flatMap((group) => group.items)
               .filter(isNavItemVisible)
-              .map(item => {
+              .map((item) => {
                 // Badge logic (Commented out to prevent background API calls. Uncomment when needed.)
                 /*
                 const liveBadge = item.isLive ? (
@@ -295,13 +321,13 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                 */
                 const liveBadge = item.badge;
 
-                const isActive = item.id.includes('tab=schedule')
-                  ? (page === '/trips' && location.search.includes('tab=schedule'))
-                  : (item.id === ROUTES.trips
-                    ? (page === ROUTES.trips && !location.search.includes('tab=schedule'))
-                    : (item.id === ROUTES.transactions
-                      ? (page === '/finance' || page === '/transactions')
-                      : (page === item.id || (item.id !== '/' && page.startsWith(item.id)))));
+                const isActive = item.id.includes("tab=schedule")
+                  ? page === "/trips" && location.search.includes("tab=schedule")
+                  : item.id === ROUTES.trips
+                    ? page === ROUTES.trips && !location.search.includes("tab=schedule")
+                    : item.id === ROUTES.transactions
+                      ? page === "/finance" || page === "/transactions"
+                      : page === item.id || (item.id !== "/" && page.startsWith(item.id));
 
                 return (
                   <NavItem
@@ -316,9 +342,19 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
               })}
           </div>
 
-          {isNavItemVisible({ id: ROUTES.settings, label: 'Settings', icon: Settings, roles: ['admin', 'dispatcher'] }) && (
+          {isNavItemVisible({
+            id: ROUTES.settings,
+            label: "Settings",
+            icon: Settings,
+            roles: ["admin", "dispatcher"],
+          }) && (
             <div className="pt-4 border-t border-line-2">
-              <NavItem to={ROUTES.settings} icon={Settings} label="System Settings" active={page === ROUTES.settings} />
+              <NavItem
+                to={ROUTES.settings}
+                icon={Settings}
+                label="System Settings"
+                active={page === ROUTES.settings}
+              />
             </div>
           )}
         </nav>
@@ -335,58 +371,69 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       </aside>
 
       {/* Main Content Area */}
-      <main ref={mainScrollRef} className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50">
+      <main
+        ref={mainScrollRef}
+        className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50"
+      >
         {/* Top Bar */}
         <header className="h-16 bg-white border-b border-line flex items-center justify-end px-8 sticky top-0 z-10 shrink-0">
-
-       
-
           <div className="flex items-center gap-2">
-           
-
             <button
               onClick={() => navigate(ROUTES.notifications)}
-              className={`relative p-2 rounded-lg transition-colors ${page === ROUTES.notifications ? 'bg-primary-light text-primary' : 'text-ink-3 hover:bg-bg'}`}
+              className={`relative p-2 rounded-lg transition-colors ${page === ROUTES.notifications ? "bg-primary-light text-primary" : "text-ink-3 hover:bg-bg"}`}
             >
               <Bell size={20} />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-urgent text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
             </button>
 
-           
-
-        
-
             <div className="relative">
               <button
-                onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); }}
-                className={`w-9 h-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 hover:shadow-sm ${profileOpen || page === ROUTES.profile ? 'border-primary' : 'border-line hover:border-primary'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProfileOpen(!profileOpen);
+                }}
+                className={`w-9 h-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 hover:shadow-sm ${profileOpen || page === ROUTES.profile ? "border-primary" : "border-line hover:border-primary"}`}
                 title="Account"
               >
-                <Avatar initials={role === 'admin' ? 'MH' : 'SR'} size="sm" className="w-full h-full" />
+                <Avatar
+                  initials={role === "admin" ? "MH" : "SR"}
+                  size="sm"
+                  className="w-full h-full"
+                />
               </button>
 
               {profileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-line overflow-hidden animate-in slide-in-from-top-2 duration-200 z-50">
                   <div className="p-5 border-b border-line bg-bg/30">
                     <div className="flex items-center gap-3 mb-3">
-                      <Avatar initials={role === 'admin' ? 'MH' : 'SR'} size="md" />
+                      <Avatar initials={role === "admin" ? "MH" : "SR"} size="md" />
                       <div>
-                        <p className="text-sm font-medium text-ink leading-none">{role === 'admin' ? 'Marcus A. Holloway' : 'Sandra K. Reynolds'}</p>
-                        <p className="text-xs text-ink-4 mt-1">ID: #{role === 'admin' ? 'LOGISS-882' : 'LOGISS-941'}</p>
+                        <p className="text-sm font-medium text-ink leading-none">
+                          {role === "admin" ? "Marcus A. Holloway" : "Sandra K. Reynolds"}
+                        </p>
+                        <p className="text-xs text-ink-4 mt-1">
+                          ID: #{role === "admin" ? "LOGISS-882" : "LOGISS-941"}
+                        </p>
                       </div>
                     </div>
-                    <Badge variant="primary-light" className="w-full justify-center py-1 text-xs uppercase tracking-wide">
-                      {role === 'admin' ? 'Administrator' : 'Dispatch Officer'}
+                    <Badge
+                      variant="primary-light"
+                      className="w-full justify-center py-1 text-xs uppercase tracking-wide"
+                    >
+                      {role === "admin" ? "Administrator" : "Dispatch Officer"}
                     </Badge>
                   </div>
 
                   <div className="p-2">
                     <button
-                      onClick={() => { navigate(ROUTES.profile); setProfileOpen(false); }}
+                      onClick={() => {
+                        navigate(ROUTES.profile);
+                        setProfileOpen(false);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-ink hover:bg-bg transition-all group"
                     >
                       <User size={15} className="text-ink-3 group-hover:text-primary" />

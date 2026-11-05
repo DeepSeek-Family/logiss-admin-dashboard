@@ -1,5 +1,5 @@
-import { money } from '@/utils/helpers';
-import { formatPricingZone, zoneBadgeTone } from '@/features/bookings/utils/helpers';
+import { money } from "@/utils/helpers";
+import { formatPricingZone, zoneBadgeTone } from "@/features/bookings/utils/helpers";
 
 type PricingRow = {
   pricingZoneLabel?: string;
@@ -16,14 +16,14 @@ type PricingRow = {
 export const BookingZoneCell = ({ row }: { row: PricingRow }) => {
   const label =
     row.pricingZoneLabel ||
-    (row.primaryPricingZone ? formatPricingZone(row.primaryPricingZone) : '') ||
-    (row.insideCounty === true ? 'Inside' : row.insideCounty === false ? 'Outside' : '');
+    (row.primaryPricingZone ? formatPricingZone(row.primaryPricingZone) : "") ||
+    (row.insideCounty === true ? "Inside" : row.insideCounty === false ? "Outside" : "");
 
   if (!label) {
     return <span className="text-xs text-ink-4">—</span>;
   }
 
-  const toneZone = row.primaryPricingZone || label.split(':').pop()?.trim() || label;
+  const toneZone = row.primaryPricingZone || label.split(":").pop()?.trim() || label;
 
   return (
     <span
@@ -60,4 +60,9 @@ export const BookingPayerChargeCell = ({ row }: { row: PricingRow }) => (
   </span>
 );
 
-export const BOOKING_PRICING_HEADERS = ['Zone', 'Miles', 'Passenger copay', 'Payer charge'] as const;
+export const BOOKING_PRICING_HEADERS = [
+  "Zone",
+  "Miles",
+  "Passenger copay",
+  "Payer charge",
+] as const;
