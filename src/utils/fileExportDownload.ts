@@ -1,20 +1,18 @@
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
-export type FileExportType = "excel" | "csv" | "pdf";
+export type FileExportType = 'excel' | 'csv'
 
 /** Server builds export files on a worker; response may take several minutes. */
 export const FILE_EXPORT_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 
 export const FILE_EXPORT_FALLBACK_NAMES = {
   tripHistory: {
-    excel: "trip-history.xlsx",
-    csv: "trip-history.csv",
-    pdf: "trip-history.pdf",
+    excel: 'trip-history.xlsx',
+    csv: 'trip-history.csv',
   },
   payments: {
-    excel: "payments.xlsx",
-    csv: "payments.csv",
-    pdf: "payments.pdf",
+    excel: 'payments.xlsx',
+    csv: 'payments.csv',
   },
 } as const satisfies Record<string, Record<FileExportType, string>>;
 

@@ -4,10 +4,9 @@ import { Button } from "./Button";
 import type { FileExportType } from "@/utils/fileExportDownload";
 
 const EXPORT_OPTIONS: { type: FileExportType; label: string }[] = [
-  { type: "excel", label: "Excel (.xlsx)" },
-  { type: "csv", label: "CSV (.csv)" },
-  { type: "pdf", label: "PDF (.pdf)" },
-];
+  { type: 'excel', label: 'Excel (.xlsx)' },
+  { type: 'csv', label: 'CSV (.csv)' },
+]
 
 interface ExportFormatMenuProps {
   onExport: (type: FileExportType) => void | Promise<void>;

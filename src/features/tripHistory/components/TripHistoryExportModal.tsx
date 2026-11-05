@@ -25,7 +25,6 @@ const FORMAT_OPTIONS: Array<{
 }> = [
   { type: "excel", label: "Excel", detail: ".xlsx", icon: FileSpreadsheet },
   { type: "csv", label: "CSV", detail: ".csv", icon: FileText },
-  { type: "pdf", label: "PDF", detail: ".pdf", icon: FileText },
 ];
 
 interface TripHistoryExportModalProps {
@@ -164,7 +163,7 @@ export const TripHistoryExportModal = ({
 
           <fieldset>
             <legend className="mb-2 text-xs font-semibold text-ink">File format</legend>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {FORMAT_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 const active = format === option.type;
