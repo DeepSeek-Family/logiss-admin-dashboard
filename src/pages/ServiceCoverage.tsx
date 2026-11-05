@@ -1,4 +1,4 @@
-import { CoverageTab } from '@/features/settings';
+import { CoverageTab } from "@/features/settings";
 
 interface ServiceCoverageProps {
   role?: string | null;

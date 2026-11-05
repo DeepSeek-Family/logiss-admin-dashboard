@@ -29,9 +29,8 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             for Every Appointment
           </h1>
           <p className="text-white/70 text-lg max-w-md">
-            Coordinate scheduled medical rides, manage transportation requests,
-            and stay informed with a platform built for dependable and organized
-            trip management.
+            Coordinate scheduled medical rides, manage transportation requests, and stay informed
+            with a platform built for dependable and organized trip management.
           </p>
         </div>
       </div>

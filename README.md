@@ -16,12 +16,12 @@ cp .env.example .env
 
 Edit `.env`:
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_API_BASE_URL` | Backend API base (e.g. `https://api.example.com/api/v1`) |
-| `VITE_IMAGE_BASE_URL` | Media host for `/image/...` paths |
-| `VITE_GOOGLE_MAPS` | Google Maps JavaScript API key |
-| `VITE_FIREBASE_*` | FCM / web push (login device token) |
+| Variable              | Purpose                                                  |
+| --------------------- | -------------------------------------------------------- |
+| `VITE_API_BASE_URL`   | Backend API base (e.g. `https://api.example.com/api/v1`) |
+| `VITE_IMAGE_BASE_URL` | Media host for `/image/...` paths                        |
+| `VITE_GOOGLE_MAPS`    | Google Maps JavaScript API key                           |
+| `VITE_FIREBASE_*`     | FCM / web push (login device token)                      |
 
 ## Scripts
 

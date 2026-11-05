@@ -1,1 +1,1 @@
-export { default } from '@/features/auth/VerifyEmailPage';
+export { default } from "@/features/auth/VerifyEmailPage";

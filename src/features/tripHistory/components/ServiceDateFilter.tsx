@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Calendar as CalendarIcon, X } from 'lucide-react';
-import { MultiCalendar } from '@/shared/components/ui';
+import React, { useEffect, useRef, useState } from "react";
+import { Calendar as CalendarIcon, X } from "lucide-react";
+import { MultiCalendar } from "@/shared/components/ui";
 
 const formatYmd = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const parseYmd = (ymd: string): Date | null => {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
@@ -23,21 +23,22 @@ export const ServiceDateFilter: React.FC<ServiceDateFilterProps> = ({ value, onC
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(event.target as Node))
+        setIsOpen(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSelect = (days: Date[]) => {
     const added = days.find((d) => d.toDateString() !== selectedDate?.toDateString());
-    onChange(added ? formatYmd(added) : '');
+    onChange(added ? formatYmd(added) : "");
     setIsOpen(false);
   };
 
   const label = selectedDate
-    ? selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : 'All Dates';
+    ? selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "All Dates";
 
   return (
     <div className="flex items-center gap-2">
@@ -47,22 +48,25 @@ export const ServiceDateFilter: React.FC<ServiceDateFilterProps> = ({ value, onC
           type="button"
           onClick={() => setIsOpen((v) => !v)}
           className={`bg-white border rounded-xl py-2 pl-3 pr-9 text-xs font-medium h-9 min-w-[130px] text-left outline-none transition-all ${
-            isOpen ? 'border-primary ring-2 ring-primary/10' : 'border-line hover:border-primary/40'
-          } ${selectedDate ? 'text-ink' : 'text-ink-3'}`}
+            isOpen ? "border-primary ring-2 ring-primary/10" : "border-line hover:border-primary/40"
+          } ${selectedDate ? "text-ink" : "text-ink-3"}`}
         >
           {label}
         </button>
         {selectedDate ? (
           <button
             type="button"
-            onClick={() => onChange('')}
+            onClick={() => onChange("")}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-urgent"
             title="Clear date"
           >
             <X size={14} />
           </button>
         ) : (
-          <CalendarIcon size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
+          <CalendarIcon
+            size={14}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none"
+          />
         )}
 
         {isOpen && (
@@ -78,14 +82,20 @@ export const ServiceDateFilter: React.FC<ServiceDateFilterProps> = ({ value, onC
               <div className="px-4 py-3 border-t border-line-2 bg-gray-50 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => { onChange(''); setIsOpen(false); }}
+                  onClick={() => {
+                    onChange("");
+                    setIsOpen(false);
+                  }}
                   className="text-xs font-medium text-ink-3 hover:text-ink px-2 py-1.5"
                 >
                   Clear
                 </button>
                 <button
                   type="button"
-                  onClick={() => { onChange(formatYmd(new Date())); setIsOpen(false); }}
+                  onClick={() => {
+                    onChange(formatYmd(new Date()));
+                    setIsOpen(false);
+                  }}
                   className="bg-primary text-white text-xs font-medium px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
                 >
                   Today

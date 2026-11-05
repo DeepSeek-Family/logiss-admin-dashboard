@@ -1,91 +1,48 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from "react-router-dom";
 
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 
 import {
-
   FileText,
-
   Shield,
-
   HelpCircle,
-
   Info,
-
   Save,
-
   RotateCcw,
-
   Clock,
-
   ExternalLink,
-
   Edit3,
-
   CheckCircle,
-
   ChevronRight,
-
   Building2,
-
   Loader2,
-
   AlertTriangle,
+} from "lucide-react";
 
-} from 'lucide-react';
+import { Card, Button, Badge } from "@/shared/components/ui";
 
-import { Card, Button, Badge } from '@/shared/components/ui';
+import { useUpdateRuleMutation } from "@/redux/api/rulesApi";
 
-import { useUpdateRuleMutation } from '@/redux/api/rulesApi';
+import { useGetCompanySupportQuery, useSaveCompanySupportMutation } from "@/redux/api/supportApi";
 
-import {
-
-  useGetCompanySupportQuery,
-
-  useSaveCompanySupportMutation,
-
-} from '@/redux/api/supportApi';
-
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 
 import {
-
   defaultOrgSettings,
-
   mapApiCompanySupportToOrg,
-
   mapOrgSettingsToApiBody,
-
   type OrgSettings,
+} from "@/features/cms/utils/supportHelpers";
 
-} from '@/features/cms/utils/supportHelpers';
-
-
-
-import {
-
-  OrgSettingsForm,
-
-  ContentEditor,
-
-  FaqPanel
-
-} from '@/features/cms';
-
-
+import { OrgSettingsForm, ContentEditor, FaqPanel } from "@/features/cms";
 
 interface ContentState {
-
   [key: string]: string;
-
 }
 
-
-
 const CMS = ({ role }: { role?: string | null }) => {
-
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -96,10 +53,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const [saveCompanySupport] = useSaveCompanySupportMutation();
 
-
-
   const {
-
     data: supportResponse,
 
     isLoading: supportLoading,
@@ -111,10 +65,7 @@ const CMS = ({ role }: { role?: string | null }) => {
     error: supportLoadError,
 
     refetch: refetchSupport,
-
   } = useGetCompanySupportQuery();
-
-
 
   const supportRecord = supportResponse?.data;
 
@@ -122,57 +73,61 @@ const CMS = ({ role }: { role?: string | null }) => {
   const supportBootLoading = supportUninitialized || (supportLoading && !supportResponse);
 
   const pages = [
+    {
+      id: "org",
+      label: "Organization & Support",
+      icon: Building2,
+      lastUpdate: "2026-04-20",
+      type: "form",
+    },
 
-    { id: 'org', label: 'Organization & Support', icon: Building2, lastUpdate: '2026-04-20', type: 'form' },
+    {
+      id: "terms",
+      label: "Terms & Conditions",
+      icon: FileText,
+      lastUpdate: "2026-04-10",
+      type: "text",
+    },
 
-    { id: 'terms', label: 'Terms & Conditions', icon: FileText, lastUpdate: '2026-04-10', type: 'text' },
+    {
+      id: "privacy",
+      label: "Privacy Policy",
+      icon: Shield,
+      lastUpdate: "2026-04-12",
+      type: "text",
+    },
 
-    { id: 'privacy', label: 'Privacy Policy', icon: Shield, lastUpdate: '2026-04-12', type: 'text' },
+    { id: "faq", label: "Help & FAQ", icon: HelpCircle, lastUpdate: "2026-04-15", type: "faq" },
 
-    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, lastUpdate: '2026-04-15', type: 'faq' },
-
-    { id: 'about', label: 'About Us', icon: Info, lastUpdate: '2026-03-20', type: 'text' },
-
+    { id: "about", label: "About Us", icon: Info, lastUpdate: "2026-03-20", type: "text" },
   ];
 
+  const validTabIds = pages.map((p) => p.id);
 
+  const tabFromUrl = searchParams.get("tab");
 
-  const validTabIds = pages.map(p => p.id);
-
-  const tabFromUrl = searchParams.get('tab');
-
-  const activePage = validTabIds.includes(tabFromUrl || '') ? (tabFromUrl as string) : 'org';
-
-
+  const activePage = validTabIds.includes(tabFromUrl || "") ? (tabFromUrl as string) : "org";
 
   const handleTabChange = (tabId: string) => {
-
     setSearchParams({ tab: tabId }, { replace: true });
-
   };
 
-
-
   const [content, setContent] = useState<ContentState>({
+    terms: "",
 
-    terms: '',
+    privacy: "",
 
-    privacy: '',
+    faq: "",
 
-    faq: '',
-
-    about: ''
-
+    about: "",
   });
-
-
 
   const [orgSettings, setOrgSettings] = useState<OrgSettings>(defaultOrgSettings());
 
   const hasHydratedOrgFromApi = useRef(false);
 
   const applySupportToOrgForm = (record: NonNullable<typeof supportRecord>) => {
-    setOrgSettings(prev => ({
+    setOrgSettings((prev) => ({
       ...mapApiCompanySupportToOrg(record),
       timezone: prev.timezone,
       status: prev.status,
@@ -186,35 +141,22 @@ const CMS = ({ role }: { role?: string | null }) => {
     hasHydratedOrgFromApi.current = true;
   }, [supportBootLoading, supportRecord]);
 
-
-
   const handleResetOrg = () => {
-
     if (supportRecord?._id) {
       applySupportToOrgForm(supportRecord);
     } else {
-
       setOrgSettings(defaultOrgSettings());
-
     }
-
   };
 
-
-
   const saveOrgSupport = async () => {
-
     const body = mapOrgSettingsToApiBody(orgSettings);
 
     if (!body.organizationName || !body.supportEmail) {
-
-      toast.error('Organization name and support email are required.');
+      toast.error("Organization name and support email are required.");
 
       return;
-
     }
-
-
 
     const result = await saveCompanySupport(body).unwrap();
     if (result?.data) {
@@ -223,52 +165,35 @@ const CMS = ({ role }: { role?: string | null }) => {
     }
   };
 
-
-
   const handleSave = async () => {
-
-    if (activePage === 'org') {
-
+    if (activePage === "org") {
       try {
-
         setIsSaving(true);
 
         await saveOrgSupport();
 
-        toast.success('Organization & support settings saved.');
+        toast.success("Organization & support settings saved.");
 
         setShowSuccess(true);
 
         setTimeout(() => setShowSuccess(false), 3000);
-
       } catch (err) {
-
-        toast.error(apiErrorMessage(err, 'Failed to save organization settings'));
-
+        toast.error(apiErrorMessage(err, "Failed to save organization settings"));
       } finally {
-
         setIsSaving(false);
-
       }
 
       return;
-
     }
 
-
-
-    if (['terms', 'privacy', 'about'].includes(activePage)) {
-
+    if (["terms", "privacy", "about"].includes(activePage)) {
       try {
-
         setIsSaving(true);
 
         await updateRule({
-
           type: activePage,
 
-          content: content[activePage] || '',
-
+          content: content[activePage] || "",
         }).unwrap();
 
         toast.success(`${activePage.toUpperCase()} saved successfully!`);
@@ -276,124 +201,89 @@ const CMS = ({ role }: { role?: string | null }) => {
         setShowSuccess(true);
 
         setTimeout(() => setShowSuccess(false), 3000);
-
       } catch (err: unknown) {
-
-        toast.error(apiErrorMessage(err, 'Failed to save rule content'));
-
+        toast.error(apiErrorMessage(err, "Failed to save rule content"));
       } finally {
-
         setIsSaving(false);
-
       }
-
     }
-
   };
 
-
-
-  const activePageData = pages.find(p => p.id === activePage);
-
-
+  const activePageData = pages.find((p) => p.id === activePage);
 
   return (
-
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
         <div>
-
           <h1 className="type-page-title">Global Configuration</h1>
 
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">Manage organization details, legal pages, and help content</p>
-
+          <p className="text-ink-3 font-semibold mt-1 tracking-wide">
+            Manage organization details, legal pages, and help content
+          </p>
         </div>
 
         <div className="flex gap-3">
-
-      
-
           <Button
-
             variant="primary"
 
             icon={isSaving ? undefined : Save}
 
             onClick={handleSave}
 
-            disabled={isSaving || (activePage === 'org' && supportBootLoading)}
-
+            disabled={isSaving || (activePage === "org" && supportBootLoading)}
           >
-
-            {isSaving ? 'Saving...' : 'Save All Changes'}
-
+            {isSaving ? "Saving..." : "Save All Changes"}
           </Button>
-
         </div>
-
       </div>
 
-
-
-   
-
-
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
         <aside className="lg:col-span-3 space-y-2">
-
-          {pages.map(page => {
-
+          {pages.map((page) => {
             const isActive = activePage === page.id;
 
             return (
-
               <button
-
                 key={page.id}
 
                 type="button"
 
                 onClick={() => handleTabChange(page.id)}
 
-                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${isActive
-
-                  ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
-
-                  : 'border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50'
-
-                  }`}
-
+                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${
+                  isActive
+                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                    : "border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50"
+                }`}
               >
-
                 <div className="flex items-center gap-3 min-w-0">
-
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-primary text-white shadow-xs' : 'bg-bg text-ink-3 group-hover:text-primary group-hover:bg-primary/10'
-
-                    }`}>
-
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                      isActive
+                        ? "bg-primary text-white shadow-xs"
+                        : "bg-bg text-ink-3 group-hover:text-primary group-hover:bg-primary/10"
+                    }`}
+                  >
                     <page.icon size={17} />
-
                   </div>
 
                   <div className="min-w-0">
-
-                    <p className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-primary' : 'text-ink group-hover:text-primary'
-
-                      }`}>
-
+                    <p
+                      className={`text-sm font-semibold truncate transition-colors ${
+                        isActive ? "text-primary" : "text-ink group-hover:text-primary"
+                      }`}
+                    >
                       {page.label}
-
                     </p>
                     <p className="text-xs font-normal text-ink-4 mt-0.5">
                       Updated {page.lastUpdate}
                     </p>
                   </div>
                 </div>
-                <ChevronRight size={15} className={`shrink-0 transition-colors ${isActive ? 'text-primary' : 'text-ink-4 group-hover:text-ink-3'}`} />
+                <ChevronRight
+                  size={15}
+                  className={`shrink-0 transition-colors ${isActive ? "text-primary" : "text-ink-4 group-hover:text-ink-3"}`}
+                />
               </button>
             );
           })}
@@ -409,117 +299,77 @@ const CMS = ({ role }: { role?: string | null }) => {
                 <h3 className="text-lg font-semibold text-ink">Editor: {activePageData?.label}</h3>
               </div>
               {/* <Badge variant="accent" dot>Global Live Settings</Badge> */}
-
             </div>
 
-
-
             <div className="p-8">
-
-              {activePageData?.type === 'text' ? (
-
+              {activePageData?.type === "text" ? (
                 <ContentEditor
-
                   activePage={activePage}
 
                   content={content}
 
                   setContent={setContent}
-
                 />
-
-              ) : activePageData?.type === 'faq' ? (
-
+              ) : activePageData?.type === "faq" ? (
                 <FaqPanel />
-
               ) : supportBootLoading ? (
-
                 <div className="py-16 flex flex-col items-center gap-2 text-ink-4">
-
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
 
                   <p className="text-sm">Loading organization settings…</p>
-
                 </div>
-
               ) : supportError ? (
-
                 <div className="py-16 flex flex-col items-center gap-3 text-center">
-
                   <AlertTriangle className="text-urgent opacity-60" size={32} />
 
-                  <p className="text-sm text-ink-3">{apiErrorMessage(supportLoadError, 'Failed to load organization settings')}</p>
+                  <p className="text-sm text-ink-3">
+                    {apiErrorMessage(supportLoadError, "Failed to load organization settings")}
+                  </p>
 
                   <button
-
                     type="button"
 
                     onClick={() => refetchSupport()}
 
                     className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
-
                   >
-
                     Retry
-
                   </button>
-
                 </div>
-
               ) : (
-
                 <OrgSettingsForm
-
                   orgSettings={orgSettings}
 
                   setOrgSettings={setOrgSettings}
 
                   disabled={isSaving}
-
                 />
-
               )}
 
-
-
               <div className="mt-8 flex items-center justify-between p-4 bg-bg rounded-lg border border-line-2">
-
                 <div className="flex items-center gap-3">
-
                   <Clock size={16} className="text-ink-3" />
 
-                  <p className="text-sm text-ink-4 italic">Changes made here affect all dispatch terminals globally.</p>
-
+                  <p className="text-sm text-ink-4 italic">
+                    Changes made here affect all dispatch terminals globally.
+                  </p>
                 </div>
 
                 <div className="flex gap-4">
-
-                  <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-ink-4 hover:text-primary transition-colors">
-
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 text-xs font-medium text-ink-4 hover:text-primary transition-colors"
+                  >
                     <ExternalLink size={14} /> View Public View
-
                   </button>
-
                 </div>
-
               </div>
-
             </div>
-
           </Card>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 };
 
-
-
 export default CMS;
-
-

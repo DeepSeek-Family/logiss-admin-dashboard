@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import { AlertCircle, AlertTriangle, Check, Copy, Loader2, Mail, Phone } from 'lucide-react';
-import { Card, Badge, Avatar, Pagination } from '@/shared/components/ui';
-import { SearchInput } from '@/shared/components/ui/SearchInput';
-import { formatShortDate, money } from '@/utils/helpers';
-import type { MappedPayment } from '../utils/helpers';
+import React, { useState } from "react";
+import { AlertCircle, AlertTriangle, Check, Copy, Loader2, Mail, Phone } from "lucide-react";
+import { Card, Badge, Avatar, Pagination } from "@/shared/components/ui";
+import { SearchInput } from "@/shared/components/ui/SearchInput";
+import { formatShortDate, money } from "@/utils/helpers";
+import type { MappedPayment } from "../utils/helpers";
 
-const STATUS_FILTERS = ['all', 'paid', 'pending'];
+const STATUS_FILTERS = ["all", "paid", "pending"];
 
 const STATUS_VARIANT: Record<string, string> = {
-  paid: 'accent',
-  pending: 'warning',
-  refunded: 'urgent',
+  paid: "accent",
+  pending: "warning",
+  refunded: "urgent",
 };
 
 const formatClock = (value: string) => {
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
 interface TransactionsTableProps {
@@ -82,8 +84,8 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 onClick={() => setFilter(f)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                   filter === f
-                    ? 'bg-white shadow-xs text-primary font-bold'
-                    : 'text-ink-3 hover:text-ink hover:bg-white/50'
+                    ? "bg-white shadow-xs text-primary font-bold"
+                    : "text-ink-3 hover:text-ink hover:bg-white/50"
                 }`}
               >
                 {f}
@@ -99,7 +101,10 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
           <p className="text-sm font-semibold text-ink">Failed to load transactions</p>
           <p className="text-xs text-ink-4 mt-1 mb-4">{error}</p>
           {onRetry && (
-            <button onClick={onRetry} className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold">
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
+            >
               Retry
             </button>
           )}
@@ -118,7 +123,9 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 <th className="px-5 py-3 text-xs font-semibold text-ink-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className={`divide-y divide-line-2 transition-opacity ${loading ? 'opacity-60' : ''}`}>
+            <tbody
+              className={`divide-y divide-line-2 transition-opacity ${loading ? "opacity-60" : ""}`}
+            >
               {payments.map((txn) => (
                 <tr key={txn.id} className="hover:bg-bg/30 transition-colors">
                   <td className="px-5 py-3.5">
@@ -131,13 +138,20 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                         className="mt-0.5 flex items-center gap-1 font-mono text-[11px] text-ink-4 hover:text-primary transition-colors"
                       >
                         <span className="truncate max-w-[180px]">{txn.txnNumber}</span>
-                        {copiedId === `txn-${txn.id}` ? <Check size={11} className="text-accent" /> : <Copy size={11} />}
+                        {copiedId === `txn-${txn.id}` ? (
+                          <Check size={11} className="text-accent" />
+                        ) : (
+                          <Copy size={11} />
+                        )}
                       </button>
                     )}
                   </td>
                   <td className="px-5 py-3.5">
                     {txn.tripId ? (
-                      <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3" title={txn.tripId}>
+                      <span
+                        className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3"
+                        title={txn.tripId}
+                      >
                         #{txn.tripId.slice(-6)}
                       </span>
                     ) : (
@@ -145,35 +159,54 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                     )}
                   </td>
                   <td className="px-5 py-3.5 whitespace-nowrap">
-                    <p className="text-xs font-medium text-ink">{formatShortDate(txn.date) || '—'}</p>
+                    <p className="text-xs font-medium text-ink">
+                      {formatShortDate(txn.date) || "—"}
+                    </p>
                     <p className="text-[10px] text-ink-4">{formatClock(txn.date)}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <Avatar initials={txn.rider.initials} src={txn.rider.image} size="sm" />
-                      <span className="text-xs font-semibold text-ink truncate max-w-[160px]">{txn.rider.name}</span>
+                      <span className="text-xs font-semibold text-ink truncate max-w-[160px]">
+                        {txn.rider.name}
+                      </span>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="space-y-0.5 text-xs">
                       {txn.rider.email ? (
-                        <a href={`mailto:${txn.rider.email}`} className="flex items-center gap-1.5 text-ink-2 hover:text-primary">
-                          <Mail size={11} className="text-ink-4" /> <span className="truncate max-w-[180px]">{txn.rider.email}</span>
+                        <a
+                          href={`mailto:${txn.rider.email}`}
+                          className="flex items-center gap-1.5 text-ink-2 hover:text-primary"
+                        >
+                          <Mail size={11} className="text-ink-4" />{" "}
+                          <span className="truncate max-w-[180px]">{txn.rider.email}</span>
                         </a>
                       ) : null}
                       {txn.rider.contact ? (
-                        <a href={`tel:${txn.rider.contact}`} className="flex items-center gap-1.5 text-ink-4 hover:text-primary">
+                        <a
+                          href={`tel:${txn.rider.contact}`}
+                          className="flex items-center gap-1.5 text-ink-4 hover:text-primary"
+                        >
                           <Phone size={11} /> {txn.rider.contact}
                         </a>
                       ) : null}
-                      {!txn.rider.email && !txn.rider.contact && <span className="text-ink-4">—</span>}
+                      {!txn.rider.email && !txn.rider.contact && (
+                        <span className="text-ink-4">—</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                    <span className="text-sm font-bold text-primary tabular-nums">{money(txn.amount)}</span>
+                    <span className="text-sm font-bold text-primary tabular-nums">
+                      {money(txn.amount)}
+                    </span>
                   </td>
                   <td className="px-5 py-3.5 text-center whitespace-nowrap">
-                    <Badge dot variant={STATUS_VARIANT[txn.status] ?? 'neutral'} className="capitalize">
+                    <Badge
+                      dot
+                      variant={STATUS_VARIANT[txn.status] ?? "neutral"}
+                      className="capitalize"
+                    >
                       {txn.status}
                     </Badge>
                   </td>
@@ -189,10 +222,14 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               ) : (
                 <AlertCircle size={36} className="mx-auto mb-3 opacity-30 text-ink-4" />
               )}
-              <p className="text-sm font-semibold text-ink">{loading ? 'Loading transactions' : 'No transactions found'}</p>
+              <p className="text-sm font-semibold text-ink">
+                {loading ? "Loading transactions" : "No transactions found"}
+              </p>
               {!loading && (
                 <p className="text-xs text-ink-4 mt-1">
-                  {search ? `No results for "${search}".` : 'Try adjusting your search or status filter.'}
+                  {search
+                    ? `No results for "${search}".`
+                    : "Try adjusting your search or status filter."}
                 </p>
               )}
             </div>

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Loader2 } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
-import { useFleet } from '@/hooks/useFleet';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Plus, Loader2 } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { useFleet } from "@/hooks/useFleet";
 
 import {
   AddVehicleModal,
@@ -10,12 +10,12 @@ import {
   FleetTable,
   STATUS_CONFIG as statusConfig,
   INSURANCE_BADGE as insuranceBadge,
-} from '@/features/fleet';
+} from "@/features/fleet";
 
 const Fleet = ({ role }: { role?: string | null }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const urlSearch = searchParams.get('searchTerm') || searchParams.get('search') || '';
+  const urlSearch = searchParams.get("searchTerm") || searchParams.get("search") || "";
   const [search, setSearch] = useState(urlSearch);
 
   const { vehicles, loading: fleetLoading, addVehicle } = useFleet({ searchTerm: search });
@@ -29,7 +29,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
   }, []);
 
   useEffect(() => {
-    const querySearch = searchParams.get('searchTerm') || searchParams.get('search') || '';
+    const querySearch = searchParams.get("searchTerm") || searchParams.get("search") || "";
     if (querySearch !== search) {
       setSearch(querySearch);
     }
@@ -45,9 +45,11 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
   const stats = {
     total: (vehicles || []).length,
-    available: (vehicles || []).filter((v: any) => v?.status === 'available').length,
-    inTrip: (vehicles || []).filter((v: any) => v?.status === 'in_trip').length,
-    issues: (vehicles || []).filter((v: any) => v?.insurance?.status !== 'valid' || v?.status === 'maintenance').length,
+    available: (vehicles || []).filter((v: any) => v?.status === "available").length,
+    inTrip: (vehicles || []).filter((v: any) => v?.status === "in_trip").length,
+    issues: (vehicles || []).filter(
+      (v: any) => v?.insurance?.status !== "valid" || v?.status === "maintenance",
+    ).length,
   };
 
   if (loading && vehicles.length === 0) {
@@ -63,15 +65,21 @@ const Fleet = ({ role }: { role?: string | null }) => {
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-500">
-      {showAddModal && <AddVehicleModal onClose={() => setShowAddModal(false)} onSave={addVehicle} />}
+      {showAddModal && (
+        <AddVehicleModal onClose={() => setShowAddModal(false)} onSave={addVehicle} />
+      )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="type-page-title">Fleet Management</h1>
-          <p className="text-sm text-ink-4 mt-0.5">Asset tracking, compliance auditing, and operator logistics</p>
+          <p className="text-sm text-ink-4 mt-0.5">
+            Asset tracking, compliance auditing, and operator logistics
+          </p>
         </div>
-        {role === 'admin' && (
-          <Button variant="primary" icon={Plus} onClick={() => setShowAddModal(true)}>Add Vehicle</Button>
+        {role === "admin" && (
+          <Button variant="primary" icon={Plus} onClick={() => setShowAddModal(true)}>
+            Add Vehicle
+          </Button>
         )}
       </div>
 

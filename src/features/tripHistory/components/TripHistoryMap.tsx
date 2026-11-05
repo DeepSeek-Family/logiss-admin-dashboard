@@ -1,9 +1,21 @@
-import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { Plus, Minus, MapPin, Navigation, Truck, ExternalLink, X, MousePointerClick, Clock, Loader2, RotateCcw } from 'lucide-react';
-import { Card, Avatar, TripStatusBadge, loadGoogleMapsScript } from '@/shared/components/ui';
-import { formatTime, formatShortDate, money } from '@/utils/helpers';
-import { parseLatLng, extractBookingStopsCoords } from '@/features/bookings/utils/helpers';
-import { createDirectionalRoutePolyline, getDrivingRoutePath } from '@/utils/googleDrivingRoute';
+import React, { useMemo, useEffect, useRef, useState } from "react";
+import {
+  Plus,
+  Minus,
+  MapPin,
+  Navigation,
+  Truck,
+  ExternalLink,
+  X,
+  MousePointerClick,
+  Clock,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
+import { Card, Avatar, TripStatusBadge, loadGoogleMapsScript } from "@/shared/components/ui";
+import { formatTime, formatShortDate, money } from "@/utils/helpers";
+import { parseLatLng, extractBookingStopsCoords } from "@/features/bookings/utils/helpers";
+import { createDirectionalRoutePolyline, getDrivingRoutePath } from "@/utils/googleDrivingRoute";
 
 interface TripHistoryMapProps {
   trips: any[];
@@ -25,7 +37,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
   onOpenDetails,
   onClose,
   plotAll = false,
-  title = 'Trip Map',
+  title = "Trip Map",
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -46,24 +58,27 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
   }, [drivers]);
 
   const historyTrips = useMemo(
-    () => (trips || []).filter((t: any) => t?.scheduledTime && (plotAll || t.status !== 'pending_review' || t.driverId)),
-    [trips, plotAll]
+    () =>
+      (trips || []).filter(
+        (t: any) => t?.scheduledTime && (plotAll || t.status !== "pending_review" || t.driverId),
+      ),
+    [trips, plotAll],
   );
 
   const selected = selectedId ? historyTrips.find((t: any) => t.id === selectedId) : null;
   const selDriver = selected?.driverId ? driverById[String(selected.driverId)] : null;
 
   const vehicleStatusLabel = selected
-    ? ['in_trip', 'en_route'].includes(selected.status)
-      ? 'En route to drop-off'
-      : selected.status === 'arrived'
-      ? 'Arrived at drop-off'
-      : selected.status === 'completed'
-      ? 'Trip completed'
-      : selDriver
-      ? 'Staged at pickup'
-      : 'Awaiting assignment'
-    : '';
+    ? ["in_trip", "en_route"].includes(selected.status)
+      ? "En route to drop-off"
+      : selected.status === "arrived"
+        ? "Arrived at drop-off"
+        : selected.status === "completed"
+          ? "Trip completed"
+          : selDriver
+            ? "Staged at pickup"
+            : "Awaiting assignment"
+    : "";
 
   useEffect(() => {
     let active = true;
@@ -77,7 +92,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
         }
       })
       .catch((err) => {
-        console.warn('Google Maps script load error:', err);
+        console.warn("Google Maps script load error:", err);
         if (active) setLoadFailed(true);
       });
     return () => {
@@ -90,7 +105,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     if (!scriptLoaded || !mapRef.current || mapInstanceRef.current) return;
 
     const google = (window as any).google;
-    const defaultCenter = { lat: 37.5407, lng: -77.4360 };
+    const defaultCenter = { lat: 37.5407, lng: -77.436 };
 
     const map = new google.maps.Map(mapRef.current, {
       zoom: 12,
@@ -137,13 +152,13 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           const pMarker = new google.maps.Marker({
             position: pCoord,
             map,
-            title: `Pickup: ${t.pickup || 'Pickup Location'}`,
+            title: `Pickup: ${t.pickup || "Pickup Location"}`,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 9,
-              fillColor: '#2969CD',
+              fillColor: "#2969CD",
               fillOpacity: 1,
-              strokeColor: '#FFFFFF',
+              strokeColor: "#FFFFFF",
               strokeWeight: 2.5,
             },
           });
@@ -158,13 +173,13 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           const sMarker = new google.maps.Marker({
             position: sCoord,
             map,
-            title: `Stop ${idx + 1}: ${t.stops?.[idx] || 'Drop Stop'}`,
+            title: `Stop ${idx + 1}: ${t.stops?.[idx] || "Drop Stop"}`,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 8,
-              fillColor: '#F59E0B',
+              fillColor: "#F59E0B",
               fillOpacity: 1,
-              strokeColor: '#FFFFFF',
+              strokeColor: "#FFFFFF",
               strokeWeight: 2.5,
             },
           });
@@ -179,13 +194,13 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           const dMarker = new google.maps.Marker({
             position: dCoord,
             map,
-            title: `Drop-off: ${t.dropoff || 'Drop-off Location'}`,
+            title: `Drop-off: ${t.dropoff || "Drop-off Location"}`,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 9,
-              fillColor: '#EF4444',
+              fillColor: "#EF4444",
               fillOpacity: 1,
-              strokeColor: '#FFFFFF',
+              strokeColor: "#FFFFFF",
               strokeWeight: 2.5,
             },
           });
@@ -219,28 +234,34 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           const marker = new google.maps.Marker({
             position: mainCoord,
             map,
-            title: `${t.rider?.name || 'Trip'} · ${formatTime(t.scheduledTime)}`,
+            title: `${t.rider?.name || "Trip"} · ${formatTime(t.scheduledTime)}`,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 6,
-              fillColor: ['completed'].includes(t.status) ? '#10B981' : ['in_trip', 'en_route'].includes(t.status) ? '#EF4444' : '#2969CD',
+              fillColor: ["completed"].includes(t.status)
+                ? "#10B981"
+                : ["in_trip", "en_route"].includes(t.status)
+                  ? "#EF4444"
+                  : "#2969CD",
               fillOpacity: 0.75,
-              strokeColor: '#FFFFFF',
+              strokeColor: "#FFFFFF",
               strokeWeight: 1.5,
             },
           });
 
-          marker.addListener('click', () => {
+          marker.addListener("click", () => {
             onSelect(t.id);
             if (infoWindowRef.current) {
-              const stopsText = stopsCoords.length ? `<div style="font-size:11px; margin-top:2px;"><b>Stops:</b> ${stopsCoords.length} stop(s)</div>` : '';
+              const stopsText = stopsCoords.length
+                ? `<div style="font-size:11px; margin-top:2px;"><b>Stops:</b> ${stopsCoords.length} stop(s)</div>`
+                : "";
               infoWindowRef.current.setContent(`
                 <div style="font-family: sans-serif; padding: 4px; max-width: 220px;">
-                  <div style="font-weight: 600; font-size: 13px; color: #111;">${t.rider?.name || 'Rider'}</div>
+                  <div style="font-weight: 600; font-size: 13px; color: #111;">${t.rider?.name || "Rider"}</div>
                   <div style="font-size: 11px; color: #666; margin-top: 2px;">#${t.id} · ${formatTime(t.scheduledTime)}</div>
-                  <div style="font-size: 11px; margin-top: 6px;"><b>Pickup:</b> ${t.pickup || 'N/A'}</div>
+                  <div style="font-size: 11px; margin-top: 6px;"><b>Pickup:</b> ${t.pickup || "N/A"}</div>
                   ${stopsText}
-                  <div style="font-size: 11px; margin-top: 2px;"><b>Drop-off:</b> ${t.dropoff || 'N/A'}</div>
+                  <div style="font-size: 11px; margin-top: 2px;"><b>Drop-off:</b> ${t.dropoff || "N/A"}</div>
                 </div>
               `);
               infoWindowRef.current.open(map, marker);
@@ -255,7 +276,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     if (validCount > 0) {
       map.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
       if (validCount === 1) {
-        const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+        const listener = google.maps.event.addListenerOnce(map, "bounds_changed", () => {
           if (map.getZoom() > 15) map.setZoom(14);
         });
         return () => google.maps.event.removeListener(listener);
@@ -283,8 +304,14 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     historyTrips.forEach((t: any) => {
       const p = parseLatLng(t.pickupLocationRaw || t.pickupLocation || t.pickup);
       const d = parseLatLng(t.dropOffLocationRaw || t.dropOffLocation || t.dropoff);
-      if (p) { bounds.extend(p); count++; }
-      if (d) { bounds.extend(d); count++; }
+      if (p) {
+        bounds.extend(p);
+        count++;
+      }
+      if (d) {
+        bounds.extend(d);
+        count++;
+      }
     });
     if (count > 0) {
       mapInstanceRef.current.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
@@ -368,15 +395,21 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <Avatar initials={selected?.rider?.initials || '?'} size="sm" />
+                <Avatar initials={selected?.rider?.initials || "?"} size="sm" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink truncate">{selected?.rider?.name || 'Unknown'}</p>
+                  <p className="text-sm font-semibold text-ink truncate">
+                    {selected?.rider?.name || "Unknown"}
+                  </p>
                   <p className="text-xs text-ink-4">
-                    #{selected.id} · {formatShortDate(selected.scheduledTime)} · {formatTime(selected.scheduledTime)}
+                    #{selected.id} · {formatShortDate(selected.scheduledTime)} ·{" "}
+                    {formatTime(selected.scheduledTime)}
                   </p>
                 </div>
               </div>
-              <button onClick={() => onSelect(null)} className="p-1.5 text-ink-4 hover:text-ink rounded-lg hover:bg-bg shrink-0">
+              <button
+                onClick={() => onSelect(null)}
+                className="p-1.5 text-ink-4 hover:text-ink rounded-lg hover:bg-bg shrink-0"
+              >
                 <X size={15} />
               </button>
             </div>
@@ -387,9 +420,13 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
                 <Truck size={15} className="text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-ink truncate">{selDriver ? selDriver.name : 'Unassigned'}</p>
+                <p className="text-xs font-semibold text-ink truncate">
+                  {selDriver ? selDriver.name : "Unassigned"}
+                </p>
                 <p className="text-xs text-ink-4">
-                  {selDriver ? `${selDriver.vehicle?.type || ''} · ${selDriver.vehicle?.plate || ''}` : 'No vehicle assigned'}
+                  {selDriver
+                    ? `${selDriver.vehicle?.type || ""} · ${selDriver.vehicle?.plate || ""}`
+                    : "No vehicle assigned"}
                 </p>
               </div>
               <span className="ml-auto text-xs font-semibold text-primary bg-white px-2 py-1 rounded-full border border-primary/20 whitespace-nowrap">
@@ -403,7 +440,9 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
                 <div className="w-3 h-3 rounded-full border-2 border-primary bg-white shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-xs text-ink-4">Pickup</p>
-                  <p className="text-xs font-medium text-ink leading-snug">{selected.pickup || '—'}</p>
+                  <p className="text-xs font-medium text-ink leading-snug">
+                    {selected.pickup || "—"}
+                  </p>
                 </div>
               </div>
               {selected.stop && (
@@ -429,7 +468,9 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
                 <MapPin size={13} className="text-urgent shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-xs text-ink-4">Drop-off</p>
-                  <p className="text-xs font-medium text-ink leading-snug">{selected.dropoff || '—'}</p>
+                  <p className="text-xs font-medium text-ink leading-snug">
+                    {selected.dropoff || "—"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -445,7 +486,9 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Distance</p>
-                <p className="text-xs font-semibold text-ink">{selected.distance || (selected.miles ? `${selected.miles} mi` : '—')}</p>
+                <p className="text-xs font-semibold text-ink">
+                  {selected.distance || (selected.miles ? `${selected.miles} mi` : "—")}
+                </p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Trip cost</p>
@@ -453,7 +496,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Reason</p>
-                <p className="text-xs font-semibold text-ink truncate">{selected.reason || '—'}</p>
+                <p className="text-xs font-semibold text-ink truncate">{selected.reason || "—"}</p>
               </div>
             </div>
 
@@ -484,4 +527,3 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     </div>
   );
 };
-

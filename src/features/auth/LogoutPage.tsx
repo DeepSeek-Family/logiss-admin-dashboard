@@ -1,6 +1,6 @@
-import React from 'react';
-import { LogOut, ArrowRight, Truck } from 'lucide-react';
-import { Button, Card } from '@/shared/components/ui';
+import React from "react";
+import { LogOut, ArrowRight, Truck } from "lucide-react";
+import { Button, Card } from "@/shared/components/ui";
 
 const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
   return (
@@ -32,9 +32,7 @@ const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
           Back to Login
         </Button>
 
-        <p className="mt-8 text-xs text-ink-4">
-          &copy; 2026 LOGISS Transportation Inc.
-        </p>
+        <p className="mt-8 text-xs text-ink-4">&copy; 2026 LOGISS Transportation Inc.</p>
       </Card>
     </div>
   );

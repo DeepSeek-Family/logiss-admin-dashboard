@@ -1,1 +1,1 @@
-export { default } from '@/features/fleet/FleetPage';
+export { default } from "@/features/fleet/FleetPage";

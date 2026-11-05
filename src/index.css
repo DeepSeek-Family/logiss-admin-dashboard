@@ -5,11 +5,27 @@
 @layer base {
   html {
     font-size: 16px;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
 
-  body, input, select, textarea, button, code, kbd, samp, pre {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  body,
+  input,
+  select,
+  textarea,
+  button,
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
 
   body {
@@ -73,13 +89,22 @@
   /* Opacity-only: a lingering transform here would become the containing block
      for position:fixed overlays (modals/drawers) and mis-position them. */
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes pulseDot {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(15, 110, 86, 0.45); }
-    50% { box-shadow: 0 0 0 6px rgba(15, 110, 86, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(15, 110, 86, 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(15, 110, 86, 0);
+    }
   }
 
   .pulse-dot {
@@ -87,8 +112,13 @@
   }
 
   @keyframes pulseDotPrimary {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(41, 105, 205, 0.45); }
-    50% { box-shadow: 0 0 0 6px rgba(41, 105, 205, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(41, 105, 205, 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(41, 105, 205, 0);
+    }
   }
 
   .pulse-dot-primary {
@@ -101,9 +131,9 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D7DDE5;
+  background: #d7dde5;
   border-radius: 99px;
-  border: 2px solid #EEF1F5;
+  border: 2px solid #eef1f5;
 }
 
 ::-webkit-scrollbar-track {
@@ -114,13 +144,13 @@
   z-index: 0;
   height: 208px;
   width: 100%;
-  background: #E8EEF6;
+  background: #e8eef6;
 }
 
 .geofence-map .leaflet-div-icon.geofence-vertex {
   width: 14px;
   height: 14px;
-  background: #2969CD;
+  background: #2969cd;
   border: 2px solid #fff;
   border-radius: 9999px;
   box-shadow: 0 1px 2px rgba(18, 24, 38, 0.35);

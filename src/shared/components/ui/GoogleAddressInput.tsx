@@ -1,19 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS || '';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS || "";
 
 let googleMapsScriptPromise: Promise<void> | null = null;
 
-const mapsApiReady = () => Boolean((window as any).google?.maps?.Map || (window as any).google?.maps?.places);
+const mapsApiReady = () =>
+  Boolean((window as any).google?.maps?.Map || (window as any).google?.maps?.places);
 
 export const loadGoogleMapsScript = (): Promise<void> => {
-  if (typeof window === 'undefined') return Promise.resolve();
+  if (typeof window === "undefined") return Promise.resolve();
   if (mapsApiReady()) return Promise.resolve();
   if (googleMapsScriptPromise) return googleMapsScriptPromise;
 
   googleMapsScriptPromise = new Promise((resolve, reject) => {
     if (!GOOGLE_MAPS_API_KEY) {
-      console.warn('VITE_GOOGLE_MAPS key missing');
+      console.warn("VITE_GOOGLE_MAPS key missing");
       resolve();
       return;
     }
@@ -30,7 +31,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
           return;
         }
         if (Date.now() - started > 8000) {
-          reject(new Error('Google Maps failed to initialize'));
+          reject(new Error("Google Maps failed to initialize"));
           return;
         }
         window.setTimeout(tick, 50);
@@ -38,20 +39,22 @@ export const loadGoogleMapsScript = (): Promise<void> => {
       tick();
     };
 
-    const existingScript = document.getElementById('google-maps-script') as HTMLScriptElement | null;
+    const existingScript = document.getElementById(
+      "google-maps-script",
+    ) as HTMLScriptElement | null;
     if (existingScript) {
       if (mapsApiReady()) {
         resolve();
         return;
       }
-      existingScript.addEventListener('load', ready);
-      existingScript.addEventListener('error', (e) => reject(e));
+      existingScript.addEventListener("load", ready);
+      existingScript.addEventListener("error", (e) => reject(e));
       ready();
       return;
     }
 
-    const script = document.createElement('script');
-    script.id = 'google-maps-script';
+    const script = document.createElement("script");
+    script.id = "google-maps-script";
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&libraries=places`;
     script.async = true;
     script.defer = true;
@@ -76,8 +79,8 @@ export const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
   value,
   onChange,
   onSelectCoords,
-  placeholder = 'Search address or location...',
-  className = '',
+  placeholder = "Search address or location...",
+  className = "",
   required = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -100,15 +103,16 @@ export const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
         if (!autocompleteRef.current) {
           const autocomplete = new (window as any).google.maps.places.Autocomplete(
             inputRef.current,
-            { types: ['geocode', 'establishment'] }
+            { types: ["geocode", "establishment"] },
           );
 
-          autocomplete.addListener('place_changed', () => {
+          autocomplete.addListener("place_changed", () => {
             const place = autocomplete.getPlace();
             if (place && place.geometry && place.geometry.location) {
               const lat = Number(place.geometry.location.lat());
               const lng = Number(place.geometry.location.lng());
-              const address = place.formatted_address || place.name || inputRef.current?.value || '';
+              const address =
+                place.formatted_address || place.name || inputRef.current?.value || "";
               onChangeRef.current(address);
               if (onSelectCoordsRef.current && Number.isFinite(lat) && Number.isFinite(lng)) {
                 onSelectCoordsRef.current([lat, lng]);
@@ -122,7 +126,7 @@ export const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
         }
       })
       .catch((err) => {
-        console.warn('Failed to load Google Maps script', err);
+        console.warn("Failed to load Google Maps script", err);
       });
 
     return () => {

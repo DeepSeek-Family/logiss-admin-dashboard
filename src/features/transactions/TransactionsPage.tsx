@@ -1,42 +1,45 @@
-import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
-import {
-  TransactionsTable,
-  mapApiPayment,
-} from '@/features/transactions';
-import { Can } from '@/features/userAccess';
-import { useGetPaymentsQuery, useExportPaymentsMutation } from '@/redux/api/transitionApi';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
-import { ExportFormatMenu } from '@/shared/components/ui';
-import { parseExportErrorMessage, type FileExportType } from '@/utils/fileExportDownload';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { TransactionsTable, mapApiPayment } from "@/features/transactions";
+import { Can } from "@/features/userAccess";
+import { useGetPaymentsQuery, useExportPaymentsMutation } from "@/redux/api/transitionApi";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { ExportFormatMenu } from "@/shared/components/ui";
+import { parseExportErrorMessage, type FileExportType } from "@/utils/fileExportDownload";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
 export const Transactions = ({ role }: { role?: string | null }) => {
   const [searchParams] = useSearchParams();
-  const [filter, setFilter] = useState('all');
-  const [search, setSearch] = useState(searchParams.get('searchTerm') || '');
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState(searchParams.get("searchTerm") || "");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const fromParam = searchParams.get('from');
-  const toParam = searchParams.get('to');
-  const startDate = fromParam && YMD.test(fromParam) ? fromParam : '';
-  const endDate = toParam && YMD.test(toParam) ? toParam : '';
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+  const startDate = fromParam && YMD.test(fromParam) ? fromParam : "";
+  const endDate = toParam && YMD.test(toParam) ? toParam : "";
 
   const listFilterParams = useMemo(
     () => ({
       searchTerm: search.trim() || undefined,
-      paymentStatus: filter !== 'all' ? filter : undefined,
+      paymentStatus: filter !== "all" ? filter : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
     }),
     [search, filter, startDate, endDate],
   );
 
-  const { data: paymentsResponse, isFetching, isError, error, refetch } = useGetPaymentsQuery(
+  const {
+    data: paymentsResponse,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useGetPaymentsQuery(
     { ...listFilterParams, page: currentPage, limit: itemsPerPage },
     { refetchOnMountOrArgChange: true },
   );
@@ -59,11 +62,11 @@ export const Transactions = ({ role }: { role?: string | null }) => {
       await exportPayments({ ...listFilterParams, type }).unwrap();
       toast.success(`Payments exported as ${type.toUpperCase()}`);
     } catch (e: unknown) {
-      const err = e as FetchBaseQueryError
-      if (err && typeof err === 'object' && 'status' in err) {
-        toast.error(await parseExportErrorMessage(err))
+      const err = e as FetchBaseQueryError;
+      if (err && typeof err === "object" && "status" in err) {
+        toast.error(await parseExportErrorMessage(err));
       } else {
-        toast.error(apiErrorMessage(e, 'Failed to export payments'))
+        toast.error(apiErrorMessage(e, "Failed to export payments"));
       }
     } finally {
       setExportingType(null);
@@ -100,7 +103,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
         }}
         payments={payments}
         loading={isFetching}
-        error={isError ? apiErrorMessage(error, 'Unable to fetch payments') : null}
+        error={isError ? apiErrorMessage(error, "Unable to fetch payments") : null}
         onRetry={refetch}
         currentPage={currentPage}
         totalPages={totalPages}

@@ -1,9 +1,9 @@
 const stripApiPrefix = (base: string): string =>
-  base.replace(/\/api\/v\d+\/?$/i, '').replace(/\/$/, '');
+  base.replace(/\/api\/v\d+\/?$/i, "").replace(/\/$/, "");
 
 /** Paths served as static files on the API host (not under `/api/v1`). */
 export const isStaticMediaPath = (path: string): boolean => {
-  const p = path.startsWith('/') ? path : `/${path}`;
+  const p = path.startsWith("/") ? path : `/${path}`;
   return /^\/image/i.test(p) || /^\/uploads\//i.test(p);
 };
 
@@ -17,7 +17,7 @@ export const getMediaOrigin = (): string => {
   if (apiBase) {
     return stripApiPrefix(apiBase);
   }
-  return '';
+  return "";
 };
 
 /**
@@ -25,20 +25,24 @@ export const getMediaOrigin = (): string => {
  * In dev, uses same-origin `/image/...` (Vite proxy) so private-network hosts work from localhost.
  */
 export const imageUrl = (path?: string | null): string => {
-  if (!path || typeof path !== 'string') {
-    return '';
+  if (!path || typeof path !== "string") {
+    return "";
   }
 
   const trimmed = path.trim();
   if (!trimmed) {
-    return '';
+    return "";
   }
 
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:")
+  ) {
     return trimmed;
   }
 
-  const normalizedPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 
   if (import.meta.env.DEV && isStaticMediaPath(normalizedPath)) {
     return normalizedPath;

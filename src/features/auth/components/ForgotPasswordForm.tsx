@@ -55,20 +55,16 @@ export const ForgotPasswordForm = ({
           </div>
         </div>
         <p className="text-ink-3 text-sm font-medium">
-          Enter your registered email address and we will send you a 6-digit verification code to reset your password.
+          Enter your registered email address and we will send you a 6-digit verification code to
+          reset your password.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs font-medium text-ink-4 mb-2">
-            Email Address
-          </label>
+          <label className="block text-xs font-medium text-ink-4 mb-2">Email Address</label>
           <div className="relative">
-            <Mail
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
-              size={18}
-            />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
             <input
               type="email"
               required

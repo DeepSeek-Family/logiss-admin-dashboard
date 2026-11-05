@@ -1,5 +1,5 @@
-import { AlertTriangle, Trash2 } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { Button } from "@/shared/components/ui";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;

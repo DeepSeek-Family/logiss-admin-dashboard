@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Phone } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Phone } from "lucide-react";
 
 interface EmergencyProtocolModalProps {
   onClose: () => void;
@@ -18,7 +18,10 @@ export const EmergencyProtocolModal: React.FC<EmergencyProtocolModalProps> = ({ 
         </div>
       </div>
       <div className="space-y-3">
-        <a href="tel:911" className="flex items-center justify-between p-4 bg-urgent-light rounded-xl border border-urgent/20 hover:bg-urgent/10 transition-colors">
+        <a
+          href="tel:911"
+          className="flex items-center justify-between p-4 bg-urgent-light rounded-xl border border-urgent/20 hover:bg-urgent/10 transition-colors"
+        >
           <div className="flex items-center gap-3">
             <Phone size={18} className="text-urgent" />
             <div>
@@ -28,7 +31,10 @@ export const EmergencyProtocolModal: React.FC<EmergencyProtocolModalProps> = ({ 
           </div>
           <span className="text-xs font-medium text-urgent">911</span>
         </a>
-        <a href="tel:+18045550911" className="flex items-center justify-between p-4 bg-bg rounded-xl border border-line-2 hover:bg-primary-light transition-colors">
+        <a
+          href="tel:+18045550911"
+          className="flex items-center justify-between p-4 bg-bg rounded-xl border border-line-2 hover:bg-primary-light transition-colors"
+        >
           <div className="flex items-center gap-3">
             <Phone size={18} className="text-primary" />
             <div>
