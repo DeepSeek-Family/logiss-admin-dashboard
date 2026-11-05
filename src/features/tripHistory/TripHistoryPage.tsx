@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
-import { Loader2, Map as MapIcon } from "lucide-react";
-import { Card, Button, ConfirmationModal, ExportFormatMenu } from "@/shared/components/ui";
+import { Download, Loader2, Map as MapIcon } from "lucide-react";
+import { Card, Button, ConfirmationModal } from "@/shared/components/ui";
 import { parseExportErrorMessage, type FileExportType } from "@/utils/fileExportDownload";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { useFleet } from "@/hooks/useFleet";
@@ -32,6 +32,7 @@ import {
   TripHistoryMap,
   ServiceDateFilter,
   TripHistoryRangeFilters,
+  TripHistoryExportModal,
 } from "@/features/tripHistory";
 import { env } from "@/config/env";
 
@@ -146,16 +147,24 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [updateBookingMutation] = useUpdateBookingMutation();
   const [exportTripHistory] = useExportTripHistoryMutation();
   const [exportingType, setExportingType] = useState<FileExportType | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const handleExport = async (type: FileExportType) => {
+  const handleExport = async (type: FileExportType, fields: string[]): Promise<boolean> => {
     if (dateRangeError) {
       toast.error(dateRangeError);
-      return;
+      return false;
     }
+    if (fields.length === 0 || exportingType) return false;
     setExportingType(type);
     try {
-      await exportTripHistory({ ...historyQueryParams, type }).unwrap();
-      toast.success(`Trip history exported as ${type.toUpperCase()}`);
+      await exportTripHistory({
+        ...historyQueryParams,
+        type,
+        fields,
+        ...(selectedIds.length ? { bookingIds: selectedIds } : {}),
+      }).unwrap();
+      toast.success(`Trip history ${type.toUpperCase()} download started`);
+      return true;
     } catch (e: unknown) {
       const err = e as FetchBaseQueryError;
       if (err && typeof err === "object" && "status" in err) {
@@ -163,6 +172,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       } else {
         toast.error(apiErrorMessage(e, "Failed to export trip history"));
       }
+      return false;
     } finally {
       setExportingType(null);
     }
@@ -348,6 +358,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
 
+  const openExportModal = () => {
+    if (dateRangeError) {
+      toast.error(dateRangeError);
+      return;
+    }
+    setIsExportModalOpen(true);
+  };
+
   const selectedTrip = selectedTripId
     ? (trips || []).find((t: any) => t?.id === selectedTripId)
     : null;
@@ -429,7 +447,17 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               <MapIcon size={15} />
               {showMap ? "Hide Map" : "Show Map"}
             </button>
-            <ExportFormatMenu exportingType={exportingType} onExport={handleExport} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon={Download}
+              onClick={openExportModal}
+              disabled={Boolean(exportingType)}
+              className="h-9 border-line text-ink-3 shadow-sm hover:bg-bg hover:text-ink"
+            >
+              Export
+            </Button>
           </div>
         )}
       </div>
@@ -467,6 +495,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               }}
               totalPages={Math.max(1, historyTotalPages)}
               totalItems={historyTotalItems}
+              onExportSelected={openExportModal}
             />
           </div>
           {showMap && (
@@ -504,6 +533,15 @@ const TripHistory = ({ role }: { role?: string | null }) => {
         isLoading={confirmModal.isLoading}
         onConfirm={confirmModal.onConfirm}
         onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
+      <TripHistoryExportModal
+        isOpen={isExportModalOpen}
+        isExporting={Boolean(exportingType)}
+        selectedBookingCount={selectedIds.length}
+        onClose={() => {
+          if (!exportingType) setIsExportModalOpen(false);
+        }}
+        onExport={handleExport}
       />
     </div>
   );

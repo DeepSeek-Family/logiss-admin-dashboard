@@ -67,6 +67,7 @@ interface TripArchiveTabProps {
   onItemsPerPageChange: (size: number) => void;
   totalPages: number;
   totalItems: number;
+  onExportSelected: () => void;
 }
 
 // Normalize "8:32 AM" / "13:05" → "HH:MM"; '' if unparseable.
@@ -146,6 +147,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   onItemsPerPageChange,
   totalPages,
   totalItems,
+  onExportSelected,
 }) => {
   const { data: payersResponse } = useGetAllPayersQuery();
   const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
@@ -167,84 +169,6 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   const toggleSelect = (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation();
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-  };
-
-  const handleExport = () => {
-    const tripsToExport =
-      selectedIds.length > 0 ? trips.filter((t: any) => selectedIds.includes(t.id)) : filteredTrips;
-
-    if (tripsToExport.length === 0) return;
-
-    const headers = [
-      "Trip ID",
-      "Passenger Name",
-      "Passenger ID",
-      "Date",
-      "Pickup Address",
-      "Drop-off Address",
-      "Scheduled Pickup",
-      "Pickup Arrival",
-      "Drop-off Completed",
-      "Trip Miles",
-      "Trip Reason",
-      "Vehicle/Service",
-      "Mobility",
-      "No-Show",
-      "Cancelled",
-      "Payer",
-      "Zone",
-      "Billing Miles",
-      "Passenger Copay",
-      "Payer Charge",
-      "Type",
-      "Leg",
-    ];
-
-    const rows = tripsToExport.map((trip: any) => {
-      const times = resolveTripTimes(trip);
-      const pickup = trip.pickupTime || to24h(trip.requestedPickup) || times.departure;
-      const driver = drivers.find((d: any) => String(d.id) === String(trip.driverId));
-      return [
-        trip.id,
-        `"${trip?.rider?.name || "Unknown"}"`,
-        `"${trip.passengerId || trip.rider?.passengerId || "N/A"}"`,
-        formatShortDate(trip.scheduledTime),
-        `"${trip.pickup}"`,
-        `"${trip.dropoff}"`,
-        `"${to12h(pickup) || "N/A"}"`,
-        `"${to12h(times.arrival) || "N/A"}"`,
-        `"${to12h(String(trip.dropoffTime || "").slice(11, 16) || times.arrival) || "N/A"}"`,
-        `"${trip.distance || (trip.miles ? `${trip.miles} mi` : "N/A")}"`,
-        `"${trip.reason || "N/A"}"`,
-        `"${driver?.vehicle?.type || trip.vehicle?.type || trip.mobility || "N/A"}"`,
-        `"${trip.mobility || "N/A"}"`,
-        trip.status === "no_show" ? "Yes" : "No",
-        trip.status === "cancelled" ? "Yes" : "No",
-        `"${trip.fundingSource || trip.paymentMethod || "N/A"}"`,
-        `"${trip.pricingZoneLabel || formatPricingZone(trip.primaryPricingZone) || (trip.insideCounty === true ? "Inside" : trip.insideCounty === false ? "Outside" : "N/A")}"`,
-        trip.billingMileage != null && trip.billingMileage > 0
-          ? trip.billingMileage.toFixed(1)
-          : "N/A",
-        trip.passengerCopay ?? trip.copay ?? 0,
-        trip.fundingSourceCharge ??
-          (trip.costToCounty != null ? trip.costToCounty : trip.cost || 0),
-        trip.type,
-        trip.legIndex ? `Leg ${trip.legIndex}` : trip.type === "round_trip" ? "Round" : "One-way",
-      ];
-    });
-
-    const csvContent = [headers.join(","), ...rows.map((row: any) => row.join(","))].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `LOGISS_Trips_${new Date().toISOString().split("T")[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setSelectedIds([]);
   };
 
   return (
@@ -327,7 +251,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
             <button
               type="button"
-              onClick={handleExport}
+              onClick={onExportSelected}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition-all shadow-sm"
             >
               <Download size={13} /> Export selected

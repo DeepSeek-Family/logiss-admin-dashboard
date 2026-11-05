@@ -7,3 +7,4 @@ export { DriverDayPanel } from "./components/DriverDayPanel";
 export { RunDispatchView } from "./components/RunDispatchView";
 export { ServiceDateFilter } from "./components/ServiceDateFilter";
 export { TripHistoryRangeFilters } from "./components/TripHistoryRangeFilters";
+export { TripHistoryExportModal } from "./components/TripHistoryExportModal";

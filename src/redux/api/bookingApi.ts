@@ -227,8 +227,21 @@ export interface IGetBookingsQueryParams {
 
 export type TripHistoryExportType = FileExportType;
 
+export interface ITripHistoryExportField {
+  header: string;
+  key: string;
+}
+
+export interface ITripHistoryExportFieldsResponse {
+  success: boolean;
+  message: string;
+  data: ITripHistoryExportField[];
+}
+
 export interface IExportTripHistoryArgs extends IGetBookingsQueryParams {
   type: FileExportType;
+  fields: string[];
+  bookingIds?: string[];
 }
 
 const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
@@ -330,13 +343,57 @@ export const bookingApi = baseApi.injectEndpoints({
           : [{ type: "bookings", id: "LIST" }],
     }),
 
+    getTripHistoryExportFields: builder.query<ITripHistoryExportFieldsResponse, void>({
+      query: () => ({
+        url: "/booking/history/export-fields",
+        method: "GET",
+      }),
+      transformResponse: (response: unknown): ITripHistoryExportFieldsResponse => {
+        const payload = response as {
+          success?: boolean;
+          message?: string;
+          data?: unknown;
+        };
+        const seen = new Set<string>();
+        const fields = Array.isArray(payload?.data)
+          ? payload.data.filter((field): field is ITripHistoryExportField => {
+              if (!field || typeof field !== "object") return false;
+              const candidate = field as Partial<ITripHistoryExportField>;
+              if (
+                typeof candidate.header !== "string" ||
+                !candidate.header.trim() ||
+                typeof candidate.key !== "string" ||
+                !candidate.key.trim() ||
+                seen.has(candidate.key)
+              ) {
+                return false;
+              }
+              seen.add(candidate.key);
+              return true;
+            })
+          : [];
+        return {
+          success: payload?.success !== false,
+          message: payload?.message || "",
+          data: fields,
+        };
+      },
+      keepUnusedDataFor: 300,
+    }),
+
     exportTripHistory: builder.mutation<null, IExportTripHistoryArgs>({
-      queryFn: async ({ type, ...filters }, _api, _extraOptions, baseQuery) =>
+      queryFn: async ({ type, fields, bookingIds, ...filters }, _api, _extraOptions, baseQuery) =>
         requestFileExport(baseQuery as unknown as (args: Record<string, unknown>) => unknown, {
           url: "/booking/history/export",
           params: buildQueryParams(filters),
           type,
           fallbackFileName: FILE_EXPORT_FALLBACK_NAMES.tripHistory[type],
+          method: "POST",
+          body: {
+            type,
+            fields,
+            ...(bookingIds?.length ? { bookingIds } : {}),
+          },
         }),
     }),
 
@@ -435,6 +492,7 @@ export const {
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,
   useGetAllTripHistoryQuery,
+  useGetTripHistoryExportFieldsQuery,
   useExportTripHistoryMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
