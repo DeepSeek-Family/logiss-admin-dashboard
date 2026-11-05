@@ -1,21 +1,28 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
-  CheckCircle2, MapPin, Phone, Mail, XCircle,
-  FileCheck, Eye, X, ImageIcon,
-} from 'lucide-react';
-import { Avatar, Button } from '@/shared/components/ui';
-import type { MappedDriverApplication } from '../utils/helpers';
+  CheckCircle2,
+  MapPin,
+  Phone,
+  Mail,
+  XCircle,
+  FileCheck,
+  Eye,
+  X,
+  ImageIcon,
+} from "lucide-react";
+import { Avatar, Button } from "@/shared/components/ui";
+import type { MappedDriverApplication } from "../utils/helpers";
 
 const APP_STATUS_CFG: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: 'text-warning bg-warning/10' },
-  approved: { label: 'Approved', color: 'text-accent bg-accent/10' },
-  rejected: { label: 'Rejected', color: 'text-urgent bg-urgent/10' },
+  pending: { label: "Pending", color: "text-warning bg-warning/10" },
+  approved: { label: "Approved", color: "text-accent bg-accent/10" },
+  rejected: { label: "Rejected", color: "text-urgent bg-urgent/10" },
 };
 
 const Field = ({ label, value }: { label: string; value?: string | number | boolean | null }) => {
-  let display = '—';
-  if (typeof value === 'boolean') display = value ? 'Yes' : 'No';
-  else if (value === 0) display = '0';
+  let display = "—";
+  if (typeof value === "boolean") display = value ? "Yes" : "No";
+  else if (value === 0) display = "0";
   else if (value != null && String(value).trim()) display = String(value).trim();
 
   return (
@@ -39,9 +46,9 @@ export const ApplicationDetails = ({
   onApprove,
   actionsDisabled = false,
 }: ApplicationDetailsProps) => {
-  const appStatus = selectedApp.status || 'pending';
-  const isApproved = appStatus === 'approved';
-  const isRejected = appStatus === 'rejected';
+  const appStatus = selectedApp.status || "pending";
+  const isApproved = appStatus === "approved";
+  const isRejected = appStatus === "rejected";
   const isFrozen = isApproved || isRejected;
   const [viewUrl, setViewUrl] = useState<string | null>(null);
 
@@ -50,19 +57,33 @@ export const ApplicationDetails = ({
   return (
     <>
       {viewUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setViewUrl(null)}>
-          <div className="bg-white rounded-2xl border border-line-2 shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setViewUrl(null)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-line-2 shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-5 py-3 border-b border-line-2">
               <div className="flex items-center gap-2">
                 <ImageIcon size={15} className="text-ink-4" />
                 <span className="text-sm font-semibold text-ink">License image</span>
               </div>
-              <button type="button" onClick={() => setViewUrl(null)} className="w-7 h-7 flex items-center justify-center rounded-lg text-ink-4 hover:bg-bg transition-colors">
+              <button
+                type="button"
+                onClick={() => setViewUrl(null)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-ink-4 hover:bg-bg transition-colors"
+              >
                 <X size={15} />
               </button>
             </div>
             <div className="bg-bg flex items-center justify-center p-4 min-h-64">
-              <img src={viewUrl} alt="Driver license" className="max-h-80 w-auto rounded-lg object-contain" />
+              <img
+                src={viewUrl}
+                alt="Driver license"
+                className="max-h-80 w-auto rounded-lg object-contain"
+              />
             </div>
           </div>
         </div>
@@ -73,23 +94,31 @@ export const ApplicationDetails = ({
           <p className="text-xs text-ink-4 mb-3 font-mono">{selectedApp.id}</p>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Avatar initials={selectedApp.initials || '?'} src={selectedApp.image} size="lg" />
+              <Avatar initials={selectedApp.initials || "?"} src={selectedApp.image} size="lg" />
               <div>
                 <h2 className="text-xl font-bold text-ink">{selectedApp.name}</h2>
                 <div className="flex flex-wrap gap-3 text-xs text-ink-4 mt-1">
                   {selectedApp.county && (
-                    <span className="flex items-center gap-1"><MapPin size={12} /> {selectedApp.county}</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin size={12} /> {selectedApp.county}
+                    </span>
                   )}
                   {selectedApp.phone && (
-                    <span className="flex items-center gap-1"><Phone size={12} /> {selectedApp.phone}</span>
+                    <span className="flex items-center gap-1">
+                      <Phone size={12} /> {selectedApp.phone}
+                    </span>
                   )}
                   {selectedApp.email && (
-                    <span className="flex items-center gap-1"><Mail size={12} /> {selectedApp.email}</span>
+                    <span className="flex items-center gap-1">
+                      <Mail size={12} /> {selectedApp.email}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${sc.color}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${sc.color}`}
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
               {sc.label}
             </span>
@@ -146,11 +175,14 @@ export const ApplicationDetails = ({
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-bold text-ink">License images</p>
               <span className="text-xs font-semibold text-ink-4">
-                {selectedApp.licenseImages.length} file{selectedApp.licenseImages.length === 1 ? '' : 's'}
+                {selectedApp.licenseImages.length} file
+                {selectedApp.licenseImages.length === 1 ? "" : "s"}
               </span>
             </div>
             {selectedApp.licenseImages.length === 0 ? (
-              <p className="text-xs text-ink-4 py-4 text-center border border-dashed border-line-2 rounded-xl">No license images uploaded</p>
+              <p className="text-xs text-ink-4 py-4 text-center border border-dashed border-line-2 rounded-xl">
+                No license images uploaded
+              </p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {selectedApp.licenseImages.map((url, i) => (
@@ -160,9 +192,16 @@ export const ApplicationDetails = ({
                     onClick={() => setViewUrl(url)}
                     className="group relative aspect-[4/3] rounded-xl border border-line-2 overflow-hidden bg-bg hover:border-primary/40 transition-colors"
                   >
-                    <img src={url} alt={`License ${i + 1}`} className="w-full h-full object-cover" />
+                    <img
+                      src={url}
+                      alt={`License ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
                     <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
-                      <Eye size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Eye
+                        size={20}
+                        className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      />
                     </span>
                   </button>
                 ))}
@@ -183,13 +222,19 @@ export const ApplicationDetails = ({
                 <XCircle size={16} /> Reject
               </button>
               <div className="flex-1" />
-              <Button variant="primary" icon={FileCheck} className="h-9 text-sm" onClick={onApprove} disabled={actionsDisabled}>
+              <Button
+                variant="primary"
+                icon={FileCheck}
+                className="h-9 text-sm"
+                onClick={onApprove}
+                disabled={actionsDisabled}
+              >
                 Approve application
               </Button>
             </>
           ) : (
-            <p className={`text-sm font-semibold ${isApproved ? 'text-accent' : 'text-urgent'}`}>
-              {isApproved ? 'Application approved' : 'Application rejected'}
+            <p className={`text-sm font-semibold ${isApproved ? "text-accent" : "text-urgent"}`}>
+              {isApproved ? "Application approved" : "Application rejected"}
             </p>
           )}
         </div>

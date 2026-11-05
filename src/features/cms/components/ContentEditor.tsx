@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import {
   Bold,
   Italic,
@@ -15,15 +15,15 @@ import {
   Loader2,
   Eye,
   Edit3,
-} from 'lucide-react';
-import { useGetRuleByTypeQuery, RuleType } from '@/redux/api/rulesApi';
+} from "lucide-react";
+import { useGetRuleByTypeQuery, RuleType } from "@/redux/api/rulesApi";
 import {
   dedupeRepeatedEditorHtml,
   escapeHtml,
   htmlToPlainText,
   prepareRuleContentForEditor,
   stripUnsafeHtml,
-} from '@/features/cms/utils/richText';
+} from "@/features/cms/utils/richText";
 
 interface ContentEditorProps {
   activePage: string;
@@ -32,14 +32,18 @@ interface ContentEditorProps {
 }
 
 const EDITOR_BODY_CLASS =
-  'w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none overflow-y-auto ' +
-  '[&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_s]:line-through [&_strike]:line-through ' +
-  '[&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-bg [&_code]:text-primary [&_code]:text-xs [&_code]:font-mono ' +
-  '[&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:my-2 [&_blockquote]:text-ink-3 [&_blockquote]:italic ' +
-  '[&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_hr]:my-4 [&_hr]:border-line-2';
+  "w-full h-[460px] p-6 bg-white text-ink text-sm font-sans leading-relaxed outline-none overflow-y-auto " +
+  "[&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_s]:line-through [&_strike]:line-through " +
+  "[&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-bg [&_code]:text-primary [&_code]:text-xs [&_code]:font-mono " +
+  "[&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:my-2 [&_blockquote]:text-ink-3 [&_blockquote]:italic " +
+  "[&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_hr]:my-4 [&_hr]:border-line-2";
 
-export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, content, setContent }) => {
-  const isRulePage = ['terms', 'privacy', 'about'].includes(activePage);
+export const ContentEditor: React.FC<ContentEditorProps> = ({
+  activePage,
+  content,
+  setContent,
+}) => {
+  const isRulePage = ["terms", "privacy", "about"].includes(activePage);
 
   const {
     data: ruleResponse,
@@ -64,11 +68,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
     });
   }, [ruleResponse?.data?.content, activePage, isRulePage, setContent]);
 
-  const value = content[activePage] || '';
+  const value = content[activePage] || "";
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSyncedHtml = useRef(value);
   const isProgrammaticDomSync = useRef(false);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
@@ -89,7 +93,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
     const normalized = dedupeRepeatedEditorHtml(html);
     if (el.innerHTML !== normalized) {
       isProgrammaticDomSync.current = true;
-      el.innerHTML = normalized || '';
+      el.innerHTML = normalized || "";
       queueMicrotask(() => {
         isProgrammaticDomSync.current = false;
       });
@@ -106,7 +110,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
   }, [value, syncEditorDom]);
 
   useLayoutEffect(() => {
-    if (viewMode !== 'edit' || ruleBootLoading) return;
+    if (viewMode !== "edit" || ruleBootLoading) return;
     syncEditorDom(value);
   }, [viewMode, ruleBootLoading, value, syncEditorDom]);
 
@@ -122,7 +126,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
     lastSyncedHtml.current = safe;
   };
 
-  const readEditorHtml = () => stripUnsafeHtml(editorRef.current?.innerHTML ?? '');
+  const readEditorHtml = () => stripUnsafeHtml(editorRef.current?.innerHTML ?? "");
 
   const syncFromEditor = () => {
     if (isProgrammaticDomSync.current) return;
@@ -140,7 +144,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
 
   const openPreview = () => {
     flushEditorToState();
-    setViewMode('preview');
+    setViewMode("preview");
   };
 
   const preventToolbarBlur = (event: React.MouseEvent) => {
@@ -166,7 +170,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
       return;
     }
     focusEditor();
-    document.execCommand('undo');
+    document.execCommand("undo");
     syncFromEditor();
   };
 
@@ -179,24 +183,24 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
       return;
     }
     focusEditor();
-    document.execCommand('redo');
+    document.execCommand("redo");
     syncFromEditor();
   };
 
   const handleEditorKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!event.ctrlKey && !event.metaKey) return;
     const key = event.key.toLowerCase();
-    if (key === 'b') {
+    if (key === "b") {
       event.preventDefault();
-      runCommand('bold');
-    } else if (key === 'i') {
+      runCommand("bold");
+    } else if (key === "i") {
       event.preventDefault();
-      runCommand('italic');
-    } else if (key === 'z') {
+      runCommand("italic");
+    } else if (key === "z") {
       event.preventDefault();
       if (event.shiftKey) handleRedo();
       else handleUndo();
-    } else if (key === 'y') {
+    } else if (key === "y") {
       event.preventDefault();
       handleRedo();
     }
@@ -204,16 +208,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
 
   const insertLink = () => {
     focusEditor();
-    const url = window.prompt('Link URL', 'https://');
+    const url = window.prompt("Link URL", "https://");
     if (!url?.trim()) return;
-    runCommand('createLink', url.trim());
+    runCommand("createLink", url.trim());
   };
 
   const insertCode = () => {
     focusEditor();
     const selection = window.getSelection();
-    const text = selection?.toString() || 'code';
-    document.execCommand('insertHTML', false, `<code>${escapeHtml(text)}</code>`);
+    const text = selection?.toString() || "code";
+    document.execCommand("insertHTML", false, `<code>${escapeHtml(text)}</code>`);
     syncFromEditor();
   };
 
@@ -240,7 +244,9 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
       dangerouslySetInnerHTML={{ __html: previewHtml }}
     />
   ) : (
-    <div className={`${EDITOR_BODY_CLASS} bg-bg/20 flex flex-col items-center justify-center text-ink-4`}>
+    <div
+      className={`${EDITOR_BODY_CLASS} bg-bg/20 flex flex-col items-center justify-center text-ink-4`}
+    >
       <Eye size={32} className="mb-2 opacity-30" />
       <p className="text-xs">No content to preview yet. Switch to Edit mode to start typing.</p>
     </div>
@@ -276,7 +282,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('bold')}
+                onClick={() => runCommand("bold")}
                 title="Bold (Ctrl+B)"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -285,7 +291,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('italic')}
+                onClick={() => runCommand("italic")}
                 title="Italic (Ctrl+I)"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -294,7 +300,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('strikeThrough')}
+                onClick={() => runCommand("strikeThrough")}
                 title="Strikethrough"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -315,7 +321,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('insertUnorderedList')}
+                onClick={() => runCommand("insertUnorderedList")}
                 title="Bullet List"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -324,7 +330,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('insertOrderedList')}
+                onClick={() => runCommand("insertOrderedList")}
                 title="Numbered List"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -333,7 +339,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('formatBlock', 'blockquote')}
+                onClick={() => runCommand("formatBlock", "blockquote")}
                 title="Quote Block"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -351,7 +357,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               <button
                 type="button"
                 onMouseDown={preventToolbarBlur}
-                onClick={() => runCommand('insertHorizontalRule')}
+                onClick={() => runCommand("insertHorizontalRule")}
                 title="Horizontal Divider"
                 className="p-1.5 rounded-lg text-ink-3 hover:text-primary hover:bg-white transition-colors"
               >
@@ -363,9 +369,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
           <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-line-2">
             <button
               type="button"
-              onClick={() => setViewMode('edit')}
+              onClick={() => setViewMode("edit")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'edit' ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:text-ink'
+                viewMode === "edit"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-ink-3 hover:text-ink"
               }`}
             >
               <Edit3 size={12} />
@@ -375,7 +383,9 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
               type="button"
               onClick={openPreview}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'preview' ? 'bg-primary text-white shadow-sm' : 'text-ink-3 hover:text-ink'
+                viewMode === "preview"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-ink-3 hover:text-ink"
               }`}
             >
               <Eye size={12} />
@@ -392,10 +402,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({ activePage, conten
             </div>
           ) : (
             <>
-              <div className={viewMode === 'edit' ? 'block' : 'hidden'} aria-hidden={viewMode !== 'edit'}>
+              <div
+                className={viewMode === "edit" ? "block" : "hidden"}
+                aria-hidden={viewMode !== "edit"}
+              >
                 {editorSurface}
               </div>
-              <div className={viewMode === 'preview' ? 'block' : 'hidden'} aria-hidden={viewMode !== 'preview'}>
+              <div
+                className={viewMode === "preview" ? "block" : "hidden"}
+                aria-hidden={viewMode !== "preview"}
+              >
                 {previewSurface}
               </div>
             </>

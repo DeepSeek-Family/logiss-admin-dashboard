@@ -1,1 +1,1 @@
-export { default } from '@/features/fleet/FleetDetailsPage';
+export { default } from "@/features/fleet/FleetDetailsPage";

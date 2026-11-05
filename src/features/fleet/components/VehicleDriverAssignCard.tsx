@@ -1,30 +1,33 @@
-import { useEffect, useMemo, useState } from 'react';
-import { User, Check } from 'lucide-react';
-import { Card, Button, EntitySearchSelect } from '@/shared/components/ui';
-import { useGetDriversQuery } from '@/redux/api/driversApi';
+import { useEffect, useMemo, useState } from "react";
+import { User, Check } from "lucide-react";
+import { Card, Button, EntitySearchSelect } from "@/shared/components/ui";
+import { useGetDriversQuery } from "@/redux/api/driversApi";
 import {
   useAssignVehicleDriverMutation,
   useUpdateVehicleAssignMutation,
-} from '@/redux/api/vehiclesMangeApi';
-import { mapApiDriver } from '@/features/drivers/utils/helpers';
-import { driverToSelectItem } from '@/features/fleet/utils/entitySelectMappers';
-import { resolveVehicleAssignId, submitVehicleAssign } from '@/features/fleet/utils/submitVehicleAssign';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
-import toast from 'react-hot-toast';
+} from "@/redux/api/vehiclesMangeApi";
+import { mapApiDriver } from "@/features/drivers/utils/helpers";
+import { driverToSelectItem } from "@/features/fleet/utils/entitySelectMappers";
+import {
+  resolveVehicleAssignId,
+  submitVehicleAssign,
+} from "@/features/fleet/utils/submitVehicleAssign";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import toast from "react-hot-toast";
 
 const resolveAssignedDriverId = (vehicle: Record<string, unknown> | undefined): string => {
-  if (!vehicle) return '';
+  if (!vehicle) return "";
   const driver = vehicle.driver;
-  if (driver && typeof driver === 'object' && driver !== null && '_id' in driver) {
-    return String((driver as { _id?: string })._id || '');
+  if (driver && typeof driver === "object" && driver !== null && "_id" in driver) {
+    return String((driver as { _id?: string })._id || "");
   }
   const driverId = vehicle.driverId;
-  if (driverId && typeof driverId === 'object' && driverId !== null && '_id' in driverId) {
-    return String((driverId as { _id?: string })._id || '');
+  if (driverId && typeof driverId === "object" && driverId !== null && "_id" in driverId) {
+    return String((driverId as { _id?: string })._id || "");
   }
-  if (typeof driverId === 'string') return driverId;
-  if (typeof vehicle.assignedDriverId === 'string') return vehicle.assignedDriverId;
-  return '';
+  if (typeof driverId === "string") return driverId;
+  if (typeof vehicle.assignedDriverId === "string") return vehicle.assignedDriverId;
+  return "";
 };
 
 interface VehicleDriverAssignCardProps {
@@ -53,10 +56,7 @@ export const VehicleDriverAssignCard = ({
   const [updateVehicleAssign, { isLoading: updating }] = useUpdateVehicleAssignMutation();
   const assigning = creating || updating;
 
-  const drivers = useMemo(
-    () => (driversResponse?.data || []).map(mapApiDriver),
-    [driversResponse],
-  );
+  const drivers = useMemo(() => (driversResponse?.data || []).map(mapApiDriver), [driversResponse]);
 
   const driverItems = useMemo(() => drivers.map(driverToSelectItem), [drivers]);
 
@@ -73,7 +73,7 @@ export const VehicleDriverAssignCard = ({
 
   const handleAssign = async () => {
     if (!selectedDriverId) {
-      toast.error('Select a driver first');
+      toast.error("Select a driver first");
       return;
     }
     try {
@@ -89,10 +89,10 @@ export const VehicleDriverAssignCard = ({
           patchDriverOnly: Boolean(assignmentId),
         },
       );
-      toast.success(result.message || 'Driver assigned to this vehicle');
+      toast.success(result.message || "Driver assigned to this vehicle");
       onAssigned?.();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to assign driver'));
+      toast.error(apiErrorMessage(err, "Failed to assign driver"));
     }
   };
 
@@ -124,7 +124,7 @@ export const VehicleDriverAssignCard = ({
         disabled={!selectedDriverId || assigning || driversLoading}
         onClick={() => void handleAssign()}
       >
-        {assigning ? 'Assigning…' : assignedFromApi ? 'Update assignment' : 'Assign driver'}
+        {assigning ? "Assigning…" : assignedFromApi ? "Update assignment" : "Assign driver"}
       </Button>
     </Card>
   );

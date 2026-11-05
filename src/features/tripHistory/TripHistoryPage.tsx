@@ -1,11 +1,11 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
-import { Loader2, Map as MapIcon } from 'lucide-react';
-import { Card, Button, ConfirmationModal, ExportFormatMenu } from '@/shared/components/ui';
-import { parseExportErrorMessage, type FileExportType } from '@/utils/fileExportDownload';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { useFleet } from '@/hooks/useFleet';
-import { toast } from 'react-hot-toast';
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { Loader2, Map as MapIcon } from "lucide-react";
+import { Card, Button, ConfirmationModal, ExportFormatMenu } from "@/shared/components/ui";
+import { parseExportErrorMessage, type FileExportType } from "@/utils/fileExportDownload";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { useFleet } from "@/hooks/useFleet";
+import { toast } from "react-hot-toast";
 import {
   useGetAllTripHistoryQuery,
   useExportTripHistoryMutation,
@@ -13,24 +13,32 @@ import {
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
   type IGetBookingsQueryParams,
-} from '@/redux/api/bookingApi';
-import { useGetDriversQuery } from '@/redux/api/driversApi';
-import { mapApiDriver } from '@/features/drivers/utils/helpers';
+} from "@/redux/api/bookingApi";
+import { useGetDriversQuery } from "@/redux/api/driversApi";
+import { mapApiDriver } from "@/features/drivers/utils/helpers";
 import {
   mapApiBooking,
   mapPatchToApiPayload,
   apiErrorMessage,
   assignFilterToUnassignQuery,
   type DriverAssignmentFilter,
-} from '@/features/bookings/utils/helpers';
+} from "@/features/bookings/utils/helpers";
 
-import { StatusUpdateModal, TripDetailsModal, TripArchiveTab, ScheduleTab, TripHistoryMap, ServiceDateFilter, TripHistoryRangeFilters } from '@/features/tripHistory';
-import { env } from '@/config/env';
+import {
+  StatusUpdateModal,
+  TripDetailsModal,
+  TripArchiveTab,
+  ScheduleTab,
+  TripHistoryMap,
+  ServiceDateFilter,
+  TripHistoryRangeFilters,
+} from "@/features/tripHistory";
+import { env } from "@/config/env";
 
 const formatYmd = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-const DATE_RANGE_ERROR = 'End date must be on or after start date';
+const DATE_RANGE_ERROR = "End date must be on or after start date";
 
 const isInvalidDateRange = (startDate: string, endDate: string) =>
   Boolean(startDate && endDate && endDate < startDate);
@@ -55,23 +63,34 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   }, []);
 
   const [historySearch, setHistorySearch] = useState(
-    () => searchParams.get('searchTerm') || searchParams.get('search') || '',
+    () => searchParams.get("searchTerm") || searchParams.get("search") || "",
   );
-  const [driverFilter, setDriverFilter] = useState('all');
-  const [payerFilter, setPayerFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
-  const [serviceDate, setServiceDate] = useState('');
-  const [historyStartDate, setHistoryStartDate] = useState('');
-  const [historyEndDate, setHistoryEndDate] = useState('');
-  const [historyPayerId, setHistoryPayerId] = useState('');
+  const [driverFilter, setDriverFilter] = useState("all");
+  const [payerFilter, setPayerFilter] = useState("all");
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
+  const [serviceDate, setServiceDate] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+  const [historyPayerId, setHistoryPayerId] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItemsPerPage, setHistoryItemsPerPage] = useState(10);
 
-  const dateRangeError = isInvalidDateRange(historyStartDate, historyEndDate) ? DATE_RANGE_ERROR : null;
+  const dateRangeError = isInvalidDateRange(historyStartDate, historyEndDate)
+    ? DATE_RANGE_ERROR
+    : null;
 
   useEffect(() => {
     setHistoryPage(1);
-  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyStartDate, historyEndDate, historyPayerId]);
+  }, [
+    historySearch,
+    serviceDate,
+    driverFilter,
+    payerFilter,
+    assignFilter,
+    historyStartDate,
+    historyEndDate,
+    historyPayerId,
+  ]);
 
   const historyQueryParams = useMemo(() => {
     const params: IGetBookingsQueryParams = {
@@ -81,23 +100,42 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     const searchTerm = historySearch.trim();
     if (searchTerm) params.searchTerm = searchTerm;
     if (serviceDate) params.serviceDate = serviceDate;
-    if (driverFilter !== 'all') params.driverId = driverFilter;
-    if (payerFilter !== 'all') params.payerSource = payerFilter;
+    if (driverFilter !== "all") params.driverId = driverFilter;
+    if (payerFilter !== "all") params.payerSource = payerFilter;
     if (historyStartDate) params.startDate = historyStartDate;
     if (historyEndDate) params.endDate = historyEndDate;
     if (historyPayerId) params.payerId = historyPayerId;
     const unassign = assignFilterToUnassignQuery(assignFilter);
     if (unassign !== undefined) params.unassign = unassign;
     return params;
-  }, [historySearch, serviceDate, driverFilter, payerFilter, assignFilter, historyStartDate, historyEndDate, historyPayerId, historyPage, historyItemsPerPage]);
+  }, [
+    historySearch,
+    serviceDate,
+    driverFilter,
+    payerFilter,
+    assignFilter,
+    historyStartDate,
+    historyEndDate,
+    historyPayerId,
+    historyPage,
+    historyItemsPerPage,
+  ]);
 
-  const { data: historyResponse, isLoading: historyLoading, isFetching: historyFetching, refetch: refetchHistory } = useGetAllTripHistoryQuery(historyQueryParams, {
+  const {
+    data: historyResponse,
+    isLoading: historyLoading,
+    isFetching: historyFetching,
+    refetch: refetchHistory,
+  } = useGetAllTripHistoryQuery(historyQueryParams, {
     skip: Boolean(dateRangeError),
     refetchOnMountOrArgChange: true,
   });
-  const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(scheduleQueryParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: scheduleResponse, isLoading: scheduleLoading } = useScheduleBookingQuery(
+    scheduleQueryParams,
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
   const { data: onboardingResponse } = useGetScheduleOnboardingQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
@@ -119,11 +157,11 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       await exportTripHistory({ ...historyQueryParams, type }).unwrap();
       toast.success(`Trip history exported as ${type.toUpperCase()}`);
     } catch (e: unknown) {
-      const err = e as FetchBaseQueryError
-      if (err && typeof err === 'object' && 'status' in err) {
-        toast.error(await parseExportErrorMessage(err))
+      const err = e as FetchBaseQueryError;
+      if (err && typeof err === "object" && "status" in err) {
+        toast.error(await parseExportErrorMessage(err));
       } else {
-        toast.error(apiErrorMessage(e, 'Failed to export trip history'))
+        toast.error(apiErrorMessage(e, "Failed to export trip history"));
       }
     } finally {
       setExportingType(null);
@@ -136,13 +174,13 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     title: string;
     message: string;
     confirmText?: string;
-    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    variant?: "primary" | "urgent" | "accent" | "warning";
     isLoading?: boolean;
     onConfirm: () => void | Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
     onConfirm: () => {},
   });
 
@@ -150,15 +188,15 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     title: string;
     message: string;
     confirmText?: string;
-    variant?: 'primary' | 'urgent' | 'accent' | 'warning';
+    variant?: "primary" | "urgent" | "accent" | "warning";
     onConfirm: () => void | Promise<void>;
   }) => {
     setConfirmModal({
       isOpen: true,
       title: params.title,
       message: params.message,
-      confirmText: params.confirmText || 'Confirm',
-      variant: params.variant || 'primary',
+      confirmText: params.confirmText || "Confirm",
+      variant: params.variant || "primary",
       isLoading: false,
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isLoading: true }));
@@ -173,7 +211,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
   const fetchedApiDrivers = useMemo(
     () => (apiDriversResponse?.data || []).map(mapApiDriver),
-    [apiDriversResponse]
+    [apiDriversResponse],
   );
 
   const drivers = useMemo(() => {
@@ -188,18 +226,21 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
     const bookings = [...(scheduleResponse?.data || []), ...(historyResponse?.data || [])];
     bookings.forEach((b: any) => {
-      if (typeof b.driverId === 'object' && b.driverId?._id) {
+      if (typeof b.driverId === "object" && b.driverId?._id) {
         const id = String(b.driverId._id);
         if (!driverMap.has(id)) {
-          const dName = [b.driverId.firstName, b.driverId.lastName].filter(Boolean).join(' ') || 'Driver';
-          const initials = `${b.driverId.firstName?.[0] || ''}${b.driverId.lastName?.[0] || ''}`.toUpperCase() || 'D';
+          const dName =
+            [b.driverId.firstName, b.driverId.lastName].filter(Boolean).join(" ") || "Driver";
+          const initials =
+            `${b.driverId.firstName?.[0] || ""}${b.driverId.lastName?.[0] || ""}`.toUpperCase() ||
+            "D";
           driverMap.set(id, {
             id,
             _id: id,
             name: dName,
             initials,
             onDuty: true,
-            status: 'available',
+            status: "available",
             profile: b.driverId.profile,
           });
         }
@@ -211,12 +252,12 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
   const apiTrips = useMemo(
     () => (historyResponse?.data || []).map(mapApiBooking),
-    [historyResponse]
+    [historyResponse],
   );
 
   const apiScheduleTrips = useMemo(
     () => (scheduleResponse?.data || []).map(mapApiBooking),
-    [scheduleResponse]
+    [scheduleResponse],
   );
 
   const trips = apiTrips;
@@ -226,27 +267,37 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const historyTotalItems = historyPagination?.total ?? trips.length;
   const loading = historyLoading && trips.length === 0;
 
-  const handleUpdateTrip = async (id: string, patch: Record<string, any>, skipConfirm?: boolean) => {
-    const existingTrip = (trips || []).find((t: any) => String(t.id) === String(id) || String(t._id) === String(id));
+  const handleUpdateTrip = async (
+    id: string,
+    patch: Record<string, any>,
+    skipConfirm?: boolean,
+  ) => {
+    const existingTrip = (trips || []).find(
+      (t: any) => String(t.id) === String(id) || String(t._id) === String(id),
+    );
     const driverObj = existingTrip?.driverId as any;
     const existingDriverId = driverObj
-      ? (typeof driverObj === 'object' ? driverObj._id || driverObj.id : String(driverObj))
-      : '';
-    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || '') : undefined;
-    const isDriverAssign = patchDriverId !== undefined && patchDriverId !== String(existingDriverId || '');
+      ? typeof driverObj === "object"
+        ? driverObj._id || driverObj.id
+        : String(driverObj)
+      : "";
+    const patchDriverId = patch.driverId !== undefined ? String(patch.driverId || "") : undefined;
+    const isDriverAssign =
+      patchDriverId !== undefined && patchDriverId !== String(existingDriverId || "");
 
-    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || '';
+    const existingStatus = existingTrip?.status || existingTrip?.rawStatus || "";
     const patchStatus = patch.status || patch.bookingStatus || patch.isApproved;
-    const isStatusUpdate = patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
+    const isStatusUpdate =
+      patchStatus !== undefined && String(patchStatus) !== String(existingStatus);
 
     const executeUpdate = async () => {
       const payload = mapPatchToApiPayload(patch);
       try {
         await updateBookingMutation({ id, payload }).unwrap();
-        toast.success('Trip updated successfully');
+        toast.success("Trip updated successfully");
         refetchHistory();
       } catch (e: any) {
-        toast.error(apiErrorMessage(e, 'Failed to update trip'));
+        toast.error(apiErrorMessage(e, "Failed to update trip"));
       }
     };
 
@@ -256,15 +307,15 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     }
 
     if (isDriverAssign) {
-      const driver = (drivers || []).find(d => String(d.id) === String(patch.driverId));
-      const driverName = driver?.name || (patch.driverId ? 'Selected Driver' : 'Unassigned');
+      const driver = (drivers || []).find((d) => String(d.id) === String(patch.driverId));
+      const driverName = driver?.name || (patch.driverId ? "Selected Driver" : "Unassigned");
       openConfirm({
-        title: 'Confirm Driver Assignment',
+        title: "Confirm Driver Assignment",
         message: patch.driverId
           ? `Are you sure you want to assign driver "${driverName}" to Trip #${id}?`
           : `Are you sure you want to unassign driver from Trip #${id}?`,
-        confirmText: 'Assign Driver',
-        variant: 'primary',
+        confirmText: "Assign Driver",
+        variant: "primary",
         onConfirm: executeUpdate,
       });
       return;
@@ -272,12 +323,14 @@ const TripHistory = ({ role }: { role?: string | null }) => {
 
     if (isStatusUpdate) {
       const statusVal = patch.status || patch.bookingStatus || patch.isApproved;
-      const isUrgent = ['cancelled', 'rejected', 'no_show'].includes(String(statusVal).toLowerCase());
+      const isUrgent = ["cancelled", "rejected", "no_show"].includes(
+        String(statusVal).toLowerCase(),
+      );
       openConfirm({
-        title: 'Confirm Status Change',
+        title: "Confirm Status Change",
         message: `Are you sure you want to change status of Trip #${id} to "${statusVal}"?`,
-        confirmText: 'Update Status',
-        variant: isUrgent ? 'urgent' : 'warning',
+        confirmText: "Update Status",
+        variant: isUrgent ? "urgent" : "warning",
         onConfirm: executeUpdate,
       });
       return;
@@ -285,7 +338,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   };
 
   const location = useLocation();
-  const activeTab = location.pathname.includes('/schedule') ? 'schedule' : (searchParams.get('tab') || 'trips');
+  const activeTab = location.pathname.includes("/schedule")
+    ? "schedule"
+    : searchParams.get("tab") || "trips";
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [mapTripId, setMapTripId] = useState<string | null>(null);
@@ -293,7 +348,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCell, setEditingCell] = useState<any>(null);
 
-  const selectedTrip = selectedTripId ? (trips || []).find((t: any) => t?.id === selectedTripId) : null;
+  const selectedTrip = selectedTripId
+    ? (trips || []).find((t: any) => t?.id === selectedTripId)
+    : null;
 
   if (loading && (trips.length === 0 || drivers.length === 0)) {
     return (
@@ -322,26 +379,30 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
-          readOnly={activeTab === 'trips'}
-          onUpdate={activeTab === 'trips' ? undefined : handleUpdateTrip}
+          readOnly={activeTab === "trips"}
+          onUpdate={activeTab === "trips" ? undefined : handleUpdateTrip}
         />
       )}
 
       {/* Header: title + actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {activeTab === 'trips' ? (
+        {activeTab === "trips" ? (
           <div>
             <h1 className="type-page-title">Trip History</h1>
-            <p className="text-sm text-ink-4 mt-0.5">Archived and active records for LOGISS fleet</p>
+            <p className="text-sm text-ink-4 mt-0.5">
+              Archived and active records for LOGISS fleet
+            </p>
           </div>
         ) : (
           <div>
             <h1 className="type-page-title">Scheduled</h1>
-            <p className="text-sm text-ink-4 mt-0.5">Plan the day — driver assignments, timelines, and conflicts</p>
+            <p className="text-sm text-ink-4 mt-0.5">
+              Plan the day — driver assignments, timelines, and conflicts
+            </p>
           </div>
         )}
 
-        {activeTab === 'trips' && (
+        {activeTab === "trips" && (
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <TripHistoryRangeFilters
               startDate={historyStartDate}
@@ -357,23 +418,24 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             {showMap && <ServiceDateFilter value={serviceDate} onChange={setServiceDate} />}
 
             <button
-              onClick={() => setShowMap(v => !v)}
-              title={showMap ? 'Hide trip map' : 'Show trip map'}
+              onClick={() => setShowMap((v) => !v)}
+              title={showMap ? "Hide trip map" : "Show trip map"}
               className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${
-                showMap ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-ink-3 border-line hover:text-ink hover:bg-bg'
+                showMap
+                  ? "bg-primary text-white border-primary shadow-md"
+                  : "bg-white text-ink-3 border-line hover:text-ink hover:bg-bg"
               }`}
             >
               <MapIcon size={15} />
-              {showMap ? 'Hide Map' : 'Show Map'}
+              {showMap ? "Hide Map" : "Show Map"}
             </button>
             <ExportFormatMenu exportingType={exportingType} onExport={handleExport} />
-      
           </div>
         )}
       </div>
 
       {/* ────────────────── TRIP HISTORY TAB VIEW ────────────────── */}
-      {activeTab === 'trips' && (
+      {activeTab === "trips" && (
         <div className="flex flex-col xl:flex-row gap-5 items-start">
           <div className="flex-1 min-w-0 w-full">
             <TripArchiveTab
@@ -421,7 +483,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
       )}
 
       {/* ────────────────── DAILY SCHEDULE TAB VIEW ────────────────── */}
-      {activeTab === 'schedule' && (
+      {activeTab === "schedule" && (
         <ScheduleTab
           drivers={drivers}
           trips={scheduleTrips}

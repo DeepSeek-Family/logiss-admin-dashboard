@@ -1,1 +1,1 @@
-export { default } from '@/features/liveTrips/LiveTripsPage';
+export { default } from "@/features/liveTrips/LiveTripsPage";
