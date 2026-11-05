@@ -11,11 +11,8 @@ import {
   AUTH_TOKEN_KEY,
   LEGACY_AUTH_TOKEN_KEY,
 } from "@/constants/auth-storage";
-import {
-  isTokenExpired,
-  handleAuthSessionExpired,
-  handleForbiddenAccess,
-} from "@/utils/authSession";
+import { handleAuthSessionExpired } from "@/utils/authSession";
+import { getUserFacingApiError } from "@/utils/apiError";
 import { logout } from "@/redux/slice/authSlice";
 import toast from "react-hot-toast";
 
@@ -23,6 +20,7 @@ type AuthStateSlice = { auth: { token: string | null } };
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:5005/api/v1",
+  timeout: 20_000,
   prepareHeaders: (headers, { getState, endpoint }) => {
     const authToken =
       (getState() as AuthStateSlice).auth?.token ||
@@ -86,13 +84,7 @@ const baseQueryWithAuthHandling: BaseQueryFn<
         });
       } else if (status === 403) {
         // Forbidden on a specific resource: alert user without killing the entire session
-        toast.error(
-          errorData?.message ||
-            "Access restricted (403): You do not have permission for this resource.",
-          {
-            id: "auth-forbidden-toast",
-          },
-        );
+        toast.error(getUserFacingApiError(result.error), { id: "auth-forbidden-toast" });
       }
     }
   }

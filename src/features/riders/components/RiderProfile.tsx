@@ -71,7 +71,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
   ];
 
   return (
-    <div className="animate-in fade-in duration-300 pb-12">
+    <div className="  duration-300 pb-12">
       {/* ── BREADCRUMB ───────────────────────────── */}
       <div className="flex items-center gap-1.5 text-sm text-ink-4 mb-6">
         <button
@@ -240,7 +240,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
           <button
             key={tab.id}
             onClick={() => setProfileTab(tab.id as any)}
-            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
               profileTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-ink-4 hover:text-ink"
@@ -474,7 +474,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
 
       {/* ── TRIP HISTORY TAB ─────────────────────── */}
       {profileTab === "trips" && (
-        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden animate-in fade-in duration-300 shadow-sm">
+        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden   duration-300 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead className="bg-bg/80 border-b border-line-2">
@@ -504,7 +504,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                   trips.map((trip: any) => (
                     <tr key={trip.id} className="align-middle hover:bg-bg/40 transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
+                        <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-xs font-medium text-ink-3">
                           #{String(trip.id || "").slice(-6)}
                         </span>
                       </td>
@@ -512,7 +512,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                         <p className="text-xs font-medium text-ink">
                           {formatShortDate(trip.serviceDate || trip.scheduledTime) || "—"}
                         </p>
-                        <p className="text-[10px] text-ink-4">
+                        <p className="text-xs text-ink-4">
                           {formatTime(trip.pickupTime || trip.scheduledTime) || "—"}
                         </p>
                       </td>
@@ -521,7 +521,7 @@ export const RiderProfile: React.FC<RiderProfileProps> = ({
                           {tripTypeLabel(trip.tripType || trip.type || "")}
                         </p>
                         {trip.isRecurring && (
-                          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-xs font-semibold text-primary">
                             <Repeat size={9} /> Recurring
                           </span>
                         )}

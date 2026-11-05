@@ -64,7 +64,7 @@ const Fleet = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="space-y-8 pb-12 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-12   duration-500">
       {showAddModal && (
         <AddVehicleModal onClose={() => setShowAddModal(false)} onSave={addVehicle} />
       )}

@@ -53,7 +53,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
       <div
-        className="bg-white rounded-2xl border border-line-2 shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 my-8"
+        className="bg-white rounded-2xl border border-line-2 shadow-lg w-full max-w-xl overflow-hidden   duration-200 my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -91,7 +91,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   required
                   value={form.name}
                   onChange={(e) => handleChange("name", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -104,7 +104,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   required
                   value={form.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -116,7 +116,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   type="email"
                   value={form.email}
                   onChange={(e) => handleChange("email", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -125,7 +125,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                 <select
                   value={form.status}
                   onChange={(e) => handleChange("status", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors cursor-pointer"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -139,7 +139,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                 <select
                   value={form.mobility}
                   onChange={(e) => handleChange("mobility", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors cursor-pointer"
                 >
                   <option value="Ambulatory">Ambulatory</option>
                   <option value="Wheelchair">Wheelchair</option>
@@ -163,7 +163,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="e.g. Powhatan DSS"
                   value={form.source}
                   onChange={(e) => handleChange("source", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -176,7 +176,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="e.g. AUTH-CHEST-9912"
                   value={form.authorizationId}
                   onChange={(e) => handleChange("authorizationId", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -197,7 +197,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="Address, City, State"
                   value={form.defaultPickup}
                   onChange={(e) => handleChange("defaultPickup", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -210,7 +210,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="Hospital or Clinic Name"
                   value={form.defaultDropoff}
                   onChange={(e) => handleChange("defaultDropoff", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -231,7 +231,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="Name"
                   value={form.emergencyName}
                   onChange={(e) => handleChange("emergencyName", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -243,7 +243,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="e.g. Daughter, Spouse"
                   value={form.emergencyRelation}
                   onChange={(e) => handleChange("emergencyRelation", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -255,7 +255,7 @@ export const EditRiderModal: React.FC<EditRiderModalProps> = ({ rider, onClose, 
                   placeholder="(804) 555-0000"
                   value={form.emergencyPhone}
                   onChange={(e) => handleChange("emergencyPhone", e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-bg/50 border border-line-2 rounded-xl text-ink outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>

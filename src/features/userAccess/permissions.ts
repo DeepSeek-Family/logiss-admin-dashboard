@@ -54,6 +54,7 @@ export const PERMISSION_GROUPS: PermGroup[] = [
       { key: "/notifications", label: "Notifications", path: "/notifications" },
       { key: "/settings", label: "Settings", path: "/settings" },
       { key: "/profile", label: "Profile", path: "/profile" },
+      { key: "/dashboard/system-logs", label: "System Logs", path: "/dashboard/system-logs" },
     ],
   },
 ];
@@ -70,6 +71,7 @@ export const DEFAULT_DISPATCH_PERMISSIONS = [
   "/trips",
   "/schedule",
   "/reports",
+  "/dashboard/system-logs",
 ];
 
 export const ROLE_LABEL: Record<string, string> = {

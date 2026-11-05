@@ -14,14 +14,23 @@ import {
 } from "lucide-react";
 import { Card, Avatar, TripStatusBadge } from "@/shared/components/ui";
 import { formatTime, formatTripId } from "@/utils/helpers";
+import type { TripHistoryDriver, TripHistoryRecord, TripUpdateHandler } from "../types";
+import {
+  addMinutes,
+  estimateTripDurationMinutes,
+  formatDurationMinutes,
+  formatLocalDateKey,
+  isSameCalendarDay,
+  parseClockTimeToMinutes,
+} from "../utils/dateTime";
 
 interface RunDispatchViewProps {
-  drivers: any[];
-  trips: any[];
+  drivers: TripHistoryDriver[];
+  trips: TripHistoryRecord[];
   date: Date;
   onTripClick?: (id: string) => void;
   /** Persist live dispatch actuals (status advance) from the manifest. */
-  updateTrip?: (id: string, patch: Record<string, any>) => void;
+  updateTrip?: TripUpdateHandler;
 }
 
 const DEPOT_BUFFER = 15;
@@ -57,41 +66,10 @@ const stampFor = (next: string): Record<string, any> => {
   return {};
 };
 
-const estDurationMin = (t: any): number => {
-  if (t?.duration) {
-    const m = parseInt(String(t.duration), 10);
-    if (!isNaN(m) && m > 0) return Math.min(m, 180);
-  }
-  if (t?.miles) return Math.min(150, Math.round(Number(t.miles) * 3) + 12);
-  return 45;
-};
-const minsToLabel = (m: number) => {
-  const v = Math.max(0, Math.round(m));
-  const h = Math.floor(v / 60);
-  const r = v % 60;
-  return h ? `${h}h${r ? ` ${r}m` : ""}` : `${r}m`;
-};
-const parseTimeToMin = (s?: string): number | null => {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!m) return null;
-  let h = parseInt(m[1], 10);
-  const min = parseInt(m[2], 10);
-  const ap = m[3]?.toUpperCase();
-  if (ap === "PM" && h !== 12) h += 12;
-  if (ap === "AM" && h === 12) h = 0;
-  return h * 60 + min;
-};
 const cityFrom = (addr?: string) => {
   const p = String(addr || "").split(",");
   return p.length >= 2 ? p[1].trim() : "";
 };
-const addMin = (d: Date, m: number) => new Date(d.getTime() + m * 60000);
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
 /**
  * Run Dispatch — MediRoutes-style operational manifest in our design system.
  * A "run" = a driver's trips for the selected day. Each trip expands into pickup +
@@ -118,10 +96,10 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
     const byDriver: Record<string, any[]> = {};
     (trips || []).forEach((t: any) => {
       if (t.status === "cancelled" || !t.driverId) return;
-      const targetYmd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      const targetDateKey = formatLocalDateKey(date);
       const isDayMatch = t?.serviceDate
-        ? t.serviceDate === targetYmd
-        : t?.scheduledTime && sameDay(new Date(t.scheduledTime), date);
+        ? t.serviceDate === targetDateKey
+        : t?.scheduledTime && isSameCalendarDay(new Date(t.scheduledTime), date);
       if (!isDayMatch) return;
       (byDriver[String(t.driverId)] ||= []).push(t);
     });
@@ -158,23 +136,25 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
     if (list.length) {
       out.push({
         kind: "pullout",
-        time: addMin(new Date(list[0].scheduledTime), -DEPOT_BUFFER),
+        time: addMinutes(new Date(list[0].scheduledTime), -DEPOT_BUFFER),
         to: list[0].pickup,
       });
     }
     list.forEach((t: any, i: number) => {
       const start = new Date(t.scheduledTime);
-      const dur = estDurationMin(t);
-      const end = addMin(start, dur);
-      const apptMin = parseTimeToMin(t.appointmentTime);
-      const isLate = apptMin != null && start.getHours() * 60 + start.getMinutes() + dur > apptMin;
+      const durationMinutes = estimateTripDurationMinutes(t);
+      const end = addMinutes(start, durationMinutes);
+      const appointmentMinutes = parseClockTimeToMinutes(t.appointmentTime);
+      const isLate =
+        appointmentMinutes != null &&
+        start.getHours() * 60 + start.getMinutes() + durationMinutes > appointmentMinutes;
       if (isLate) late++;
       miles += Number(t.miles) || 0;
 
       // standby gap before this trip
       if (i > 0) {
         const prev = list[i - 1];
-        const prevEnd = addMin(new Date(prev.scheduledTime), estDurationMin(prev));
+        const prevEnd = addMinutes(new Date(prev.scheduledTime), estimateTripDurationMinutes(prev));
         const gap = (start.getTime() - prevEnd.getTime()) / 60000;
         if (gap < -1) out.push({ kind: "conflict", mins: Math.abs(gap) });
         else if (gap > 5) out.push({ kind: "gap", mins: gap });
@@ -188,7 +168,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
         time: t.requestedPickup || formatTime(t.scheduledTime),
         appt: "",
         eta: formatTime(start.toISOString()),
-        travel: dur,
+        travel: durationMinutes,
         dist: t.miles,
         on: t.passengers ?? 1,
         space: t.driverId ? (driverById[String(t.driverId)]?.vehicle?.seats ?? "") : "",
@@ -231,7 +211,10 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
       const last = list[list.length - 1];
       out.push({
         kind: "pullin",
-        time: addMin(new Date(last.scheduledTime), estDurationMin(last) + DEPOT_BUFFER),
+        time: addMinutes(
+          new Date(last.scheduledTime),
+          estimateTripDurationMinutes(last) + DEPOT_BUFFER,
+        ),
         from: last.dropoff,
       });
     }
@@ -361,11 +344,11 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
                       >
                         {conflict ? (
                           <>
-                            <AlertTriangle size={10} /> Overlap · {minsToLabel(r.mins)}
+                            <AlertTriangle size={10} /> Overlap · {formatDurationMinutes(r.mins)}
                           </>
                         ) : (
                           <>
-                            <Coffee size={10} /> Standby · {minsToLabel(r.mins)}
+                            <Coffee size={10} /> Standby · {formatDurationMinutes(r.mins)}
                           </>
                         )}
                       </span>
@@ -419,7 +402,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
                     {r.late && <AlertTriangle size={10} className="inline ml-1 -mt-0.5" />}
                   </td>
                   <td className="px-3 py-2.5 text-xs text-ink-4 whitespace-nowrap">
-                    {r.travel ? minsToLabel(r.travel) : "—"}
+                    {r.travel ? formatDurationMinutes(r.travel) : "—"}
                   </td>
                   <td className="px-3 py-2.5 text-xs text-ink-4 whitespace-nowrap">
                     {r.dist ? `${r.dist} mi` : "—"}
@@ -470,7 +453,7 @@ export const RunDispatchView: React.FC<RunDispatchViewProps> = ({
                               updateTrip(t.id, { status: next, ...stampFor(next) });
                             }}
                             title={`Mark ${STEP_LABEL[t.status]}`}
-                            className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-full px-2 py-0.5 transition-all whitespace-nowrap"
+                            className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-full px-2 py-0.5 transition-colors whitespace-nowrap"
                           >
                             {STEP_LABEL[t.status]} →
                           </button>

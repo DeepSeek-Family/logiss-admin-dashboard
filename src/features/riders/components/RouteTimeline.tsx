@@ -169,7 +169,7 @@ export const TripRouteRow = ({
 
       {stopCount > 0 ? (
         <span
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning-dark"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning-dark"
           title={Array.isArray(trip.stops) ? trip.stops.join(" · ") : "Stop"}
         >
           <span className="h-1.5 w-1.5 rounded-full bg-warning" />
@@ -228,7 +228,7 @@ export const RouteTimeline = ({ points }: { points: RouteTimelinePoint[] }) => {
                   displayFallback={point.displayFallback}
                   className="max-w-[200px] truncate text-xs font-medium"
                 />
-                <p className="text-[10px] text-ink-4">{label}</p>
+                <p className="text-xs text-ink-4">{label}</p>
               </div>
             </li>
           );

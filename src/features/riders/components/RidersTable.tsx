@@ -124,7 +124,7 @@ export const RidersTable = ({
                   <div className="relative">
                     <button
                       onClick={() => setOpenStatusId(openStatusId === rider.id ? null : rider.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 transition-colors ${
                         rider.status === "active"
                           ? "text-accent bg-accent-light/35"
                           : rider.status === "suspended"
@@ -141,7 +141,7 @@ export const RidersTable = ({
                       <ChevronDown size={10} />
                     </button>
                     {openStatusId === rider.id && (
-                      <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-xl w-44 py-1 animate-in fade-in duration-150">
+                      <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-line-2 rounded-xl shadow-md w-44 py-1   duration-150">
                         <p className="px-3 py-2 type-th border-b border-line-2 mb-1">
                           Change Status
                         </p>
@@ -189,7 +189,7 @@ export const RidersTable = ({
                         {displayDob(rider.dateOfBirth)}
                       </span>
                       {calculateAge(rider.dateOfBirth) !== null && (
-                        <span className="text-[11px] text-ink-4 whitespace-nowrap">
+                        <span className="text-xs text-ink-4 whitespace-nowrap">
                           {calculateAge(rider.dateOfBirth)} yrs
                         </span>
                       )}

@@ -14,6 +14,7 @@ import {
   CircleDot,
   Layers,
   Loader2,
+  List,
 } from "lucide-react";
 import { Card, Avatar, Badge } from "@/shared/components/ui";
 import { formatTime } from "@/utils/helpers";
@@ -22,14 +23,22 @@ import {
   type DriverAssignmentFilter,
 } from "@/features/bookings/utils/helpers";
 import { DriverDayPanel } from "./DriverDayPanel";
+import ScheduleAgenda from "./ScheduleAgenda";
+import type { TripHistoryDriver, TripHistoryRecord, TripUpdateHandler } from "../types";
+import {
+  estimateTripDurationMinutes,
+  formatLocalDateKey,
+  isSameCalendarDay,
+  parseClockTimeToMinutes,
+} from "../utils/dateTime";
 
 interface ScheduleTabProps {
-  drivers: any[];
-  trips: any[];
+  drivers: TripHistoryDriver[];
+  trips: TripHistoryRecord[];
   /** Open the shared trip detail / assignment drawer (reuses the existing flow). */
   onTripClick?: (id: string) => void;
   /** Persist reassign/unassign from the run sheet (id, patch). */
-  updateTrip?: (id: string, patch: Record<string, any>) => void;
+  updateTrip?: TripUpdateHandler;
   onboardingData?: {
     todayTotalTrips: number;
     todayAssignedStatusTrips: number;
@@ -54,40 +63,11 @@ const TOTAL_MIN = TOTAL_HOURS * 60;
 const IN_PROGRESS = ["dispatched", "en_route", "arrived", "in_trip", "in-progress"];
 const COMPLETED = ["completed", "trip-completed"];
 
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
-const formatYmd = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
 // Estimated trip length in minutes (duration string → miles → sensible default).
-const estDurationMin = (trip: any): number => {
-  if (trip?.duration) {
-    const m = parseInt(String(trip.duration), 10);
-    if (!isNaN(m) && m > 0) return Math.min(m, 180);
-  }
-  if (trip?.miles) return Math.min(150, Math.round(Number(trip.miles) * 3) + 12);
-  return 45;
-};
-
-const parseTimeToMin = (s?: string): number | null => {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!m) return null;
-  let h = parseInt(m[1], 10);
-  const min = parseInt(m[2], 10);
-  const ap = m[3]?.toUpperCase();
-  if (ap === "PM" && h !== 12) h += 12;
-  if (ap === "AM" && h === 12) h = 0;
-  return h * 60 + min;
-};
-
 const getTripMinutes = (trip: any): number => {
   const pTime = trip.requestedPickup || trip.pickupTime;
   if (pTime) {
-    const parsed = parseTimeToMin(pTime);
+    const parsed = parseClockTimeToMinutes(pTime);
     if (parsed != null) return Math.max(0, parsed - START_HOUR * 60);
   }
   if (trip.scheduledTime) {
@@ -135,10 +115,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [statusFilter, setStatusFilter] = useState("all");
   const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
+  const [scheduleView, setScheduleView] = useState<"agenda" | "timeline">("agenda");
   const initialized = useRef(false);
 
   useEffect(() => {
-    const serviceDate = formatYmd(selectedDate);
+    const serviceDate = formatLocalDateKey(selectedDate);
     const bookingStatus = statusFilter !== "all" ? statusFilter : undefined;
     const unassign = assignFilterToUnassignQuery(assignFilter);
     onFilterChange?.({
@@ -148,7 +129,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     });
   }, [selectedDate, statusFilter, assignFilter, onFilterChange]);
 
-  const isToday = sameDay(selectedDate, new Date());
+  const isToday = isSameCalendarDay(selectedDate, new Date());
 
   // Trips supplied directly from backend (backend handles serviceDate and bookingStatus filtering).
   const dayTrips = useMemo(() => trips || [], [trips]);
@@ -196,7 +177,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       );
       for (let i = 1; i < list.length; i++) {
         const prevEnd =
-          new Date(list[i - 1].scheduledTime).getTime() + estDurationMin(list[i - 1]) * 60000;
+          new Date(list[i - 1].scheduledTime).getTime() +
+          estimateTripDurationMinutes(list[i - 1]) * 60000;
         const curStart = new Date(list[i].scheduledTime).getTime();
         if (curStart < prevEnd) {
           conflicts.add(list[i].id);
@@ -300,7 +282,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   ];
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500 pb-16">
+    <div className="space-y-5   duration-500 pb-16">
       {/* ───────── Toolbar ───────── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-line-2 shadow-sm">
         <div className="flex items-center gap-3 flex-wrap">
@@ -308,7 +290,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           <div className="flex items-center gap-1.5 p-1 bg-bg rounded-xl border border-line-2">
             <button
               onClick={() => shiftDay(-1)}
-              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm"
+              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-colors border border-line-2/50 shadow-sm"
               title="Previous day"
             >
               <ChevronLeft size={16} />
@@ -328,7 +310,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
             <button
               onClick={() => shiftDay(1)}
-              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm"
+              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-colors border border-line-2/50 shadow-sm"
               title="Next day"
             >
               <ChevronRight size={16} />
@@ -339,7 +321,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   initialized.current = true;
                   setSelectedDate(new Date());
                 }}
-                className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all"
+                className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-colors"
               >
                 Today
               </button>
@@ -348,7 +330,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
           <input
             type="date"
-            value={formatYmd(selectedDate)}
+            value={formatLocalDateKey(selectedDate)}
             onChange={(e) => {
               if (e.target.value) {
                 const [y, m, d] = e.target.value.split("-").map(Number);
@@ -363,7 +345,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 /* noop */
               }
             }}
-            className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer transition-all"
+            className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer transition-colors"
             title="Jump to date"
           />
 
@@ -378,7 +360,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         <select
           value={assignFilter}
           onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
-          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
+          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-colors"
           title="Filter by driver assignment"
         >
           <option value="">All assignments</option>
@@ -388,7 +370,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
+          className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-colors"
         >
           {STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -514,7 +496,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         updateTrip(trip.id, { driverId: e.target.value, status: "assigned" });
                       }
                     }}
-                    className="w-full bg-bg border border-line-2 rounded-lg py-1.5 px-2.5 text-xs font-semibold text-ink outline-none cursor-pointer focus:border-primary transition-all"
+                    className="w-full bg-bg border border-line-2 rounded-lg py-1.5 px-2.5 text-xs font-semibold text-ink outline-none cursor-pointer focus:border-primary transition-colors"
                   >
                     <option value="" disabled>
                       Assign Driver...
@@ -532,6 +514,34 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         </div>
       )}
 
+      {/* ───────── Density-friendly schedule view switcher ───────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-2 bg-white px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-ink">Daily schedule</p>
+          <p className="mt-0.5 text-xs text-ink-4">
+            Agenda keeps high-volume hours readable; Timeline shows driver utilization.
+          </p>
+        </div>
+        <div className="inline-flex rounded-lg border border-line-2 bg-bg p-1" role="group" aria-label="Schedule view">
+          <button
+            type="button"
+            onClick={() => setScheduleView("agenda")}
+            aria-pressed={scheduleView === "agenda"}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${scheduleView === "agenda" ? "bg-white text-primary shadow-sm" : "text-ink-4 hover:text-ink"}`}
+          >
+            <List size={14} /> Agenda
+          </button>
+          <button
+            type="button"
+            onClick={() => setScheduleView("timeline")}
+            aria-pressed={scheduleView === "timeline"}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${scheduleView === "timeline" ? "bg-white text-primary shadow-sm" : "text-ink-4 hover:text-ink"}`}
+          >
+            <Clock size={14} /> Timeline
+          </button>
+        </div>
+      </div>
+
       {/* ───────── Conflict banner (only when action is needed) ───────── */}
       {kpis.conflicts > 0 && (
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl border border-urgent/20 bg-urgent-light/30">
@@ -543,8 +553,17 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         </div>
       )}
 
+      {scheduleView === "agenda" && dayTrips.length > 0 ? (
+        <ScheduleAgenda
+          trips={dayTrips}
+          drivers={drivers}
+          conflictIds={conflictIds}
+          onTripClick={onTripClick}
+        />
+      ) : null}
+
       {/* ───────── Driver timeline (Gantt) ───────── */}
-      <Card className="overflow-x-auto relative p-0">
+      <Card className={`${scheduleView === "timeline" ? "" : "hidden"} overflow-x-auto relative p-0`}>
         <div className="min-w-[1100px]">
           {/* Header / hour ruler */}
           <div className="sticky top-0 z-30 flex bg-bg border-b border-line-2">
@@ -650,7 +669,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                     {shownTrips.map((trip: any, idx: number) => {
                       const startMin = getTripMinutes(trip);
                       const startPct = pctFromMinutes(startMin);
-                      const endPct = pctFromMinutes(startMin + estDurationMin(trip));
+                      const endPct = pctFromMinutes(startMin + estimateTripDurationMinutes(trip));
                       const width = Math.max(endPct - startPct, 12);
                       const conflict = conflictIds.has(trip.id);
                       const inProgress = IN_PROGRESS.includes(trip.status);
@@ -674,7 +693,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                       if (idx > 0) {
                         const prev = shownTrips[idx - 1];
                         const prevStartMin = getTripMinutes(prev);
-                        const prevEndPct = pctFromMinutes(prevStartMin + estDurationMin(prev));
+                        const prevEndPct = pctFromMinutes(
+                          prevStartMin + estimateTripDurationMinutes(prev),
+                        );
                         const gapW = startPct - prevEndPct;
                         if (gapW > 0.5 && !conflict) {
                           gap = (
@@ -711,7 +732,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           <button
                             onClick={() => onTripClick?.(trip.id)}
                             title={`#${trip.id} · ${trip.rider?.name || ""}\nTime: ${displayTime}\nType: ${trip.type === "round_trip" || trip.type === "round-trip" ? "Round Trip" : "One Way"}\nPickup: ${trip.pickup || "—"}\nDrop-off: ${trip.dropoff || "—"}\nStatus: ${String(trip.status).replace(/_/g, " ")}${conflict ? " · ⚠ TIME CONFLICT" : ""}`}
-                            className={`absolute top-1 bottom-1 min-w-[130px] rounded-xl shadow-sm border bg-white transition-all cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? "border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg" : "border-line-2 hover:border-primary/50 hover:shadow-lg"}`}
+                            className={`absolute top-1 bottom-1 min-w-[130px] rounded-xl shadow-sm border bg-white transition-colors cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? "border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg" : "border-line-2 hover:border-primary/50 hover:shadow-lg"}`}
                             style={{ left: `${startPct}%`, width: `${width}%` }}
                           >
                             <div
@@ -726,7 +747,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                                   <AlertTriangle size={11} className="text-urgent shrink-0" />
                                 ) : inProgress ? (
                                   <span className="flex h-2 w-2 relative shrink-0">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-urgent opacity-75" />
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-urgent" />
                                   </span>
                                 ) : null}
@@ -813,7 +833,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       {/* Dedicated single-driver day run sheet */}
       {dayDriverId && (
         <DriverDayPanel
-          driver={(drivers || []).find((d: any) => String(d.id) === String(dayDriverId))}
+          driver={(drivers || []).find((driver) => String(driver.id) === String(dayDriverId))!}
           trips={trips}
           date={selectedDate}
           onClose={() => setDayDriverId(null)}

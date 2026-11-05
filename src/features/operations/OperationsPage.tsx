@@ -83,7 +83,7 @@ const Operations = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6   duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Fleet Operations</h1>

@@ -37,12 +37,12 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({
           {streamTotal > 0 ? (
             <>
               <div
-                className="bg-primary transition-all duration-500 rounded-l-full"
+                className="bg-primary transition-colors duration-500 rounded-l-full"
                 style={{ width: `${(countyTotal / streamTotal) * 100}%` }}
                 title={`Payer Charge: ${money(countyTotal)} (${countyPercent}%)`}
               />
               <div
-                className="bg-accent transition-all duration-500 rounded-r-full"
+                className="bg-accent transition-colors duration-500 rounded-r-full"
                 style={{ width: `${(copayTotal / streamTotal) * 100}%` }}
                 title={`Passenger Copay: ${money(copayTotal)} (${copayPercent}%)`}
               />

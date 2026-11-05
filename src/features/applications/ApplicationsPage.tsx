@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Loader2, CheckCircle2, X } from "lucide-react";
-import { Pagination, EmptyState, QueryFeedback } from "@/shared/components/ui";
-import { FileCheck } from "lucide-react";
+import { CheckCircle2, FileCheck, X } from "lucide-react";
+import { Badge, EmptyState, Pagination, QueryFeedback } from "@/shared/components/ui";
 import { ApplicationCard, ApplicationDetails } from "@/features/applications";
+import ApplicationsPageSkeleton from "./components/ApplicationsPageSkeleton";
 import {
   useGetDriverApplicationsQuery,
   useUpdateApplicationStatusMutation,
@@ -23,10 +23,7 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
   >({});
 
   const listParams = useMemo(
-    () => ({
-      page: currentPage,
-      limit: itemsPerPage,
-    }),
+    () => ({ page: currentPage, limit: itemsPerPage }),
     [currentPage, itemsPerPage],
   );
 
@@ -36,30 +33,29 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
     isError,
     error,
     refetch,
-  } = useGetDriverApplicationsQuery(listParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  } = useGetDriverApplicationsQuery(listParams, { refetchOnMountOrArgChange: true });
   const [updateApplicationStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation();
 
-  const applications = useMemo(() => {
-    return (appsResponse?.data || []).map((item) => {
-      const mapped = mapApiDriverApplication(item);
-      const override = localStatusOverrides[mapped.id];
-      return override ? { ...mapped, ...override } : mapped;
-    });
-  }, [appsResponse, localStatusOverrides]);
+  const applications = useMemo(
+    () =>
+      (appsResponse?.data || []).map((item) => {
+        const mapped = mapApiDriverApplication(item);
+        const override = localStatusOverrides[mapped.id];
+        return override ? { ...mapped, ...override } : mapped;
+      }),
+    [appsResponse, localStatusOverrides],
+  );
 
   const pagination = appsResponse?.pagination;
   const totalPages = pagination?.totalPage || Math.ceil(applications.length / itemsPerPage) || 1;
   const totalItems = pagination?.total ?? applications.length;
-
   const selectedApp: MappedDriverApplication | null = selectedAppId
-    ? applications.find((a) => a.id === selectedAppId) || applications[0] || null
+    ? applications.find((application) => application.id === selectedAppId) || applications[0] || null
     : applications[0] || null;
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
+    window.setTimeout(() => setToast(null), 3500);
   };
 
   const patchStatus = async (
@@ -74,30 +70,17 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
         applicationStatus,
         isAdminVerifiedDriver,
       }).unwrap();
-      setLocalStatusOverrides((prev) => ({
-        ...prev,
-        [app.id]: {
-          status: applicationStatus,
-          applicationStatus,
-          isAdminVerifiedDriver: isAdminVerifiedDriver,
-        },
+      setLocalStatusOverrides((previous) => ({
+        ...previous,
+        [app.id]: { status: applicationStatus, applicationStatus, isAdminVerifiedDriver },
       }));
       showToast(successMsg, isAdminVerifiedDriver ? "success" : "error");
-    } catch (err) {
-      showToast(apiErrorMessage(err, "Failed to update application"), "error");
+    } catch (requestError) {
+      showToast(apiErrorMessage(requestError, "Failed to update application"), "error");
     }
   };
 
-  if (isLoading && applications.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-ink-4">Loading Applications...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading && applications.length === 0) return <ApplicationsPageSkeleton />;
 
   if (isError && applications.length === 0) {
     return (
@@ -110,45 +93,61 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-      {toast && (
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5">
+      {toast ? (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-white text-sm font-medium ${
-            toast.type === "success" ? "bg-accent" : "bg-urgent"
-          }`}
+          role="status"
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-md ${toast.type === "success" ? "bg-accent" : "bg-urgent"}`}
         >
           {toast.type === "success" ? <CheckCircle2 size={15} /> : <X size={15} />}
           {toast.msg}
         </div>
-      )}
+      ) : null}
 
-      <div>
-        <h1 className="type-page-title">Driver Applications</h1>
-        <p className="text-ink-3 font-semibold mt-1 tracking-normal">
-          Review and approve new driver onboarding requests
-          {totalItems > 0 && <span className="ml-2 text-ink-4">· {totalItems} total</span>}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="type-page-title">Driver Applications</h1>
+          <p className="mt-1 text-sm text-ink-3">
+            Review and manage new driver onboarding requests.
+          </p>
+        </div>
+        {totalItems > 0 ? <Badge variant="primary">{totalItems} total</Badge> : null}
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-220px)]">
-        <div className="lg:col-span-5 flex flex-col gap-2.5 overflow-y-auto pr-1 scrollbar-hide">
-          {applications.length === 0 ? (
+      {applications.length === 0 ? (
+        <section className="flex min-h-[460px] items-center justify-center rounded-xl border border-line-2 bg-white px-6 py-12">
+          <div className="max-w-md">
             <EmptyState
               icon={FileCheck}
               title="No applications"
-              description="New driver onboarding requests will appear here for review."
+              description="There are no driver onboarding requests to review right now. New submissions will appear here automatically."
             />
-          ) : (
-            applications.map((app) => (
-              <ApplicationCard
-                key={app.id}
-                app={app}
-                selected={selectedApp?.id === app.id}
-                onClick={() => setSelectedAppId(app.id)}
-              />
-            ))
-          )}
-          <div className="mt-auto pt-3">
+          </div>
+        </section>
+      ) : (
+        <div className="grid min-h-[560px] grid-cols-1 gap-5 lg:h-[calc(100vh-190px)] lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)]">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-line-2 bg-white">
+            <div className="flex items-center justify-between border-b border-line-2 px-4 py-3">
+              <div>
+                <h2 className="text-sm font-semibold text-ink">Application queue</h2>
+                <p className="mt-0.5 text-xs text-ink-4">Select a driver to review</p>
+              </div>
+              <span className="rounded-md bg-bg px-2 py-1 text-xs font-semibold tabular-nums text-ink-3">
+                {totalItems}
+              </span>
+            </div>
+
+            <div className="flex-1 space-y-2 overflow-y-auto p-3">
+              {applications.map((application) => (
+                <ApplicationCard
+                  key={application.id}
+                  app={application}
+                  selected={selectedApp?.id === application.id}
+                  onClick={() => setSelectedAppId(application.id)}
+                />
+              ))}
+            </div>
+
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -160,26 +159,20 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
                 setCurrentPage(1);
               }}
             />
-          </div>
-        </div>
+          </section>
 
-        <div className="lg:col-span-7 overflow-y-auto scrollbar-hide">
-          {selectedApp ? (
+          <section className="min-h-0 overflow-y-auto">
             <ApplicationDetails
-              selectedApp={selectedApp}
-              onApprove={() => patchStatus(selectedApp, "approved", `${selectedApp.name} approved`)}
+              selectedApp={selectedApp!}
+              onApprove={() => patchStatus(selectedApp!, "approved", `${selectedApp!.name} approved`)}
               onReject={() =>
-                patchStatus(selectedApp, "rejected", `${selectedApp.name}'s application rejected`)
+                patchStatus(selectedApp!, "rejected", `${selectedApp!.name}'s application rejected`)
               }
               actionsDisabled={isUpdating}
             />
-          ) : (
-            <div className="h-full flex items-center justify-center bg-bg/30 rounded-3xl border-2 border-dashed border-line-2">
-              <p className="text-ink-4 font-medium">Select an application to review</p>
-            </div>
-          )}
+          </section>
         </div>
-      </div>
+      )}
     </div>
   );
 };

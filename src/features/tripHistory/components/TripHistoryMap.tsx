@@ -15,7 +15,34 @@ import {
 import { Card, Avatar, TripStatusBadge, loadGoogleMapsScript } from "@/shared/components/ui";
 import { formatTime, formatShortDate, money } from "@/utils/helpers";
 import { parseLatLng, extractBookingStopsCoords } from "@/features/bookings/utils/helpers";
-import { createDirectionalRoutePolyline, getDrivingRoutePath } from "@/utils/googleDrivingRoute";
+import {
+  createDirectionalRoutePolyline,
+  getDrivingRouteDetails,
+  type DrivingRouteDetails,
+} from "@/utils/googleDrivingRoute";
+
+const formatRouteDuration = (seconds: number | null): string => {
+  if (seconds == null) return "—";
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
+};
+
+const getTrafficCondition = (route: DrivingRouteDetails | null) => {
+  if (!route?.trafficAware || !route.staticDurationSeconds || !route.durationSeconds) {
+    return { label: "Live traffic unavailable", className: "bg-bg text-ink-4 border-line-2" };
+  }
+  const ratio = route.durationSeconds / route.staticDurationSeconds;
+  if (ratio <= 1.08) {
+    return { label: "Traffic flowing normally", className: "bg-accent-light text-accent border-accent/20" };
+  }
+  if (ratio <= 1.25) {
+    return { label: "Moderate traffic", className: "bg-warning-light text-warning-dark border-warning/20" };
+  }
+  return { label: "Heavy traffic", className: "bg-urgent-light text-urgent border-urgent/20" };
+};
 
 interface TripHistoryMapProps {
   trips: any[];
@@ -48,6 +75,8 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
 
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [routeDetails, setRouteDetails] = useState<DrivingRouteDetails | null>(null);
+  const [routeDetailsLoading, setRouteDetailsLoading] = useState(false);
 
   const driverById = useMemo(() => {
     const m: Record<string, any> = {};
@@ -117,6 +146,9 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     });
 
     infoWindowRef.current = new google.maps.InfoWindow();
+    if (google.maps.TrafficLayer) {
+      new google.maps.TrafficLayer().setMap(map);
+    }
     mapInstanceRef.current = map;
   }, [scriptLoaded]);
 
@@ -134,6 +166,8 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
 
     const bounds = new google.maps.LatLngBounds();
     let validCount = 0;
+    setRouteDetails(null);
+    setRouteDetailsLoading(Boolean(selectedId));
 
     historyTrips.forEach((t: any) => {
       const pCoord = parseLatLng(t.pickupLocationRaw || t.pickupLocation || t.pickup);
@@ -212,8 +246,11 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
           const drawGen = ++routeDrawGenRef.current;
           const initialLine = createDirectionalRoutePolyline(google, map, waypointPath);
           if (initialLine) polylinesRef.current.push(initialLine);
-          void getDrivingRoutePath(google, waypointPath).then((routePath) => {
+          void getDrivingRouteDetails(google, waypointPath).then((details) => {
             if (drawGen !== routeDrawGenRef.current || !mapInstanceRef.current) return;
+            setRouteDetails(details);
+            setRouteDetailsLoading(false);
+            const routePath = details.path;
             if (routePath.length <= waypointPath.length) return;
             polylinesRef.current.forEach((p) => p.setMap(null));
             polylinesRef.current = [];
@@ -223,6 +260,8 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
             routePath.forEach((pt) => routeBounds.extend(pt));
             map.fitBounds(routeBounds, { top: 40, bottom: 40, left: 40, right: 40 });
           });
+        } else if (isSel) {
+          setRouteDetailsLoading(false);
         }
       } else {
         // Plot non-selected trips
@@ -253,15 +292,15 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
             onSelect(t.id);
             if (infoWindowRef.current) {
               const stopsText = stopsCoords.length
-                ? `<div style="font-size:11px; margin-top:2px;"><b>Stops:</b> ${stopsCoords.length} stop(s)</div>`
+                ? `<div style="font-size:12px; margin-top:2px;"><b>Stops:</b> ${stopsCoords.length} stop(s)</div>`
                 : "";
               infoWindowRef.current.setContent(`
                 <div style="font-family: sans-serif; padding: 4px; max-width: 220px;">
                   <div style="font-weight: 600; font-size: 13px; color: #111;">${t.rider?.name || "Rider"}</div>
-                  <div style="font-size: 11px; color: #666; margin-top: 2px;">#${t.id} · ${formatTime(t.scheduledTime)}</div>
-                  <div style="font-size: 11px; margin-top: 6px;"><b>Pickup:</b> ${t.pickup || "N/A"}</div>
+                  <div style="font-size: 12px; color: #666; margin-top: 2px;">#${t.id} · ${formatTime(t.scheduledTime)}</div>
+                  <div style="font-size: 12px; margin-top: 6px;"><b>Pickup:</b> ${t.pickup || "N/A"}</div>
                   ${stopsText}
-                  <div style="font-size: 11px; margin-top: 2px;"><b>Drop-off:</b> ${t.dropoff || "N/A"}</div>
+                  <div style="font-size: 12px; margin-top: 2px;"><b>Drop-off:</b> ${t.dropoff || "N/A"}</div>
                 </div>
               `);
               infoWindowRef.current.open(map, marker);
@@ -318,6 +357,14 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
     }
   };
 
+  const trafficCondition = getTrafficCondition(routeDetails);
+  const trafficDelaySeconds =
+    routeDetails?.trafficAware &&
+    routeDetails.durationSeconds != null &&
+    routeDetails.staticDurationSeconds != null
+      ? Math.max(0, routeDetails.durationSeconds - routeDetails.staticDurationSeconds)
+      : null;
+
   return (
     <div className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-4 flex flex-col gap-4 xl:h-[calc(100vh-9rem)]">
       {/* Map Card */}
@@ -357,7 +404,7 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
             <div className="absolute inset-0 bg-bg flex flex-col items-center justify-center p-4 text-center z-10">
               <MapPin size={24} className="text-urgent opacity-40 mb-2" />
               <p className="text-xs font-semibold text-ink">Google Maps Unavailable</p>
-              <p className="text-[11px] text-ink-4 mt-0.5">
+              <p className="text-xs text-ink-4 mt-0.5">
                 Check VITE_GOOGLE_MAPS — enable Maps JS, Places, Geocoding &amp; Routes APIs
               </p>
             </div>
@@ -475,6 +522,62 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
               </div>
             </div>
 
+            {/* Live route estimate */}
+            <div className="mb-3 rounded-xl border border-line-2 bg-white p-3">
+              <div className="mb-2.5 flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                  Live route estimate
+                </p>
+                {routeDetailsLoading ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-ink-4">
+                    <Loader2 size={12} className="animate-spin" /> Calculating
+                  </span>
+                ) : null}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-bg px-2.5 py-2">
+                  <p className="text-xs text-ink-4">Driving distance</p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
+                    {routeDetails?.distanceMeters != null
+                      ? `${(routeDetails.distanceMeters / 1609.344).toFixed(1)} mi`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-bg px-2.5 py-2">
+                  <p className="text-xs text-ink-4">ETA with traffic</p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
+                    {formatRouteDuration(routeDetails?.durationSeconds ?? null)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-bg px-2.5 py-2">
+                  <p className="text-xs text-ink-4">Typical drive time</p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
+                    {formatRouteDuration(
+                      routeDetails?.staticDurationSeconds ?? routeDetails?.durationSeconds ?? null,
+                    )}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-bg px-2.5 py-2">
+                  <p className="text-xs text-ink-4">Traffic delay</p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
+                    {trafficDelaySeconds == null
+                      ? "—"
+                      : trafficDelaySeconds < 60
+                        ? "No delay"
+                        : `+${formatRouteDuration(trafficDelaySeconds)}`}
+                  </p>
+                </div>
+              </div>
+              <div
+                className={`mt-2 flex items-center justify-between rounded-lg border px-2.5 py-2 text-xs font-semibold ${trafficCondition.className}`}
+              >
+                <span>{trafficCondition.label}</span>
+                <span className="font-medium opacity-80">
+                  {routeDetails?.source === "google" ? "Google live traffic" : "Estimated route"}
+                </span>
+              </div>
+            </div>
+
             {/* Meta */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
@@ -485,16 +588,10 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
                 </p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-xs text-ink-4">Distance</p>
-                <p className="text-xs font-semibold text-ink">
-                  {selected.distance || (selected.miles ? `${selected.miles} mi` : "—")}
-                </p>
-              </div>
-              <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Trip cost</p>
                 <p className="text-xs font-semibold text-ink">{money(selected.cost || 0)}</p>
               </div>
-              <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
+              <div className="col-span-2 bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Reason</p>
                 <p className="text-xs font-semibold text-ink truncate">{selected.reason || "—"}</p>
               </div>

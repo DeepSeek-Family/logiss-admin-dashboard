@@ -174,10 +174,10 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
       <div
-        className="absolute inset-0 bg-ink/50 animate-in fade-in duration-200"
+        className="absolute inset-0 bg-ink/50   duration-200"
         onClick={closeBooking}
       ></div>
-      <div className="relative w-full max-w-lg bg-white border-l border-line-2 shadow-2xl h-full animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-lg bg-white border-l border-line-2 shadow-lg h-full   duration-300">
         <div className="h-full flex flex-col overflow-hidden">
           <div className="px-6 py-4 border-b border-line-2 flex items-center justify-between">
             <div>
@@ -193,7 +193,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
               {onEditDetails && (
                 <button
                   onClick={() => onEditDetails(selectedBooking.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line-2 bg-white text-xs font-semibold text-ink-3 hover:text-primary hover:border-primary/40 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line-2 bg-white text-xs font-semibold text-ink-3 hover:text-primary hover:border-primary/40 transition-colors"
                   title="Edit ride details (date, time, pickup, drop-off…)"
                 >
                   <Edit2 size={13} /> Edit Details
@@ -394,7 +394,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                   </div>
                 ) : !isAssigning ? (
                   <div
-                    className={`border rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all ${activeTab === "confirmed" ? "border-primary bg-primary-tint/30" : "border-line-2 bg-bg hover:bg-line-2/50"}`}
+                    className={`border rounded-xl p-4 flex items-center justify-between cursor-pointer transition-colors ${activeTab === "confirmed" ? "border-primary bg-primary-tint/30" : "border-line-2 bg-bg hover:bg-line-2/50"}`}
                     onClick={() => setIsAssigning(true)}
                   >
                     <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 animate-in fade-in duration-200">
+                  <div className="flex flex-col gap-2   duration-200">
                     <div className="flex items-center justify-between shrink-0">
                       <p className="text-xs text-ink-4">
                         {driverSearch.trim()
@@ -439,7 +439,7 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                         placeholder="Search any driver by name..."
                         value={driverSearch}
                         onChange={(e) => setDriverSearch(e.target.value)}
-                        className="w-full pl-8 pr-8 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium text-ink placeholder:text-ink-4 focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+                        className="w-full pl-8 pr-8 py-2 bg-white border border-line-2 rounded-lg text-xs font-medium text-ink placeholder:text-ink-4 focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-colors"
                       />
                       {driversSearching ? (
                         <Loader2

@@ -35,19 +35,14 @@ import {
   TripHistoryExportModal,
 } from "@/features/tripHistory";
 import { env } from "@/config/env";
-
-const formatYmd = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+import { formatLocalDateKey, isInvalidDateRange } from "./utils/dateTime";
 
 const DATE_RANGE_ERROR = "End date must be on or after start date";
-
-const isInvalidDateRange = (startDate: string, endDate: string) =>
-  Boolean(startDate && endDate && endDate < startDate);
 
 const TripHistory = ({ role }: { role?: string | null }) => {
   const [searchParams] = useSearchParams();
   const [scheduleQueryParams, setScheduleQueryParams] = useState<IGetBookingsQueryParams>({
-    serviceDate: formatYmd(new Date()),
+    serviceDate: formatLocalDateKey(new Date()),
   });
 
   const handleScheduleFilterChange = useCallback((params: IGetBookingsQueryParams) => {
@@ -382,7 +377,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6   duration-500">
       {editingCell && (
         <StatusUpdateModal
           item={editingCell.item}
@@ -397,8 +392,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
           trip={selectedTrip}
           drivers={drivers}
           onClose={() => setSelectedTripId(null)}
-          readOnly={activeTab === "trips"}
-          onUpdate={activeTab === "trips" ? undefined : handleUpdateTrip}
+          readOnly={false}
+          onUpdate={handleUpdateTrip}
         />
       )}
 
@@ -438,7 +433,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             <button
               onClick={() => setShowMap((v) => !v)}
               title={showMap ? "Hide trip map" : "Show trip map"}
-              className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${
+              className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-colors ${
                 showMap
                   ? "bg-primary text-white border-primary shadow-md"
                   : "bg-white text-ink-3 border-line hover:text-ink hover:bg-bg"
@@ -496,6 +491,7 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               totalPages={Math.max(1, historyTotalPages)}
               totalItems={historyTotalItems}
               onExportSelected={openExportModal}
+              updateTrip={handleUpdateTrip}
             />
           </div>
           {showMap && (

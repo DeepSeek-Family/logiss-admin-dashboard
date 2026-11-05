@@ -636,7 +636,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-6 h-[calc(100vh-8rem)] animate-in fade-in duration-500">
+    <div className="flex flex-col gap-6 h-[calc(100vh-8rem)]   duration-500">
       {showManualModal && (
         <ManualTripModal
           trips={bookingsList}
@@ -712,7 +712,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
           <button
             onClick={() => setShowMap((v) => !v)}
             title={showMap ? "Hide map" : "Show map"}
-            className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-all ${showMap ? "bg-primary text-white border-primary shadow-md" : "bg-white text-ink-3 border-line hover:text-ink hover:bg-bg"}`}
+            className={`inline-flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-semibold border transition-colors ${showMap ? "bg-primary text-white border-primary shadow-md" : "bg-white text-ink-3 border-line hover:text-ink hover:bg-bg"}`}
           >
             <MapIcon size={15} />
             {showMap ? "Hide Map" : "Show Map"}

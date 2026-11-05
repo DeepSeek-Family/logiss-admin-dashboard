@@ -100,7 +100,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="flex flex-col gap-6   duration-500">
       {/* Side Profile Drawer for Rider */}
       <LiveTripRiderProfile
         profile={selectedRiderProfile}
@@ -144,7 +144,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                   key={trip.id}
                   hover
                   onClick={() => setSelectedTripId(trip.id)}
-                  className={`p-4 cursor-pointer transition-all ${selectedTripId === trip.id ? "border-primary ring-1 ring-primary/10 shadow-sm" : ""} ${trip.isUrgent ? "border-l-2 border-l-urgent" : ""}`}
+                  className={`p-4 cursor-pointer transition-colors ${selectedTripId === trip.id ? "border-primary ring-1 ring-primary/10 shadow-sm" : ""} ${trip.isUrgent ? "border-l-2 border-l-urgent" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsFullView(true)}
-                    className="p-1.5 rounded-lg border border-line-2 text-ink-4 hover:text-primary hover:border-primary transition-all"
+                    className="p-1.5 rounded-lg border border-line-2 text-ink-4 hover:text-primary hover:border-primary transition-colors"
                     title="Focus Mode"
                   >
                     <Maximize2 size={14} />
@@ -244,7 +244,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               {/* Passenger + Driver */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div
-                  className="flex items-center gap-3 p-3 rounded-xl bg-bg hover:bg-bg/80 cursor-pointer transition-all group"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-bg hover:bg-bg/80 cursor-pointer transition-colors group"
                   onClick={() => setSelectedRiderProfile(selectedTrip.rider)}
                 >
                   <Avatar initials={selectedTrip.rider.initials} size="sm" className="shrink-0" />
@@ -260,7 +260,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
                 </div>
 
                 <div
-                  className="flex items-center gap-3 p-3 rounded-xl bg-bg hover:bg-bg/80 cursor-pointer transition-all group"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-bg hover:bg-bg/80 cursor-pointer transition-colors group"
                   onClick={() => setSelectedDriverProfile(selectedDriver)}
                 >
                   <Avatar
@@ -318,7 +318,7 @@ const LiveTrips = ({ role }: { role?: string | null }) => {
               <div className="flex items-center justify-between mb-2.5">
                 <p className="text-xs text-ink-4">Activity Log</p>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                   <span className="text-xs text-accent">Live</span>
                 </div>
               </div>

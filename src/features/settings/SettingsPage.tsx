@@ -2,7 +2,7 @@ import { SecurityTab } from "@/features/settings";
 
 const Settings = () => {
   return (
-    <div className="w-full max-w-6xl mx-auto pb-16 px-4 animate-in fade-in duration-300">
+    <div className="w-full max-w-6xl mx-auto pb-16 px-4   duration-300">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="type-page-title">System Settings</h1>

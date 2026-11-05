@@ -124,7 +124,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
   ];
 
   return (
-    <div className="animate-in fade-in duration-300 pb-12">
+    <div className="  duration-300 pb-12">
       {/* ── BREADCRUMB ───────────────────────────── */}
       <div className="flex items-center gap-1.5 text-sm text-ink-4 mb-6">
         <button
@@ -252,7 +252,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
           <button
             key={tab.id}
             onClick={() => setProfileTab(tab.id as any)}
-            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
               profileTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-ink-4 hover:text-ink"
@@ -329,7 +329,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                     </span>
                   )}
                   {(assignedVehicle || apiAssigned) && (
-                    <p className="text-[10px] text-accent mt-1">✓ Assigned</p>
+                    <p className="text-xs text-accent mt-1">✓ Assigned</p>
                   )}
                 </div>
               </div>
@@ -397,7 +397,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
 
       {/* ── TRIP HISTORY TAB ─────────────────────── */}
       {profileTab === "trips" && (
-        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden animate-in fade-in duration-300">
+        <div className="bg-white border border-line-2 rounded-2xl overflow-hidden   duration-300">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-bg border-b border-line-2">
@@ -427,7 +427,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                   trips.map((trip: any) => (
                     <tr key={trip.id} className="align-middle hover:bg-bg/50 transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3">
+                        <span className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-xs font-medium text-ink-3">
                           #{String(trip.id || "").slice(-6)}
                         </span>
                       </td>
@@ -435,11 +435,11 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                         <p className="text-xs font-medium text-ink">
                           {formatShortDate(trip.serviceDate || trip.scheduledTime) || "—"}
                         </p>
-                        <p className="text-[10px] text-ink-4">
+                        <p className="text-xs text-ink-4">
                           {formatTime(trip.pickupTime || trip.scheduledTime) || "—"}
                         </p>
                         {trip.isRecurring && (
-                          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-xs font-semibold text-primary">
                             <Repeat size={9} /> Recurring
                           </span>
                         )}
@@ -455,7 +455,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
                             <p className="text-xs font-medium text-ink truncate">
                               {trip.rider?.name || "—"}
                             </p>
-                            <p className="text-[10px] text-ink-4">
+                            <p className="text-xs text-ink-4">
                               {tripTypeLabel(trip.tripType || trip.type || "")}
                             </p>
                           </div>
@@ -505,7 +505,7 @@ export const DriverProfile: React.FC<DriverProfileProps> = ({
 
       {/* ── LICENSE TAB ──────────────────────────── */}
       {profileTab === "docs" && (
-        <div className="bg-white border border-line-2 rounded-2xl p-6 animate-in fade-in duration-300 max-w-2xl">
+        <div className="bg-white border border-line-2 rounded-2xl p-6   duration-300 max-w-2xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-bold text-ink">Driver License</h3>
             <span className="text-xs font-semibold text-ink-4">

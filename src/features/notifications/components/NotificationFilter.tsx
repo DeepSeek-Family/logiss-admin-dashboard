@@ -22,7 +22,7 @@ export const NotificationFilter = ({
           <button
             key={cat}
             onClick={() => setActiveFilter(cat)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
               activeFilter === cat
                 ? "bg-primary text-white"
                 : "text-ink-4 hover:text-ink hover:bg-bg"

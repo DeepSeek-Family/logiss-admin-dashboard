@@ -3,6 +3,7 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import toast from "react-hot-toast";
 import { apis } from "@/redux/apis";
 import { reducers } from "@/redux/reducers";
+import { getUserFacingApiError } from "@/utils/apiError";
 
 /**
  * Global RTK Query error middleware:
@@ -31,25 +32,14 @@ const rtkQueryErrorLogger: Middleware = () => (next) => (action: any) => {
       return next(action);
     }
 
-    if (status === "FETCH_ERROR") {
-      toast.error(
-        "Network error: Unable to connect to server. Please check your internet connection.",
-        {
-          id: "global-network-error",
-        },
-      );
-    } else if (status === "TIMEOUT") {
-      toast.error("Request timed out. The server took too long to respond.", {
-        id: "global-timeout-error",
-      });
-    } else if (status === 429) {
-      toast.error("Too many requests. Please wait a moment and try again.", {
-        id: "rate-limit-error",
-      });
-    } else if (typeof status === "number" && status >= 500) {
-      const serverMessage = payload?.data?.message || payload?.data?.error;
-      toast.error(serverMessage || `Server error (${status}). Please try again later.`, {
-        id: `server-error-${status}`,
+    if (
+      status === "FETCH_ERROR" ||
+      status === "TIMEOUT_ERROR" ||
+      status === 429 ||
+      (typeof status === "number" && status >= 500)
+    ) {
+      toast.error(getUserFacingApiError(payload), {
+        id: `api-error-${String(status)}`,
       });
     }
   }

@@ -43,7 +43,7 @@ export const ForgotPasswordForm = ({
   };
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary-light text-primary">
@@ -71,7 +71,7 @@ export const ForgotPasswordForm = ({
               value={localEmail}
               placeholder="Enter your registered email"
               onChange={(e) => setLocalEmail(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
             />
           </div>
         </div>

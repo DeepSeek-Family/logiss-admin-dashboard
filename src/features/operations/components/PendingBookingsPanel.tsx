@@ -76,7 +76,7 @@ export const PendingBookingsPanel = ({
               >
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-ink truncate">{title}</p>
-                  <p className="text-[11px] text-ink-4 truncate">
+                  <p className="text-xs text-ink-4 truncate">
                     {[dateLabel, pickupLabel].filter(Boolean).join(" · ") || "—"}
                     <span className="hidden xl:inline">
                       {booking.tripType ? ` · ${tripTypeLabel(booking.tripType)}` : ""}
@@ -87,14 +87,14 @@ export const PendingBookingsPanel = ({
                   {booking.recurringBooking ? (
                     <Badge
                       variant="primary"
-                      className="hidden xl:inline-flex text-[10px] px-1.5 py-0.5 normal-case tracking-normal"
+                      className="hidden xl:inline-flex text-xs px-1.5 py-0.5 normal-case tracking-normal"
                     >
                       Recurring
                     </Badge>
                   ) : null}
                   <Badge
                     variant="warning"
-                    className="text-[10px] px-1.5 py-0.5 normal-case tracking-normal"
+                    className="text-xs px-1.5 py-0.5 normal-case tracking-normal"
                   >
                     Pending
                   </Badge>

@@ -128,13 +128,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        className="w-full pl-12 pr-10 py-3 bg-white border-2 border-transparent focus:border-primary/20 rounded-2xl text-xs font-medium text-ink shadow-sm ring-1 ring-ink/5 outline-none transition-all placeholder:text-ink-4/60"
+        className="w-full h-10 pl-10 pr-9 bg-white border border-line rounded-lg text-sm font-medium text-ink outline-none transition-colors duration-150 placeholder:text-ink-4/70 hover:border-line focus:border-primary focus:ring-2 focus:ring-primary/15"
       />
       {text && (
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink p-1 rounded-full hover:bg-bg transition-all"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink p-1 rounded-md hover:bg-bg transition-colors"
         >
           <X size={14} />
         </button>

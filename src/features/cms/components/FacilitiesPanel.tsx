@@ -11,9 +11,9 @@ import {
 import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 import toast from "react-hot-toast";
 
-const actionBtn = "h-10 rounded-xl px-4 text-sm";
+const actionBtn = "h-9 rounded-lg px-3 text-sm";
 const controlClass =
-  "h-10 box-border w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all";
+  "h-10 box-border w-full text-sm font-medium text-ink border border-line-2 rounded-lg px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors";
 
 const TYPE_OPTIONS: { label: string; value: FacilityType }[] = [
   { label: "Hospital", value: "hospital" },
@@ -114,8 +114,11 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="type-section-title">Facilities</h2>
+      <div className="flex items-start justify-between gap-4 border-b border-line-2 pb-4">
+        <div>
+          <h3 className="type-section-title">Facility directory</h3>
+          <p className="mt-0.5 text-xs text-ink-4">Manage common destinations used during booking.</p>
+        </div>
         {canEdit && (
           <Button
             variant="primary"
@@ -133,7 +136,7 @@ export const FacilitiesPanel = ({ canEdit = true }: FacilitiesPanelProps) => {
       </div>
 
       {showAddForm && canEdit && (
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+        <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
           <p className="text-xs font-bold text-primary uppercase tracking-wider">
             New Facility / Program
           </p>

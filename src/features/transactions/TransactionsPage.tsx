@@ -74,7 +74,7 @@ export const Transactions = ({ role }: { role?: string | null }) => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
+    <div className="space-y-6   duration-300 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="type-page-title">Transactions</h1>

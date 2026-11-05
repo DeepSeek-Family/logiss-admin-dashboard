@@ -29,7 +29,7 @@ export const AccessScopeModal = ({ user, onClose }: AccessScopeModalProps) => {
     <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0" onClick={onClose} aria-hidden />
       <div
-        className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden border border-line-2"
+        className="relative bg-white rounded-2xl shadow-lg max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden border border-line-2"
         role="dialog"
         aria-labelledby="access-scope-title"
       >

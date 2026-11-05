@@ -3,7 +3,7 @@ import { Card } from "@/shared/components/ui";
 
 export const EmergencyContactsTab = () => {
   return (
-    <div className="animate-in slide-in-from-bottom-2 duration-200">
+    <div className="  duration-200">
       <Card className="p-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-ink">Organization Contact Channels</h3>
@@ -13,8 +13,8 @@ export const EmergencyContactsTab = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-4 mt-6">
-          <div className="flex items-center gap-5 p-6 bg-urgent-light/40 rounded-3xl border border-urgent/10 group hover:border-urgent/30 transition-all">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-urgent shadow-lg shadow-urgent/10 group-hover:scale-105 transition-transform">
+          <div className="flex items-center gap-4 p-5 bg-urgent-light/40 rounded-xl border border-urgent/10">
+            <div className="w-11 h-11 bg-white rounded-lg border border-urgent/10 flex items-center justify-center text-urgent">
               <AlertTriangle size={24} />
             </div>
             <div className="flex-1">
@@ -26,8 +26,8 @@ export const EmergencyContactsTab = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-5 p-6 bg-primary-tint/20 rounded-3xl border border-primary/10 group hover:border-primary/30 transition-all">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-primary shadow-lg shadow-primary/10 group-hover:scale-105 transition-transform">
+          <div className="flex items-center gap-4 p-5 bg-primary-tint/20 rounded-xl border border-primary/10">
+            <div className="w-11 h-11 bg-white rounded-lg border border-primary/10 flex items-center justify-center text-primary">
               <Phone size={24} />
             </div>
             <div className="flex-1">
@@ -38,8 +38,8 @@ export const EmergencyContactsTab = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-all">
-              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-all">
+            <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-colors">
+              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-colors">
                 <Bell size={18} />
               </div>
               <div className="min-w-0">
@@ -47,8 +47,8 @@ export const EmergencyContactsTab = () => {
                 <p className="text-sm font-medium text-ink truncate">support@loggiskabir.com</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-all">
-              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-all">
+            <div className="flex items-center gap-4 p-5 bg-bg rounded-2xl border border-line-2 group hover:bg-white transition-colors">
+              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-ink-3 border border-line-2 group-hover:text-primary group-hover:border-primary/20 transition-colors">
                 <MapPin size={18} />
               </div>
               <div className="min-w-0">

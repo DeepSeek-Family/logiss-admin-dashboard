@@ -53,7 +53,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
 
   return (
     <div className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg overflow-hidden   duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-line-2 bg-bg relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
@@ -86,7 +86,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setAudience("all_drivers")}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${audience === "all_drivers" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-colors ${audience === "all_drivers" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
               >
                 <Users
                   size={18}
@@ -100,7 +100,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
               </button>
               <button
                 onClick={() => setAudience("all_riders")}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${audience === "all_riders" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-colors ${audience === "all_riders" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
               >
                 <Users
                   size={18}
@@ -114,7 +114,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
               </button>
               <button
                 onClick={() => setAudience("specific_driver")}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${audience === "specific_driver" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-colors ${audience === "specific_driver" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
               >
                 <User
                   size={18}
@@ -128,7 +128,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
               </button>
               <button
                 onClick={() => setAudience("specific_rider")}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${audience === "specific_rider" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-colors ${audience === "specific_rider" ? "border-primary bg-primary/5" : "border-line-2 hover:border-primary/30"}`}
               >
                 <User
                   size={18}
@@ -142,11 +142,11 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
               </button>
             </div>
             {(audience === "specific_driver" || audience === "specific_rider") && (
-              <div className="mt-2 animate-in slide-in-from-top-2">
+              <div className="mt-2  ">
                 <input
                   type="text"
                   placeholder={`Search ${audience.split("_")[1]} by name or ID...`}
-                  className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                  className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
                 />
               </div>
             )}
@@ -160,19 +160,19 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
             <div className="flex bg-bg p-1 rounded-xl border border-line-2">
               <button
                 onClick={() => setPriority("standard")}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${priority === "standard" ? "bg-white shadow-sm text-ink border border-line-2" : "text-ink-4 hover:bg-white/50"}`}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${priority === "standard" ? "bg-white shadow-sm text-ink border border-line-2" : "text-ink-4 hover:bg-white/50"}`}
               >
                 <BellRing size={12} /> Standard
               </button>
               <button
                 onClick={() => setPriority("high")}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${priority === "high" ? "bg-warning shadow-sm text-white" : "text-ink-4 hover:bg-white/50"}`}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${priority === "high" ? "bg-warning shadow-sm text-white" : "text-ink-4 hover:bg-white/50"}`}
               >
                 <AlertCircle size={12} /> High
               </button>
               <button
                 onClick={() => setPriority("urgent")}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${priority === "urgent" ? "bg-urgent shadow-sm text-white" : "text-ink-4 hover:bg-white/50"}`}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${priority === "urgent" ? "bg-urgent shadow-sm text-white" : "text-ink-4 hover:bg-white/50"}`}
               >
                 <AlertCircle size={12} /> Urgent
               </button>
@@ -190,7 +190,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Inclement Weather Alert"
-                className="w-full text-sm font-bold text-ink border border-line-2 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                className="w-full text-sm font-bold text-ink border border-line-2 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
               />
             </div>
 
@@ -203,7 +203,7 @@ export const SendBroadcastModal = ({ isOpen, onClose }: SendBroadcastModalProps)
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type the message that will appear on their screen..."
                 rows={4}
-                className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none"
+                className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-none"
               />
               <p className="text-xs text-ink-4 text-right">{message.length}/200 characters</p>
             </div>

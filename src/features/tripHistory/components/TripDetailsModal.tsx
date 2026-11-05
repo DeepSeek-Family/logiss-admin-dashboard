@@ -174,7 +174,7 @@ interface TripDetailsModalProps {
 }
 
 const INPUT =
-  "w-full bg-white border border-line-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all";
+  "w-full bg-white border border-line-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors";
 
 // "10:15 AM" / "13:05" → "HH:MM" (24h) for <input type="time">.
 const to24h = (val?: string): string => {
@@ -489,7 +489,7 @@ export const TripDetailsModal = ({
   return createPortal(
     <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 border-b border-line-2 bg-bg relative shrink-0">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
@@ -530,7 +530,7 @@ export const TripDetailsModal = ({
                 {trip.status !== "cancelled" && trip.status !== "completed" && (
                   <button
                     onClick={() => setCancelMode(true)}
-                    className="px-4 py-2 bg-urgent/10 text-urgent border border-urgent/20 rounded-xl text-xs font-medium hover:bg-urgent hover:text-white transition-all shadow-sm"
+                    className="px-4 py-2 bg-urgent/10 text-urgent border border-urgent/20 rounded-xl text-xs font-medium hover:bg-urgent hover:text-white transition-colors shadow-sm"
                   >
                     Cancel Trip
                   </button>
@@ -548,7 +548,7 @@ export const TripDetailsModal = ({
               </>
             )}
             {!readOnly && cancelMode && (
-              <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
+              <div className="flex items-center gap-2  ">
                 <input
                   placeholder="Reason for cancellation..."
                   className="bg-white border border-urgent/30 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-urgent/10 min-w-[200px]"

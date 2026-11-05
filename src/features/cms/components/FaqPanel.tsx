@@ -126,7 +126,7 @@ export const FaqPanel = () => {
       : faqs.filter((f) => f.role?.toUpperCase() === cat.toUpperCase()).length;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6   duration-300">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -153,7 +153,7 @@ export const FaqPanel = () => {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
               activeCategory === cat
                 ? "bg-primary text-white border-primary shadow-sm"
                 : "bg-white text-ink-2 border-line-2 hover:border-primary/40 hover:text-primary"
@@ -173,7 +173,7 @@ export const FaqPanel = () => {
 
       {/* Add New Form */}
       {showAddForm && (
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-4   duration-200">
           <div className="flex items-center justify-between border-b border-primary/10 pb-3">
             <p className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <Plus size={14} /> Add New FAQ Entry
@@ -197,7 +197,7 @@ export const FaqPanel = () => {
                   key={r}
                   type="button"
                   onClick={() => setNewRole(r)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors border ${
                     newRole === r
                       ? "bg-primary text-white border-primary shadow-sm"
                       : "bg-white text-ink-2 border-line-2 hover:border-primary/40"
@@ -220,7 +220,7 @@ export const FaqPanel = () => {
               onChange={(e) => setNewQuestion(e.target.value)}
               placeholder="e.g. How do I reset a dispatcher password?"
               autoFocus
-              className="w-full text-sm font-semibold text-ink border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:font-normal"
+              className="w-full text-sm font-semibold text-ink border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:font-normal"
             />
           </div>
 
@@ -233,7 +233,7 @@ export const FaqPanel = () => {
               onChange={(e) => setNewAns(e.target.value)}
               placeholder="Write a clear, helpful answer..."
               rows={3}
-              className="w-full text-sm text-ink font-medium border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none placeholder:font-normal"
+              className="w-full text-sm text-ink font-medium border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-none placeholder:font-normal"
             />
           </div>
 
@@ -301,7 +301,7 @@ export const FaqPanel = () => {
             return (
               <div
                 key={faq._id}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                className={`rounded-2xl border transition-colors duration-200 overflow-hidden ${
                   editingId === faq._id
                     ? "border-primary bg-primary/5 shadow-sm"
                     : "border-line-2 bg-white hover:border-line"
@@ -332,7 +332,7 @@ export const FaqPanel = () => {
 
                   {/* Role Badge */}
                   <span
-                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border shrink-0 uppercase tracking-wide ${
+                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 uppercase tracking-wide ${
                       roleUpper === "DISPATCHER"
                         ? "bg-primary/10 text-primary border-primary/20"
                         : "bg-amber-500/10 text-amber-700 border-amber-500/20"
@@ -378,7 +378,7 @@ export const FaqPanel = () => {
                         {/* Edit Button */}
                         <button
                           onClick={() => startEdit(faq)}
-                          className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-lg transition-all border border-primary/20"
+                          className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white rounded-lg transition-colors border border-primary/20"
                           title="Edit FAQ"
                         >
                           <Pencil size={12} />
@@ -387,7 +387,7 @@ export const FaqPanel = () => {
 
                         {/* Delete Button */}
                         {deleteConfirmId === faq._id ? (
-                          <div className="flex items-center gap-1 animate-in fade-in duration-150">
+                          <div className="flex items-center gap-1   duration-150">
                             <button
                               onClick={() => handleDeleteFaq(faq._id)}
                               disabled={isDeleting}
@@ -405,7 +405,7 @@ export const FaqPanel = () => {
                         ) : (
                           <button
                             onClick={() => setDeleteConfirmId(faq._id)}
-                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-urgent bg-urgent/10 hover:bg-urgent hover:text-white rounded-lg transition-all border border-urgent/20"
+                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-urgent bg-urgent/10 hover:bg-urgent hover:text-white rounded-lg transition-colors border border-urgent/20"
                             title="Delete FAQ"
                           >
                             <Trash2 size={12} />
@@ -420,7 +420,7 @@ export const FaqPanel = () => {
                             e.stopPropagation();
                             toggleExpand(faq._id);
                           }}
-                          className="p-1.5 ml-1 text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          className="p-1.5 ml-1 text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                           title={isExpanded ? "Collapse Answer" : "Expand Answer"}
                         >
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -432,7 +432,7 @@ export const FaqPanel = () => {
 
                 {/* Answer Expand */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-line-2/50 animate-in slide-in-from-top-1 duration-200">
+                  <div className="px-4 pb-4 border-t border-line-2/50   duration-200">
                     {editingId === faq._id ? (
                       <div className="space-y-3 pt-3">
                         <div>
@@ -456,7 +456,7 @@ export const FaqPanel = () => {
                                 key={r}
                                 type="button"
                                 onClick={() => setEditRole(r)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
                                   editRole === r
                                     ? "bg-primary text-white border-primary shadow-xs"
                                     : "bg-white text-ink-2 border-line-2 hover:border-primary/40"

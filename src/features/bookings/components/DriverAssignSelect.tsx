@@ -218,7 +218,7 @@ export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
               <span className="block truncate text-xs font-medium text-ink">{selected.name}</span>
               {selectedHasDuty && (
                 <span
-                  className={`block truncate text-[10px] font-medium ${isDriverOnDuty(selected) ? "text-accent" : "text-ink-4"}`}
+                  className={`block truncate text-xs font-medium ${isDriverOnDuty(selected) ? "text-accent" : "text-ink-4"}`}
                 >
                   {driverDutyStatusLabel(selected)}
                 </span>
@@ -245,7 +245,7 @@ export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
               width: coords.width,
               maxHeight: coords.maxHeight,
             }}
-            className="fixed z-[80] bg-white border border-line-2 rounded-xl shadow-xl overflow-hidden flex flex-col"
+            className="fixed z-[80] bg-white border border-line-2 rounded-xl shadow-md overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-2 border-b border-line-2 bg-bg/20 shrink-0">
@@ -326,7 +326,7 @@ export const DriverAssignSelect: React.FC<DriverAssignSelectProps> = ({
                             {s.driver.name}
                           </p>
                           <p
-                            className={`text-[10px] font-medium truncate ${onDuty ? "text-accent" : "text-ink-4"}`}
+                            className={`text-xs font-medium truncate ${onDuty ? "text-accent" : "text-ink-4"}`}
                           >
                             {driverDutyStatusLabel(s.driver)}
                           </p>

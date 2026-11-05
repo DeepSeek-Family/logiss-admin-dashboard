@@ -13,7 +13,7 @@ export const Loader = ({
   fullScreen = false,
 }: LoaderProps) => (
   <div
-    className={`flex flex-col items-center justify-center gap-4 animate-in fade-in duration-500 ${
+    className={`flex flex-col items-center justify-center gap-4   duration-500 ${
       fullScreen ? "min-h-[60vh] w-full" : "py-12 w-full"
     } ${className}`}
     role="status"

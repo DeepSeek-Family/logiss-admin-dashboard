@@ -1,10 +1,10 @@
-import React, { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import MainLayout from "@/shared/components/layout/MainLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import RouteLoadingFallback from "./components/RouteLoadingFallback";
 import { Button } from "@/shared/components/ui";
 import { PrivateRoute } from "@/router/PrivateRoute";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -22,13 +22,6 @@ import {
   verifyEmailRoute,
   resetPasswordRoute,
 } from "./routes/appRoutes";
-
-const LoadingScreen = () => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] w-full gap-4 animate-in fade-in duration-500">
-    <Loader2 className="w-10 h-10 text-primary animate-spin" />
-    <p className="text-sm text-ink-4">Initializing module...</p>
-  </div>
-);
 
 function App() {
   const dispatch = useAppDispatch();
@@ -143,7 +136,7 @@ function App() {
   const ResetPasswordPage = resetPasswordRoute.Component;
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={<RouteLoadingFallback />}>
       <Toaster
         position="top-right"
         toastOptions={{ duration: 3000, style: { fontWeight: "600", fontSize: "14px" } }}

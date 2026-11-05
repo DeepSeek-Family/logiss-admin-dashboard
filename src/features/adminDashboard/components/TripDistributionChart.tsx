@@ -67,12 +67,12 @@ export const TripDistributionChart = () => {
               >
                 <div className="flex items-end gap-1 w-full justify-center h-full">
                   <div
-                    className={`w-3 rounded-t-sm transition-all ${data.roundTripTrips > 0 ? "bg-primary group-hover:bg-primary/80" : "bg-line-2"}`}
+                    className={`w-3 rounded-t-sm transition-colors ${data.roundTripTrips > 0 ? "bg-primary group-hover:bg-primary/80" : "bg-line-2"}`}
                     style={{ height: barHeight(data.roundTripTrips, scale) }}
                     title={`Round trip: ${data.roundTripTrips}`}
                   />
                   <div
-                    className={`w-3 rounded-t-sm transition-all ${data.oneWayTrips > 0 ? "bg-accent group-hover:opacity-80" : "bg-line-2"}`}
+                    className={`w-3 rounded-t-sm transition-colors ${data.oneWayTrips > 0 ? "bg-accent group-hover:opacity-80" : "bg-line-2"}`}
                     style={{ height: barHeight(data.oneWayTrips, scale) }}
                     title={`One way: ${data.oneWayTrips}`}
                   />

@@ -8,3 +8,9 @@ export { RunDispatchView } from "./components/RunDispatchView";
 export { ServiceDateFilter } from "./components/ServiceDateFilter";
 export { TripHistoryRangeFilters } from "./components/TripHistoryRangeFilters";
 export { TripHistoryExportModal } from "./components/TripHistoryExportModal";
+export type {
+  TripHistoryDriver,
+  TripHistoryRecord,
+  TripUpdateHandler,
+  TripUpdatePayload,
+} from "./types";

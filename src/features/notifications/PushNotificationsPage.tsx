@@ -179,7 +179,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-400 pb-12">
+    <div className="max-w-2xl mx-auto space-y-6   duration-400 pb-12">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -206,7 +206,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
                 <button
                   key={a.id}
                   onClick={() => setAudience(a.id)}
-                  className={`text-left p-3 rounded-xl border-2 transition-all ${on ? "border-primary bg-primary-tint/20" : "border-line-2 bg-bg hover:border-primary/40"}`}
+                  className={`text-left p-3 rounded-xl border-2 transition-colors ${on ? "border-primary bg-primary-tint/20" : "border-line-2 bg-bg hover:border-primary/40"}`}
                 >
                   <a.icon size={16} className={on ? "text-primary" : "text-ink-4"} />
                   <p className={`text-xs font-semibold mt-1.5 ${on ? "text-primary" : "text-ink"}`}>
@@ -227,7 +227,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Notification title..."
-          className="w-full text-sm font-semibold text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+          className="w-full text-sm font-semibold text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
         />
 
         {/* Message */}
@@ -237,7 +237,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
             onChange={(e) => setMessage(e.target.value.slice(0, 200))}
             placeholder="Write your message..."
             rows={3}
-            className="w-full text-sm text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none"
+            className="w-full text-sm text-ink border border-line-2 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-none"
           />
           <p className="text-xs text-ink-4 text-right mt-1">{message.length}/200</p>
         </div>
@@ -270,7 +270,7 @@ const PushNotifications = ({ role }: { role?: string | null }) => {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="group flex items-start gap-3 px-4 py-3.5 rounded-2xl border border-line-2 bg-white hover:bg-bg transition-all"
+                  className="group flex items-start gap-3 px-4 py-3.5 rounded-2xl border border-line-2 bg-white hover:bg-bg transition-colors"
                 >
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                     {log.audienceLabel.includes("Driver") ? (

@@ -80,7 +80,7 @@ import type { ICounty } from "@/redux/api/coverageApi";
 import { geocodeAddress } from "@/utils/geofenceEngine";
 
 const inputClass =
-  "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-ink-4 h-9 shadow-sm";
+  "w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-ink-4 h-9 shadow-sm";
 const disabledInputClass =
   "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
 
@@ -967,12 +967,12 @@ export const BookingForm = () => {
   );
 
   return (
-    <div className="max-w-[1300px] mx-auto pb-6 animate-in fade-in duration-300">
+    <div className="max-w-[1300px] mx-auto pb-6   duration-300">
       <div className="flex items-center justify-between mb-6 border-b border-line-2 pb-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 bg-white border border-line-2 rounded-lg text-ink-2 hover:text-primary transition-all shadow-sm"
+            className="p-2 bg-white border border-line-2 rounded-lg text-ink-2 hover:text-primary transition-colors shadow-sm"
           >
             <ArrowLeft size={16} />
           </button>
@@ -1019,7 +1019,7 @@ export const BookingForm = () => {
               {selectedUserId && (
                 <div
                   onClick={() => setIsRiderDropdownOpen(true)}
-                  className="flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5 cursor-pointer hover:border-primary transition-all group"
+                  className="flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5 cursor-pointer hover:border-primary transition-colors group"
                   title="Click to change passenger"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -1032,11 +1032,11 @@ export const BookingForm = () => {
                         <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors truncate">
                           {form.firstName} {form.lastName}
                         </p>
-                        <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">
+                        <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded font-medium">
                           Selected
                         </span>
                       </div>
-                      <p className="text-[11px] text-ink-4 truncate">
+                      <p className="text-xs text-ink-4 truncate">
                         {form.phone ||
                           form.email ||
                           (form.authId ? `Auth: ${form.authId}` : selectedUserId)}
@@ -1092,7 +1092,7 @@ export const BookingForm = () => {
 
                 {/* Dropdown list - closes when rider selected, opens when field clicked */}
                 {isRiderDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 border border-line-2 rounded-xl bg-white shadow-xl divide-y divide-line-2 max-h-56 overflow-y-auto p-1 custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 border border-line-2 rounded-xl bg-white shadow-md divide-y divide-line-2 max-h-56 overflow-y-auto p-1 custom-scrollbar    duration-150">
                     {ridersLoading || ridersFetching ? (
                       <div className="flex items-center justify-center gap-2 p-4 text-xs text-ink-3">
                         <Loader2 size={16} className="animate-spin text-primary" />
@@ -1107,7 +1107,7 @@ export const BookingForm = () => {
                             key={rider.id}
                             type="button"
                             onClick={() => handleSelectRider(rider)}
-                            className={`w-full text-left p-2.5 hover:bg-bg rounded-lg transition-all flex items-center justify-between group ${
+                            className={`w-full text-left p-2.5 hover:bg-bg rounded-lg transition-colors flex items-center justify-between group ${
                               isSelected ? "bg-primary/5 ring-1 ring-primary/30" : ""
                             }`}
                           >
@@ -1123,7 +1123,7 @@ export const BookingForm = () => {
                                 >
                                   {rider.name}
                                 </p>
-                                <p className="text-[11px] text-ink-4 truncate">
+                                <p className="text-xs text-ink-4 truncate">
                                   {rider.phone ||
                                     rider.email ||
                                     rider.authorizationId ||
@@ -1133,7 +1133,7 @@ export const BookingForm = () => {
                             </div>
                             <Badge
                               variant="bg"
-                              className={`border text-[11px] font-medium ${isSelected ? "bg-primary text-white border-primary" : "bg-white border-line-2 text-ink-3"}`}
+                              className={`border text-xs font-medium ${isSelected ? "bg-primary text-white border-primary" : "bg-white border-line-2 text-ink-3"}`}
                             >
                               {isSelected ? "Selected" : "Select"}
                             </Badge>
@@ -1265,7 +1265,7 @@ export const BookingForm = () => {
               {/* Smart Geofence Auto-Detection Pill */}
               {form.pickup && form.dropoff && (
                 <div
-                  className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
                     boundaryEval.isInsideCounty
                       ? "bg-accent-light/40 border-accent/30 text-ink"
                       : "bg-primary/5 border-primary/20 text-ink"
@@ -1304,7 +1304,7 @@ export const BookingForm = () => {
                     key={opt.id}
                     type="button"
                     onClick={() => setForm({ ...form, mobility: opt.name, mobilityId: opt.id })}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors whitespace-nowrap ${
                       isSelected
                         ? "border-primary bg-primary/5 ring-1 ring-primary font-semibold text-primary"
                         : "border-line-2 bg-bg hover:border-primary/20 text-ink"
@@ -1404,7 +1404,7 @@ export const BookingForm = () => {
                       key={t}
                       type="button"
                       onClick={() => setForm({ ...form, tripType: t as any })}
-                      className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${form.tripType === t ? "bg-primary text-white shadow-md" : "text-ink-4"}`}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${form.tripType === t ? "bg-primary text-white shadow-md" : "text-ink-4"}`}
                     >
                       {t === "one-way" ? "One Way" : "Round Trip"}
                     </button>
@@ -1531,10 +1531,10 @@ export const BookingForm = () => {
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, insideCounty: !form.insideCounty })}
-                  className={`w-9 h-5 rounded-full relative transition-all ${form.insideCounty ? "bg-accent" : "bg-urgent/70"}`}
+                  className={`w-9 h-5 rounded-full relative transition-colors ${form.insideCounty ? "bg-accent" : "bg-urgent/70"}`}
                 >
                   <div
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${form.insideCounty ? "right-0.5" : "left-0.5"}`}
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-colors ${form.insideCounty ? "right-0.5" : "left-0.5"}`}
                   />
                 </button>
                 <span
@@ -1611,10 +1611,10 @@ export const BookingForm = () => {
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, isWillCall: !form.isWillCall })}
-                      className={`w-9 h-5 rounded-full relative transition-all ${form.isWillCall ? "bg-primary" : "bg-line-2"}`}
+                      className={`w-9 h-5 rounded-full relative transition-colors ${form.isWillCall ? "bg-primary" : "bg-line-2"}`}
                     >
                       <div
-                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${form.isWillCall ? "right-0.5" : "left-0.5"}`}
+                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-colors ${form.isWillCall ? "right-0.5" : "left-0.5"}`}
                       />
                     </button>
                   </div>
@@ -1652,16 +1652,16 @@ export const BookingForm = () => {
                   type="button"
                   disabled={selectedDates.length > 1}
                   onClick={() => setIsRecurring(!isRecurring)}
-                  className={`w-9 h-5 rounded-full relative transition-all ${selectedDates.length > 1 ? "bg-line-2 cursor-not-allowed" : isRecurring ? "bg-primary" : "bg-line-2"}`}
+                  className={`w-9 h-5 rounded-full relative transition-colors ${selectedDates.length > 1 ? "bg-line-2 cursor-not-allowed" : isRecurring ? "bg-primary" : "bg-line-2"}`}
                 >
                   <div
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${isRecurring && selectedDates.length <= 1 ? "right-0.5" : "left-0.5"}`}
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-colors ${isRecurring && selectedDates.length <= 1 ? "right-0.5" : "left-0.5"}`}
                   />
                 </button>
               </div>
 
               {isRecurring && selectedDates.length <= 1 && (
-                <div className="mt-5 space-y-5 animate-in slide-in-from-top-2 duration-300">
+                <div className="mt-5 space-y-5   duration-300">
                   {/* Select Days of the Week */}
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-ink-3">
@@ -1689,7 +1689,7 @@ export const BookingForm = () => {
                                   : [...prev, day.key],
                               );
                             }}
-                            className={`flex-1 aspect-square md:h-9 flex items-center justify-center text-xs font-medium rounded-lg transition-all ${isSelected ? "bg-primary text-white shadow-md" : "text-ink-4 hover:bg-white"}`}
+                            className={`flex-1 aspect-square md:h-9 flex items-center justify-center text-xs font-medium rounded-lg transition-colors ${isSelected ? "bg-primary text-white shadow-md" : "text-ink-4 hover:bg-white"}`}
                             title={day.short}
                           >
                             {day.label}
@@ -1731,7 +1731,7 @@ export const BookingForm = () => {
                         {recurringDates.map((date, idx) => (
                           <span
                             key={idx}
-                            className="bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                            className="bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap"
                           >
                             {date.toLocaleDateString("en-US", {
                               weekday: "short",
@@ -1769,7 +1769,7 @@ export const BookingForm = () => {
                     {selectedDates.map((date, idx) => (
                       <span
                         key={idx}
-                        className="flex items-center gap-1 bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap animate-in zoom-in-50 duration-200"
+                        className="flex items-center gap-1 bg-white border border-line-2 text-ink text-xs font-medium px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap"
                       >
                         {date.toLocaleDateString("en-US", {
                           weekday: "short",
@@ -1826,7 +1826,7 @@ export const BookingForm = () => {
                   <span className="font-semibold text-ink-3">
                     {selectedPayerLabel} · {formatPriceMethodLabel(calculatedPrice.priceMethod)}
                   </span>
-                  <Badge variant="bg" className="text-[11px] capitalize border border-line-2">
+                  <Badge variant="bg" className="text-xs capitalize border border-line-2">
                     {calculatedPrice.zone} zone
                   </Badge>
                 </div>
@@ -1954,7 +1954,7 @@ export const BookingForm = () => {
             variant="primary"
             type="submit"
             disabled={isCreating || !calculatedPrice || !priceAgreed || scheduleHasErrors}
-            className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-all"
+            className="w-full py-4 text-sm font-medium shadow-lg shadow-primary/10 transition-colors"
             icon={ArrowRight}
           >
             {isCreating ? "Creating booking..." : "Complete & Dispatch"}

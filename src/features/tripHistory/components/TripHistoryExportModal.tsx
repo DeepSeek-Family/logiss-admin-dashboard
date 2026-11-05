@@ -119,7 +119,7 @@ export const TripHistoryExportModal = ({
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6">
       <button
         type="button"
-        className="fixed inset-0 bg-ink/55 backdrop-blur-xs animate-in fade-in duration-200"
+        className="fixed inset-0 bg-ink/55 backdrop-blur-xs   duration-200"
         aria-label="Close export dialog"
         disabled={isExporting}
         onClick={onClose}
@@ -131,7 +131,7 @@ export const TripHistoryExportModal = ({
         aria-labelledby="trip-export-title"
         aria-describedby="trip-export-description"
         tabIndex={-1}
-        className="relative z-10 flex max-h-[min(760px,calc(100vh-24px))] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line-2 bg-white shadow-2xl outline-none animate-in zoom-in-95 fade-in duration-200"
+        className="relative z-10 flex max-h-[min(760px,calc(100vh-24px))] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line-2 bg-white shadow-lg outline-none    duration-200"
       >
         <div className="flex items-start justify-between gap-4 border-b border-line-2 px-5 py-4 sm:px-6">
           <div>
@@ -183,7 +183,7 @@ export const TripHistoryExportModal = ({
                     />
                     <Icon size={18} aria-hidden="true" />
                     <span className="text-xs font-semibold">{option.label}</span>
-                    <span className="ml-auto text-[11px] text-ink-4">{option.detail}</span>
+                    <span className="ml-auto text-xs text-ink-4">{option.detail}</span>
                     {active && <Check size={14} aria-hidden="true" />}
                   </label>
                 );
@@ -197,7 +197,7 @@ export const TripHistoryExportModal = ({
                 <h3 id="trip-export-columns-title" className="text-xs font-semibold text-ink">
                   Columns
                 </h3>
-                <p className="mt-0.5 text-[11px] text-ink-4" aria-live="polite">
+                <p className="mt-0.5 text-xs text-ink-4" aria-live="polite">
                   {selectedKeys.length} of {fields.length} selected
                 </p>
               </div>

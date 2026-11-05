@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { MapPin, Plus, Trash2, Edit2, Accessibility, Landmark, Building2 } from "lucide-react";
-import { Card, Button } from "@/shared/components/ui";
+import { MapPin, Plus, Trash2, Edit2, Accessibility, Landmark } from "lucide-react";
+import { Button } from "@/shared/components/ui";
 import { usePricing, CountyConfig, DEFAULT_TRANSIT_RULES } from "@/hooks/usePricing";
 import { CountyModal } from "./CountyModal";
 import { MobilityFeesSection } from "./MobilityFeesSection";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { AreaZoneCard } from "./AreaZoneCard";
 import { FundingSourcesPanel } from "@/features/cms/components/FundingSourcesPanel";
-import { FacilitiesPanel } from "@/features/cms/components/FacilitiesPanel";
 import { resolveFenceLists, parsePolygon } from "@/utils/geofenceEngine";
 import toast from "react-hot-toast";
 
@@ -20,18 +19,17 @@ const num = (v: string, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-type Section = "counties" | "funding" | "fees" | "facilities";
+type Section = "counties" | "funding" | "fees";
 
 const actionBtn = "h-10 rounded-xl px-4 text-sm";
 
 /** Flip to true to restore the Areas tab (CountyModal stays in the tree). */
 const SHOW_AREAS_TAB = false;
 
-const ALL_TABS: { id: Section; label: string; icon: any }[] = [
-  { id: "counties", label: "Areas", icon: MapPin },
-  { id: "funding", label: "Payers", icon: Landmark },
-  { id: "fees", label: "Fees", icon: Accessibility },
-  { id: "facilities", label: "Facilities", icon: Building2 },
+const ALL_TABS: { id: Section; label: string; description: string; icon: any }[] = [
+  { id: "counties", label: "Service areas", description: "Coverage zones and boundaries", icon: MapPin },
+  { id: "funding", label: "Payers & tariffs", description: "Funding sources and rate rules", icon: Landmark },
+  { id: "fees", label: "Trip fees", description: "Stops and mobility surcharges", icon: Accessibility },
 ];
 
 const TABS = SHOW_AREAS_TAB ? ALL_TABS : ALL_TABS.filter((t) => t.id !== "counties");
@@ -56,6 +54,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   const rules = pricing.rules || DEFAULT_TRANSIT_RULES;
   const zoneId =
     mapAreaId && counties.some((c) => c.id === mapAreaId) ? mapAreaId : counties[0]?.id || null;
+  const activeTab = TABS.find((tab) => tab.id === activeSection) || TABS[0];
 
   const handleSaveCounty = (data: Omit<CountyConfig, "id">) => {
     if (selectedCounty) {
@@ -80,31 +79,42 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-1 p-1 bg-white rounded-2xl border border-line-2 w-fit flex-wrap">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const on = activeSection === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveSection(tab.id)}
-              className={`h-10 px-4 flex items-center gap-2 rounded-xl text-sm font-semibold transition-all ${
-                on ? "bg-primary text-white" : "text-ink-3 hover:text-ink hover:bg-bg"
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className="border-b border-line-2">
+        <nav className="flex gap-6 overflow-x-auto" aria-label="Service and tariff sections">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const on = activeSection === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveSection(tab.id)}
+                aria-current={on ? "page" : undefined}
+                className={`relative flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-sm font-semibold transition-colors ${
+                  on
+                    ? "border-primary text-primary"
+                    : "border-transparent text-ink-4 hover:border-line hover:text-ink"
+                }`}
+              >
+                <Icon size={15} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {SHOW_AREAS_TAB && activeSection === "counties" && (
+      <div className="min-w-0 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-ink">{activeTab.label}</h2>
+          <p className="mt-0.5 text-sm text-ink-4">{activeTab.description}</p>
+        </div>
+
+        {SHOW_AREAS_TAB && activeSection === "counties" && (
         <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
           <header className="flex items-start justify-between gap-4 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
             <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-primary">
                 1
               </span>
               <div>
@@ -160,7 +170,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                         >
                           <td className="px-4 py-3">
                             <p className="text-sm font-semibold text-ink">{c.name}</p>
-                            <p className="text-[11px] text-ink-4 mt-0.5">
+                            <p className="text-xs text-ink-4 mt-0.5">
                               {parsePolygon(c.polygon).length >= 3
                                 ? "Drawn fence"
                                 : fence.zipCodes.length > 0
@@ -236,18 +246,16 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
             </div>
           </div>
         </section>
-      )}
+        )}
 
-      {activeSection === "funding" && <FundingSourcesPanel canEdit={canEdit} />}
+        {activeSection === "funding" && <FundingSourcesPanel canEdit={canEdit} />}
 
-      {activeSection === "fees" && (
-        <div className="space-y-6 w-full max-w-2xl">
+        {activeSection === "fees" && (
+        <div className="grid w-full grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
-            <header className="flex items-start gap-2.5 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
-                1
-              </span>
-              <h2 className="text-sm font-semibold text-primary">Trip add-ons</h2>
+            <header className="px-5 py-4 border-b border-line-2">
+              <h3 className="text-sm font-semibold text-ink">Trip add-ons</h3>
+              <p className="mt-0.5 text-xs text-ink-4">Additional charges applied to a booking.</p>
             </header>
             <div className="p-5">
               <label className="block max-w-xs text-xs font-semibold text-ink-3">
@@ -272,13 +280,9 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
           <MobilityFeesSection canEdit={canEdit} />
         </div>
-      )}
+        )}
 
-      {activeSection === "facilities" && (
-        <Card className="p-5">
-          <FacilitiesPanel canEdit={canEdit} />
-        </Card>
-      )}
+      </div>
 
       {SHOW_AREAS_TAB && (
         <CountyModal
