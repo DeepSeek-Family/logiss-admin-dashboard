@@ -96,16 +96,17 @@ export async function requestFileExport(
     params: Record<string, string | number | boolean>;
     type: FileExportType;
     fallbackFileName: string;
+    method?: "GET" | "POST";
+    body?: Record<string, unknown>;
   },
 ): Promise<{ data: null } | { error: FetchBaseQueryError }> {
   const result = (await Promise.resolve(
     baseQuery({
       url: options.url,
-      method: "GET",
-      params: {
-        ...options.params,
-        type: options.type,
-      },
+      method: options.method || "GET",
+      params:
+        options.method === "POST" ? options.params : { ...options.params, type: options.type },
+      ...(options.body ? { body: options.body } : {}),
       responseHandler: (response: Response) => response.blob(),
       cache: "no-cache",
       timeout: FILE_EXPORT_REQUEST_TIMEOUT_MS,
