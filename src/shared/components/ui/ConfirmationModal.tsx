@@ -66,10 +66,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-ink/50 backdrop-blur-xs animate-in fade-in duration-200"
+        className="fixed inset-0 bg-ink/45"
         onClick={() => !isLoading && onClose()}
       />
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-line-2 p-6 animate-in zoom-in-95 fade-in duration-200 z-10">
+      <div role="dialog" aria-modal="true" aria-labelledby="confirmation-title" className="relative w-full max-w-md bg-white rounded-xl shadow-lg border border-line p-6 z-10">
         <button
           type="button"
           disabled={isLoading}
@@ -84,7 +84,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <IconComponent size={24} />
           </div>
           <div className="flex-1 min-w-0 pr-4">
-            <h3 className="text-base font-semibold text-ink leading-snug">{title}</h3>
+            <h3 id="confirmation-title" className="text-base font-semibold text-ink leading-snug">{title}</h3>
             <p className="text-xs text-ink-4 mt-1.5 leading-relaxed">{message}</p>
           </div>
         </div>

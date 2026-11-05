@@ -20,7 +20,7 @@ interface OrgSettingsFormProps {
 }
 
 const inputClass =
-  "w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-ink-4 shadow-2xs";
+  "w-full h-11 pl-11 pr-4 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors outline-none placeholder:text-ink-4 shadow-2xs";
 
 const Field = ({
   label,
@@ -61,7 +61,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
   return (
     <fieldset
       disabled={disabled}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300 disabled:opacity-60"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-8    duration-300 disabled:opacity-60"
     >
       {/* Left Column — Contact Channels */}
       <div className="space-y-5">
@@ -176,7 +176,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
               />
               <textarea
                 rows={3}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none placeholder:text-ink-4 shadow-2xs"
+                className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors outline-none resize-none placeholder:text-ink-4 shadow-2xs"
                 value={orgSettings.address}
                 onChange={set("address")}
                 placeholder="2200 Broad St, Suite 400, Richmond VA 23230"

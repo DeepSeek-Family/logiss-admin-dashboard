@@ -124,7 +124,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
 
   if (isLoading && drivers.length === 0) {
     return (
-      <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
+      <div className="flex flex-col gap-4   duration-300 pb-12">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="w-48 h-8 bg-line-2 rounded-xl animate-pulse"></div>
@@ -238,7 +238,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 pb-12">
+    <div className="flex flex-col gap-4   duration-300 pb-12">
       {showAddModal && (
         <AddDriverModal
           saving={isCreatingDriver}

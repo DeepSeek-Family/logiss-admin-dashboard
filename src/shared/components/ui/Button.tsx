@@ -15,23 +15,23 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const variants = {
-    primary: "bg-primary text-white hover:bg-primary-dark",
-    accent: "bg-accent text-white hover:bg-accent-dark",
+    primary: "bg-primary text-white border border-primary hover:bg-primary-dark",
+    accent: "bg-accent text-white border border-accent hover:bg-accent-dark",
     ghost: "bg-transparent text-ink-2 hover:bg-bg",
-    outline: "bg-transparent border border-line text-ink-2 hover:bg-bg",
-    danger: "bg-urgent text-white hover:bg-urgent-dark",
-    "primary-light": "bg-primary-light text-primary hover:bg-primary/20",
+    outline: "bg-white border border-line text-ink-2 hover:bg-bg hover:border-line",
+    danger: "bg-urgent text-white border border-urgent hover:bg-urgent-dark",
+    "primary-light": "bg-primary-tint text-primary border border-primary/15 hover:bg-primary-light",
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 type-action",
-    md: "px-4 py-2 type-body-sm",
-    lg: "px-6 py-3 type-body",
+    sm: "min-h-8 px-3 py-1.5 type-action",
+    md: "min-h-9 px-4 py-2 type-body-sm",
+    lg: "min-h-10 px-5 py-2.5 type-body",
   };
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 ${variants[variant] || variants.primary} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50 ${variants[variant] || variants.primary} ${sizes[size]} ${className}`}
       {...props}
     >
       {Icon && <Icon size={size === "sm" ? 14 : 18} />}

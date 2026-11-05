@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RotateCcw, Home, Copy, Check } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
 interface Props {
@@ -9,18 +9,16 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  copied: boolean;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
-    copied: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, copied: false };
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -41,16 +39,6 @@ class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private handleCopy = () => {
-    if (this.state.error) {
-      navigator.clipboard.writeText(
-        `${this.state.error.name}: ${this.state.error.message}\n${this.state.error.stack || ""}`,
-      );
-      this.setState({ copied: true });
-      setTimeout(() => this.setState({ copied: false }), 2000);
-    }
-  };
-
   public render() {
     if (this.state.hasError) {
       const isChunkError =
@@ -58,7 +46,7 @@ class ErrorBoundary extends Component<Props, State> {
         this.state.error?.message?.includes("Importing a module script failed");
 
       return (
-        <div className="flex flex-col items-center justify-center min-h-[450px] w-full p-8 text-center bg-white rounded-3xl border border-line-2 shadow-sm animate-in fade-in duration-500 max-w-xl mx-auto my-12">
+        <div className="flex flex-col items-center justify-center min-h-[450px] w-full p-8 text-center bg-white rounded-xl border border-line-2 shadow-sm   duration-500 max-w-xl mx-auto my-12">
           <div className="w-16 h-16 bg-urgent-light text-urgent rounded-2xl flex items-center justify-center mb-6 shadow-sm">
             <AlertTriangle size={32} />
           </div>
@@ -78,7 +66,7 @@ class ErrorBoundary extends Component<Props, State> {
                 sessionStorage.removeItem("chunk_reload_attempted");
                 window.location.reload();
               }}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-md shadow-primary/20 hover:opacity-95 transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-md shadow-primary/20 hover:opacity-95 transition-colors"
             >
               <RotateCcw size={18} />
               Reload Page
@@ -105,30 +93,6 @@ class ErrorBoundary extends Component<Props, State> {
             </button>
           </div>
 
-          {this.state.error && (
-            <div className="mt-8 p-4 bg-bg rounded-xl border border-line-2 text-left w-full overflow-auto max-h-40 relative group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-ink-3 uppercase tracking-wider">
-                  Error Details
-                </span>
-                <button
-                  type="button"
-                  onClick={this.handleCopy}
-                  className="text-xs text-ink-4 hover:text-ink flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-line-2 shadow-2xs"
-                >
-                  {this.state.copied ? (
-                    <Check size={12} className="text-green-600" />
-                  ) : (
-                    <Copy size={12} />
-                  )}
-                  {this.state.copied ? "Copied" : "Copy"}
-                </button>
-              </div>
-              <p className="text-xs text-urgent font-mono break-all">
-                {this.state.error.toString()}
-              </p>
-            </div>
-          )}
         </div>
       );
     }

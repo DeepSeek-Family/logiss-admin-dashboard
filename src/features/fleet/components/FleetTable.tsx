@@ -39,7 +39,7 @@ export const FleetTable = ({
   onNavigate,
 }: FleetTableProps) => {
   return (
-    <Card className="overflow-hidden border-line-2 shadow-xl shadow-ink/5 ring-1 ring-ink/5 rounded-2xl">
+    <Card className="overflow-hidden border-line-2 shadow-md shadow-ink/5 ring-1 ring-ink/5 rounded-2xl">
       <div className="flex flex-col lg:flex-row lg:items-center justify-end gap-6 px-8 py-6 border-b border-line-2 bg-bg/20">
         <SearchInput
           className="w-full lg:w-72"
@@ -85,7 +85,7 @@ export const FleetTable = ({
               return (
                 <tr
                   key={v.id}
-                  className="hover:bg-bg/40 transition-all duration-300 group cursor-pointer"
+                  className="hover:bg-bg/40 transition-colors duration-300 group cursor-pointer"
                   onClick={() => onNavigate(`/fleet/${v.id}`)}
                 >
                   <td className="px-6 py-5">
@@ -188,7 +188,7 @@ export const FleetTable = ({
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => onNavigate(`/fleet/${v.id}`)}
-                      className="w-10 h-10 rounded-xl bg-bg flex items-center justify-center text-ink-4 hover:bg-primary hover:text-white transition-all"
+                      className="w-10 h-10 rounded-xl bg-bg flex items-center justify-center text-ink-4 hover:bg-primary hover:text-white transition-colors"
                     >
                       <ChevronRight size={18} />
                     </button>

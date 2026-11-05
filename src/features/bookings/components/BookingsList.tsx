@@ -18,7 +18,14 @@ import {
   User,
   Loader2,
 } from "lucide-react";
-import { Avatar, Badge, Button, Pagination, SearchInput } from "@/shared/components/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  GoogleMapsRouteButton,
+  Pagination,
+  SearchInput,
+} from "@/shared/components/ui";
 import { formatShortDate, formatTripId } from "@/utils/helpers";
 import { DollarSign } from "lucide-react";
 import { usePricing } from "@/hooks/usePricing";
@@ -35,7 +42,7 @@ import { RouteLocationLabel } from "./RouteLocationLabel";
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
 const INLINE_INPUT =
-  "bg-transparent border border-transparent hover:bg-bg/70 focus:bg-white focus:ring-2 focus:ring-primary/15 rounded-lg px-1.5 py-1 text-xs font-medium text-ink outline-none transition-all cursor-pointer";
+  "bg-transparent border border-transparent hover:bg-bg/70 focus:bg-white focus:ring-2 focus:ring-primary/15 rounded-lg px-1.5 py-1 text-xs font-medium text-ink outline-none transition-colors cursor-pointer";
 
 const to24h = (val?: string): string => {
   if (!val) return "";
@@ -298,7 +305,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
       <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         {/* Bulk-action bar — consistent with Trip History; appears on selection */}
         {selectedTrips.length > 0 && (
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-primary-tint/40 border-b border-primary/20 animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-primary-tint/40 border-b border-primary/20    duration-200 shrink-0">
             <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">
               {selectedTrips.length} selected
             </span>
@@ -326,7 +333,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               <button
                 type="button"
                 onClick={() => handleBulkAction("approve")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-dark transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-dark transition-colors shadow-sm"
               >
                 <Check size={13} /> Approve
               </button>
@@ -335,7 +342,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <button
               type="button"
               onClick={() => handleBulkAction("cancel")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-urgent bg-urgent/5 hover:bg-urgent/10 border border-urgent/15 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-urgent bg-urgent/5 hover:bg-urgent/10 border border-urgent/15 transition-colors"
             >
               <Trash2 size={13} /> Cancel
             </button>
@@ -343,7 +350,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <button
               type="button"
               onClick={() => setSelectedTrips([])}
-              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-ink-3 hover:bg-white hover:text-ink transition-all"
+              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-ink-3 hover:bg-white hover:text-ink transition-colors"
             >
               <X size={13} /> Clear
             </button>
@@ -360,7 +367,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       <th className="pl-4 pr-2 py-2.5 w-8">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                          className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-colors cursor-pointer"
                           checked={
                             paginatedBookings.length > 0 &&
                             paginatedBookings.every((b: any) => selectedTrips.includes(b.id))
@@ -389,6 +396,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[220px]">Driver</th>
                     {/* <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Run</th> */}
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[280px]">Route</th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[130px]">Map</th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">
                       Trip Reason
                     </th>
@@ -442,7 +450,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           {activeTab === "pending" && (
                             <button
                               title="Approve"
-                              className="p-2 text-accent hover:bg-accent-light rounded-xl transition-all"
+                              className="p-2 text-accent hover:bg-accent-light rounded-xl transition-colors"
                               onClick={() => handleApprove(booking.id)}
                             >
                               <Check size={16} />
@@ -450,14 +458,14 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           )}
                           <button
                             title="Edit ride details"
-                            className="p-2 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                            className="p-2 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
                             onClick={() => onEditTrip(booking.id)}
                           >
                             <Pencil size={15} />
                           </button>
                           <button
                             title="Cancel / delete ride"
-                            className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-all"
+                            className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-colors"
                             onClick={() => updateTrip(booking.id, { status: "cancelled" })}
                           >
                             <Trash2 size={15} />
@@ -594,7 +602,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           value={booking.status}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateTrip(booking.id, { status: e.target.value })}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-all focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || "text-ink-3 bg-bg"}`}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition-colors focus:ring-2 focus:ring-primary/15 ${STATUS_STYLE[booking.status] || "text-ink-3 bg-bg"}`}
                         >
                           {(activeTab === "pending"
                             ? PENDING_TAB_STATUS_OPTIONS
@@ -662,6 +670,19 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                             className="text-ink-2"
                           />
                         </div>
+                      </td>
+
+                      <td
+                        className="px-3.5 py-3 min-w-[130px]"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <GoogleMapsRouteButton
+                          pickup={booking.pickupLocationRaw ?? booking.pickupLocation}
+                          dropoff={booking.dropOffLocationRaw ?? booking.dropOffLocation}
+                          stops={
+                            booking.stopAddressRaw ? [booking.stopAddressRaw] : booking.stops || []
+                          }
+                        />
                       </td>
 
                       {/* Trip Reason */}

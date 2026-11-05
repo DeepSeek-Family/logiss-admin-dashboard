@@ -181,7 +181,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
   return createPortal(
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-line-2">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg my-auto flex flex-col overflow-hidden   duration-300 border border-line-2">
         {/* Header */}
         <div className="px-6 py-5 border-b border-line-2 bg-white sticky top-0 z-10">
           <div className="flex items-center justify-between mb-4">
@@ -198,7 +198,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-bg text-ink-4 transition-all hover:rotate-90"
+              className="p-2 rounded-xl hover:bg-bg text-ink-4 transition-colors hover:rotate-90"
             >
               <X size={18} />
             </button>
@@ -209,7 +209,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
             {steps.map((s, i) => (
               <div key={s} className="flex-1">
                 <div
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                  className={`h-1.5 rounded-full transition-colors duration-500 ${
                     step > i ? "bg-primary shadow-[0_0_12px_rgba(41,105,205,0.4)]" : "bg-line-2"
                   }`}
                 />
@@ -222,14 +222,14 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         <div className="flex-1 px-6 py-5 space-y-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           {/* Step 1: Personal Information */}
           {step === 1 && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-5    duration-300">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-ink-3 mb-1.5">
                     First Name *
                   </label>
                   <input
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.firstName}
                     onChange={(e) => set("firstName", e.target.value)}
                     placeholder="David"
@@ -240,7 +240,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     Last Name *
                   </label>
                   <input
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.lastName}
                     onChange={(e) => set("lastName", e.target.value)}
                     placeholder="Wilson"
@@ -253,7 +253,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   Middle Name (Optional)
                 </label>
                 <input
-                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                   value={form.middleName}
                   onChange={(e) => set("middleName", e.target.value)}
                   placeholder="Middle name or initial"
@@ -267,7 +267,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   </label>
                   <input
                     type="date"
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.dob}
                     onChange={(e) => set("dob", e.target.value)}
                   />
@@ -275,7 +275,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                 <div>
                   <label className="block text-xs font-semibold text-ink-3 mb-1.5">Phone *</label>
                   <input
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value)}
                     placeholder="+8801712345678"
@@ -289,7 +289,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                 </label>
                 <input
                   type="email"
-                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                   value={form.email}
                   onChange={(e) => set("email", e.target.value)}
                   placeholder="d.wilson@email.com"
@@ -301,7 +301,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="w-full bg-bg border border-line-2 rounded-xl pl-4 pr-10 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl pl-4 pr-10 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.password}
                     onChange={(e) => set("password", e.target.value)}
                     placeholder="Set a password"
@@ -320,13 +320,13 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
           {/* Step 2: Driver's license */}
           {step === 2 && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-5    duration-300">
               <div>
                 <label className="block text-xs font-semibold text-ink-3 mb-1.5">
                   Years of driving experience *
                 </label>
                 <select
-                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all appearance-none cursor-pointer focus:bg-white"
+                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors appearance-none cursor-pointer focus:bg-white"
                   value={form.experience}
                   onChange={(e) => set("experience", e.target.value)}
                 >
@@ -344,7 +344,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     License number *
                   </label>
                   <input
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white uppercase"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white uppercase"
                     value={form.licenseNumber}
                     onChange={(e) => set("licenseNumber", e.target.value)}
                     placeholder="DL-VA-XXXXX"
@@ -355,7 +355,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     License class *
                   </label>
                   <select
-                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all appearance-none cursor-pointer focus:bg-white"
+                    className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors appearance-none cursor-pointer focus:bg-white"
                     value={form.licenseClass}
                     onChange={(e) => set("licenseClass", e.target.value)}
                   >
@@ -374,7 +374,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                 </label>
                 <input
                   type="date"
-                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-all focus:bg-white"
+                  className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                   value={form.licenseExpiry}
                   onChange={(e) => set("licenseExpiry", e.target.value)}
                 />
@@ -435,11 +435,11 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full p-6 bg-bg border-2 border-dashed border-line-2 rounded-2xl text-center cursor-pointer hover:bg-white hover:border-primary transition-all group"
+                    className="w-full p-6 bg-bg border-2 border-dashed border-line-2 rounded-2xl text-center cursor-pointer hover:bg-white hover:border-primary transition-colors group"
                   >
                     <UploadCloud
                       size={28}
-                      className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-all"
+                      className="mx-auto text-ink-4 mb-2 group-hover:text-primary transition-colors"
                     />
                     <p className="text-xs font-semibold text-ink">
                       Add license image ({(form.licensePhotos || []).length}/3)
@@ -453,7 +453,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
           {/* Step 3: Review & Submit */}
           {step === 3 && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-5    duration-300">
               {/* Personal Info Recap */}
               <div className="p-4 bg-bg rounded-2xl border border-line-2 space-y-3 relative group">
                 <div className="flex items-center justify-between">
@@ -602,7 +602,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
         {/* Error Messaging */}
         {stepError && (
-          <div className="mx-6 mb-4 px-4 py-3 bg-urgent-light rounded-xl border border-urgent/20 text-xs font-semibold text-urgent flex items-center gap-2 animate-in slide-in-from-top-2">
+          <div className="mx-6 mb-4 px-4 py-3 bg-urgent-light rounded-xl border border-urgent/20 text-xs font-semibold text-urgent flex items-center gap-2  ">
             <AlertTriangle size={14} className="shrink-0" />
             <span>{stepError}</span>
           </div>

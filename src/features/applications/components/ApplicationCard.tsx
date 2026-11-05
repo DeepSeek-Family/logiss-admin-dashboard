@@ -1,5 +1,5 @@
 import { MapPin, ImageIcon } from "lucide-react";
-import { Card, Avatar, Badge } from "@/shared/components/ui";
+import { Avatar, Badge } from "@/shared/components/ui";
 import type { MappedDriverApplication } from "../utils/helpers";
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
@@ -19,14 +19,17 @@ export const ApplicationCard = ({ app, selected, onClick }: ApplicationCardProps
   const licenseCount = app.licenseImages.length;
 
   return (
-    <Card
-      hover
+    <button
+      type="button"
       onClick={onClick}
-      className={`p-4 cursor-pointer transition-all border rounded-2xl ${
-        selected ? "border-primary bg-primary-tint/20 shadow-md shadow-primary/5" : "border-line-2"
+      aria-pressed={selected}
+      className={`w-full rounded-lg border p-3 text-left transition-colors ${
+        selected
+          ? "border-primary/50 bg-primary-tint"
+          : "border-line-2 bg-white hover:border-line hover:bg-bg/40"
       }`}
     >
-      <div className="flex items-center gap-3 mb-3">
+      <div className="mb-3 flex items-start gap-3">
         <Avatar initials={app.initials || "?"} src={app.image} size="sm" />
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-semibold text-ink truncate">{app.name}</h4>
@@ -37,7 +40,7 @@ export const ApplicationCard = ({ app, selected, onClick }: ApplicationCardProps
             </p>
           )}
         </div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${sc.cls}`}>
+        <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${sc.cls}`}>
           {sc.label}
         </span>
       </div>
@@ -48,13 +51,13 @@ export const ApplicationCard = ({ app, selected, onClick }: ApplicationCardProps
         {app.authorizationID && <Badge variant="neutral">Auth {app.authorizationID}</Badge>}
       </div>
 
-      <div className="flex items-center justify-between text-[10px] font-medium text-ink-4">
+      <div className="flex items-center justify-between text-xs font-medium text-ink-4">
         <span className="flex items-center gap-1">
           <ImageIcon size={10} />
           {licenseCount} license photo{licenseCount === 1 ? "" : "s"}
         </span>
         {app.createdAt && <span>Applied {app.createdAt}</span>}
       </div>
-    </Card>
+    </button>
   );
 };

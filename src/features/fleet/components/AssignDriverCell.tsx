@@ -33,7 +33,7 @@ export const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: AssignDriver
           </div>
           <button
             onClick={() => setOpen((o) => !o)}
-            className="ml-1 w-6 h-6 rounded-lg bg-bg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+            className="ml-1 w-6 h-6 rounded-lg bg-bg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors"
           >
             <Settings size={12} />
           </button>
@@ -41,14 +41,14 @@ export const AssignDriverCell = ({ vehicle, allDrivers, onAssign }: AssignDriver
       ) : (
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg border border-dashed border-line text-xs font-medium text-ink-4 hover:text-primary hover:border-primary/30 transition-all"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg border border-dashed border-line text-xs font-medium text-ink-4 hover:text-primary hover:border-primary/30 transition-colors"
         >
           <User size={12} /> Assign Operator
         </button>
       )}
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-[24px] border border-line-2 shadow-2xl z-50 py-2 animate-in slide-in-from-top-3 duration-200 ring-1 ring-ink/5">
+        <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-lg border border-line shadow-md z-50 py-2">
           <div className="px-4 py-2 border-b border-line-2 mb-2">
             <p className="text-xs font-medium text-ink-4">Select Operator</p>
           </div>

@@ -16,10 +16,10 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({
   return (
     <div className="fixed inset-0 z-[300] flex justify-end">
       <div
-        className="absolute inset-0 bg-ink/20 backdrop-blur-sm animate-in fade-in duration-300"
+        className="absolute inset-0 bg-ink/20 backdrop-blur-sm   duration-300"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-line-2 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-md bg-white h-full shadow-lg border-l border-line-2 flex flex-col   duration-300">
         <div className="px-6 py-5 border-b border-line-2 flex items-center justify-between">
           <h3 className="text-base font-semibold text-ink">Driver Profile</h3>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-xl text-ink-4">
@@ -31,7 +31,7 @@ export const LiveTripDriverProfile: React.FC<LiveTripDriverProfileProps> = ({
             <Avatar
               initials={profile.initials}
               size="lg"
-              className="ring-4 ring-bg shadow-xl mb-4"
+              className="ring-4 ring-bg shadow-md mb-4"
             />
             <h4 className="text-xl font-semibold text-ink leading-tight">{profile.name}</h4>
             <div className="flex items-center gap-2 mt-2">

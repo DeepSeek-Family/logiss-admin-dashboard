@@ -73,7 +73,7 @@ const typeChipTone = (type: string) => {
 };
 
 const listChip =
-  "inline-flex items-center justify-center box-border h-7 w-[6.5rem] shrink-0 rounded-full px-2.5 text-[11px] font-medium leading-none truncate border";
+  "inline-flex items-center justify-center box-border h-7 w-[6.5rem] shrink-0 rounded-full px-2.5 text-xs font-medium leading-none truncate border";
 
 const methodChipTone = "bg-white text-ink-2 border-line";
 
@@ -82,7 +82,7 @@ const actionBtn = "h-10 rounded-xl px-4 text-sm";
 const labelClass = "text-xs font-semibold text-ink-4 uppercase mb-1.5 block";
 
 const controlBase =
-  "h-10 box-border text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all";
+  "h-10 box-border text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors";
 
 const controlGrow = `${controlBase} w-full`;
 const controlSelect = `${controlBase} w-52`;
@@ -235,7 +235,7 @@ const EditorSection = ({
           collapsible ? "py-1.5" : "py-3"
         } ${expanded ? "border-b border-line-2" : ""} bg-primary-tint/60`}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-primary">
           {n}
         </span>
         <div className="min-w-0 flex-1">
@@ -906,16 +906,16 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     {currentMethod === "mileage_based" && (
                       <div className="rounded-xl border border-line-2 bg-white overflow-hidden">
                         <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 px-4 py-2.5 bg-primary-tint/50 border-b border-line-2">
-                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
                             From (miles)
                           </span>
-                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
                             To (miles)
                           </span>
-                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
                             Rate ($)
                           </span>
-                          <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide text-right pr-1">
+                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide text-right pr-1">
                             Actions
                           </span>
                         </div>

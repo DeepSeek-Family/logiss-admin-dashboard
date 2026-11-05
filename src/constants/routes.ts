@@ -4,6 +4,7 @@ export const ROUTES = {
   verifyEmail: "/verify-email",
   resetPassword: "/reset-password",
   dashboard: "/dashboard",
+  systemLogs: "/dashboard/system-logs",
   operations: "/operations",
   bookings: "/bookings",
   createBooking: "/create-booking",

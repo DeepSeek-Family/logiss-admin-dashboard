@@ -30,6 +30,35 @@
 
   body {
     @apply font-sans text-base leading-normal text-ink antialiased;
+    background: #f4f6f8;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(41, 105, 205, 0.55);
+    outline-offset: 2px;
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    @apply bg-bg/70 text-left text-xs font-semibold uppercase tracking-wide text-ink-3;
+  }
+
+  td {
+    @apply text-sm text-ink-2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   small,
@@ -41,7 +70,7 @@
 
 @layer components {
   .input-base {
-    @apply bg-white border border-line rounded-xl px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-bg disabled:text-ink-4 disabled:cursor-not-allowed;
+    @apply bg-white border border-line rounded-lg px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors duration-150 disabled:bg-bg disabled:text-ink-4 disabled:cursor-not-allowed;
   }
 
   .type-page-title {
@@ -82,8 +111,23 @@
 }
 
 @layer utilities {
+  .render-lazy {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 320px;
+  }
   .animate-fade-in {
-    animation: fadeIn 300ms ease-out forwards;
+    animation: none;
+  }
+
+  .animate-in,
+  .slide-in-from-top-2,
+  .zoom-in-95,
+  .fade-in {
+    animation: none !important;
+  }
+
+  .transition-all {
+    transition-duration: 150ms !important;
   }
 
   /* Opacity-only: a lingering transform here would become the containing block
@@ -108,7 +152,7 @@
   }
 
   .pulse-dot {
-    animation: pulseDot 2s ease-in-out infinite;
+    animation: none;
   }
 
   @keyframes pulseDotPrimary {
@@ -122,7 +166,7 @@
   }
 
   .pulse-dot-primary {
-    animation: pulseDotPrimary 2s ease-in-out infinite;
+    animation: none;
   }
 }
 

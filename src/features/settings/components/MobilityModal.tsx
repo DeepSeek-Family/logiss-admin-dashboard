@@ -93,8 +93,8 @@ export const MobilityModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-line-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
+      <div className="bg-white rounded-2xl shadow-md w-full max-w-lg overflow-hidden border border-line-2">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/50">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -202,7 +202,7 @@ export const MobilityModal = ({
                       setForm((prev) => ({ ...prev, iconPreview: mobility?.iconUrl || "" }));
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
-                    className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-all"
+                    className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -213,13 +213,13 @@ export const MobilityModal = ({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 group ${
+                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
                   errors.image
                     ? "border-urgent bg-urgent/5"
                     : "border-line-2 hover:border-primary/50 bg-bg/30 hover:bg-primary/5"
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-line-2 flex items-center justify-center text-ink-3 group-hover:text-primary group-hover:border-primary/30 transition-all shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-white border border-line-2 flex items-center justify-center text-ink-3 group-hover:text-primary group-hover:border-primary/30 transition-colors shadow-xs">
                   <UploadCloud size={20} />
                 </div>
                 <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors">

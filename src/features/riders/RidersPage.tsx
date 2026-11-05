@@ -161,7 +161,7 @@ const Riders = ({ role }: { role?: string | null }) => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
+      <div className="flex flex-col gap-6   duration-300 pb-12">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="w-48 h-8 bg-line-2 rounded-xl animate-pulse"></div>
@@ -224,7 +224,7 @@ const Riders = ({ role }: { role?: string | null }) => {
         )}
 
         {editSuccessToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl shadow-lg   duration-300">
             <Check size={15} /> Rider profile updated successfully
           </div>
         )}
@@ -257,7 +257,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-300 pb-12">
+    <div className="flex flex-col gap-6   duration-300 pb-12">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Rider Directory</h1>

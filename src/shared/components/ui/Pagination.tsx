@@ -49,7 +49,7 @@ export const Pagination = ({
   };
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-line-2">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-3 bg-white border-t border-line-2">
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -69,9 +69,9 @@ export const Pagination = ({
               <button
                 key={page}
                 onClick={() => typeof page === "number" && onPageChange(page)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-medium transition-colors ${
                   currentPage === page
-                    ? "bg-primary text-white shadow-md shadow-primary/20 scale-110"
+                    ? "bg-primary text-white"
                     : "text-ink-3 hover:bg-bg hover:text-ink"
                 }`}
               >
@@ -90,14 +90,14 @@ export const Pagination = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         {onItemsPerPageChange && (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-ink-4 whitespace-nowrap">Rows per page</span>
             <select
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="bg-white border border-line-2 rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-medium text-ink outline-none cursor-pointer hover:border-primary/40 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+              className="bg-white border border-line-2 rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-medium text-ink outline-none cursor-pointer hover:border-primary/40 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors"
             >
               {sizeOptions.map((opt) => (
                 <option key={opt} value={opt}>

@@ -99,7 +99,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
   };
 
   return (
-    <div className="flex flex-col gap-5 animate-in fade-in duration-300 pb-12">
+    <div className="flex flex-col gap-5   duration-300 pb-12">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="type-page-title">Incident Reports</h1>
@@ -272,7 +272,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
             if (event.target === event.currentTarget) setSelectedReport(null);
           }}
         >
-          <aside className="relative flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
+          <aside className="relative flex h-full w-full max-w-2xl flex-col bg-white shadow-lg">
             <div className="flex h-12 shrink-0 items-center justify-end border-b border-line-2 px-3">
               <button
                 type="button"

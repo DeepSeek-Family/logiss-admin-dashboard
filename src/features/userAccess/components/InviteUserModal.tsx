@@ -56,7 +56,7 @@ export const InviteUserModal = ({
   return createPortal(
     <div className="fixed inset-0 bg-ink/50 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0" onClick={() => !isSubmitting && onClose()} />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-lg max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 border-b border-line-2 shrink-0 flex items-center justify-between">
           <div>
@@ -203,7 +203,7 @@ export const InviteUserModal = ({
                         <button
                           type="button"
                           onClick={() => toggleGroup(groupKeys)}
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-all ${allOn ? "bg-primary text-white border-primary" : someOn ? "bg-primary/10 text-primary border-primary/20" : "bg-white text-ink-4 border-line-2 hover:bg-bg"}`}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors ${allOn ? "bg-primary text-white border-primary" : someOn ? "bg-primary/10 text-primary border-primary/20" : "bg-white text-ink-4 border-line-2 hover:bg-bg"}`}
                         >
                           {allOn ? "All on" : "Select group"}
                         </button>
@@ -216,7 +216,7 @@ export const InviteUserModal = ({
                               type="button"
                               key={p.key}
                               onClick={() => togglePerm(p.key)}
-                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all ${on ? "border-primary/30 bg-primary-tint/20" : "border-line-2 bg-white hover:bg-bg"}`}
+                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-colors ${on ? "border-primary/30 bg-primary-tint/20" : "border-line-2 bg-white hover:bg-bg"}`}
                             >
                               <span
                                 className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${on ? "bg-primary border-primary text-white" : "border-line-2 bg-white"}`}

@@ -57,7 +57,7 @@ export const NotificationList = ({ filtered }: NotificationListProps) => {
           <div className="relative mb-6">
             <div className="absolute inset-0 scale-[1.35] rounded-full border border-primary/10 bg-primary/[0.04]" />
             <div className="absolute inset-0 scale-[1.15] rounded-full border border-primary/15" />
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 via-white to-primary/5 shadow-sm ring-1 ring-primary/10">
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-primary-tint border border-primary/10">
               <Bell size={32} className="text-primary" strokeWidth={1.75} />
               <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-2 ring-white">
                 <CheckCircle2 size={16} className="text-accent" strokeWidth={2.25} />
@@ -65,7 +65,7 @@ export const NotificationList = ({ filtered }: NotificationListProps) => {
             </div>
           </div>
 
-          <h2 className="text-lg font-semibold tracking-tight text-ink sm:text-xl">
+          <h2 className="text-lg font-semibold tracking-normal text-ink sm:text-xl">
             You&apos;re all caught up
           </h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-3">
@@ -77,7 +77,7 @@ export const NotificationList = ({ filtered }: NotificationListProps) => {
             {alertHints.map(({ icon: HintIcon, label }) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line-2/80 bg-bg/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-4"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line-2/80 bg-bg/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink-4"
               >
                 <HintIcon size={12} className="text-primary/80" strokeWidth={2} />
                 {label}

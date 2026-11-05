@@ -23,7 +23,7 @@ export const PwField = ({ label, placeholder, value, onChange }: PwFieldProps) =
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg pl-10 pr-11 focus:outline-none focus:border-primary/30 focus:bg-white transition-all"
+          className="w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg pl-10 pr-11 focus:outline-none focus:border-primary/30 focus:bg-white transition-colors"
         />
         <button
           type="button"

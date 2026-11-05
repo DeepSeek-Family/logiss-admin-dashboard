@@ -253,8 +253,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   );
 
   return (
-    <div className="space-y-3 animate-in fade-in duration-300">
-      <div className="bg-white rounded-2xl border border-line-2 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+    <div className="space-y-3   duration-300">
+      <div className="bg-white rounded-2xl border border-line-2 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
         <div className="bg-bg/60 border-b border-line-2 px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1 flex-wrap">
             <div className="flex items-center gap-0.5 pr-1.5 border-r border-line-2">
@@ -370,7 +370,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             <button
               type="button"
               onClick={() => setViewMode("edit")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                 viewMode === "edit"
                   ? "bg-primary text-white shadow-sm"
                   : "text-ink-3 hover:text-ink"
@@ -382,7 +382,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             <button
               type="button"
               onClick={openPreview}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                 viewMode === "preview"
                   ? "bg-primary text-white shadow-sm"
                   : "text-ink-3 hover:text-ink"

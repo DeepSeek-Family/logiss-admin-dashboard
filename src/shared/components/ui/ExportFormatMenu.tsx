@@ -32,7 +32,7 @@ export const ExportFormatMenu = ({
         icon={isBusy ? Loader2 : Download}
         onClick={() => setOpen((value) => !value)}
         disabled={disabled}
-        className={`shadow-sm border-line text-ink-3 hover:text-ink hover:bg-bg transition-all h-9 pr-2 ${isBusy ? "[&_svg]:animate-spin opacity-70" : ""}`}
+        className={`border-line text-ink-3 hover:text-ink hover:bg-bg h-9 pr-2 ${isBusy ? "[&_svg]:animate-spin opacity-70" : ""}`}
       >
         <span className="flex items-center gap-1">
           {isBusy && exportingType ? `Exporting ${exportingType.toUpperCase()}…` : buttonLabel}
@@ -51,7 +51,7 @@ export const ExportFormatMenu = ({
             aria-label="Close export menu"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-1 z-20 min-w-[168px] py-1 bg-white border border-line-2 rounded-xl shadow-lg">
+          <div className="absolute right-0 top-full mt-1 z-20 min-w-[168px] py-1 bg-white border border-line rounded-lg shadow-md">
             {EXPORT_OPTIONS.map((option) => {
               const loading = exportingType === option.type;
               return (

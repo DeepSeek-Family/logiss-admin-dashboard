@@ -189,7 +189,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
     }));
 
   const inputClass =
-    "w-full bg-white border border-line-2 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none placeholder:text-ink-4 shadow-sm";
+    "w-full bg-white border border-line-2 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors outline-none placeholder:text-ink-4 shadow-sm";
 
   // Safe access to existing riders
   const existingRiders = Array.from(
@@ -246,8 +246,8 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-ink/50 backdrop-blur-md z-[60] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden border border-line-2">
+    <div className="fixed inset-0 bg-ink/50 backdrop-blur-md z-[60] flex items-center justify-center p-4 md:p-6   duration-300">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden border border-line-2">
         <div className="flex items-center justify-between px-8 py-5 border-b border-line-2 bg-white sticky top-0 z-10">
           <div>
             <h3 className="text-xl font-semibold text-ink">Manual Booking Console</h3>
@@ -269,7 +269,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
               <button
                 key={t}
                 type="button"
-                className={`flex-1 py-2 text-xs font-medium rounded-xl transition-all ${userType === t ? "bg-white shadow-md text-primary ring-1 ring-line-2" : "text-ink-4"}`}
+                className={`flex-1 py-2 text-xs font-medium rounded-xl transition-colors ${userType === t ? "bg-white shadow-md text-primary ring-1 ring-line-2" : "text-ink-4"}`}
                 onClick={() => setUserType(t)}
               >
                 {t === "new" ? "GUEST" : "EXISTING"}
@@ -406,7 +406,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, insideCounty: !form.insideCounty })}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
                     form.insideCounty
                       ? "bg-accent-light text-accent border-accent/20"
                       : "bg-primary/10 text-primary border-primary/20"
@@ -476,7 +476,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                 {/* Smart Geofence Auto-Detection Pill */}
                 {form.pickup && form.dropoff && (
                   <div
-                    className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                    className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
                       form.insideCounty
                         ? "bg-accent-light/40 border-accent/30 text-ink"
                         : "bg-primary/5 border-primary/20 text-ink"
@@ -531,7 +531,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                         key={t}
                         type="button"
                         onClick={() => setForm({ ...form, type: t as any })}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${form.type === t ? "bg-white shadow-sm text-primary" : "text-ink-4"}`}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${form.type === t ? "bg-white shadow-sm text-primary" : "text-ink-4"}`}
                       >
                         {t.replace("_", " ").toUpperCase()}
                       </button>
@@ -552,7 +552,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                         key={opt.id}
                         type="button"
                         onClick={() => setForm({ ...form, mobility: opt.name })}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-line-2 bg-white hover:border-primary/20"}`}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-colors ${isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-line-2 bg-white hover:border-primary/20"}`}
                       >
                         <div
                           className={`p-2 rounded-lg ${isSelected ? "bg-primary text-white" : "bg-bg text-ink-4"}`}

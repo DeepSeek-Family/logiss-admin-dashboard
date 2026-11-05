@@ -74,7 +74,7 @@ export function MultiCalendar({
         <button
           type="button"
           onClick={() => setCurrentMonth(new Date(year, month - 1))}
-          className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink"
+          className="p-1.5 hover:bg-bg rounded-md transition-colors text-ink-3 hover:text-ink"
         >
           <ChevronLeft size={18} />
         </button>
@@ -84,7 +84,7 @@ export function MultiCalendar({
         <button
           type="button"
           onClick={() => setCurrentMonth(new Date(year, month + 1))}
-          className="p-1.5 hover:bg-bg rounded-md transition-all text-ink-3 hover:text-ink"
+          className="p-1.5 hover:bg-bg rounded-md transition-colors text-ink-3 hover:text-ink"
         >
           <ChevronRight size={18} />
         </button>
@@ -113,7 +113,7 @@ export function MultiCalendar({
               onClick={() => !isPast && toggleDate(date)}
               disabled={isPast}
               className={`
-                h-8 w-8 rounded-md text-xs font-medium flex items-center justify-center transition-all
+                h-8 w-8 rounded-md text-xs font-medium flex items-center justify-center transition-colors
                 ${isSel ? "bg-primary text-white shadow-md" : "text-ink hover:bg-bg"}
                 ${isTod && !isSel ? "border border-primary/30 text-primary" : ""}
                 ${isPast ? "opacity-30 cursor-not-allowed hover:bg-transparent" : "cursor-pointer"}

@@ -27,11 +27,11 @@ export default {
           4: "#5F6B7A",
         },
         bg: {
-          DEFAULT: "#EEF1F5",
+          DEFAULT: "#F4F6F8",
         },
         line: {
-          DEFAULT: "#C5CDD8",
-          2: "#D9DFE7",
+          DEFAULT: "#CBD2DA",
+          2: "#E1E5EA",
         },
         // Status colors
         urgent: {
@@ -48,6 +48,25 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
         display: ['"Plus Jakarta Sans"', "Inter", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        lg: "0.5rem",
+        xl: "0.625rem",
+        "2xl": "0.75rem",
+        "3xl": "0.75rem",
+      },
+      boxShadow: {
+        sm: "0 1px 2px rgb(18 24 38 / 0.05)",
+        md: "0 2px 6px rgb(18 24 38 / 0.08)",
+        lg: "0 4px 12px rgb(18 24 38 / 0.10)",
+        xl: "0 6px 18px rgb(18 24 38 / 0.12)",
+        "2xl": "0 8px 24px rgb(18 24 38 / 0.14)",
+      },
+      transitionDuration: {
+        150: "150ms",
+        200: "180ms",
+        300: "180ms",
+        500: "180ms",
       },
     },
   },

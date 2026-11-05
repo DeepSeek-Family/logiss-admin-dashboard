@@ -16,13 +16,13 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
   if (!selectedTrip) return null;
 
   return (
-    <div className="fixed inset-0 z-[500] bg-white animate-in zoom-in-95 duration-300 flex flex-col">
+    <div className="fixed inset-0 z-[500] bg-white   duration-300 flex flex-col">
       {/* Top Navigation Bar */}
       <div className="px-8 py-5 border-b border-line-2 flex items-center justify-between bg-white shadow-sm">
         <div className="flex items-center gap-6">
           <button
             onClick={() => setIsFullView(false)}
-            className="p-3 hover:bg-bg rounded-2xl text-ink-3 transition-all border border-line-2 shadow-sm"
+            className="p-3 hover:bg-bg rounded-2xl text-ink-3 transition-colors border border-line-2 shadow-sm"
           >
             <ChevronLeft size={24} />
           </button>
@@ -43,7 +43,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
         <div className="flex gap-2">
           <button
             onClick={() => setIsFullView(false)}
-            className="p-2 text-ink-4 hover:text-ink hover:bg-bg rounded-xl transition-all"
+            className="p-2 text-ink-4 hover:text-ink hover:bg-bg rounded-xl transition-colors"
           >
             <X size={20} />
           </button>
@@ -53,7 +53,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
       <div className="flex-1 overflow-hidden grid grid-cols-12 min-h-0">
         {/* Left Column: Map View */}
         <div className="col-span-7 relative bg-primary-tint/5 border-r border-line-2 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-light/30 to-accent-light/30">
+          <div className="absolute inset-0 bg-bg">
             {/* Reusing existing map SVG but bigger */}
             <svg className="w-full h-full" viewBox="0 0 800 500" preserveAspectRatio="none">
               <pattern id="grid-large" width="60" height="60" patternUnits="userSpaceOnUse">
@@ -72,7 +72,6 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                 stroke="url(#lineGradient)"
                 strokeWidth="4"
                 strokeDasharray="10 6"
-                className="animate-dash"
               />
               <defs>
                 <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -86,14 +85,13 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                 cy="400"
                 r="8"
                 fill="var(--color-primary)"
-                className="animate-pulse"
               />
               <circle cx="700" cy="300" r="8" fill="var(--color-urgent)" />
             </svg>
           </div>
           {/* Map Floating Controls */}
           <div className="absolute bottom-8 left-8 flex gap-2">
-            <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-line-2 shadow-2xl space-y-2">
+            <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-line-2 shadow-lg space-y-2">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-accent-light rounded-xl flex items-center justify-center text-accent">
                   <Clock size={20} />
@@ -229,7 +227,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                 ].map((step, i) => (
                   <div
                     key={i}
-                    className={`p-4 rounded-2xl border transition-all ${
+                    className={`p-4 rounded-2xl border transition-colors ${
                       step.status === "active"
                         ? "bg-primary/5 border-primary shadow-lg ring-1 ring-primary/20"
                         : "bg-white border-line-2"
@@ -242,7 +240,7 @@ export const TripFocusMode: React.FC<TripFocusModeProps> = ({
                             step.status === "done"
                               ? "bg-accent"
                               : step.status === "active"
-                                ? "bg-primary animate-pulse"
+                                ? "bg-primary"
                                 : "bg-line-2"
                           }`}
                         />

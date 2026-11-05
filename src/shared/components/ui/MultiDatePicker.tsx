@@ -44,7 +44,7 @@ export function MultiDatePicker({ selected = [], onSelect }: MultiDatePickerProp
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm font-semibold text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all h-9 shadow-sm flex items-center justify-between hover:bg-bg/50"
+        className="w-full px-3 py-1.5 bg-white border border-line-2 rounded-lg text-sm font-semibold text-ink outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-colors h-9 shadow-sm flex items-center justify-between hover:bg-bg/50"
       >
         <span className={selected.length === 0 ? "text-ink-4 font-normal" : ""}>
           {formatDisplay()}
@@ -53,8 +53,8 @@ export function MultiDatePicker({ selected = [], onSelect }: MultiDatePickerProp
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 min-w-[280px]">
-          <div className="shadow-2xl border border-line-2 bg-white rounded-xl overflow-hidden flex flex-col">
+        <div className="absolute top-full left-0 mt-2 z-50    duration-200 min-w-[280px]">
+          <div className="shadow-lg border border-line-2 bg-white rounded-xl overflow-hidden flex flex-col">
             <MultiCalendar
               selected={selected}
               onSelect={onSelect}

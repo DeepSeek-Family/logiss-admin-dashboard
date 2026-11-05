@@ -32,6 +32,7 @@ const Riders = lazy(() => import("../pages/Riders"));
 const CreateBooking = lazy(() => import("../pages/CreateBooking"));
 const PushNotifications = lazy(() => import("../pages/PushNotifications"));
 const ServiceCoverage = lazy(() => import("../pages/ServiceCoverage"));
+const SystemLogs = lazy(() => import("../pages/SystemLogs"));
 
 type LazyPage = React.LazyExoticComponent<React.ComponentType<any>>;
 
@@ -86,6 +87,11 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: "schedule", Component: TripHistory },
   { path: "notifications", Component: Notifications },
   { path: "dashboard", Component: AdminDashboard, allowedRoles: ["admin"] },
+  {
+    path: "dashboard/system-logs",
+    Component: SystemLogs,
+    allowedRoles: ["admin", "dispatcher"],
+  },
   { path: "finance", Component: Transactions, allowedRoles: ["admin", "dispatcher"] },
   { path: "transactions", Component: Transactions, allowedRoles: ["admin", "dispatcher"] },
   { path: "staff", Component: UserAccess, allowedRoles: ["admin", "dispatcher"] },

@@ -7,7 +7,7 @@ interface EmergencyProtocolModalProps {
 
 export const EmergencyProtocolModal: React.FC<EmergencyProtocolModalProps> = ({ onClose }) => (
   <div className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-10 h-10 bg-urgent-light rounded-xl flex items-center justify-center text-urgent">
           <AlertTriangle size={20} />

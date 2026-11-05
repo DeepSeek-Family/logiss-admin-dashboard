@@ -212,7 +212,7 @@ const CMS = ({ role }: { role?: string | null }) => {
   const activePageData = pages.find((p) => p.id === activePage);
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="flex flex-col gap-6   duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="type-page-title">Global Configuration</h1>
@@ -250,7 +250,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                 onClick={() => handleTabChange(page.id)}
 
-                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left group ${
+                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-colors text-left group ${
                   isActive
                     ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
                     : "border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50"
