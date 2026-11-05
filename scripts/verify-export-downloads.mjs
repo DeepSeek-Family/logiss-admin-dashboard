@@ -15,14 +15,11 @@ const BASE =
 const TOKEN = process.env.ACCESS_TOKEN || process.env.AUTH_TOKEN || ''
 
 const cases = [
-  { name: 'trip-history-pdf', path: '/booking/history/excel', type: 'pdf' },
   { name: 'trip-history-csv', path: '/booking/history/excel', type: 'csv' },
-  { name: 'payments-pdf', path: '/payment/export', type: 'pdf' },
   { name: 'payments-csv', path: '/payment/export', type: 'csv' },
 ]
 
 const expectedContentType = {
-  pdf: 'application/pdf',
   csv: 'text/csv',
 }
 
@@ -58,20 +55,6 @@ async function runCase({ name, path, type }) {
   const buf = Buffer.from(await res.arrayBuffer())
   const head = buf.subarray(0, 4).toString('ascii')
 
-  if (type === 'pdf') {
-    const pdfOk = head === '%PDF'
-    const ctOk = contentType.toLowerCase().includes(expectedContentType.pdf)
-    return {
-      name,
-      ok: pdfOk && ctOk,
-      status: res.status,
-      contentType,
-      disposition,
-      bytes: buf.length,
-      checks: { pdfMagic: pdfOk, contentTypePdf: ctOk },
-    }
-  }
-
   const csvText = buf.toString('utf8')
   const headerLine = parseCsvHeaderLine(csvText)
   const looksZip = head === 'PK\u0003\u0004' || head.startsWith('PK')
@@ -102,16 +85,14 @@ async function main() {
   }
 
   const tripCsv = results.find((r) => r.name === 'trip-history-csv')
-  const tripPdf = results.find((r) => r.name === 'trip-history-pdf')
   const payCsv = results.find((r) => r.name === 'payments-csv')
-  const payPdf = results.find((r) => r.name === 'payments-pdf')
 
-  if (tripCsv?.csvHeaderLine && tripPdf?.ok) {
-    console.log('\nTrip history CSV header (compare visually to PDF table header row):')
+  if (tripCsv?.csvHeaderLine) {
+    console.log('\nTrip history CSV header:')
     console.log(tripCsv.csvHeaderLine)
   }
-  if (payCsv?.csvHeaderLine && payPdf?.ok) {
-    console.log('\nPayments CSV header (compare visually to PDF table header row):')
+  if (payCsv?.csvHeaderLine) {
+    console.log('\nPayments CSV header:')
     console.log(payCsv.csvHeaderLine)
   }
 

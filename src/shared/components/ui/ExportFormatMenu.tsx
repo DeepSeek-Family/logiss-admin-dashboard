@@ -6,7 +6,6 @@ import type { FileExportType } from '@/utils/fileExportDownload'
 const EXPORT_OPTIONS: { type: FileExportType; label: string }[] = [
   { type: 'excel', label: 'Excel (.xlsx)' },
   { type: 'csv', label: 'CSV (.csv)' },
-  { type: 'pdf', label: 'PDF (.pdf)' },
 ]
 
 interface ExportFormatMenuProps {
