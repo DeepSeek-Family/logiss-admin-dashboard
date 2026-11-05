@@ -136,8 +136,8 @@ export const CountyModal = ({ isOpen, county, onClose, onSave }: CountyModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-line-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
+      <div className="bg-white rounded-2xl shadow-md w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-line-2">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/50 sticky top-0 z-10">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">

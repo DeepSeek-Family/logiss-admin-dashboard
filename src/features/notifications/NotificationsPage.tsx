@@ -107,7 +107,7 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-3xl mx-auto space-y-5   duration-500 pb-12">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-ink flex items-center gap-2">

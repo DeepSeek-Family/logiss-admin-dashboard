@@ -117,7 +117,7 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                           onClick={() =>
                             user.status === "active" ? onRevokeAccess(user) : onRestoreAccess(user)
                           }
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border shadow-2xs ${
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border shadow-2xs ${
                             user.status === "active"
                               ? "bg-urgent/10 text-urgent border-urgent/30 hover:bg-urgent hover:text-white"
                               : "bg-accent/10 text-accent border-accent/30 hover:bg-accent hover:text-white"

@@ -28,14 +28,14 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
   return (
     <div className="fixed inset-0 z-[200] flex justify-end">
       <div
-        className="absolute inset-0 bg-ink/20 backdrop-blur-sm animate-in fade-in duration-300"
+        className="absolute inset-0 bg-ink/20 backdrop-blur-sm   duration-300"
         onClick={() => {
           setDispatchModalTrip(null);
           setDriverSearch("");
         }}
       />
 
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-line-2 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-md bg-white h-full shadow-lg border-l border-line-2 flex flex-col   duration-300">
         {/* Header */}
         <div className="px-6 py-5 border-b border-line-2 flex items-center justify-between bg-white sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
 
           {/* Rider Summary */}
           <div
-            className="flex items-center gap-4 px-1 cursor-pointer hover:bg-bg p-2 rounded-xl transition-all"
+            className="flex items-center gap-4 px-1 cursor-pointer hover:bg-bg p-2 rounded-xl transition-colors"
             onClick={() => {
               const riderObj = {
                 name: dispatchModalTrip.rider,
@@ -129,7 +129,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
               <input
                 type="text"
                 placeholder="Search by name or ID..."
-                className="w-full bg-bg border border-line-2 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-ink-4/50"
+                className="w-full bg-bg border border-line-2 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-colors placeholder:text-ink-4/50"
                 value={driverSearch}
                 onChange={(e) => setDriverSearch(e.target.value)}
               />
@@ -141,7 +141,7 @@ export const QuickDispatchModal: React.FC<QuickDispatchModalProps> = ({
                   <button
                     key={driver.id}
                     onClick={() => handleQuickDispatch(driver.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${driver.id === dispatchModalTrip.driverId ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-line-2 bg-white hover:border-primary/20 hover:bg-bg"}`}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left group ${driver.id === dispatchModalTrip.driverId ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-line-2 bg-white hover:border-primary/20 hover:bg-bg"}`}
                   >
                     <div className="flex items-center gap-3">
                       <div

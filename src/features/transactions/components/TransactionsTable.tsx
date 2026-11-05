@@ -82,7 +82,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
                   filter === f
                     ? "bg-white shadow-xs text-primary font-bold"
                     : "text-ink-3 hover:text-ink hover:bg-white/50"
@@ -135,7 +135,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                         type="button"
                         onClick={() => copy(txn.txnNumber, `txn-${txn.id}`)}
                         title="Copy transaction number"
-                        className="mt-0.5 flex items-center gap-1 font-mono text-[11px] text-ink-4 hover:text-primary transition-colors"
+                        className="mt-0.5 flex items-center gap-1 font-mono text-xs text-ink-4 hover:text-primary transition-colors"
                       >
                         <span className="truncate max-w-[180px]">{txn.txnNumber}</span>
                         {copiedId === `txn-${txn.id}` ? (
@@ -149,7 +149,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   <td className="px-5 py-3.5">
                     {txn.tripId ? (
                       <span
-                        className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-[11px] font-medium text-ink-3"
+                        className="inline-flex rounded-md bg-bg px-2 py-1 font-mono text-xs font-medium text-ink-3"
                         title={txn.tripId}
                       >
                         #{txn.tripId.slice(-6)}
@@ -162,7 +162,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                     <p className="text-xs font-medium text-ink">
                       {formatShortDate(txn.date) || "—"}
                     </p>
-                    <p className="text-[10px] text-ink-4">{formatClock(txn.date)}</p>
+                    <p className="text-xs text-ink-4">{formatClock(txn.date)}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2.5">

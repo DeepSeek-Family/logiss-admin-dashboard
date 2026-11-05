@@ -15,7 +15,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-2xl border border-line ${hasOverflowClass ? "" : "overflow-hidden"} transition-all duration-200 ${hover ? "hover:border-primary/30 cursor-pointer" : ""} ${className}`}
+      className={`bg-white rounded-xl border border-line-2 ${hasOverflowClass ? "" : "overflow-hidden"} ${hover ? "transition-colors duration-150 hover:border-line cursor-pointer" : ""} ${className}`}
       {...props}
     >
       {children}

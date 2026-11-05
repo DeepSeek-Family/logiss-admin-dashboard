@@ -48,7 +48,7 @@ const Field = ({
       <input
         defaultValue={value}
         readOnly={readOnly}
-        className={`w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg ${Icon ? "pl-10" : "pl-4"} pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-all ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg ${Icon ? "pl-10" : "pl-4"} pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-colors ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
       />
     </div>
   </div>
@@ -81,7 +81,7 @@ const Profile = ({ role }: { role?: string | null }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto pb-16 animate-in fade-in duration-300">
+    <div className="max-w-2xl mx-auto pb-16   duration-300">
       {/* Header */}
       <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">

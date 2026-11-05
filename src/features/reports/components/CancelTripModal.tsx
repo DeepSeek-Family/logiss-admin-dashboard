@@ -49,10 +49,10 @@ export const CancelTripModal = ({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
       <div
-        className="absolute inset-0 bg-ink/60 backdrop-blur-md animate-in fade-in duration-300"
+        className="absolute inset-0 bg-ink/60 backdrop-blur-md   duration-300"
         onClick={onClose}
       />
-      <Card className="relative w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 shadow-2xl border-line-2">
+      <Card className="relative w-full max-w-2xl overflow-hidden   duration-200 shadow-lg border-line-2">
         <div className="flex items-center justify-between p-6 border-b border-line-2 bg-white">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-urgent-light rounded-xl flex items-center justify-center border border-urgent/10">
@@ -76,7 +76,7 @@ export const CancelTripModal = ({
           {reasons.map((r) => (
             <label
               key={r.id}
-              className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${reason === r.id ? "border-urgent bg-urgent-light/20 shadow-sm" : "border-line-2 hover:border-line"}`}
+              className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-colors cursor-pointer ${reason === r.id ? "border-urgent bg-urgent-light/20 shadow-sm" : "border-line-2 hover:border-line"}`}
             >
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 ${reason === r.id ? "border-urgent" : "border-line-2"}`}

@@ -12,7 +12,7 @@ export const StatusUpdateModal = ({
 }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+      <Card className="w-full max-w-sm overflow-hidden   duration-200">
         <div className="p-4 border-b border-line-2 flex justify-between items-center bg-bg">
           <h3 className="font-semibold text-sm text-ink">Update Status</h3>
           <button
@@ -42,19 +42,19 @@ export const StatusUpdateModal = ({
             <div className="grid grid-cols-2 gap-2">
               {item.plate ? (
                 <>
-                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-all">
+                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-colors">
                     Active Duty
                   </button>
-                  <button className="py-3 rounded-xl border-2 border-transparent font-medium text-xs bg-urgent-light/40 text-urgent hover:bg-urgent-light transition-all flex flex-col items-center justify-center gap-1">
+                  <button className="py-3 rounded-xl border-2 border-transparent font-medium text-xs bg-urgent-light/40 text-urgent hover:bg-urgent-light transition-colors flex flex-col items-center justify-center gap-1">
                     <Wrench size={14} /> Maintenance
                   </button>
                 </>
               ) : (
                 <>
-                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-all">
+                  <button className="py-3 rounded-xl border-2 border-line hover:border-primary font-medium text-xs bg-bg text-ink-4 hover:text-primary transition-colors">
                     Assign Shift
                   </button>
-                  <button className="py-3 rounded-xl border-2 border-line font-medium text-xs bg-white text-ink-4 hover:border-ink-4 hover:text-ink transition-all flex flex-col items-center justify-center gap-1">
+                  <button className="py-3 rounded-xl border-2 border-line font-medium text-xs bg-white text-ink-4 hover:border-ink-4 hover:text-ink transition-colors flex flex-col items-center justify-center gap-1">
                     <Coffee size={14} /> Weekend / Off
                   </button>
                 </>

@@ -15,7 +15,7 @@ export const TripMap: React.FC<TripMapProps> = ({
   setSelectedTripId,
 }) => {
   return (
-    <div className="relative bg-gradient-to-br from-primary-light to-accent-light rounded-xl border border-line-2 overflow-hidden min-h-[260px]">
+    <div className="relative bg-bg rounded-xl border border-line-2 overflow-hidden min-h-[260px]">
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 800 500"
@@ -133,7 +133,7 @@ export const TripMap: React.FC<TripMapProps> = ({
             return (
               <div
                 key={driver?.id || index}
-                className={`absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 ${statusColor(status)} rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-medium text-white pointer-events-auto cursor-pointer group transition-all duration-300 ${isSelected ? "scale-125 ring-4 ring-white z-10" : ""}`}
+                className={`absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 ${statusColor(status)} rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-medium text-white pointer-events-auto cursor-pointer group transition-colors duration-300 ${isSelected ? "scale-125 ring-4 ring-white z-10" : ""}`}
                 style={{ left, top }}
                 onClick={() => {
                   const t = (trips || []).find(
@@ -145,10 +145,7 @@ export const TripMap: React.FC<TripMapProps> = ({
                 }}
               >
                 {driver?.initials || "?"}
-                {status === "in_trip" && (
-                  <div className="absolute inset-0 rounded-full pulse-dot" />
-                )}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-ink text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-xl">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-ink text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md">
                   {driver?.name || "Unknown"} ·{" "}
                   {status === "in_trip" ? "In Trip" : status === "break" ? "Break" : "Available"}
                 </div>

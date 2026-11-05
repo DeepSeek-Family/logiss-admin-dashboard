@@ -60,7 +60,7 @@ export const ResetPasswordForm = ({ onSuccess, onBack }: ResetPasswordFormProps)
   };
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary-light text-primary">
@@ -95,7 +95,7 @@ export const ResetPasswordForm = ({ onSuccess, onBack }: ResetPasswordFormProps)
               value={newPassword}
               placeholder="Enter new password"
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
             />
           </div>
         </div>
@@ -118,7 +118,7 @@ export const ResetPasswordForm = ({ onSuccess, onBack }: ResetPasswordFormProps)
               value={confirmPassword}
               placeholder="Confirm new password"
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
             />
           </div>
         </div>

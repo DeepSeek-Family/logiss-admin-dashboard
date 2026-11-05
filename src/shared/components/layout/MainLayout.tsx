@@ -27,6 +27,8 @@ import {
   Activity,
   Send,
   Loader2,
+  Menu,
+  X,
 } from "lucide-react";
 import { Avatar, Badge, Button } from "@/shared/components/ui";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -36,6 +38,16 @@ import { ROUTES } from "@/constants/routes";
 import { can } from "@/features/userAccess/permissions";
 import toast from "react-hot-toast";
 import { getDefaultRoute } from "@/routes/appRoutes";
+import { useGetAuthUserByIdQuery } from "@/redux/api/userApi";
+import { resolveMediaUrl } from "@/utils/imageUrl";
+import {
+  getUserDisplayId,
+  getUserFullName,
+  getUserInitials,
+  getUserProfileImage,
+  getUserRoleLabel,
+  type AuthenticatedUserProfile,
+} from "@/shared/utils/userProfileDisplay";
 // import { useGetAllBookingsQuery } from '@/redux/api/bookingApi';
 // import { useGetDriverApplicationsQuery, useGetDriversQuery } from '@/redux/api/driversApi';
 
@@ -58,22 +70,22 @@ const NavItem: React.FC<NavItemProps> = ({
 }) => (
   <Link
     to={to}
-    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group relative ${
+    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors duration-200 group relative ${
       active
-        ? "bg-primary text-white shadow-sm font-semibold"
+        ? "bg-primary-tint text-primary font-semibold"
         : "text-ink-2 hover:bg-bg hover:text-ink font-medium"
     }`}
   >
     <div className="flex items-center gap-3">
       <Icon
         size={20}
-        className={active ? "text-white" : "text-ink-3 group-hover:text-primary transition-colors"}
+        className={active ? "text-primary" : "text-ink-3 group-hover:text-primary transition-colors"}
       />
       <span className={`text-sm ${active ? "font-semibold" : "font-medium"}`}>{label}</span>
     </div>
-    {badge && <Badge variant={active ? "white" : (badgeVariant as any)}>{badge}</Badge>}
+    {badge && <Badge variant={active ? "primary-light" : (badgeVariant as any)}>{badge}</Badge>}
     {active && (
-      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full shadow-sm"></div>
+      <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-primary rounded-full"></div>
     )}
   </Link>
 );
@@ -157,6 +169,12 @@ const NAV_CONFIG: NavConfigGroup[] = [
       },
       { id: ROUTES.cms, label: "CMS & Content", icon: FileText, roles: ["admin", "dispatcher"] },
       { id: ROUTES.push, label: "Push Notifications", icon: Send, roles: ["admin", "dispatcher"] },
+      {
+        id: ROUTES.systemLogs,
+        label: "System Logs",
+        icon: Activity,
+        roles: ["admin", "dispatcher"],
+      },
     ],
   },
 ];
@@ -172,9 +190,13 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const page = location.pathname;
 
   const authToken = useSelector((state: any) => state.auth?.token as string | null | undefined);
+  const hasAuthToken =
+    Boolean(authToken) ||
+    (typeof localStorage !== "undefined" &&
+      Boolean(localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)));
 
-  const currentUser =
-    useSelector((state: any) => state.auth?.user) ||
+  const storedUser =
+    (useSelector((state: any) => state.auth?.user) as AuthenticatedUserProfile | null) ||
     (() => {
       try {
         const u = typeof localStorage !== "undefined" ? localStorage.getItem("logiss-user") : null;
@@ -184,19 +206,33 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       }
     })();
 
+  const storedUserId = String(storedUser?._id || storedUser?.id || storedUser?.userId || "");
+  const { data: authenticatedUserResponse } = useGetAuthUserByIdQuery(storedUserId, {
+    skip: !hasAuthToken || !storedUserId,
+    refetchOnMountOrArgChange: true,
+  });
+  const currentUser = React.useMemo<AuthenticatedUserProfile | null>(() => {
+    if (!storedUser && !authenticatedUserResponse?.data) return null;
+    return {
+      ...(storedUser || {}),
+      ...(authenticatedUserResponse?.data || {}),
+    };
+  }, [authenticatedUserResponse?.data, storedUser]);
+  const userFullName = getUserFullName(currentUser);
+  const userInitials = getUserInitials(currentUser);
+  const userDisplayId = getUserDisplayId(currentUser);
+  const userRoleLabel = getUserRoleLabel(currentUser, role);
+  const userProfileImage = resolveMediaUrl(getUserProfileImage(currentUser));
+
   const accessScope: string[] = currentUser?.accessScope || currentUser?.permissions || [];
 
   const [profileOpen, setProfileOpen] = React.useState(false);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
   /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
   const routeOutletKey = location.pathname;
-  const hasAuthToken =
-    Boolean(authToken) ||
-    (typeof localStorage !== "undefined" &&
-      Boolean(localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY)));
-
   const { data: unreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
     skip: !hasAuthToken,
     refetchOnMountOrArgChange: true,
@@ -205,6 +241,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   React.useEffect(() => {
     mainScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     setProfileOpen(false);
+    setSidebarOpen(false);
   }, [location.pathname]);
   // --- Sidebar Badges & Driver Queries (Commented out to prevent unnecessary API calls across all pages. Uncomment when needed.) ---
   /*
@@ -265,6 +302,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       if (!item.roles.includes(role) && !(role === "admin" && item.roles.includes("admin"))) {
         if (role !== "dispatcher" || !item.roles.includes("dispatcher")) return false;
       }
+      if (item.id === ROUTES.systemLogs) return role === "admin" || role === "dispatcher";
       const pathKey = item.id.startsWith("/") ? item.id : `/${item.id}`;
       return can(role, pathKey, accessScope?.length ? accessScope : undefined);
     },
@@ -282,6 +320,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
     const path = pathForAccessCheck(page);
     if (path === ROUTES.profile || path === ROUTES.settings || path === ROUTES.notifications)
       return;
+    if (path === ROUTES.systemLogs && (role === "admin" || role === "dispatcher")) return;
     if (can(role, path, accessScope?.length ? accessScope : undefined)) return;
 
     toast.error("You do not have permission to view this page.", { id: "page-access-denied" });
@@ -296,12 +335,23 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   return (
     <div className="flex h-screen bg-bg overflow-hidden font-sans text-ink">
       {/* Sidebar */}
-      <aside className="w-[260px] bg-white border-r border-line fixed h-full flex flex-col z-20 shadow-[4px_0_24px_-10px_rgba(0,0,0,0.05)]">
-        <div className="p-6 flex items-center justify-center mb-2">
-          <img src="/logo.png" alt="Logiss Rides" className="w-48 h-auto max-h-24 object-contain" />
+      {sidebarOpen ? (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-20 bg-ink/30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+      <aside className={`w-[248px] bg-white border-r border-line-2 fixed inset-y-0 left-0 flex flex-col z-30 transition-transform duration-150 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="h-16 px-5 flex items-center justify-between border-b border-line-2">
+          <img src="/logo.png" alt="Logiss Rides" className="w-36 h-10 object-contain object-left" />
+          <button type="button" aria-label="Close navigation" onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg text-ink-4 hover:bg-bg md:hidden">
+            <X size={18} />
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 py-2 overflow-y-auto scrollbar-hide space-y-6">
+        <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-hide space-y-5">
           <div className="space-y-1.5">
             {NAV_CONFIG.flatMap((group) => group.items)
               .filter(isNavItemVisible)
@@ -325,9 +375,11 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   ? page === "/trips" && location.search.includes("tab=schedule")
                   : item.id === ROUTES.trips
                     ? page === ROUTES.trips && !location.search.includes("tab=schedule")
-                    : item.id === ROUTES.transactions
-                      ? page === "/finance" || page === "/transactions"
-                      : page === item.id || (item.id !== "/" && page.startsWith(item.id));
+                    : item.id === ROUTES.dashboard
+                      ? page === ROUTES.dashboard
+                      : item.id === ROUTES.transactions
+                        ? page === "/finance" || page === "/transactions"
+                        : page === item.id || (item.id !== "/" && page.startsWith(item.id));
 
                 return (
                   <NavItem
@@ -362,7 +414,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
         <div className="p-3 border-t border-line">
           <div
             onClick={onLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-urgent hover:bg-urgent-light/60 group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-150 text-urgent hover:bg-urgent-light/60 group"
           >
             <LogOut size={20} className="text-urgent" />
             <span className="text-base font-normal">Sign Out</span>
@@ -373,10 +425,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       {/* Main Content Area */}
       <main
         ref={mainScrollRef}
-        className="flex-1 ml-[260px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg/50"
+        className="flex-1 ml-0 md:ml-[248px] flex flex-col min-w-0 h-screen overflow-y-auto bg-bg"
       >
         {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-line flex items-center justify-end px-8 sticky top-0 z-10 shrink-0">
+        <header className="h-16 bg-white border-b border-line-2 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shrink-0">
+          <button type="button" aria-label="Open navigation" onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg text-ink-3 hover:bg-bg md:hidden">
+            <Menu size={20} />
+          </button>
+          <div className="hidden md:block" />
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(ROUTES.notifications)}
@@ -396,27 +452,27 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                   e.stopPropagation();
                   setProfileOpen(!profileOpen);
                 }}
-                className={`w-9 h-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 hover:shadow-sm ${profileOpen || page === ROUTES.profile ? "border-primary" : "border-line hover:border-primary"}`}
+                className={`w-9 h-9 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 ${profileOpen || page === ROUTES.profile ? "border-primary" : "border-line hover:border-primary"}`}
                 title="Account"
               >
                 <Avatar
-                  initials={role === "admin" ? "MH" : "SR"}
+                  initials={userInitials}
+                  src={userProfileImage}
                   size="sm"
                   className="w-full h-full"
                 />
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-line overflow-hidden animate-in slide-in-from-top-2 duration-200 z-50">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-line overflow-hidden z-50">
                   <div className="p-5 border-b border-line bg-bg/30">
                     <div className="flex items-center gap-3 mb-3">
-                      <Avatar initials={role === "admin" ? "MH" : "SR"} size="md" />
+                      <Avatar initials={userInitials} src={userProfileImage} size="md" />
                       <div>
-                        <p className="text-sm font-medium text-ink leading-none">
-                          {role === "admin" ? "Marcus A. Holloway" : "Sandra K. Reynolds"}
-                        </p>
+                        <p className="text-sm font-medium text-ink leading-none">{userFullName}</p>
                         <p className="text-xs text-ink-4 mt-1">
-                          ID: #{role === "admin" ? "LOGISS-882" : "LOGISS-941"}
+                          ID:{" "}
+                          {userDisplayId === "Not available" ? userDisplayId : `#${userDisplayId}`}
                         </p>
                       </div>
                     </div>
@@ -424,7 +480,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                       variant="primary-light"
                       className="w-full justify-center py-1 text-xs uppercase tracking-wide"
                     >
-                      {role === "admin" ? "Administrator" : "Dispatch Officer"}
+                      {userRoleLabel}
                     </Badge>
                   </div>
 
@@ -434,14 +490,14 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                         navigate(ROUTES.profile);
                         setProfileOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-ink hover:bg-bg transition-all group"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-ink hover:bg-bg transition-colors group"
                     >
                       <User size={15} className="text-ink-3 group-hover:text-primary" />
                       <span>Account Info</span>
                     </button>
                     <button
                       onClick={onLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium text-urgent hover:bg-urgent-light transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-urgent hover:bg-urgent-light transition-colors"
                     >
                       <LogOut size={15} /> Sign Out
                     </button>
@@ -453,8 +509,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
         </header>
 
         {/* Content Wrapper */}
-        <div className="p-8 flex-1">
-          <div className="animate-fade-in" key={routeOutletKey}>
+        <div className="p-4 sm:p-6 lg:p-8 flex-1">
+          <div key={routeOutletKey}>
             <ErrorBoundary key={routeOutletKey}>
               <Suspense fallback={<RouteLoadingFallback />}>
                 <Outlet />

@@ -57,12 +57,14 @@ export const Avatar: React.FC<AvatarProps> = ({
         <img
           src={imageSrc}
           alt={initials}
-          className={`${sizes[size]} ${roundedClass} object-cover shadow-sm ring-1 ring-black/5`}
+          loading="lazy"
+          decoding="async"
+          className={`${sizes[size]} ${roundedClass} object-cover ring-1 ring-black/10`}
           onError={() => setImgFailed(true)}
         />
       ) : (
         <div
-          className={`${sizes[size]} ${roundedClass} bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-medium shadow-sm`}
+          className={`${sizes[size]} ${roundedClass} bg-primary flex items-center justify-center text-white font-medium`}
         >
           {initials}
         </div>

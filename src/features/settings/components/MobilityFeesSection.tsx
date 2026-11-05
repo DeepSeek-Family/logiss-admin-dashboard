@@ -12,7 +12,7 @@ import {
 } from "@/redux/api/mobilityApi";
 import toast from "react-hot-toast";
 
-const actionBtn = "h-10 rounded-xl px-4 text-sm";
+const actionBtn = "h-9 rounded-lg px-3 text-sm";
 
 export type MobilityModalItem = {
   id: string;
@@ -88,13 +88,11 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
 
   return (
     <>
-      <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
-        <header className="flex items-center justify-between gap-4 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
-              2
-            </span>
-            <h2 className="text-sm font-semibold text-primary">Mobility</h2>
+      <section className="overflow-hidden rounded-xl border border-line-2 bg-white">
+        <header className="flex items-center justify-between gap-4 border-b border-line-2 px-5 py-4">
+          <div>
+            <h3 className="text-sm font-semibold text-ink">Mobility surcharges</h3>
+            <p className="mt-0.5 text-xs text-ink-4">Additional fees based on rider mobility needs.</p>
           </div>
           {canEdit && (
             <Button
@@ -137,7 +135,7 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
           )}
 
           {!isLoading && !isError && (
-            <div className="rounded-xl border border-line-2 divide-y divide-line-2">
+            <div className="divide-y divide-line-2 overflow-hidden rounded-lg border border-line-2">
               {items.length === 0 ? (
                 <div className="py-10 text-center text-sm text-ink-4">No mobility options yet</div>
               ) : (

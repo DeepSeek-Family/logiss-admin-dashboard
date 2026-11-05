@@ -15,8 +15,8 @@ export const AddVehicleModal = ({
   const set = (k: keyof FleetForm, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="fixed inset-0 bg-ink/60 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col border border-line-2 ring-1 ring-ink/5 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-ink/60 backdrop-blur-md z-50 flex items-center justify-center p-6   duration-300">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-xl max-h-[90vh] flex flex-col border border-line-2 ring-1 ring-ink/5   duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line-2 bg-bg/20">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white shadow-md shadow-primary/20">
@@ -29,7 +29,7 @@ export const AddVehicleModal = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-urgent-light hover:text-urgent text-ink-4 transition-all flex items-center justify-center border border-transparent hover:border-urgent/10"
+            className="w-8 h-8 rounded-lg hover:bg-urgent-light hover:text-urgent text-ink-4 transition-colors flex items-center justify-center border border-transparent hover:border-urgent/10"
           >
             <X size={18} />
           </button>
@@ -39,7 +39,7 @@ export const AddVehicleModal = ({
           {["Vehicle Specifications", "Compliance & Safety"].map((s, i) => (
             <div key={s} className="flex-1">
               <div
-                className={`h-1 rounded-full transition-all duration-500 ${step > i ? "bg-primary" : "bg-line-2"}`}
+                className={`h-1 rounded-full transition-colors duration-500 ${step > i ? "bg-primary" : "bg-line-2"}`}
               />
               <p
                 className={`text-xs font-medium mt-1.5 ${step === i + 1 ? "text-primary" : "text-ink-4"}`}
@@ -62,7 +62,7 @@ export const AddVehicleModal = ({
                 <div key={field.key}>
                   <label className="block text-xs text-ink-4 mb-2.5 ml-1">{field.label}</label>
                   <input
-                    className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all placeholder:text-ink-4/50"
+                    className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-colors placeholder:text-ink-4/50"
                     type="text"
                     placeholder={field.ph}
                     value={form[field.key as keyof FleetForm]}
@@ -75,7 +75,7 @@ export const AddVehicleModal = ({
                   VIN Number (17 Characters)
                 </label>
                 <input
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all placeholder:text-ink-4/50 uppercase"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-colors placeholder:text-ink-4/50 uppercase"
                   placeholder="1FD..."
                   value={form.vin}
                   onChange={(e) => set("vin", e.target.value)}
@@ -84,7 +84,7 @@ export const AddVehicleModal = ({
               <div>
                 <label className="block text-xs text-ink-4 mb-2.5 ml-1">Configuration Type</label>
                 <select
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all cursor-pointer"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-colors cursor-pointer"
                   value={form.type}
                   onChange={(e) => set("type", e.target.value)}
                 >
@@ -96,7 +96,7 @@ export const AddVehicleModal = ({
               <div>
                 <label className="block text-xs text-ink-4 mb-2.5 ml-1">Max Passengers</label>
                 <input
-                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-all"
+                  className="w-full h-12 px-4 rounded-xl bg-bg border-2 border-transparent focus:bg-white focus:border-primary/20 text-sm text-ink outline-none transition-colors"
                   type="number"
                   placeholder="4"
                   value={form.seats}
@@ -106,7 +106,7 @@ export const AddVehicleModal = ({
             </div>
           )}
           {step === 2 && (
-            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6   duration-500">
               <div className="bg-bg/40 rounded-2xl p-6 border-2 border-line-2 space-y-5">
                 <p className="text-xs font-medium text-ink flex items-center gap-2 mb-2">
                   <Wrench size={14} className="text-primary" /> Maintenance Schedule
@@ -137,7 +137,7 @@ export const AddVehicleModal = ({
                   </div>
                 </div>
               </div>
-              <div className="bg-bg/40 rounded-3xl p-6 border-2 border-line-2 space-y-5">
+              <div className="bg-bg/40 rounded-xl p-6 border-2 border-line-2 space-y-5">
                 <p className="text-xs font-medium text-ink flex items-center gap-2 mb-2">
                   <ShieldCheck size={14} className="text-accent" /> Insurance Records
                 </p>

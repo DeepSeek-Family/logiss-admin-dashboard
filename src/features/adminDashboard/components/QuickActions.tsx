@@ -48,7 +48,7 @@ export const QuickActions = ({ onNavigate }: QuickActionsProps) => {
           <button
             key={path}
             onClick={() => onNavigate(path)}
-            className="flex flex-col items-center gap-2.5 p-4 bg-bg border border-line-2 rounded-xl hover:border-primary/30 hover:bg-white transition-all text-center group hover:shadow-sm"
+            className="flex flex-col items-center gap-2.5 p-4 bg-bg border border-line-2 rounded-xl hover:border-primary/30 hover:bg-white transition-colors text-center group hover:shadow-sm"
           >
             <div
               className={`w-9 h-9 rounded-lg flex items-center justify-center ${bgCls} group-hover:scale-110 transition-transform`}

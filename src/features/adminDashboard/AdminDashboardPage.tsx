@@ -13,7 +13,7 @@ const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="space-y-8   duration-500 pb-12">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Executive Dashboard</h1>
@@ -22,7 +22,7 @@ const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
           </p>
         </div>
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-light/30 border border-accent/20 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-accent" />
           <span className="text-xs font-medium text-accent">Live</span>
         </div>
       </div>

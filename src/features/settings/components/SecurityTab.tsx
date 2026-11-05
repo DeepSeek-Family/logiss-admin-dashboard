@@ -44,7 +44,7 @@ export const SecurityTab = () => {
   };
 
   return (
-    <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-200">
+    <div className="space-y-4   duration-200">
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 bg-accent-light rounded-xl flex items-center justify-center text-accent shrink-0">

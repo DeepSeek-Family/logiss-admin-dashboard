@@ -97,7 +97,7 @@ const FleetDetails = (_props: { role?: string | null }) => {
   if (isError || !vehicle) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] text-center p-8">
-        <div className="w-20 h-20 bg-urgent-light text-urgent rounded-3xl flex items-center justify-center mb-6">
+        <div className="w-20 h-20 bg-urgent-light text-urgent rounded-xl flex items-center justify-center mb-6">
           <AlertTriangle size={40} />
         </div>
         <h2 className="text-2xl font-semibold text-ink mb-2">
@@ -131,12 +131,12 @@ const FleetDetails = (_props: { role?: string | null }) => {
       : null;
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-20   duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/fleet")}
-          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-line-2 text-ink-3 hover:text-primary hover:border-primary/20 transition-all shadow-sm"
+          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-line-2 text-ink-3 hover:text-primary hover:border-primary/20 transition-colors shadow-sm"
         >
           <ChevronLeft size={24} />
         </button>

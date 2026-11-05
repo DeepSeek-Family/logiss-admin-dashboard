@@ -26,11 +26,11 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <Card className="p-4 relative border-line">
+    <Card className="p-4 relative">
       <div className="flex justify-between items-start mb-2">
         <span className="type-label text-ink-3">{label}</span>
         {Icon && (
-          <div className={`p-1.5 rounded-lg ${accents[accent] || accents.primary}`}>
+          <div className={`p-1.5 rounded-md ${accents[accent] || accents.primary}`}>
             <Icon size={16} />
           </div>
         )}

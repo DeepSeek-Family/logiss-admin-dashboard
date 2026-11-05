@@ -15,43 +15,28 @@ import {
 } from "lucide-react";
 import { Avatar, Badge, TripStatusBadge } from "@/shared/components/ui";
 import { formatTime } from "@/utils/helpers";
+import type { TripHistoryDriver, TripHistoryRecord, TripUpdateHandler } from "../types";
+import {
+  addMinutes,
+  estimateTripDurationMinutes,
+  formatDurationMinutes,
+  formatLocalDateKey,
+  isSameCalendarDay,
+} from "../utils/dateTime";
 
 interface DriverDayPanelProps {
-  driver: any;
-  trips: any[];
+  driver: TripHistoryDriver;
+  trips: TripHistoryRecord[];
   date: Date;
   onClose: () => void;
   onTripClick?: (id: string) => void;
   /** Full driver roster for reassignment. */
-  drivers?: any[];
+  drivers?: TripHistoryDriver[];
   /** Persist reassign/unassign (id, patch). */
-  updateTrip?: (id: string, patch: Record<string, any>) => void;
+  updateTrip?: TripUpdateHandler;
 }
 
 const DEPOT_BUFFER_MIN = 15; // pull-out / pull-in depot travel allowance
-
-const estDurationMin = (trip: any): number => {
-  if (trip?.duration) {
-    const m = parseInt(String(trip.duration), 10);
-    if (!isNaN(m) && m > 0) return Math.min(m, 180);
-  }
-  if (trip?.miles) return Math.min(150, Math.round(Number(trip.miles) * 3) + 12);
-  return 45;
-};
-
-const fmtDur = (mins: number) => {
-  const m = Math.round(mins);
-  if (m <= 0) return "0m";
-  const h = Math.floor(m / 60);
-  const r = m % 60;
-  return h ? `${h}h${r ? ` ${r}m` : ""}` : `${r}m`;
-};
-
-const addMin = (d: Date, mins: number) => new Date(d.getTime() + mins * 60000);
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
 
 export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
   driver,
@@ -66,10 +51,10 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
     return (trips || [])
       .filter((t: any) => {
         if (String(t?.driverId) !== String(driver?.id) || t.status === "cancelled") return false;
-        const targetYmd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const targetDateKey = formatLocalDateKey(date);
         return t?.serviceDate
-          ? t.serviceDate === targetYmd
-          : t?.scheduledTime && sameDay(new Date(t.scheduledTime), date);
+          ? t.serviceDate === targetDateKey
+          : t?.scheduledTime && isSameCalendarDay(new Date(t.scheduledTime), date);
       })
       .sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
   }, [trips, driver, date]);
@@ -82,16 +67,16 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
     const firstStart = new Date(dayTrips[0].scheduledTime);
     segs.push({
       kind: "pullout",
-      time: addMin(firstStart, -DEPOT_BUFFER_MIN),
+      time: addMinutes(firstStart, -DEPOT_BUFFER_MIN),
       to: dayTrips[0].pickup,
     });
 
     dayTrips.forEach((t: any, i: number) => {
       const start = new Date(t.scheduledTime);
-      const end = addMin(start, estDurationMin(t));
+      const end = addMinutes(start, estimateTripDurationMinutes(t));
       if (i > 0) {
         const prev = dayTrips[i - 1];
-        const prevEnd = addMin(new Date(prev.scheduledTime), estDurationMin(prev));
+        const prevEnd = addMinutes(new Date(prev.scheduledTime), estimateTripDurationMinutes(prev));
         const gapMin = (start.getTime() - prevEnd.getTime()) / 60000;
         if (gapMin < -1) segs.push({ kind: "conflict", mins: Math.abs(gapMin) });
         else if (gapMin > 5) segs.push({ kind: "gap", mins: gapMin });
@@ -100,7 +85,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
     });
 
     const last = dayTrips[dayTrips.length - 1];
-    const lastEnd = addMin(new Date(last.scheduledTime), estDurationMin(last));
+    const lastEnd = addMinutes(new Date(last.scheduledTime), estimateTripDurationMinutes(last));
     segs.push({ kind: "pullin", time: lastEnd, from: last.dropoff });
     return segs;
   }, [dayTrips]);
@@ -108,9 +93,9 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
   const totalMiles = dayTrips.reduce((s: number, t: any) => s + (Number(t.miles) || 0), 0);
   const firstStart = dayTrips[0] ? new Date(dayTrips[0].scheduledTime) : null;
   const lastEnd = dayTrips.length
-    ? addMin(
+    ? addMinutes(
         new Date(dayTrips[dayTrips.length - 1].scheduledTime),
-        estDurationMin(dayTrips[dayTrips.length - 1]),
+        estimateTripDurationMinutes(dayTrips[dayTrips.length - 1]),
       )
     : null;
   const dutyWindow =
@@ -121,10 +106,10 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex justify-end">
       <div
-        className="absolute inset-0 duration-200 bg-ink/50 animate-in fade-in"
+        className="absolute inset-0 duration-200 bg-ink/50  "
         onClick={onClose}
       />
-      <div className="relative flex flex-col w-full h-full max-w-md duration-300 bg-white border-l shadow-2xl border-line-2 animate-in slide-in-from-right">
+      <div className="relative flex flex-col w-full h-full max-w-md duration-300 bg-white border-l shadow-lg border-line-2  ">
         {/* Header */}
         <div className="px-5 py-4 border-b border-line-2 bg-bg shrink-0">
           <div className="flex items-center justify-between mb-3">
@@ -226,7 +211,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
                   return (
                     <div key={`gap-${i}`} className="relative my-2 ml-1">
                       <div className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-4 bg-bg border border-line-2 rounded-full px-2.5 py-1">
-                        <Coffee size={10} /> Standby · {fmtDur(seg.mins)}
+                        <Coffee size={10} /> Standby · {formatDurationMinutes(seg.mins)}
                       </div>
                     </div>
                   );
@@ -235,7 +220,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
                   return (
                     <div key={`cf-${i}`} className="relative my-2 ml-1">
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-urgent bg-urgent-light/40 border border-urgent/20 rounded-full px-2.5 py-1">
-                        <AlertTriangle size={10} /> Overlap · {fmtDur(seg.mins)}
+                        <AlertTriangle size={10} /> Overlap · {formatDurationMinutes(seg.mins)}
                       </div>
                     </div>
                   );
@@ -253,7 +238,7 @@ export const DriverDayPanel: React.FC<DriverDayPanelProps> = ({
                     </div>
                     <button
                       onClick={() => onTripClick?.(t.id)}
-                      className="w-full p-3 text-left transition-all bg-white border rounded-xl border-line-2 hover:border-primary/40 hover:shadow-sm group"
+                      className="w-full p-3 text-left transition-colors bg-white border rounded-xl border-line-2 hover:border-primary/40 hover:shadow-sm group"
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold text-ink flex items-center gap-1.5">

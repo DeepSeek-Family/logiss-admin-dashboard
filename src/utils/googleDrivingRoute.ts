@@ -1,5 +1,14 @@
 export type LatLngPoint = { lat: number; lng: number };
 
+export type DrivingRouteDetails = {
+  path: LatLngPoint[];
+  distanceMeters: number | null;
+  durationSeconds: number | null;
+  staticDurationSeconds: number | null;
+  trafficAware: boolean;
+  source: "google" | "osrm" | "fallback";
+};
+
 type GoogleMapsNs = {
   maps: {
     importLibrary?: (name: string) => Promise<{
@@ -8,6 +17,9 @@ type GoogleMapsNs = {
           routes?: Array<{
             path?: unknown[];
             legs?: Array<{ path?: unknown[] }>;
+            distanceMeters?: number;
+            durationMillis?: number;
+            staticDurationMillis?: number;
             createPolylines?: (
               opts?: Record<string, unknown>,
             ) => Array<{ setMap: (map: unknown | null) => void }>;
@@ -20,7 +32,8 @@ type GoogleMapsNs = {
   };
 };
 
-const routePathCache = new Map<string, LatLngPoint[]>();
+const routeDetailsCache = new Map<string, DrivingRouteDetails>();
+const routeDetailsRequests = new Map<string, Promise<DrivingRouteDetails>>();
 let googleRoutesBlocked = false;
 
 function cacheKey(points: LatLngPoint[]): string {
@@ -69,12 +82,12 @@ function isRoutesPermissionDenied(err: unknown): boolean {
   );
 }
 
-async function computeRoutePathViaMapsJs(
+async function computeRouteViaMapsJs(
   google: GoogleMapsNs,
   origin: LatLngPoint,
   destination: LatLngPoint,
   intermediates: LatLngPoint[],
-): Promise<LatLngPoint[] | null> {
+): Promise<DrivingRouteDetails | null> {
   const importLibrary = google.maps.importLibrary;
   if (typeof importLibrary !== "function") return null;
 
@@ -86,7 +99,8 @@ async function computeRoutePathViaMapsJs(
     origin,
     destination,
     travelMode: "DRIVING",
-    fields: ["path", "legs"],
+    routingPreference: "TRAFFIC_AWARE",
+    fields: ["path", "legs", "distanceMeters", "durationMillis", "staticDurationMillis"],
   };
   if (intermediates.length) {
     request.intermediates = intermediates.map((location) => ({ location }));
@@ -97,25 +111,112 @@ async function computeRoutePathViaMapsJs(
   if (!route) return null;
 
   const fromPath = pointsFromUnknown(route.path);
-  if (fromPath.length > 1) return fromPath;
-
   const fromLegs = (route.legs || []).flatMap((leg) => pointsFromUnknown(leg.path));
-  return fromLegs.length > 1 ? fromLegs : null;
+  const path = fromPath.length > 1 ? fromPath : fromLegs;
+  if (path.length < 2) return null;
+
+  const durationMillis = Number(route.durationMillis);
+  const staticDurationMillis = Number(route.staticDurationMillis);
+  const distanceMeters = Number(route.distanceMeters);
+  return {
+    path,
+    distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
+    durationSeconds: Number.isFinite(durationMillis) ? durationMillis / 1000 : null,
+    staticDurationSeconds: Number.isFinite(staticDurationMillis)
+      ? staticDurationMillis / 1000
+      : null,
+    trafficAware: Number.isFinite(durationMillis) && Number.isFinite(staticDurationMillis),
+    source: "google",
+  };
 }
 
-async function computeRoutePathViaOsrm(points: LatLngPoint[]): Promise<LatLngPoint[] | null> {
+async function computeRouteViaOsrm(points: LatLngPoint[]): Promise<DrivingRouteDetails | null> {
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
   const response = await fetch(
     `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
   );
   if (!response.ok) return null;
   const data = await response.json();
-  const line = data?.routes?.[0]?.geometry?.coordinates;
+  const route = data?.routes?.[0];
+  const line = route?.geometry?.coordinates;
   if (!Array.isArray(line) || line.length < 2) return null;
-  return line.map((pair: unknown) => {
+  const path = line.map((pair: unknown) => {
     const [lng, lat] = pair as [number, number];
     return { lat, lng };
   });
+  return {
+    path,
+    distanceMeters: Number.isFinite(Number(route.distance)) ? Number(route.distance) : null,
+    durationSeconds: Number.isFinite(Number(route.duration)) ? Number(route.duration) : null,
+    staticDurationSeconds: null,
+    trafficAware: false,
+    source: "osrm",
+  };
+}
+
+async function computeDrivingRouteDetails(
+  google: GoogleMapsNs,
+  waypointPoints: LatLngPoint[],
+): Promise<DrivingRouteDetails> {
+  const origin = waypointPoints[0];
+  const destination = waypointPoints[waypointPoints.length - 1];
+  const intermediates = waypointPoints.slice(1, -1);
+
+  if (!googleRoutesBlocked) {
+    try {
+      const mapsRoute = await computeRouteViaMapsJs(google, origin, destination, intermediates);
+      if (mapsRoute) return mapsRoute;
+    } catch (err) {
+      if (isRoutesPermissionDenied(err)) googleRoutesBlocked = true;
+    }
+  }
+
+  try {
+    const osrmRoute = await computeRouteViaOsrm(waypointPoints);
+    if (osrmRoute) return osrmRoute;
+  } catch (err) {
+    console.warn("[Maps] Road-following fallback failed", err);
+  }
+
+  return {
+    path: waypointPoints,
+    distanceMeters: null,
+    durationSeconds: null,
+    staticDurationSeconds: null,
+    trafficAware: false,
+    source: "fallback",
+  };
+}
+
+export async function getDrivingRouteDetails(
+  google: GoogleMapsNs,
+  waypointPoints: LatLngPoint[],
+): Promise<DrivingRouteDetails> {
+  if (waypointPoints.length < 2) {
+    return {
+      path: waypointPoints,
+      distanceMeters: null,
+      durationSeconds: null,
+      staticDurationSeconds: null,
+      trafficAware: false,
+      source: "fallback",
+    };
+  }
+
+  const key = cacheKey(waypointPoints);
+  const cached = routeDetailsCache.get(key);
+  if (cached) return cached;
+
+  const pending = routeDetailsRequests.get(key);
+  if (pending) return pending;
+
+  const request = computeDrivingRouteDetails(google, waypointPoints).then((details) => {
+    routeDetailsCache.set(key, details);
+    routeDetailsRequests.delete(key);
+    return details;
+  });
+  routeDetailsRequests.set(key, request);
+  return request;
 }
 
 /**
@@ -127,41 +228,7 @@ export async function getDrivingRoutePath(
   google: GoogleMapsNs,
   waypointPoints: LatLngPoint[],
 ): Promise<LatLngPoint[]> {
-  if (waypointPoints.length < 2) return waypointPoints;
-
-  const key = cacheKey(waypointPoints);
-  const cached = routePathCache.get(key);
-  if (cached) return cached;
-
-  const origin = waypointPoints[0];
-  const destination = waypointPoints[waypointPoints.length - 1];
-  const intermediates = waypointPoints.slice(1, -1);
-
-  if (!googleRoutesBlocked) {
-    try {
-      const mapsPath = await computeRoutePathViaMapsJs(google, origin, destination, intermediates);
-      if (mapsPath && mapsPath.length > 1) {
-        routePathCache.set(key, mapsPath);
-        return mapsPath;
-      }
-    } catch (err) {
-      if (isRoutesPermissionDenied(err)) {
-        googleRoutesBlocked = true;
-      }
-    }
-  }
-
-  try {
-    const osrmPath = await computeRoutePathViaOsrm(waypointPoints);
-    if (osrmPath && osrmPath.length > 1) {
-      routePathCache.set(key, osrmPath);
-      return osrmPath;
-    }
-  } catch (err) {
-    console.warn("[Maps] Road-following fallback failed", err);
-  }
-
-  return waypointPoints;
+  return (await getDrivingRouteDetails(google, waypointPoints)).path;
 }
 
 export function createDirectionalRoutePolyline(

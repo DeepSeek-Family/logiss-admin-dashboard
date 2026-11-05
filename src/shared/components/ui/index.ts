@@ -15,3 +15,5 @@ export * from "./ConfirmationModal";
 export * from "./GoogleAddressInput";
 export * from "./ExportFormatMenu";
 export * from "./EntitySearchSelect";
+export * from "./InlineEdit";
+export * from "./GoogleMapsRouteButton";

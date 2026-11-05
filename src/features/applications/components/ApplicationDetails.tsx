@@ -27,7 +27,7 @@ const Field = ({ label, value }: { label: string; value?: string | number | bool
 
   return (
     <div>
-      <p className="text-[10px] text-ink-4 mb-0.5">{label}</p>
+      <p className="text-xs text-ink-4 mb-0.5">{label}</p>
       <p className="text-xs font-semibold text-ink break-all">{display}</p>
     </div>
   );
@@ -62,7 +62,7 @@ export const ApplicationDetails = ({
           onClick={() => setViewUrl(null)}
         >
           <div
-            className="bg-white rounded-2xl border border-line-2 shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-2xl border border-line-2 shadow-lg w-full max-w-lg mx-4 overflow-hidden   duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-3 border-b border-line-2">
@@ -89,14 +89,16 @@ export const ApplicationDetails = ({
         </div>
       )}
 
-      <div className="flex flex-col h-full bg-white rounded-2xl border border-line-2 shadow-sm overflow-hidden">
+      <div className="flex h-full min-h-[560px] flex-col overflow-hidden rounded-xl border border-line-2 bg-white">
         <div className="px-6 pt-5 pb-4 border-b border-line-2">
-          <p className="text-xs text-ink-4 mb-3 font-mono">{selectedApp.id}</p>
+          <p className="mb-3 truncate font-mono text-xs text-ink-4">
+            Application #{selectedApp.id}
+          </p>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <Avatar initials={selectedApp.initials || "?"} src={selectedApp.image} size="lg" />
               <div>
-                <h2 className="text-xl font-bold text-ink">{selectedApp.name}</h2>
+                <h2 className="text-lg font-semibold text-ink">{selectedApp.name}</h2>
                 <div className="flex flex-wrap gap-3 text-xs text-ink-4 mt-1">
                   {selectedApp.county && (
                     <span className="flex items-center gap-1">
@@ -117,7 +119,7 @@ export const ApplicationDetails = ({
               </div>
             </div>
             <span
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${sc.color}`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${sc.color}`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
               {sc.label}
@@ -140,8 +142,10 @@ export const ApplicationDetails = ({
           )}
 
           <div className="px-6 py-5 border-b border-line-2">
-            <p className="text-sm font-bold text-ink mb-4">Applicant</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-3">
+              Applicant information
+            </p>
+            <div className="grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3">
               <Field label="First name" value={selectedApp.firstName} />
               <Field label="Last name" value={selectedApp.lastName} />
               <Field label="Date of birth" value={selectedApp.dateOfBirth} />
@@ -162,7 +166,9 @@ export const ApplicationDetails = ({
           </div>
 
           <div className="px-6 py-5 border-b border-line-2">
-            <p className="text-sm font-bold text-ink mb-4">License & experience</p>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-3">
+              License & experience
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Field label="Experience" value={selectedApp.driverExperience} />
               <Field label="License number" value={selectedApp.licenseNumber} />
@@ -173,7 +179,9 @@ export const ApplicationDetails = ({
 
           <div className="px-6 py-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold text-ink">License images</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                License images
+              </p>
               <span className="text-xs font-semibold text-ink-4">
                 {selectedApp.licenseImages.length} file
                 {selectedApp.licenseImages.length === 1 ? "" : "s"}

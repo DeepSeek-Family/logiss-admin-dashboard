@@ -173,7 +173,7 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
         <div className="min-w-0">
           <p className="text-xs text-ink-4 mb-0.5">Filed {filed}</p>
 
-          <h2 className="text-xl font-bold tracking-tight text-ink">{subjectName}</h2>
+          <h2 className="text-xl font-bold tracking-normal text-ink">{subjectName}</h2>
 
           <p className="mt-1 text-sm text-ink-3">
             {reportCategory(merged)} · Reported by {reporterName}

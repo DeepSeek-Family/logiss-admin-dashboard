@@ -36,7 +36,7 @@ export const DriverWorkHistoryTab: React.FC<DriverWorkHistoryTabProps> = ({ driv
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-4   duration-300">
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-line-2 bg-white p-4">
         <div>
           <label className="mb-1 block text-xs font-medium text-ink-4">From</label>
@@ -125,7 +125,7 @@ export const DriverWorkHistoryTab: React.FC<DriverWorkHistoryTabProps> = ({ driv
                     <tr key={log.id} className="hover:bg-bg/40">
                       <td className="px-4 py-3">
                         <p className="text-xs font-semibold text-ink">{log.dateLabel}</p>
-                        <p className="text-[10px] text-ink-4 tabular-nums">{log.date}</p>
+                        <p className="text-xs text-ink-4 tabular-nums">{log.date}</p>
                       </td>
                       <td className="px-4 py-3">
                         <Badge

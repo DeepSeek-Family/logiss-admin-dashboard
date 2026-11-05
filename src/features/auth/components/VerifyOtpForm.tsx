@@ -141,7 +141,7 @@ export const VerifyOtpForm = ({ email, onSuccess, onBack, onChangeEmail }: Verif
   };
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent-light text-accent">
@@ -184,7 +184,7 @@ export const VerifyOtpForm = ({ email, onSuccess, onBack, onChangeEmail }: Verif
                 onChange={(e) => handleChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 onPaste={idx === 0 ? handlePaste : undefined}
-                className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold font-mono bg-white border border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold font-mono bg-white border border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
               />
             ))}
           </div>

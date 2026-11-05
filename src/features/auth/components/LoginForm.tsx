@@ -38,7 +38,7 @@ export const LoginForm = ({
 }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div
@@ -67,7 +67,7 @@ export const LoginForm = ({
               value={email}
               placeholder="Enter email address"
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
             />
           </div>
         </div>
@@ -103,7 +103,7 @@ export const LoginForm = ({
               value={password}
               placeholder="Enter password"
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full bg-white border border-line rounded-xl py-3 pl-10 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none"
             />
           </div>
         </div>

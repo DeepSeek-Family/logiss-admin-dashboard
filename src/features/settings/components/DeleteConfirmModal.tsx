@@ -21,8 +21,8 @@ export const DeleteConfirmModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-line-2 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
+      <div className="bg-white rounded-2xl shadow-md w-full max-w-md overflow-hidden border border-line-2 p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-urgent-light flex items-center justify-center text-urgent shrink-0">
             <AlertTriangle size={20} />

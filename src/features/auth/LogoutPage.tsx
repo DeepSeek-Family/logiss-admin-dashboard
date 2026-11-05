@@ -5,8 +5,8 @@ import { Button, Card } from "@/shared/components/ui";
 const Logout = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-6 font-sans">
-      <Card className="w-full max-w-md p-10 text-center shadow-2xl border-line-2 animate-in zoom-in-95 duration-300">
-        <div className="w-20 h-20 bg-primary-light rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10">
+      <Card className="w-full max-w-md p-10 text-center shadow-lg border-line-2   duration-300">
+        <div className="w-20 h-20 bg-primary-light rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10">
           <LogOut size={40} className="text-primary" />
         </div>
 

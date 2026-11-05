@@ -138,9 +138,9 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
             setOpen((prev) => !prev);
             if (!open) setSearch("");
           }}
-          className={`w-full p-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all disabled:opacity-60 ${
+          className={`w-full p-3 border rounded-lg flex items-center justify-between gap-3 text-left transition-colors duration-150 disabled:opacity-60 ${
             open
-              ? "border-primary ring-2 ring-primary/20 bg-white shadow-sm"
+              ? "border-primary ring-2 ring-primary/15 bg-white"
               : selected
                 ? "border-primary/40 bg-primary/5 hover:border-primary"
                 : "border-line-2 bg-bg/50 hover:bg-white hover:border-line"
@@ -153,13 +153,13 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-semibold text-ink truncate">{selected.title}</p>
                   {selectedBadge ? (
-                    <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium shrink-0">
+                    <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded font-medium shrink-0">
                       {selectedBadge}
                     </span>
                   ) : null}
                 </div>
                 {selected.subtitle ? (
-                  <p className="text-[11px] text-ink-4 truncate">{selected.subtitle}</p>
+                  <p className="text-xs text-ink-4 truncate">{selected.subtitle}</p>
                 ) : null}
               </div>
             </div>
@@ -177,13 +177,13 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
         </button>
 
         {open && (
-          <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-line-2 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-line rounded-lg shadow-md overflow-hidden">
             <div className="p-2.5 border-b border-line-2 bg-bg/20">
               <div className="relative">
                 <input
                   autoFocus
                   type="text"
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-line-2 rounded-lg text-ink placeholder:text-ink-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-line-2 rounded-lg text-ink placeholder:text-ink-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors"
                   placeholder={searchPlaceholder}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -241,7 +241,7 @@ export const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
                             {item.title}
                           </p>
                           {item.subtitle ? (
-                            <p className="text-[11px] text-ink-4 truncate">{item.subtitle}</p>
+                            <p className="text-xs text-ink-4 truncate">{item.subtitle}</p>
                           ) : null}
                         </div>
                       </div>
