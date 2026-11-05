@@ -1,42 +1,54 @@
-import { useState, useRef } from 'react';
-import {
-  User, Mail, Phone, MapPin,
-  Camera, Loader2, CheckCircle2,
-} from 'lucide-react';
-import { Card, Badge, Button } from '@/shared/components/ui';
+import { useState, useRef } from "react";
+import { User, Mail, Phone, MapPin, Camera, Loader2, CheckCircle2 } from "lucide-react";
+import { Card, Badge, Button } from "@/shared/components/ui";
 
 const PROFILES = {
   admin: {
-    name: 'Marcus A. Holloway',
-    email: 'm.holloway@logiss.com',
-    phone: '(804) 555-0882',
-    region: 'Richmond, VA',
-    role: 'Administrator',
-    employeeId: 'LOGISS-882',
-    department: 'Operations & Fleet',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+    name: "Marcus A. Holloway",
+    email: "m.holloway@logiss.com",
+    phone: "(804) 555-0882",
+    region: "Richmond, VA",
+    role: "Administrator",
+    employeeId: "LOGISS-882",
+    department: "Operations & Fleet",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
   },
   dispatcher: {
-    name: 'Sandra K. Reynolds',
-    email: 's.reynolds@logiss.com',
-    phone: '(804) 555-0941',
-    region: 'Richmond, VA',
-    role: 'Dispatch Officer',
-    employeeId: 'LOGISS-941',
-    department: 'Dispatch Center',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop',
+    name: "Sandra K. Reynolds",
+    email: "s.reynolds@logiss.com",
+    phone: "(804) 555-0941",
+    region: "Richmond, VA",
+    role: "Dispatch Officer",
+    employeeId: "LOGISS-941",
+    department: "Dispatch Center",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
   },
 };
 
-const Field = ({ label, icon: Icon, value, readOnly }: { label: string; icon?: any; value: string; readOnly?: boolean }) => (
+const Field = ({
+  label,
+  icon: Icon,
+  value,
+  readOnly,
+}: {
+  label: string;
+  icon?: any;
+  value: string;
+  readOnly?: boolean;
+}) => (
   <div>
     <p className="text-xs font-semibold text-ink-4 mb-1.5">{label}</p>
     <div className="relative">
-      {Icon && <Icon size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />}
+      {Icon && (
+        <Icon
+          size={14}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none"
+        />
+      )}
       <input
         defaultValue={value}
         readOnly={readOnly}
-        className={`w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg ${Icon ? 'pl-10' : 'pl-4'} pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-all ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg ${Icon ? "pl-10" : "pl-4"} pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-all ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
       />
     </div>
   </div>
@@ -53,7 +65,11 @@ const Profile = ({ role }: { role?: string | null }) => {
 
   const handleSave = () => {
     setSaving(true);
-    setTimeout(() => { setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000); }, 900);
+    setTimeout(() => {
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }, 900);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,27 +82,37 @@ const Profile = ({ role }: { role?: string | null }) => {
 
   return (
     <div className="max-w-2xl mx-auto pb-16 animate-in fade-in duration-300">
-
       {/* Header */}
       <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="type-page-title">{p.name}</h1>
-            <Badge variant="primary-light" className="text-xs">{p.role}</Badge>
+            <Badge variant="primary-light" className="text-xs">
+              {p.role}
+            </Badge>
           </div>
-          <p className="text-sm text-ink-4 mt-0.5">{p.employeeId} · {p.department}</p>
+          <p className="text-sm text-ink-4 mt-0.5">
+            {p.employeeId} · {p.department}
+          </p>
         </div>
         <Button variant="primary" onClick={handleSave} disabled={saving} className="shrink-0">
-          {saving
-            ? <><Loader2 size={14} className="animate-spin inline mr-1.5" />Saving</>
-            : saved
-              ? <><CheckCircle2 size={14} className="inline mr-1.5" />Saved</>
-              : 'Save Changes'}
+          {saving ? (
+            <>
+              <Loader2 size={14} className="animate-spin inline mr-1.5" />
+              Saving
+            </>
+          ) : saved ? (
+            <>
+              <CheckCircle2 size={14} className="inline mr-1.5" />
+              Saved
+            </>
+          ) : (
+            "Save Changes"
+          )}
         </Button>
       </div>
 
       <Card className="p-6 space-y-6">
-
         {/* Photo Upload */}
         <div>
           <p className="type-th mb-4">Profile Photo</p>
@@ -109,8 +135,13 @@ const Profile = ({ role }: { role?: string | null }) => {
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <Button variant="outline" size="sm" icon={Camera} onClick={() => fileRef.current?.click()}>
-                {previewImg ? 'Change Photo' : 'Upload Photo'}
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Camera}
+                onClick={() => fileRef.current?.click()}
+              >
+                {previewImg ? "Change Photo" : "Upload Photo"}
               </Button>
               {previewImg && (
                 <button
@@ -135,8 +166,6 @@ const Profile = ({ role }: { role?: string | null }) => {
             <Field label="Reporting Region" icon={MapPin} value={p.region} />
           </div>
         </div>
-
-
       </Card>
     </div>
   );

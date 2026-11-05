@@ -1,40 +1,37 @@
-import { Bell, CheckCircle2, MapPin, Truck, Shield } from 'lucide-react';
-import { Card } from '@/shared/components/ui';
-import { timeAgo } from '@/utils/helpers';
+import { Bell, CheckCircle2, MapPin, Truck, Shield } from "lucide-react";
+import { Card } from "@/shared/components/ui";
+import { timeAgo } from "@/utils/helpers";
 
 interface NotificationListProps {
   filtered: any[];
 }
 
-const urgentTypes = ['critical', 'warning'];
+const urgentTypes = ["critical", "warning"];
 
 const isGenericNotificationLabel = (value?: string) => {
-  const text = (value || '').trim();
+  const text = (value || "").trim();
   return !text || /^notification$/i.test(text);
 };
 
 /** Top row = one uppercase badge; body = message (no duplicate "Notification" headline). */
 const notificationDisplay = (notif: { title?: string; category?: string; message?: string }) => {
-  const message = (notif.message || '').trim();
-  const title = (notif.title || '').trim();
-  const category = (notif.category || '').trim();
+  const message = (notif.message || "").trim();
+  const title = (notif.title || "").trim();
+  const category = (notif.category || "").trim();
 
-  const badge =
-    !isGenericNotificationLabel(category)
-      ? category
-      : !isGenericNotificationLabel(title)
-        ? title
-        : 'Notification';
+  const badge = !isGenericNotificationLabel(category)
+    ? category
+    : !isGenericNotificationLabel(title)
+      ? title
+      : "Notification";
 
   const body =
     message ||
-    (!isGenericNotificationLabel(title) ? title : '') ||
-    (!isGenericNotificationLabel(category) ? category : '');
+    (!isGenericNotificationLabel(title) ? title : "") ||
+    (!isGenericNotificationLabel(category) ? category : "");
 
   const headline =
-    message &&
-    !isGenericNotificationLabel(title) &&
-    title.toLowerCase() !== message.toLowerCase()
+    message && !isGenericNotificationLabel(title) && title.toLowerCase() !== message.toLowerCase()
       ? title
       : null;
 
@@ -44,9 +41,9 @@ const notificationDisplay = (notif: { title?: string; category?: string; message
 export const NotificationList = ({ filtered }: NotificationListProps) => {
   if (filtered.length === 0) {
     const alertHints = [
-      { icon: Truck, label: 'Fleet updates' },
-      { icon: MapPin, label: 'Trip alerts' },
-      { icon: Shield, label: 'System notices' },
+      { icon: Truck, label: "Fleet updates" },
+      { icon: MapPin, label: "Trip alerts" },
+      { icon: Shield, label: "System notices" },
     ];
 
     return (
@@ -72,8 +69,8 @@ export const NotificationList = ({ filtered }: NotificationListProps) => {
             You&apos;re all caught up
           </h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-3">
-            No notifications right now. When trips change, drivers update, or the system sends an alert,
-            it will appear here instantly.
+            No notifications right now. When trips change, drivers update, or the system sends an
+            alert, it will appear here instantly.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
@@ -95,70 +92,76 @@ export const NotificationList = ({ filtered }: NotificationListProps) => {
   // Group into Today vs Earlier
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const today = filtered.filter(n => new Date(n.time).getTime() >= todayStart);
-  const earlier = filtered.filter(n => new Date(n.time).getTime() < todayStart);
+  const today = filtered.filter((n) => new Date(n.time).getTime() >= todayStart);
+  const earlier = filtered.filter((n) => new Date(n.time).getTime() < todayStart);
 
   const renderItem = (notif: any) => {
     const { badge, headline, body } = notificationDisplay(notif);
 
     return (
-    <div
-      key={notif.id}
-      className={`flex gap-4 px-5 py-4 rounded-2xl border transition-colors ${
-        notif.read
-          ? 'border-line-2/60 bg-white'
-          : urgentTypes.includes(notif.type)
-            ? 'border-urgent/20 bg-urgent/[0.03]'
-            : 'border-primary/10 bg-primary/[0.03]'
-      }`}
-    >
-      {/* Icon */}
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${notif.bg}`}>
-        <notif.icon size={16} className={notif.color} />
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <div className="flex items-center gap-2">
-            {!notif.read && (
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${
-                urgentTypes.includes(notif.type) ? 'bg-urgent' : 'bg-primary'
-              }`} />
-            )}
-            <span className={`text-xs font-bold uppercase tracking-wide ${notif.color}`}>
-              {badge}
-            </span>
-          </div>
-          <span className="text-xs text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
+      <div
+        key={notif.id}
+        className={`flex gap-4 px-5 py-4 rounded-2xl border transition-colors ${
+          notif.read
+            ? "border-line-2/60 bg-white"
+            : urgentTypes.includes(notif.type)
+              ? "border-urgent/20 bg-urgent/[0.03]"
+              : "border-primary/10 bg-primary/[0.03]"
+        }`}
+      >
+        {/* Icon */}
+        <div
+          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${notif.bg}`}
+        >
+          <notif.icon size={16} className={notif.color} />
         </div>
 
-        {headline && (
-          <p className={`text-sm leading-snug ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`}>
-            {headline}
-          </p>
-        )}
-        {body && (
-          <p
-            className={`leading-snug line-clamp-3 ${
-              headline
-                ? 'text-xs text-ink-4 mt-1'
-                : `text-sm ${notif.read ? 'text-ink-3 font-normal' : 'text-ink font-semibold'}`
-            }`}
-          >
-            {body}
-          </p>
-        )}
-
-        {notif.action && (
-          <div className="flex items-center gap-3 mt-2">
-            <span className={`text-xs font-semibold flex items-center gap-1 ${notif.color}`}>
-              {notif.action} →
-            </span>
+        {/* Body */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-0.5">
+            <div className="flex items-center gap-2">
+              {!notif.read && (
+                <span
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${
+                    urgentTypes.includes(notif.type) ? "bg-urgent" : "bg-primary"
+                  }`}
+                />
+              )}
+              <span className={`text-xs font-bold uppercase tracking-wide ${notif.color}`}>
+                {badge}
+              </span>
+            </div>
+            <span className="text-xs text-ink-4 shrink-0">{timeAgo(notif.time)}</span>
           </div>
-        )}
+
+          {headline && (
+            <p
+              className={`text-sm leading-snug ${notif.read ? "text-ink-3 font-normal" : "text-ink font-semibold"}`}
+            >
+              {headline}
+            </p>
+          )}
+          {body && (
+            <p
+              className={`leading-snug line-clamp-3 ${
+                headline
+                  ? "text-xs text-ink-4 mt-1"
+                  : `text-sm ${notif.read ? "text-ink-3 font-normal" : "text-ink font-semibold"}`
+              }`}
+            >
+              {body}
+            </p>
+          )}
+
+          {notif.action && (
+            <div className="flex items-center gap-3 mt-2">
+              <span className={`text-xs font-semibold flex items-center gap-1 ${notif.color}`}>
+                {notif.action} →
+              </span>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     );
   };
 

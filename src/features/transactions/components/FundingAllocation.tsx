@@ -1,6 +1,6 @@
-import React from 'react';
-import { money } from '@/utils/helpers';
-import { Landmark, Users } from 'lucide-react';
+import React from "react";
+import { money } from "@/utils/helpers";
+import { Landmark, Users } from "lucide-react";
 
 interface FundingAllocationProps {
   countyTotal: number;
@@ -8,7 +8,11 @@ interface FundingAllocationProps {
   totalRevenue: number;
 }
 
-export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTotal, copayTotal, totalRevenue }) => {
+export const FundingAllocation: React.FC<FundingAllocationProps> = ({
+  countyTotal,
+  copayTotal,
+  totalRevenue,
+}) => {
   const streamTotal = countyTotal + copayTotal || totalRevenue;
   const countyPercent = streamTotal > 0 ? Math.round((countyTotal / streamTotal) * 100) : 0;
   const copayPercent = streamTotal > 0 ? Math.round((copayTotal / streamTotal) * 100) : 0;
@@ -18,7 +22,9 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-ink">Payer vs Copay Allocation</h3>
-          <p className="text-xs text-ink-4 mt-0.5">Passenger Copay vs Payer Charge (never combined as one trip cost)</p>
+          <p className="text-xs text-ink-4 mt-0.5">
+            Passenger Copay vs Payer Charge (never combined as one trip cost)
+          </p>
         </div>
         <span className="text-xs font-bold text-ink bg-bg px-2.5 py-1 rounded-lg border border-line-2">
           Total: {money(streamTotal)}
@@ -42,7 +48,9 @@ export const FundingAllocation: React.FC<FundingAllocationProps> = ({ countyTota
               />
             </>
           ) : (
-            <div className="w-full bg-line-2/50 flex items-center justify-center text-xs text-ink-4">No data available</div>
+            <div className="w-full bg-line-2/50 flex items-center justify-center text-xs text-ink-4">
+              No data available
+            </div>
           )}
         </div>
       </div>

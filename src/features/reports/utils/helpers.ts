@@ -8,9 +8,7 @@ export const statusLabel = (status: string) => {
   const key = status.toLowerCase();
   if (key === "approved") return "Solved";
   if (key === "rejected") return "Rejected";
-  return status
-    .replace(/[_-]/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return status.replace(/[_-]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 export const reportStatusVariant = (status: string) => {
@@ -35,9 +33,9 @@ export const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value.trim());
 const isPopulatedUser = (user: IReportUser): boolean =>
   Boolean(
     user.firstName?.trim() ||
-      user.middleName?.trim() ||
-      user.lastName?.trim() ||
-      user.email?.trim(),
+    user.middleName?.trim() ||
+    user.lastName?.trim() ||
+    user.email?.trim(),
   );
 
 export const formatReportUser = (user?: IReportUser | string | null): string => {
@@ -84,8 +82,7 @@ export const reportPersonEmail = (
 export const reportCategory = (report: IIncidentReport): string =>
   report.documents?.trim() || "Untitled report";
 
-export const reportReasonText = (report: IIncidentReport): string =>
-  report.reason?.trim() || "";
+export const reportReasonText = (report: IIncidentReport): string => report.reason?.trim() || "";
 
 export const reportTrip = (report: IIncidentReport): IIncidentReportTrip | null => {
   if (report.tripId == null) return null;
@@ -105,4 +102,61 @@ export const reportCardSubtitle = (report: IIncidentReport): string => {
   else if (tripLabel) parts.push(tripLabel);
   parts.push(`Filed by ${reporter}`);
   return parts.join(" · ");
+};
+
+export const parseReportCoordinates = (value: unknown): { lat: number; lng: number } | null => {
+  const validPair = (first: number, second: number) => {
+    if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+    if (Math.abs(first) > 90 && Math.abs(first) <= 180 && Math.abs(second) <= 90) {
+      return { lat: second, lng: first };
+    }
+    if (Math.abs(first) <= 90 && Math.abs(second) <= 180) {
+      return { lat: first, lng: second };
+    }
+    return null;
+  };
+
+  if (Array.isArray(value) && value.length >= 2) {
+    return validPair(Number(value[0]), Number(value[1]));
+  }
+
+  if (value && typeof value === "object") {
+    const point = value as Record<string, unknown>;
+    const nested =
+      point.location && typeof point.location === "object"
+        ? (point.location as Record<string, unknown>)
+        : point;
+    const first = nested.lng ?? nested.longitude ?? nested.lat ?? nested.latitude;
+    const second = nested.lat ?? nested.latitude ?? nested.lng ?? nested.longitude;
+    if (first != null && second != null) {
+      return validPair(Number(first), Number(second));
+    }
+  }
+
+  const text = String(value ?? "").trim();
+  const separated = text.match(/^(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (separated) {
+    const pair = validPair(Number(separated[1]), Number(separated[2]));
+    if (pair) return pair;
+  }
+
+  const compactCandidates: Array<{ point: { lat: number; lng: number }; score: number }> = [];
+  const firstDecimalIndex = text.indexOf(".");
+  for (let decimalIndex = firstDecimalIndex + 1; decimalIndex < text.length; decimalIndex += 1) {
+    if (text[decimalIndex] !== ".") continue;
+    for (let splitAt = firstDecimalIndex + 5; splitAt < decimalIndex; splitAt += 1) {
+      const firstPart = text.slice(0, splitAt);
+      const secondPart = text.slice(splitAt);
+      if (!/^-?\d{1,3}\.\d{4,10}$/.test(firstPart) || !/^-?\d{1,2}\.\d{4,10}$/.test(secondPart))
+        continue;
+
+      const point = validPair(Number(firstPart), Number(secondPart));
+      if (!point) continue;
+      const degreeDigits = secondPart.match(/^-?(\d+)/)?.[1].length ?? 0;
+      compactCandidates.push({ point, score: degreeDigits });
+    }
+  }
+
+  compactCandidates.sort((a, b) => b.score - a.score);
+  return compactCandidates[0]?.point ?? null;
 };

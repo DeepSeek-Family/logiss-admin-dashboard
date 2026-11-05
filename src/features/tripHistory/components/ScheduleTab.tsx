@@ -1,12 +1,27 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
-  ChevronLeft, ChevronRight, Truck, Clock, MapPin, Users, Calendar,
-  AlertTriangle, UserPlus, Activity, CheckCircle2, CircleDot, Layers, Loader2
-} from 'lucide-react';
-import { Card, Avatar, Badge } from '@/shared/components/ui';
-import { formatTime } from '@/utils/helpers';
-import { assignFilterToUnassignQuery, type DriverAssignmentFilter } from '@/features/bookings/utils/helpers';
-import { DriverDayPanel } from './DriverDayPanel';
+  ChevronLeft,
+  ChevronRight,
+  Truck,
+  Clock,
+  MapPin,
+  Users,
+  Calendar,
+  AlertTriangle,
+  UserPlus,
+  Activity,
+  CheckCircle2,
+  CircleDot,
+  Layers,
+  Loader2,
+} from "lucide-react";
+import { Card, Avatar, Badge } from "@/shared/components/ui";
+import { formatTime } from "@/utils/helpers";
+import {
+  assignFilterToUnassignQuery,
+  type DriverAssignmentFilter,
+} from "@/features/bookings/utils/helpers";
+import { DriverDayPanel } from "./DriverDayPanel";
 
 interface ScheduleTabProps {
   drivers: any[];
@@ -23,7 +38,11 @@ interface ScheduleTabProps {
     todayCancelledStatusTrips: number;
   };
   isLoading?: boolean;
-  onFilterChange?: (params: { serviceDate?: string; bookingStatus?: string; unassign?: boolean }) => void;
+  onFilterChange?: (params: {
+    serviceDate?: string;
+    bookingStatus?: string;
+    unassign?: boolean;
+  }) => void;
 }
 
 // Timeline window: 6 AM → 10 PM (covers virtually all NEMT operating hours).
@@ -32,14 +51,16 @@ const END_HOUR = 22;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 const TOTAL_MIN = TOTAL_HOURS * 60;
 
-const IN_PROGRESS = ['dispatched', 'en_route', 'arrived', 'in_trip', 'in-progress'];
-const COMPLETED = ['completed', 'trip-completed'];
+const IN_PROGRESS = ["dispatched", "en_route", "arrived", "in_trip", "in-progress"];
+const COMPLETED = ["completed", "trip-completed"];
 
 const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
 
 const formatYmd = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // Estimated trip length in minutes (duration string → miles → sensible default).
 const estDurationMin = (trip: any): number => {
@@ -58,8 +79,8 @@ const parseTimeToMin = (s?: string): number | null => {
   let h = parseInt(m[1], 10);
   const min = parseInt(m[2], 10);
   const ap = m[3]?.toUpperCase();
-  if (ap === 'PM' && h !== 12) h += 12;
-  if (ap === 'AM' && h === 12) h = 0;
+  if (ap === "PM" && h !== 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
   return h * 60 + min;
 };
 
@@ -94,23 +115,31 @@ const pctFromMinutes = (mins: number) => {
 
 // Status → left-accent + dot color, aligned with TripStatusBadge semantics.
 const statusAccent = (status: string) => {
-  if (IN_PROGRESS.includes(status)) return 'bg-urgent';
-  if (COMPLETED.includes(status)) return 'bg-accent';
-  if (status === 'no_show' || status === 'cancelled') return 'bg-ink-4';
-  if (status === 'arrived') return 'bg-warning';
-  return 'bg-primary';
+  if (IN_PROGRESS.includes(status)) return "bg-urgent";
+  if (COMPLETED.includes(status)) return "bg-accent";
+  if (status === "no_show" || status === "cancelled") return "bg-ink-4";
+  if (status === "arrived") return "bg-warning";
+  return "bg-primary";
 };
 
-export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTripClick, updateTrip, onboardingData, isLoading, onFilterChange }) => {
+export const ScheduleTab: React.FC<ScheduleTabProps> = ({
+  drivers,
+  trips,
+  onTripClick,
+  updateTrip,
+  onboardingData,
+  isLoading,
+  onFilterChange,
+}) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
   const [dayDriverId, setDayDriverId] = useState<string | null>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
     const serviceDate = formatYmd(selectedDate);
-    const bookingStatus = statusFilter !== 'all' ? statusFilter : undefined;
+    const bookingStatus = statusFilter !== "all" ? statusFilter : undefined;
     const unassign = assignFilterToUnassignQuery(assignFilter);
     onFilterChange?.({
       serviceDate,
@@ -126,13 +155,21 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
   const driverById = useMemo(() => {
     const m: Record<string, any> = {};
-    (drivers || []).forEach(d => { m[String(d.id)] = d; });
+    (drivers || []).forEach((d) => {
+      m[String(d.id)] = d;
+    });
     return m;
   }, [drivers]);
 
   // Separate unassigned trips
   const unassignedTrips = useMemo(() => {
-    return dayTrips.filter((t: any) => !t.driverId || String(t.driverId) === 'null' || t.status === 'unassigned' || t.status === 'pending_review');
+    return dayTrips.filter(
+      (t: any) =>
+        !t.driverId ||
+        String(t.driverId) === "null" ||
+        t.status === "unassigned" ||
+        t.status === "pending_review",
+    );
   }, [dayTrips]);
 
   // Per-driver sorted trips + conflict detection (overlap with previous trip's est. end).
@@ -141,22 +178,30 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
       __UNASSIGNED__: unassignedTrips,
     };
     const conflicts = new Set<string>();
-    (drivers || []).forEach(d => { byDriver[String(d.id)] = []; });
+    (drivers || []).forEach((d) => {
+      byDriver[String(d.id)] = [];
+    });
 
     dayTrips.forEach((t: any) => {
-      if (t.driverId && String(t.driverId) !== 'null') {
+      if (t.driverId && String(t.driverId) !== "null") {
         const dId = String(t.driverId);
         if (!byDriver[dId]) byDriver[dId] = [];
         byDriver[dId].push(t);
       }
     });
 
-    Object.values(byDriver).forEach(list => {
-      list.sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
+    Object.values(byDriver).forEach((list) => {
+      list.sort(
+        (a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime(),
+      );
       for (let i = 1; i < list.length; i++) {
-        const prevEnd = new Date(list[i - 1].scheduledTime).getTime() + estDurationMin(list[i - 1]) * 60000;
+        const prevEnd =
+          new Date(list[i - 1].scheduledTime).getTime() + estDurationMin(list[i - 1]) * 60000;
         const curStart = new Date(list[i].scheduledTime).getTime();
-        if (curStart < prevEnd) { conflicts.add(list[i].id); conflicts.add(list[i - 1].id); }
+        if (curStart < prevEnd) {
+          conflicts.add(list[i].id);
+          conflicts.add(list[i - 1].id);
+        }
       }
     });
     return { tripsByDriver: byDriver, conflictIds: conflicts };
@@ -164,7 +209,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
 
   // KPI metrics for the day.
   const kpis = useMemo(() => {
-    const assigned = dayTrips.filter((t: any) => t.driverId && String(t.driverId) !== 'null' && t.status !== 'unassigned').length;
+    const assigned = dayTrips.filter(
+      (t: any) => t.driverId && String(t.driverId) !== "null" && t.status !== "unassigned",
+    ).length;
     const unassigned = dayTrips.length - assigned;
     const inProgress = dayTrips.filter((t: any) => IN_PROGRESS.includes(t.status)).length;
     const completed = dayTrips.filter((t: any) => COMPLETED.includes(t.status)).length;
@@ -182,41 +229,49 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
       };
     }
 
-    return { total: dayTrips.length, assigned, unassigned, inProgress, completed, conflicts: conflictIds.size, onDuty };
+    return {
+      total: dayTrips.length,
+      assigned,
+      unassigned,
+      inProgress,
+      completed,
+      conflicts: conflictIds.size,
+      onDuty,
+    };
   }, [dayTrips, conflictIds, drivers, isToday, onboardingData]);
 
   // Drivers shown on the board.
   const visibleDrivers = useMemo(() => {
-    const knownIds = new Set((drivers || []).map(d => String(d.id)));
+    const knownIds = new Set((drivers || []).map((d) => String(d.id)));
     let list: any[] = [...(drivers || [])];
 
     // Include dynamically synthesized drivers for trips that have a driverId not in the drivers list
-    Object.keys(tripsByDriver).forEach(dId => {
-      if (dId !== '__UNASSIGNED__' && !knownIds.has(dId) && tripsByDriver[dId].length > 0) {
+    Object.keys(tripsByDriver).forEach((dId) => {
+      if (dId !== "__UNASSIGNED__" && !knownIds.has(dId) && tripsByDriver[dId].length > 0) {
         const sampleTrip = tripsByDriver[dId][0];
-        const synthName = sampleTrip.driverName || 'Assigned Driver';
+        const synthName = sampleTrip.driverName || "Assigned Driver";
         list.push({
           id: dId,
           _id: dId,
           name: synthName,
-          initials: `${synthName[0] || 'D'}`,
+          initials: `${synthName[0] || "D"}`,
           onDuty: true,
-          status: 'available',
+          status: "available",
         });
       }
     });
 
-    list = list.filter(d => d.onDuty || (tripsByDriver[String(d.id)] || []).length > 0);
+    list = list.filter((d) => d.onDuty || (tripsByDriver[String(d.id)] || []).length > 0);
 
     if (unassignedTrips.length > 0) {
       list = [
         {
-          id: '__UNASSIGNED__',
-          name: 'Unassigned Trips',
-          initials: 'UT',
+          id: "__UNASSIGNED__",
+          name: "Unassigned Trips",
+          initials: "UT",
           onDuty: true,
           isVirtualUnassigned: true,
-          vehicle: { plate: 'Pending Assign', type: 'Queue' },
+          vehicle: { plate: "Pending Assign", type: "Queue" },
         },
         ...list,
       ];
@@ -235,13 +290,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
   };
 
   const STATUS_OPTIONS = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'assigned', label: 'Assigned' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'confirmed', label: 'Confirmed' },
-    { value: 'trip-completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: "all", label: "All statuses" },
+    { value: "pending", label: "Pending" },
+    { value: "assigned", label: "Assigned" },
+    { value: "in-progress", label: "In Progress" },
+    { value: "confirmed", label: "Confirmed" },
+    { value: "trip-completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
   ];
 
   return (
@@ -251,19 +306,41 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         <div className="flex items-center gap-3 flex-wrap">
           {/* Date navigator */}
           <div className="flex items-center gap-1.5 p-1 bg-bg rounded-xl border border-line-2">
-            <button onClick={() => shiftDay(-1)} className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm" title="Previous day">
+            <button
+              onClick={() => shiftDay(-1)}
+              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm"
+              title="Previous day"
+            >
               <ChevronLeft size={16} />
             </button>
             <div className="px-3 text-xs font-semibold text-ink min-w-[150px] text-center flex items-center justify-center gap-2">
               <Calendar size={14} className="text-primary" />
-              {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-              {isToday && <span className="text-xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">TODAY</span>}
+              {selectedDate.toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+              {isToday && (
+                <span className="text-xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">
+                  TODAY
+                </span>
+              )}
             </div>
-            <button onClick={() => shiftDay(1)} className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm" title="Next day">
+            <button
+              onClick={() => shiftDay(1)}
+              className="w-8 h-8 rounded-lg bg-white hover:bg-primary/5 flex items-center justify-center text-ink-3 hover:text-primary transition-all border border-line-2/50 shadow-sm"
+              title="Next day"
+            >
               <ChevronRight size={16} />
             </button>
             {!isToday && (
-              <button onClick={() => { initialized.current = true; setSelectedDate(new Date()); }} className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all">
+              <button
+                onClick={() => {
+                  initialized.current = true;
+                  setSelectedDate(new Date());
+                }}
+                className="ml-1 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all"
+              >
                 Today
               </button>
             )}
@@ -272,8 +349,20 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           <input
             type="date"
             value={formatYmd(selectedDate)}
-            onChange={(e) => { if (e.target.value) { const [y, m, d] = e.target.value.split('-').map(Number); initialized.current = true; setSelectedDate(new Date(y, m - 1, d)); } }}
-            onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* noop */ } }}
+            onChange={(e) => {
+              if (e.target.value) {
+                const [y, m, d] = e.target.value.split("-").map(Number);
+                initialized.current = true;
+                setSelectedDate(new Date(y, m - 1, d));
+              }
+            }}
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {
+                /* noop */
+              }
+            }}
             className="bg-white border border-line-2 hover:border-primary/40 rounded-xl py-2 px-3 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer transition-all"
             title="Jump to date"
           />
@@ -301,25 +390,69 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none transition-all"
         >
-          {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {STATUS_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* ───────── KPI strip ───────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
-          { label: 'Total Trips', value: kpis.total, icon: Layers, tone: 'text-ink', bg: 'bg-ink/5', ic: 'text-ink-3' },
-          { label: 'Assigned', value: kpis.assigned, icon: CheckCircle2, tone: 'text-ink', bg: 'bg-accent/10', ic: 'text-accent' },
-          { label: 'In Progress', value: kpis.inProgress, icon: Activity, tone: 'text-ink', bg: 'bg-primary/10', ic: 'text-primary' },
-          { label: 'Completed', value: kpis.completed, icon: CircleDot, tone: 'text-ink', bg: 'bg-accent/10', ic: 'text-accent' },
-          { label: 'Conflicts', value: kpis.conflicts, icon: AlertTriangle, tone: kpis.conflicts ? 'text-urgent' : 'text-ink', bg: 'bg-urgent/10', ic: 'text-urgent' },
-        ].map(k => (
-          <div key={k.label} className="flex items-center gap-3 px-3.5 py-3 bg-white rounded-2xl border border-line-2 shadow-sm">
+          {
+            label: "Total Trips",
+            value: kpis.total,
+            icon: Layers,
+            tone: "text-ink",
+            bg: "bg-ink/5",
+            ic: "text-ink-3",
+          },
+          {
+            label: "Assigned",
+            value: kpis.assigned,
+            icon: CheckCircle2,
+            tone: "text-ink",
+            bg: "bg-accent/10",
+            ic: "text-accent",
+          },
+          {
+            label: "In Progress",
+            value: kpis.inProgress,
+            icon: Activity,
+            tone: "text-ink",
+            bg: "bg-primary/10",
+            ic: "text-primary",
+          },
+          {
+            label: "Completed",
+            value: kpis.completed,
+            icon: CircleDot,
+            tone: "text-ink",
+            bg: "bg-accent/10",
+            ic: "text-accent",
+          },
+          {
+            label: "Conflicts",
+            value: kpis.conflicts,
+            icon: AlertTriangle,
+            tone: kpis.conflicts ? "text-urgent" : "text-ink",
+            bg: "bg-urgent/10",
+            ic: "text-urgent",
+          },
+        ].map((k) => (
+          <div
+            key={k.label}
+            className="flex items-center gap-3 px-3.5 py-3 bg-white rounded-2xl border border-line-2 shadow-sm"
+          >
             <div className={`w-9 h-9 rounded-xl ${k.bg} flex items-center justify-center shrink-0`}>
               <k.icon size={16} className={k.ic} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-ink-4 uppercase tracking-wide truncate">{k.label}</p>
+              <p className="text-xs font-semibold text-ink-4 uppercase tracking-wide truncate">
+                {k.label}
+              </p>
               <p className={`text-xl font-bold leading-none ${k.tone}`}>{k.value}</p>
             </div>
           </div>
@@ -333,41 +466,63 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
             <div className="flex items-center gap-2">
               <UserPlus size={18} className="text-warning-dark shrink-0" />
               <p className="text-sm font-bold text-ink">
-                {unassignedTrips.length} Unassigned {unassignedTrips.length === 1 ? 'Trip' : 'Trips'} for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {unassignedTrips.length} Unassigned{" "}
+                {unassignedTrips.length === 1 ? "Trip" : "Trips"} for{" "}
+                {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
             </div>
             <span className="text-xs text-ink-4">Select a driver below to assign immediately</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {unassignedTrips.map((trip: any) => (
-              <div key={trip.id} className="p-3 bg-white rounded-xl border border-line-2 shadow-sm flex flex-col justify-between gap-2.5">
+              <div
+                key={trip.id}
+                className="p-3 bg-white rounded-xl border border-line-2 shadow-sm flex flex-col justify-between gap-2.5"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-xs font-bold text-primary">#{String(trip.id).slice(-6)}</span>
-                    <p className="text-sm font-semibold text-ink">{trip.rider?.name || 'Rider'}</p>
-                    <p className="text-xs text-ink-4">{trip.reason || trip.tripReason || 'Medical'} · {trip.type === 'round-trip' || trip.type === 'round_trip' ? 'Round Trip' : 'One Way'}</p>
+                    <span className="text-xs font-bold text-primary">
+                      #{String(trip.id).slice(-6)}
+                    </span>
+                    <p className="text-sm font-semibold text-ink">{trip.rider?.name || "Rider"}</p>
+                    <p className="text-xs text-ink-4">
+                      {trip.reason || trip.tripReason || "Medical"} ·{" "}
+                      {trip.type === "round-trip" || trip.type === "round_trip"
+                        ? "Round Trip"
+                        : "One Way"}
+                    </p>
                   </div>
-                  <Badge variant="warning" className="text-xs capitalize">{String(trip.status || 'pending').replace(/_/g, ' ')}</Badge>
+                  <Badge variant="warning" className="text-xs capitalize">
+                    {String(trip.status || "pending").replace(/_/g, " ")}
+                  </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-ink-3 bg-bg px-2.5 py-1 rounded-lg flex-wrap">
                   <Clock size={12} className="text-primary shrink-0" />
                   <span>Pickup {trip.requestedPickup || formatTime(trip.scheduledTime)}</span>
-                  {trip.appointmentTime && <span className="text-ink-4">· Appt {trip.appointmentTime}</span>}
-                  {trip.returnTime && <span className="text-primary font-semibold">· Return {trip.returnTime}</span>}
+                  {trip.appointmentTime && (
+                    <span className="text-ink-4">· Appt {trip.appointmentTime}</span>
+                  )}
+                  {trip.returnTime && (
+                    <span className="text-primary font-semibold">· Return {trip.returnTime}</span>
+                  )}
                 </div>
                 {updateTrip && (
                   <select
                     defaultValue=""
                     onChange={(e) => {
                       if (e.target.value) {
-                        updateTrip(trip.id, { driverId: e.target.value, status: 'assigned' });
+                        updateTrip(trip.id, { driverId: e.target.value, status: "assigned" });
                       }
                     }}
                     className="w-full bg-bg border border-line-2 rounded-lg py-1.5 px-2.5 text-xs font-semibold text-ink outline-none cursor-pointer focus:border-primary transition-all"
                   >
-                    <option value="" disabled>Assign Driver...</option>
+                    <option value="" disabled>
+                      Assign Driver...
+                    </option>
                     {(drivers || []).map((d: any) => (
-                      <option key={d.id} value={d.id}>{d.name} {d.onDuty ? '(On Duty)' : ''}</option>
+                      <option key={d.id} value={d.id}>
+                        {d.name} {d.onDuty ? "(On Duty)" : ""}
+                      </option>
                     ))}
                   </select>
                 )}
@@ -382,187 +537,239 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl border border-urgent/20 bg-urgent-light/30">
           <AlertTriangle size={16} className="text-urgent shrink-0" />
           <p className="text-xs font-medium text-ink">
-            <span className="font-bold text-urgent">{kpis.conflicts}</span> scheduling {kpis.conflicts === 1 ? 'conflict' : 'conflicts'} detected
+            <span className="font-bold text-urgent">{kpis.conflicts}</span> scheduling{" "}
+            {kpis.conflicts === 1 ? "conflict" : "conflicts"} detected
           </p>
         </div>
       )}
 
       {/* ───────── Driver timeline (Gantt) ───────── */}
       <Card className="overflow-x-auto relative p-0">
-          <div className="min-w-[1100px]">
-            {/* Header / hour ruler */}
-            <div className="sticky top-0 z-30 flex bg-bg border-b border-line-2">
-              <div className="w-[260px] min-w-[260px] shrink-0 p-4 border-r border-line-2 flex items-center justify-between">
-                <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">Driver & Fleet</span>
-                <span className="text-xs text-ink-4">{visibleDrivers.length}</span>
-              </div>
-              <div className="flex-1 relative h-14">
-                {timelineHours.map((hour, idx) => {
-                  const left = (idx / TOTAL_HOURS) * 100;
-                  const display = hour > 12 ? hour - 12 : hour;
-                  const ampm = hour >= 12 ? 'PM' : 'AM';
-                  return (
-                    <div key={hour} className="absolute top-0 bottom-0 border-l border-line-2/40" style={{ left: `${left}%` }}>
-                      <span className="absolute -left-5 top-4 w-10 text-center text-xs font-bold text-ink-3">
-                        {display}<span className="text-xs text-ink-4 ml-0.5">{ampm}</span>
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+        <div className="min-w-[1100px]">
+          {/* Header / hour ruler */}
+          <div className="sticky top-0 z-30 flex bg-bg border-b border-line-2">
+            <div className="w-[260px] min-w-[260px] shrink-0 p-4 border-r border-line-2 flex items-center justify-between">
+              <span className="text-xs font-bold text-ink-3 uppercase tracking-wide">
+                Driver & Fleet
+              </span>
+              <span className="text-xs text-ink-4">{visibleDrivers.length}</span>
             </div>
-
-            {/* Rows */}
-            <div className="divide-y divide-line-2/40 relative bg-bg/20">
-
-              {visibleDrivers.map(driver => {
-                const driverTrips = tripsByDriver[String(driver.id)] || [];
-                const shownTrips = driverTrips;
-                const totalMiles = driverTrips.reduce((s: number, t: any) => s + (Number(t.miles) || 0), 0);
-                const hasConflict = driverTrips.some((t: any) => conflictIds.has(t.id));
-
+            <div className="flex-1 relative h-14">
+              {timelineHours.map((hour, idx) => {
+                const left = (idx / TOTAL_HOURS) * 100;
+                const display = hour > 12 ? hour - 12 : hour;
+                const ampm = hour >= 12 ? "PM" : "AM";
                 return (
-                  <div key={driver.id} className="flex min-h-[88px] group hover:bg-white/60 transition-colors relative z-10">
-                    {/* Driver sidebar — click to open the driver's run sheet */}
-                    <button
-                      type="button"
-                      onClick={() => setDayDriverId(driver.id)}
-                      title="View this driver's day"
-                      className="w-[260px] min-w-[260px] shrink-0 p-3 border-r border-line-2/40 bg-bg/20 hover:bg-primary-tint/20 transition-colors flex flex-col justify-center gap-2 text-left cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Avatar initials={driver.initials} size="sm" online={driver.onDuty} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-ink truncate">{driver.name}</p>
-                            {hasConflict && <AlertTriangle size={11} className="text-urgent shrink-0" />}
-                          </div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Truck size={10} className="text-ink-4 shrink-0" />
-                            <span className="text-xs text-ink-4 truncate">
-                              {[driver.vehicle?.plate, driver.vehicle?.type].filter(Boolean).join(' · ') || 'No vehicle'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 pl-10">
-                        {driverTrips.length > 0 ? (
-                          <>
-                            <Badge variant="primary" className="text-xs py-0">{driverTrips.length} {driverTrips.length === 1 ? 'trip' : 'trips'}</Badge>
-                            {totalMiles > 0 && <span className="text-xs font-medium text-ink-4">{totalMiles.toFixed(1)} mi</span>}
-                          </>
-                        ) : (
-                          <span className="text-xs font-medium text-ink-4">{driver.onDuty ? 'On duty · idle' : 'Off duty'}</span>
-                        )}
-                      </div>
-                    </button>
-
-                    {/* Timeline lane */}
-                    <div className="flex-1 relative p-2 overflow-hidden bg-white">
-                      {timelineHours.map((_, idx) => (
-                        <div key={`bg-${idx}`} className="absolute top-0 bottom-0 border-l border-line-2/20" style={{ left: `${(idx / TOTAL_HOURS) * 100}%` }} />
-                      ))}
-
-                      {shownTrips.map((trip: any, idx: number) => {
-                        const startMin = getTripMinutes(trip);
-                        const startPct = pctFromMinutes(startMin);
-                        const endPct = pctFromMinutes(startMin + estDurationMin(trip));
-                        const width = Math.max(endPct - startPct, 12);
-                        const conflict = conflictIds.has(trip.id);
-                        const inProgress = IN_PROGRESS.includes(trip.status);
-                        const isLast = idx === shownTrips.length - 1;
-
-                        // Pull-out marker on the first trip of the day.
-                        const pullOut = idx === 0 && startPct > 1 ? (
-                          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-[calc(100%+6px)] flex items-center gap-1 z-10" style={{ left: `${startPct}%` }}>
-                            <span className="text-xs font-black text-primary/70 uppercase tracking-wide bg-primary/5 px-2 py-0.5 rounded-full border border-primary/20 whitespace-nowrap shadow-sm">PULL-OUT</span>
-                          </div>
-                        ) : null;
-
-                        // Standby connecting line between previous trip and this trip
-                        let gap = null;
-                        if (idx > 0) {
-                          const prev = shownTrips[idx - 1];
-                          const prevStartMin = getTripMinutes(prev);
-                          const prevEndPct = pctFromMinutes(prevStartMin + estDurationMin(prev));
-                          const gapW = startPct - prevEndPct;
-                          if (gapW > 0.5 && !conflict) {
-                            gap = (
-                              <div
-                                className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-line-2 border-t border-line-2 z-10"
-                                style={{ left: `${prevEndPct}%`, width: `${gapW}%` }}
-                                title="Standby / Driving"
-                              />
-                            );
-                          }
-                        }
-
-                        // Pull-in marker after the last trip of the day.
-                        const pullIn = isLast && endPct < 99 ? (
-                          <div className="absolute top-1/2 -translate-y-1/2 translate-x-2 flex items-center gap-1 z-10" style={{ left: `${endPct}%` }}>
-                            <span className="text-xs font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-2 py-0.5 rounded-full border border-line-2 whitespace-nowrap shadow-sm">PULL-IN</span>
-                          </div>
-                        ) : null;
-
-                        const displayTime = trip.requestedPickup || trip.pickupTime || formatTime(trip.scheduledTime);
-
-                        return (
-                          <React.Fragment key={trip.id}>
-                            {pullOut}
-                            {gap}
-                            {pullIn}
-                            <button
-                              onClick={() => onTripClick?.(trip.id)}
-                              title={`#${trip.id} · ${trip.rider?.name || ''}\nTime: ${displayTime}\nType: ${trip.type === 'round_trip' || trip.type === 'round-trip' ? 'Round Trip' : 'One Way'}\nPickup: ${trip.pickup || '—'}\nDrop-off: ${trip.dropoff || '—'}\nStatus: ${String(trip.status).replace(/_/g, ' ')}${conflict ? ' · ⚠ TIME CONFLICT' : ''}`}
-                              className={`absolute top-1 bottom-1 min-w-[130px] rounded-xl shadow-sm border bg-white transition-all cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? 'border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg' : 'border-line-2 hover:border-primary/50 hover:shadow-lg'}`}
-                              style={{ left: `${startPct}%`, width: `${width}%` }}
-                            >
-                              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${statusAccent(trip.status)}`} />
-                              <div className="flex-1 p-2 pl-3 flex flex-col justify-between overflow-hidden">
-                                <div className="flex items-center justify-between gap-1 mb-0.5">
-                                  <span className="text-xs font-bold text-primary truncate">#{String(trip.id).slice(-6)}</span>
-                                  {conflict ? (
-                                    <AlertTriangle size={11} className="text-urgent shrink-0" />
-                                  ) : inProgress ? (
-                                    <span className="flex h-2 w-2 relative shrink-0">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-urgent opacity-75" />
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-urgent" />
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p className="text-xs font-bold text-ink truncate">{trip.rider?.name || 'Rider'}</p>
-                                <div className="flex items-center gap-1 mt-1 bg-bg/80 px-1.5 py-0.5 rounded-md w-fit border border-line-2/50">
-                                  <Clock size={10} className="text-ink-4 shrink-0" />
-                                  <span className="text-xs font-semibold text-ink-3">{displayTime}</span>
-                                </div>
-                              </div>
-                            </button>
-                          </React.Fragment>
-                        );
-                      })}
-
-                      {driverTrips.length === 0 && (
-                        <div className="absolute inset-0 flex items-center pl-3">
-                          <span className="text-xs text-ink-4/70 italic">No trips scheduled</span>
-                        </div>
-                      )}
-                    </div>
+                  <div
+                    key={hour}
+                    className="absolute top-0 bottom-0 border-l border-line-2/40"
+                    style={{ left: `${left}%` }}
+                  >
+                    <span className="absolute -left-5 top-4 w-10 text-center text-xs font-bold text-ink-3">
+                      {display}
+                      <span className="text-xs text-ink-4 ml-0.5">{ampm}</span>
+                    </span>
                   </div>
                 );
               })}
-
-              {/* Empty states */}
-              {visibleDrivers.length === 0 && (
-                <div className="py-16 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-line-2 flex items-center justify-center mb-3">
-                    <Users size={20} className="text-ink-4" />
-                  </div>
-                  <p className="text-sm font-semibold text-ink">No drivers</p>
-                  <p className="text-xs text-ink-4 mt-0.5 max-w-xs">No operators are on duty for this date.</p>
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Rows */}
+          <div className="divide-y divide-line-2/40 relative bg-bg/20">
+            {visibleDrivers.map((driver) => {
+              const driverTrips = tripsByDriver[String(driver.id)] || [];
+              const shownTrips = driverTrips;
+              const totalMiles = driverTrips.reduce(
+                (s: number, t: any) => s + (Number(t.miles) || 0),
+                0,
+              );
+              const hasConflict = driverTrips.some((t: any) => conflictIds.has(t.id));
+
+              return (
+                <div
+                  key={driver.id}
+                  className="flex min-h-[88px] group hover:bg-white/60 transition-colors relative z-10"
+                >
+                  {/* Driver sidebar — click to open the driver's run sheet */}
+                  <button
+                    type="button"
+                    onClick={() => setDayDriverId(driver.id)}
+                    title="View this driver's day"
+                    className="w-[260px] min-w-[260px] shrink-0 p-3 border-r border-line-2/40 bg-bg/20 hover:bg-primary-tint/20 transition-colors flex flex-col justify-center gap-2 text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Avatar initials={driver.initials} size="sm" online={driver.onDuty} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-ink truncate">{driver.name}</p>
+                          {hasConflict && (
+                            <AlertTriangle size={11} className="text-urgent shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Truck size={10} className="text-ink-4 shrink-0" />
+                          <span className="text-xs text-ink-4 truncate">
+                            {[driver.vehicle?.plate, driver.vehicle?.type]
+                              .filter(Boolean)
+                              .join(" · ") || "No vehicle"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 pl-10">
+                      {driverTrips.length > 0 ? (
+                        <>
+                          <Badge variant="primary" className="text-xs py-0">
+                            {driverTrips.length} {driverTrips.length === 1 ? "trip" : "trips"}
+                          </Badge>
+                          {totalMiles > 0 && (
+                            <span className="text-xs font-medium text-ink-4">
+                              {totalMiles.toFixed(1)} mi
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs font-medium text-ink-4">
+                          {driver.onDuty ? "On duty · idle" : "Off duty"}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Timeline lane */}
+                  <div className="flex-1 relative p-2 overflow-hidden bg-white">
+                    {timelineHours.map((_, idx) => (
+                      <div
+                        key={`bg-${idx}`}
+                        className="absolute top-0 bottom-0 border-l border-line-2/20"
+                        style={{ left: `${(idx / TOTAL_HOURS) * 100}%` }}
+                      />
+                    ))}
+
+                    {shownTrips.map((trip: any, idx: number) => {
+                      const startMin = getTripMinutes(trip);
+                      const startPct = pctFromMinutes(startMin);
+                      const endPct = pctFromMinutes(startMin + estDurationMin(trip));
+                      const width = Math.max(endPct - startPct, 12);
+                      const conflict = conflictIds.has(trip.id);
+                      const inProgress = IN_PROGRESS.includes(trip.status);
+                      const isLast = idx === shownTrips.length - 1;
+
+                      // Pull-out marker on the first trip of the day.
+                      const pullOut =
+                        idx === 0 && startPct > 1 ? (
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 -translate-x-[calc(100%+6px)] flex items-center gap-1 z-10"
+                            style={{ left: `${startPct}%` }}
+                          >
+                            <span className="text-xs font-black text-primary/70 uppercase tracking-wide bg-primary/5 px-2 py-0.5 rounded-full border border-primary/20 whitespace-nowrap shadow-sm">
+                              PULL-OUT
+                            </span>
+                          </div>
+                        ) : null;
+
+                      // Standby connecting line between previous trip and this trip
+                      let gap = null;
+                      if (idx > 0) {
+                        const prev = shownTrips[idx - 1];
+                        const prevStartMin = getTripMinutes(prev);
+                        const prevEndPct = pctFromMinutes(prevStartMin + estDurationMin(prev));
+                        const gapW = startPct - prevEndPct;
+                        if (gapW > 0.5 && !conflict) {
+                          gap = (
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-line-2 border-t border-line-2 z-10"
+                              style={{ left: `${prevEndPct}%`, width: `${gapW}%` }}
+                              title="Standby / Driving"
+                            />
+                          );
+                        }
+                      }
+
+                      // Pull-in marker after the last trip of the day.
+                      const pullIn =
+                        isLast && endPct < 99 ? (
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 translate-x-2 flex items-center gap-1 z-10"
+                            style={{ left: `${endPct}%` }}
+                          >
+                            <span className="text-xs font-black text-ink-4 uppercase tracking-wide bg-ink/5 px-2 py-0.5 rounded-full border border-line-2 whitespace-nowrap shadow-sm">
+                              PULL-IN
+                            </span>
+                          </div>
+                        ) : null;
+
+                      const displayTime =
+                        trip.requestedPickup || trip.pickupTime || formatTime(trip.scheduledTime);
+
+                      return (
+                        <React.Fragment key={trip.id}>
+                          {pullOut}
+                          {gap}
+                          {pullIn}
+                          <button
+                            onClick={() => onTripClick?.(trip.id)}
+                            title={`#${trip.id} · ${trip.rider?.name || ""}\nTime: ${displayTime}\nType: ${trip.type === "round_trip" || trip.type === "round-trip" ? "Round Trip" : "One Way"}\nPickup: ${trip.pickup || "—"}\nDrop-off: ${trip.dropoff || "—"}\nStatus: ${String(trip.status).replace(/_/g, " ")}${conflict ? " · ⚠ TIME CONFLICT" : ""}`}
+                            className={`absolute top-1 bottom-1 min-w-[130px] rounded-xl shadow-sm border bg-white transition-all cursor-pointer flex flex-col overflow-visible group/trip z-20 hover:z-40 hover:-translate-y-0.5 text-left ${conflict ? "border-urgent ring-1 ring-urgent/30 hover:ring-urgent/50 hover:shadow-lg" : "border-line-2 hover:border-primary/50 hover:shadow-lg"}`}
+                            style={{ left: `${startPct}%`, width: `${width}%` }}
+                          >
+                            <div
+                              className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${statusAccent(trip.status)}`}
+                            />
+                            <div className="flex-1 p-2 pl-3 flex flex-col justify-between overflow-hidden">
+                              <div className="flex items-center justify-between gap-1 mb-0.5">
+                                <span className="text-xs font-bold text-primary truncate">
+                                  #{String(trip.id).slice(-6)}
+                                </span>
+                                {conflict ? (
+                                  <AlertTriangle size={11} className="text-urgent shrink-0" />
+                                ) : inProgress ? (
+                                  <span className="flex h-2 w-2 relative shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-urgent opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-urgent" />
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="text-xs font-bold text-ink truncate">
+                                {trip.rider?.name || "Rider"}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1 bg-bg/80 px-1.5 py-0.5 rounded-md w-fit border border-line-2/50">
+                                <Clock size={10} className="text-ink-4 shrink-0" />
+                                <span className="text-xs font-semibold text-ink-3">
+                                  {displayTime}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {driverTrips.length === 0 && (
+                      <div className="absolute inset-0 flex items-center pl-3">
+                        <span className="text-xs text-ink-4/70 italic">No trips scheduled</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Empty states */}
+            {visibleDrivers.length === 0 && (
+              <div className="py-16 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-line-2 flex items-center justify-center mb-3">
+                  <Users size={20} className="text-ink-4" />
+                </div>
+                <p className="text-sm font-semibold text-ink">No drivers</p>
+                <p className="text-xs text-ink-4 mt-0.5 max-w-xs">
+                  No operators are on duty for this date.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* Day-level empty state */}
@@ -571,19 +778,24 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           <div className="w-14 h-14 rounded-2xl bg-bg border border-line-2 flex items-center justify-center mb-4">
             <Calendar size={24} className="text-ink-4" />
           </div>
-          <p className="text-sm font-semibold text-ink">No trips scheduled for {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
-          <p className="text-xs text-ink-4 mt-1 max-w-sm">Pick another date, or create a booking to start building this day's schedule.</p>
+          <p className="text-sm font-semibold text-ink">
+            No trips scheduled for{" "}
+            {selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+          </p>
+          <p className="text-xs text-ink-4 mt-1 max-w-sm">
+            Pick another date, or create a booking to start building this day's schedule.
+          </p>
         </Card>
       )}
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 px-1">
         {[
-          { c: 'bg-primary', l: 'Scheduled' },
-          { c: 'bg-warning', l: 'Arrived' },
-          { c: 'bg-urgent', l: 'In progress' },
-          { c: 'bg-accent', l: 'Completed' },
-        ].map(x => (
+          { c: "bg-primary", l: "Scheduled" },
+          { c: "bg-warning", l: "Arrived" },
+          { c: "bg-urgent", l: "In progress" },
+          { c: "bg-accent", l: "Completed" },
+        ].map((x) => (
           <div key={x.l} className="flex items-center gap-1.5">
             <span className={`w-2.5 h-2.5 rounded-sm ${x.c}`} />
             <span className="text-xs text-ink-4">{x.l}</span>
@@ -593,7 +805,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ drivers, trips, onTrip
           <AlertTriangle size={11} className="text-urgent" />
           <span className="text-xs text-ink-4">Time conflict</span>
         </div>
-        <span className="text-xs text-ink-4 ml-auto hidden sm:inline">Tip: click a driver to open their full day run sheet</span>
+        <span className="text-xs text-ink-4 ml-auto hidden sm:inline">
+          Tip: click a driver to open their full day run sheet
+        </span>
       </div>
 
       {/* Dedicated single-driver day run sheet */}

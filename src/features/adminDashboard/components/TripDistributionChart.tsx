@@ -6,12 +6,7 @@ const barHeight = (value: number, scale: number) =>
   value > 0 ? `${(value / scale) * 100}%` : "4px";
 
 export const TripDistributionChart = () => {
-  const {
-    data: months = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetDashboardAnalyticsQuery();
+  const { data: months = [], isLoading, isError, refetch } = useGetDashboardAnalyticsQuery();
 
   const peak = months.reduce(
     (max, month) => Math.max(max, month.oneWayTrips, month.roundTripTrips),

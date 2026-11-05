@@ -12,9 +12,7 @@ const ResetPasswordPage = () => {
   // Validate that a reset token exists from the verify-email step
   useEffect(() => {
     const token =
-      typeof localStorage !== "undefined"
-        ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
-        : null;
+      typeof localStorage !== "undefined" ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY) : null;
 
     if (!token) {
       toast.error("Please verify your email first.");

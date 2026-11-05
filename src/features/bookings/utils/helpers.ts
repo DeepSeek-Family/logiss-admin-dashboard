@@ -4,75 +4,78 @@ import type {
   IBookingPricingLeg,
   IBookingUser,
   IMobilityRequirement,
-} from '@/redux/api/bookingApi';
+} from "@/redux/api/bookingApi";
 
 /** Empty string = no `unassign` query param until the user picks a filter. */
-export type DriverAssignmentFilter = '' | 'all' | 'assigned' | 'unassigned'
+export type DriverAssignmentFilter = "" | "all" | "assigned" | "unassigned";
 
 /** Maps UI filter to `unassign` query param for approved/schedule/history lists. */
 export const assignFilterToUnassignQuery = (
   filter: DriverAssignmentFilter,
 ): boolean | undefined => {
-  if (filter === 'unassigned') return true
-  if (filter === 'assigned') return false
-  return undefined
-}
+  if (filter === "unassigned") return true;
+  if (filter === "assigned") return false;
+  return undefined;
+};
 
 export const WEEKDAY_KEY_TO_NAME: Record<string, string> = {
-  '0': 'sunday',
-  '1': 'monday',
-  '2': 'tuesday',
-  '3': 'wednesday',
-  '4': 'thursday',
-  '5': 'friday',
-  '6': 'saturday',
+  "0": "sunday",
+  "1": "monday",
+  "2": "tuesday",
+  "3": "wednesday",
+  "4": "thursday",
+  "5": "friday",
+  "6": "saturday",
 };
 
 export const to24hTime = (val?: string): string => {
-  if (!val) return '';
+  if (!val) return "";
   const s = String(val).trim();
   if (/^\d{2}:\d{2}$/.test(s)) return s;
   const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
-  if (!m) return '';
+  if (!m) return "";
   let h = parseInt(m[1], 10);
   const ap = m[3]?.toUpperCase();
-  if (ap === 'PM' && h !== 12) h += 12;
-  if (ap === 'AM' && h === 12) h = 0;
-  return `${String(h).padStart(2, '0')}:${m[2]}`;
+  if (ap === "PM" && h !== 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${m[2]}`;
 };
 
 /** Convert a time input (`09:15` or `09:15 AM`) into the API's `09:15 AM` format. */
 export const toApiTime = (val?: string): string => {
-  if (!val) return '';
+  if (!val) return "";
   const s = String(val).trim();
   const already12h = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i);
   if (already12h) {
-    const h = String(parseInt(already12h[1], 10)).padStart(2, '0');
+    const h = String(parseInt(already12h[1], 10)).padStart(2, "0");
     return `${h}:${already12h[2]} ${already12h[3].toUpperCase()}`;
   }
   const m = s.match(/^(\d{1,2}):(\d{2})/);
   if (!m) return s;
   let h = parseInt(m[1], 10);
-  const ap = h >= 12 ? 'PM' : 'AM';
+  const ap = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;
-  return `${String(h12).padStart(2, '0')}:${m[2]} ${ap}`;
+  return `${String(h12).padStart(2, "0")}:${m[2]} ${ap}`;
 };
 
 export const toYmd = (date: Date): string => {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 };
 
 /** Minutes from midnight for HTML `<input type="time">` value (`HH:mm`). */
 export const parseTimeInputToMinutes = (value?: string): number | null => {
   if (!value?.trim()) return null;
-  const m = String(value).trim().match(/^(\d{1,2}):(\d{2})/);
+  const m = String(value)
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})/);
   if (!m) return null;
   const h = parseInt(m[1], 10);
   const min = parseInt(m[2], 10);
-  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59)
+    return null;
   return h * 60 + min;
 };
 
@@ -101,10 +104,10 @@ export function validateServiceScheduleTimes(input: {
   const apptMin = parseTimeInputToMinutes(input.appointmentTime);
 
   if (input.requestedPickup && pickupMin == null) {
-    errors.push('Pickup time is not valid.');
+    errors.push("Pickup time is not valid.");
   }
   if (input.appointmentTime && apptMin == null) {
-    errors.push('Appointment time is not valid.');
+    errors.push("Appointment time is not valid.");
   }
 
   let pickupLeadMinutes: number | null = null;
@@ -112,7 +115,7 @@ export function validateServiceScheduleTimes(input: {
   if (pickupMin != null && apptMin != null) {
     pickupLeadMinutes = apptMin - pickupMin;
     if (pickupLeadMinutes <= 0) {
-      errors.push('Pickup time cannot be at or after appointment time.');
+      errors.push("Pickup time cannot be at or after appointment time.");
     } else if (pickupLeadMinutes < MIN_PICKUP_BEFORE_APPOINTMENT_MIN) {
       errors.push(
         `Pickup must be at least ${MIN_PICKUP_BEFORE_APPOINTMENT_MIN} minutes before appointment (currently ${pickupLeadMinutes} min).`,
@@ -124,17 +127,17 @@ export function validateServiceScheduleTimes(input: {
     }
   }
 
-  const isRound = input.tripType === 'round-trip';
+  const isRound = input.tripType === "round-trip";
   if (isRound && !input.isWillCall) {
     const returnMin = parseTimeInputToMinutes(input.returnPickup);
     if (!input.returnPickup?.trim()) {
-      errors.push('Return pickup time is required for round trips, or turn on Will Call.');
+      errors.push("Return pickup time is required for round trips, or turn on Will Call.");
     } else if (returnMin == null) {
-      errors.push('Return time is not valid.');
+      errors.push("Return time is not valid.");
     } else if (apptMin != null) {
       const afterAppt = returnMin - apptMin;
       if (afterAppt <= 0) {
-        errors.push('Return pickup must be after appointment time.');
+        errors.push("Return pickup must be after appointment time.");
       } else if (afterAppt < MIN_RETURN_AFTER_APPOINTMENT_MIN) {
         warnings.push(
           `Return is only ${afterAppt} min after appointment — allow time for the visit or adjust return time.`,
@@ -147,7 +150,7 @@ export function validateServiceScheduleTimes(input: {
 }
 
 export const toLocationValue = (value: any): [number, number] | null => {
-  if (value == null || value === '') return null;
+  if (value == null || value === "") return null;
   const loc = to2NumArrayLoc(value);
   return loc || null;
 };
@@ -164,15 +167,18 @@ export const toGeoJsonPosition = (pair: [number, number]): [number, number] => {
   return [b, a];
 };
 
+export { imageUrl, resolveMediaUrl } from "@/utils/imageUrl";
 
-export { imageUrl, resolveMediaUrl } from '@/utils/imageUrl';
+export const isMongoId = (value?: string): boolean =>
+  /^[a-fA-F0-9]{24}$/.test(String(value || "").trim());
 
-export const isMongoId = (value?: string): boolean => /^[a-fA-F0-9]{24}$/.test(String(value || '').trim());
-
-export const apiErrorMessage = (err: any, fallback = 'Request failed'): string => {
+export const apiErrorMessage = (err: any, fallback = "Request failed"): string => {
   const messages = err?.data?.errorMessages;
   if (Array.isArray(messages) && messages.length) {
-    return messages.map((m: any) => m?.message).filter(Boolean).join('. ');
+    return messages
+      .map((m: any) => m?.message)
+      .filter(Boolean)
+      .join(". ");
   }
   return err?.data?.message || err?.error || fallback;
 };
@@ -181,33 +187,47 @@ export const weekdayKeysToNames = (keys: string[]): string[] =>
   keys.map((k) => WEEKDAY_KEY_TO_NAME[k] || String(k).toLowerCase()).filter(Boolean);
 
 export const isRoundTrip = (type?: string): boolean => {
-  const t = String(type || '').toLowerCase();
-  return t === 'round-trip' || t === 'round_trip';
+  const t = String(type || "").toLowerCase();
+  return t === "round-trip" || t === "round_trip";
 };
 
 export const combineServiceDateTime = (serviceDate?: string, time?: string): string | undefined => {
   if (!serviceDate) return undefined;
-  const ymd = String(serviceDate).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const ymd = String(serviceDate)
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!ymd) return serviceDate;
-  const t24 = to24hTime(time) || '00:00';
-  const [hh, mm] = t24.split(':').map(Number);
-  return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]), hh || 0, mm || 0).toISOString();
+  const t24 = to24hTime(time) || "00:00";
+  const [hh, mm] = t24.split(":").map(Number);
+  return new Date(
+    Number(ymd[1]),
+    Number(ymd[2]) - 1,
+    Number(ymd[3]),
+    hh || 0,
+    mm || 0,
+  ).toISOString();
 };
 
-const personName = (person?: Pick<IBookingUser, 'firstName' | 'middleName' | 'lastName'> | null): string => {
-  if (!person) return '';
-  return [person.firstName, person.middleName, person.lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+const personName = (
+  person?: Pick<IBookingUser, "firstName" | "middleName" | "lastName"> | null,
+): string => {
+  if (!person) return "";
+  return [person.firstName, person.middleName, person.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
-import { detectCountyFromAddress, extractGpsFromAddress } from '@/utils/geofenceEngine';
+import { detectCountyFromAddress, extractGpsFromAddress } from "@/utils/geofenceEngine";
 
-const personInitials = (person?: Pick<IBookingUser, 'firstName' | 'lastName'> | null): string => {
-  if (!person) return '';
-  return `${person.firstName?.[0] || ''}${person.lastName?.[0] || ''}`.toUpperCase();
+const personInitials = (person?: Pick<IBookingUser, "firstName" | "lastName"> | null): string => {
+  if (!person) return "";
+  return `${person.firstName?.[0] || ""}${person.lastName?.[0] || ""}`.toUpperCase();
 };
 
 export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
-  if (val == null || val === '') return undefined;
+  if (val == null || val === "") return undefined;
 
   if (Array.isArray(val)) {
     if (val.length >= 2) {
@@ -236,7 +256,11 @@ export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
   if (extracted) return extracted;
 
   const detected = detectCountyFromAddress(strVal);
-  if (detected.matchedBy !== 'fallback' && detected.gpsEstimate && detected.gpsEstimate.length === 2) {
+  if (
+    detected.matchedBy !== "fallback" &&
+    detected.gpsEstimate &&
+    detected.gpsEstimate.length === 2
+  ) {
     return detected.gpsEstimate;
   }
 
@@ -244,11 +268,11 @@ export const to2NumArrayLoc = (val: any): [number, number] | undefined => {
     return [nums[0], 0];
   }
 
-  return [37.5407, -77.4360];
+  return [37.5407, -77.436];
 };
 
 export const parseLatLng = (val: any): { lat: number; lng: number } | null => {
-  if (val == null || val === '') return null;
+  if (val == null || val === "") return null;
   const loc = to2NumArrayLoc(val);
   if (!loc || !Number.isFinite(loc[0]) || !Number.isFinite(loc[1])) return null;
   let [n1, n2] = loc;
@@ -264,7 +288,11 @@ export const extractBookingStopsCoords = (b: any): { lat: number; lng: number }[
   if (!rawStops) return [];
 
   if (Array.isArray(rawStops)) {
-    if (rawStops.length === 2 && typeof rawStops[0] === 'number' && typeof rawStops[1] === 'number') {
+    if (
+      rawStops.length === 2 &&
+      typeof rawStops[0] === "number" &&
+      typeof rawStops[1] === "number"
+    ) {
       const parsed = parseLatLng(rawStops);
       return parsed ? [parsed] : [];
     }
@@ -281,89 +309,93 @@ export const extractBookingStopsCoords = (b: any): { lat: number; lng: number }[
 };
 
 export const formatLocationString = (val: any): string => {
-  if (val == null || val === '') return 'N/A';
+  if (val == null || val === "") return "N/A";
   if (Array.isArray(val)) {
-    const clean = val.filter((x) => x != null && x !== '');
+    const clean = val.filter((x) => x != null && x !== "");
     if (clean.length === 2 && !isNaN(Number(clean[0])) && !isNaN(Number(clean[1]))) {
       return `${clean[0]}, ${clean[1]}`;
     }
-    return clean.join(', ');
+    return clean.join(", ");
   }
   return String(val);
 };
 
 const pricingNum = (value: unknown): number => {
-  const n = Number(value)
-  return Number.isFinite(n) ? n : 0
-}
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
 
 export const normalizePricingLegs = (raw: unknown): IBookingPricingLeg[] => {
-  if (!Array.isArray(raw)) return []
-  return raw.filter((item) => item && typeof item === 'object') as IBookingPricingLeg[]
-}
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item) => item && typeof item === "object") as IBookingPricingLeg[];
+};
 
 export const formatPricingZone = (zone?: string | null): string => {
-  const z = String(zone || '').trim().toLowerCase()
-  if (!z) return ''
-  if (z === 'inside') return 'Inside'
-  if (z === 'outside') return 'Outside'
-  return z.charAt(0).toUpperCase() + z.slice(1)
-}
+  const z = String(zone || "")
+    .trim()
+    .toLowerCase();
+  if (!z) return "";
+  if (z === "inside") return "Inside";
+  if (z === "outside") return "Outside";
+  return z.charAt(0).toUpperCase() + z.slice(1);
+};
 
 /** Primary zone label for table County column (from API pricingLegs). */
 export const pricingZonesDisplay = (legs: IBookingPricingLeg[]): string => {
-  if (!legs.length) return ''
-  if (legs.length === 1) return formatPricingZone(legs[0].zone)
+  if (!legs.length) return "";
+  if (legs.length === 1) return formatPricingZone(legs[0].zone);
   return legs
     .map((leg) => {
       const legLabel =
-        String(leg.leg || '').toLowerCase() === 'return'
-          ? 'Return'
-          : String(leg.leg || '').toLowerCase() === 'outbound'
-            ? 'Out'
-            : 'Leg'
-      return `${legLabel}: ${formatPricingZone(leg.zone) || '—'}`
+        String(leg.leg || "").toLowerCase() === "return"
+          ? "Return"
+          : String(leg.leg || "").toLowerCase() === "outbound"
+            ? "Out"
+            : "Leg";
+      return `${legLabel}: ${formatPricingZone(leg.zone) || "—"}`;
     })
-    .join(' · ')
-}
+    .join(" · ");
+};
 
 export const sumPricingLegs = (legs: IBookingPricingLeg[]) => ({
   passengerCoPay: legs.reduce((sum, leg) => sum + pricingNum(leg.passengerCoPay), 0),
   fundingSourceCharge: legs.reduce((sum, leg) => sum + pricingNum(leg.fundingSourceCharge), 0),
   billingMileage: legs.reduce((sum, leg) => sum + pricingNum(leg.billingMileage), 0),
-})
+});
 
 export const zoneBadgeTone = (zone?: string | null): string => {
-  const z = String(zone || '').trim().toLowerCase()
-  if (z === 'inside') return 'text-accent bg-accent/10 border-accent/25'
-  if (z === 'outside') return 'text-urgent bg-urgent/10 border-urgent/25'
-  return 'text-ink-3 bg-bg border-line-2'
-}
+  const z = String(zone || "")
+    .trim()
+    .toLowerCase();
+  if (z === "inside") return "text-accent bg-accent/10 border-accent/25";
+  if (z === "outside") return "text-urgent bg-urgent/10 border-urgent/25";
+  return "text-ink-3 bg-bg border-line-2";
+};
 
 /** Payer display name from populated `countyId.payersId` (e.g. "Dhaka City"). */
 export const countyPayerNameFromBooking = (booking: {
-  countyId?: IBooking['countyId']
+  countyId?: IBooking["countyId"];
 }): string => {
-  const county = booking.countyId
-  if (!county || typeof county !== 'object') return ''
-  const payersId = county.payersId
-  if (payersId && typeof payersId === 'object') {
-    const name = payersId.name || payersId.title || payersId.payerName
-    if (name && String(name).trim()) return String(name).trim()
+  const county = booking.countyId;
+  if (!county || typeof county !== "object") return "";
+  const payersId = county.payersId;
+  if (payersId && typeof payersId === "object") {
+    const name = payersId.name || payersId.title || payersId.payerName;
+    if (name && String(name).trim()) return String(name).trim();
   }
-  return ''
-}
+  return "";
+};
 
 export const payerSourceObjectLabel = (payer: unknown): string => {
-  if (!payer || typeof payer !== 'object') return ''
-  const p = payer as { name?: string; title?: string; payerName?: string }
-  return String(p.name || p.title || p.payerName || '').trim()
-}
+  if (!payer || typeof payer !== "object") return "";
+  const p = payer as { name?: string; title?: string; payerName?: string };
+  return String(p.name || p.title || p.payerName || "").trim();
+};
 
 export const parseStopsArray = (stopAddressVal: any): string[] => {
-  if (stopAddressVal == null || stopAddressVal === '') return [];
+  if (stopAddressVal == null || stopAddressVal === "") return [];
   if (Array.isArray(stopAddressVal)) {
-    const clean = stopAddressVal.filter((x) => x != null && x !== '');
+    const clean = stopAddressVal.filter((x) => x != null && x !== "");
     if (clean.length === 2 && !isNaN(Number(clean[0])) && !isNaN(Number(clean[1]))) {
       return [`${clean[0]}, ${clean[1]}`];
     }
@@ -373,48 +405,52 @@ export const parseStopsArray = (stopAddressVal: any): string[] => {
 };
 
 export const mapApiBooking = (b: IBooking) => {
-  const userObj = typeof b.userId === 'object' && b.userId ? (b.userId as IBookingUser) : null;
-  const driverObj = typeof b.driverId === 'object' && b.driverId ? (b.driverId as IBookingDriver) : null;
+  const userObj = typeof b.userId === "object" && b.userId ? (b.userId as IBookingUser) : null;
+  const driverObj =
+    typeof b.driverId === "object" && b.driverId ? (b.driverId as IBookingDriver) : null;
   const mobilityObj =
-    typeof b.mobilityRequirements === 'object' && b.mobilityRequirements
+    typeof b.mobilityRequirements === "object" && b.mobilityRequirements
       ? (b.mobilityRequirements as IMobilityRequirement)
       : null;
-  const rawMobilityId = mobilityObj?._id || (typeof b.mobilityRequirements === 'string' && isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : undefined);
-  const payerObj = typeof b.payerSource === 'object' && b.payerSource ? b.payerSource : null;
+  const rawMobilityId =
+    mobilityObj?._id ||
+    (typeof b.mobilityRequirements === "string" && isMongoId(b.mobilityRequirements)
+      ? b.mobilityRequirements
+      : undefined);
+  const payerObj = typeof b.payerSource === "object" && b.payerSource ? b.payerSource : null;
   const countyPayerName = countyPayerNameFromBooking(b);
   const payerSourceName = payerSourceObjectLabel(payerObj);
-  const fundingSourceLabel = countyPayerName || payerSourceName || b.programContext || '';
+  const fundingSourceLabel = countyPayerName || payerSourceName || b.programContext || "";
 
-  const riderName = personName(userObj) || 'Rider';
+  const riderName = personName(userObj) || "Rider";
   const driverName = personName(driverObj) || undefined;
-  const pickupTime = b.pickupTime || '';
-  const appointmentTime = b.appointmentTime || '';
-  const returnTime = b.returnTime || '';
+  const pickupTime = b.pickupTime || "";
+  const appointmentTime = b.appointmentTime || "";
+  const returnTime = b.returnTime || "";
 
-  let mappedStatus = String(b.bookingStatus || 'pending').toLowerCase();
-  if (mappedStatus === 'pending') mappedStatus = 'pending_review';
+  let mappedStatus = String(b.bookingStatus || "pending").toLowerCase();
+  if (mappedStatus === "pending") mappedStatus = "pending_review";
 
-  const tripType = b.tripType || 'one-way';
-  const pricingLegs = normalizePricingLegs((b as IBooking).pricingLegs)
-  const legTotals = sumPricingLegs(pricingLegs)
-  const primaryZone = pricingLegs[0]?.zone
-  const pricingZoneLabel = pricingZonesDisplay(pricingLegs)
+  const tripType = b.tripType || "one-way";
+  const pricingLegs = normalizePricingLegs((b as IBooking).pricingLegs);
+  const legTotals = sumPricingLegs(pricingLegs);
+  const primaryZone = pricingLegs[0]?.zone;
+  const pricingZoneLabel = pricingZonesDisplay(pricingLegs);
   const passengerCopay =
-    b.passengerCoPay != null ? pricingNum(b.passengerCoPay) : legTotals.passengerCoPay
+    b.passengerCoPay != null ? pricingNum(b.passengerCoPay) : legTotals.passengerCoPay;
   const fundingSourceCharge =
     b.organizationContribution != null
       ? pricingNum(b.organizationContribution)
-      : legTotals.fundingSourceCharge || pricingNum(b.price)
-  const billingMileage =
-    legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined
+      : legTotals.fundingSourceCharge || pricingNum(b.price);
+  const billingMileage = legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined;
 
   return {
     id: b._id,
     _id: b._id,
-    passengerId: userObj?.id || userObj?._id || (typeof b.userId === 'string' ? b.userId : ''),
+    passengerId: userObj?.id || userObj?._id || (typeof b.userId === "string" ? b.userId : ""),
     rider: {
       name: riderName,
-      initials: personInitials(userObj) || 'R',
+      initials: personInitials(userObj) || "R",
       profile: userObj?.profile,
       phone: (userObj as any)?.phone,
       email: (userObj as any)?.email,
@@ -425,22 +461,28 @@ export const mapApiBooking = (b: IBooking) => {
     dropOffLocationRaw: b.dropOffLocation,
     stops: parseStopsArray(b.stopAddress),
     stopAddressRaw: b.stopAddress,
-    mobility: mobilityObj?.name || (typeof b.mobilityRequirements === 'string' && !isMongoId(b.mobilityRequirements) ? b.mobilityRequirements : 'Ambulatory'),
+    mobility:
+      mobilityObj?.name ||
+      (typeof b.mobilityRequirements === "string" && !isMongoId(b.mobilityRequirements)
+        ? b.mobilityRequirements
+        : "Ambulatory"),
     mobilityId: rawMobilityId,
     mobilityRequirementsId: rawMobilityId,
     mobilityPrice: mobilityObj?.price || 0,
     status: mappedStatus,
     rawStatus: b.bookingStatus,
-    scheduledTime: combineServiceDateTime(b.serviceDate, pickupTime) || b.createdAt || new Date().toISOString(),
+    scheduledTime:
+      combineServiceDateTime(b.serviceDate, pickupTime) || b.createdAt || new Date().toISOString(),
     serviceDate: b.serviceDate,
     pickupTime,
     requestedPickup: pickupTime,
     appointmentTime,
-    driverArrivedAt: b.driverArrivedAt || '',
-    driverPicupAt: b.driverPicupAt || '',
+    driverArrivedAt: b.driverArrivedAt || "",
+    driverPicupAt: b.driverPicupAt || "",
     returnTime,
     returnPickup: returnTime,
-    driverId: driverObj?._id || driverObj?.id || (typeof b.driverId === 'string' ? b.driverId : undefined),
+    driverId:
+      driverObj?._id || driverObj?.id || (typeof b.driverId === "string" ? b.driverId : undefined),
     driverName,
     tripType,
     type: tripType,
@@ -451,11 +493,12 @@ export const mapApiBooking = (b: IBooking) => {
     countyPayerName,
     fundingSource: fundingSourceLabel,
     paymentMethod: fundingSourceLabel,
-    fundingSourceId: payerObj?._id || (typeof b.payerSource === 'string' ? b.payerSource : undefined),
+    fundingSourceId:
+      payerObj?._id || (typeof b.payerSource === "string" ? b.payerSource : undefined),
     countyId:
-      typeof b.countyId === 'object' && b.countyId?._id
+      typeof b.countyId === "object" && b.countyId?._id
         ? b.countyId._id
-        : typeof b.countyId === 'string'
+        : typeof b.countyId === "string"
           ? b.countyId
           : undefined,
     isRecurring: Boolean(b.recurringBooking),
@@ -478,8 +521,7 @@ export const mapApiBooking = (b: IBooking) => {
     primaryPricingZone: primaryZone,
     billingMileage,
     billingMileageSource: b.billingMileageSource,
-    insideCounty:
-      primaryZone === 'inside' ? true : primaryZone === 'outside' ? false : undefined,
+    insideCounty: primaryZone === "inside" ? true : primaryZone === "outside" ? false : undefined,
     recurringBatchId: b.recurringBatchId,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
@@ -492,9 +534,9 @@ export const extractBookingPeople = (bookings: IBooking[]) => {
   const mobility = new Map<string, IMobilityRequirement>();
 
   bookings.forEach((b) => {
-    if (typeof b.userId === 'object' && b.userId?._id) users.set(b.userId._id, b.userId);
-    if (typeof b.driverId === 'object' && b.driverId?._id) drivers.set(b.driverId._id, b.driverId);
-    if (typeof b.mobilityRequirements === 'object' && b.mobilityRequirements?._id) {
+    if (typeof b.userId === "object" && b.userId?._id) users.set(b.userId._id, b.userId);
+    if (typeof b.driverId === "object" && b.driverId?._id) drivers.set(b.driverId._id, b.driverId);
+    if (typeof b.mobilityRequirements === "object" && b.mobilityRequirements?._id) {
       mobility.set(b.mobilityRequirements._id, b.mobilityRequirements);
     }
   });
@@ -518,10 +560,11 @@ export const hasTimeConflict = (existingTrip: any, candidateTime: string | null)
 
 // Helper: check if driver vehicle type matches trip mobility need
 export const isVehicleMatch = (driver: any, booking: any) => {
-  if (!booking?.mobility || booking.mobility.toLowerCase() === 'standard') return true;
+  if (!booking?.mobility || booking.mobility.toLowerCase() === "standard") return true;
   const need = booking.mobility.toLowerCase();
-  const type = driver.vehicle?.type?.toLowerCase() || '';
-  if (need.includes('wheelchair') || need.includes('stretcher')) return type.includes(need.split(' ')[0]);
+  const type = driver.vehicle?.type?.toLowerCase() || "";
+  if (need.includes("wheelchair") || need.includes("stretcher"))
+    return type.includes(need.split(" ")[0]);
   return true; // ambulatory / cane can use any van
 };
 
@@ -554,28 +597,33 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
 
   // 5. Pickup Location (pickupLocation) -> GeoJSON [longitude, latitude]
   const pickupLocVal = patch.pickupLocation !== undefined ? patch.pickupLocation : patch.pickup;
-  if (pickupLocVal !== undefined && pickupLocVal !== null && pickupLocVal !== '') {
+  if (pickupLocVal !== undefined && pickupLocVal !== null && pickupLocVal !== "") {
     const locArr = to2NumArrayLoc(pickupLocVal);
     if (locArr) payload.pickupLocation = toGeoJsonPosition(locArr);
   }
 
   // 6. Dropoff Location (dropOffLocation) -> GeoJSON [longitude, latitude]
   const dropoffLocVal = patch.dropOffLocation !== undefined ? patch.dropOffLocation : patch.dropoff;
-  if (dropoffLocVal !== undefined && dropoffLocVal !== null && dropoffLocVal !== '') {
+  if (dropoffLocVal !== undefined && dropoffLocVal !== null && dropoffLocVal !== "") {
     const locArr = to2NumArrayLoc(dropoffLocVal);
     if (locArr) payload.dropOffLocation = toGeoJsonPosition(locArr);
   }
 
   // 7. Stop Address (stopAddress) -> GeoJSON [longitude, latitude]
-  const stopAddressVal = patch.stopAddress !== undefined ? patch.stopAddress : (Array.isArray(patch.stops) ? patch.stops[0] : patch.stop);
-  if (stopAddressVal !== undefined && stopAddressVal !== null && stopAddressVal !== '') {
+  const stopAddressVal =
+    patch.stopAddress !== undefined
+      ? patch.stopAddress
+      : Array.isArray(patch.stops)
+        ? patch.stops[0]
+        : patch.stop;
+  if (stopAddressVal !== undefined && stopAddressVal !== null && stopAddressVal !== "") {
     const locArr = to2NumArrayLoc(stopAddressVal);
     if (locArr) payload.stopAddress = toGeoJsonPosition(locArr);
   }
 
   // 8. Mobility Requirements (mobilityRequirements) -> Mongo ObjectId string
   let mobVal = patch.mobilityRequirements || patch.mobilityId || patch.mobility;
-  if (typeof mobVal === 'object' && mobVal != null) {
+  if (typeof mobVal === "object" && mobVal != null) {
     mobVal = mobVal._id || mobVal.id;
   }
   if (mobVal && isMongoId(String(mobVal))) {
@@ -589,7 +637,8 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
   }
 
   // 10. Internal Private Note (internalPrivateNote)
-  const privateNoteVal = patch.internalPrivateNote !== undefined ? patch.internalPrivateNote : patch.privateNotes;
+  const privateNoteVal =
+    patch.internalPrivateNote !== undefined ? patch.internalPrivateNote : patch.privateNotes;
   if (privateNoteVal !== undefined) {
     payload.internalPrivateNote = String(privateNoteVal);
   }
@@ -597,7 +646,7 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
   // 11. Trip Type (tripType) -> "round-trip" | "one-way"
   const tripTypeVal = patch.tripType || patch.type;
   if (tripTypeVal) {
-    payload.tripType = tripTypeVal === 'round_trip' ? 'round-trip' : String(tripTypeVal);
+    payload.tripType = tripTypeVal === "round_trip" ? "round-trip" : String(tripTypeVal);
   }
 
   // 12. Trip Reason (tripReason)
@@ -614,7 +663,7 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
 
   // 14. Payer Source (payerSource) -> Mongo ObjectId string
   let payerVal = patch.payerSource || patch.fundingSourceId;
-  if (typeof payerVal === 'object' && payerVal != null) {
+  if (typeof payerVal === "object" && payerVal != null) {
     payerVal = payerVal._id || payerVal.id;
   }
   if (payerVal && isMongoId(String(payerVal))) {
@@ -628,37 +677,41 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
   }
 
   // 16. Driver ID (driverId) -> Mongo ObjectId string, string ID or null
-  if ('driverId' in patch) {
+  if ("driverId" in patch) {
     let driverVal = patch.driverId;
-    if (typeof driverVal === 'object' && driverVal != null) {
+    if (typeof driverVal === "object" && driverVal != null) {
       driverVal = driverVal._id || driverVal.id;
     }
     payload.driverId = driverVal ? String(driverVal) : null;
   }
 
-
   // 17. Booking Status (bookingStatus) & Approval (isApproved)
-  if ('isApproved' in patch) {
+  if ("isApproved" in patch) {
     payload.isApproved = patch.isApproved;
   }
-  if ('bookingStatus' in patch) {
+  if ("bookingStatus" in patch) {
     payload.bookingStatus = patch.bookingStatus;
-  } else if ('status' in patch) {
+  } else if ("status" in patch) {
     const s = String(patch.status).toLowerCase();
-    if (s === 'approved') {
-      payload.isApproved = 'approved';
-      payload.bookingStatus = 'confirmed';
-    } else if (s === 'rejected' || s === 'cancelled') {
-      payload.isApproved = 'rejected';
-      payload.bookingStatus = 'cancelled';
+    if (s === "approved") {
+      payload.isApproved = "approved";
+      payload.bookingStatus = "confirmed";
+    } else if (s === "rejected" || s === "cancelled") {
+      payload.isApproved = "rejected";
+      payload.bookingStatus = "cancelled";
     } else {
       payload.bookingStatus = patch.status;
     }
   }
 
   // 18. Price (price) -> number
-  const priceVal = patch.price !== undefined ? patch.price : (patch.fundingSourceCharge !== undefined ? patch.fundingSourceCharge : patch.cost);
-  if (priceVal !== undefined && priceVal !== null && priceVal !== '') {
+  const priceVal =
+    patch.price !== undefined
+      ? patch.price
+      : patch.fundingSourceCharge !== undefined
+        ? patch.fundingSourceCharge
+        : patch.cost;
+  if (priceVal !== undefined && priceVal !== null && priceVal !== "") {
     const numPrice = Number(priceVal);
     if (!Number.isNaN(numPrice)) {
       payload.price = numPrice;
@@ -667,4 +720,3 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
 
   return payload;
 };
-

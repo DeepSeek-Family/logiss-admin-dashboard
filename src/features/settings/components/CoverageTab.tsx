@@ -1,27 +1,15 @@
-import { useState } from 'react';
-import {
-  MapPin,
-  Plus,
-  Trash2,
-  Edit2,
-  Accessibility,
-  Landmark,
-  Building2,
-} from 'lucide-react';
-import { Card, Button } from '@/shared/components/ui';
-import {
-  usePricing,
-  CountyConfig,
-  DEFAULT_TRANSIT_RULES,
-} from '@/hooks/usePricing';
-import { CountyModal } from './CountyModal';
-import { MobilityFeesSection } from './MobilityFeesSection';
-import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { AreaZoneCard } from './AreaZoneCard';
-import { FundingSourcesPanel } from '@/features/cms/components/FundingSourcesPanel';
-import { FacilitiesPanel } from '@/features/cms/components/FacilitiesPanel';
-import { resolveFenceLists, parsePolygon } from '@/utils/geofenceEngine';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { MapPin, Plus, Trash2, Edit2, Accessibility, Landmark, Building2 } from "lucide-react";
+import { Card, Button } from "@/shared/components/ui";
+import { usePricing, CountyConfig, DEFAULT_TRANSIT_RULES } from "@/hooks/usePricing";
+import { CountyModal } from "./CountyModal";
+import { MobilityFeesSection } from "./MobilityFeesSection";
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { AreaZoneCard } from "./AreaZoneCard";
+import { FundingSourcesPanel } from "@/features/cms/components/FundingSourcesPanel";
+import { FacilitiesPanel } from "@/features/cms/components/FacilitiesPanel";
+import { resolveFenceLists, parsePolygon } from "@/utils/geofenceEngine";
+import toast from "react-hot-toast";
 
 interface CoverageTabProps {
   role?: string | null;
@@ -32,47 +20,44 @@ const num = (v: string, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-type Section = 'counties' | 'funding' | 'fees' | 'facilities';
+type Section = "counties" | "funding" | "fees" | "facilities";
 
-const actionBtn = 'h-10 rounded-xl px-4 text-sm';
+const actionBtn = "h-10 rounded-xl px-4 text-sm";
 
 /** Flip to true to restore the Areas tab (CountyModal stays in the tree). */
 const SHOW_AREAS_TAB = false;
 
 const ALL_TABS: { id: Section; label: string; icon: any }[] = [
-  { id: 'counties', label: 'Areas', icon: MapPin },
-  { id: 'funding', label: 'Payers', icon: Landmark },
-  { id: 'fees', label: 'Fees', icon: Accessibility },
-  { id: 'facilities', label: 'Facilities', icon: Building2 },
+  { id: "counties", label: "Areas", icon: MapPin },
+  { id: "funding", label: "Payers", icon: Landmark },
+  { id: "fees", label: "Fees", icon: Accessibility },
+  { id: "facilities", label: "Facilities", icon: Building2 },
 ];
 
-const TABS = SHOW_AREAS_TAB ? ALL_TABS : ALL_TABS.filter(t => t.id !== 'counties');
+const TABS = SHOW_AREAS_TAB ? ALL_TABS : ALL_TABS.filter((t) => t.id !== "counties");
 
 export const CoverageTab = ({ role }: CoverageTabProps) => {
-  const {
-    pricing,
-    updateRules,
-    addCounty,
-    updateCounty,
-    deleteCounty,
-  } = usePricing();
+  const { pricing, updateRules, addCounty, updateCounty, deleteCounty } = usePricing();
 
-  const canEdit = role !== 'driver';
-  const [activeSection, setActiveSection] = useState<Section>(SHOW_AREAS_TAB ? 'counties' : 'funding');
+  const canEdit = role !== "driver";
+  const [activeSection, setActiveSection] = useState<Section>(
+    SHOW_AREAS_TAB ? "counties" : "funding",
+  );
   const [isCountyModalOpen, setIsCountyModalOpen] = useState(false);
   const [selectedCounty, setSelectedCounty] = useState<CountyConfig | null>(null);
   const [mapAreaId, setMapAreaId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: 'county';
+    type: "county";
     id: string;
     label: string;
   } | null>(null);
 
   const counties = pricing.counties || [];
   const rules = pricing.rules || DEFAULT_TRANSIT_RULES;
-  const zoneId = mapAreaId && counties.some(c => c.id === mapAreaId) ? mapAreaId : counties[0]?.id || null;
+  const zoneId =
+    mapAreaId && counties.some((c) => c.id === mapAreaId) ? mapAreaId : counties[0]?.id || null;
 
-  const handleSaveCounty = (data: Omit<CountyConfig, 'id'>) => {
+  const handleSaveCounty = (data: Omit<CountyConfig, "id">) => {
     if (selectedCounty) {
       updateCounty(selectedCounty.id, data);
       toast.success(`Updated ${data.name}`);
@@ -86,7 +71,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'county') {
+    if (deleteTarget.type === "county") {
       deleteCounty(deleteTarget.id);
       toast.success(`Removed ${deleteTarget.label}`);
     }
@@ -96,7 +81,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-1 p-1 bg-white rounded-2xl border border-line-2 w-fit flex-wrap">
-        {TABS.map(tab => {
+        {TABS.map((tab) => {
           const Icon = tab.icon;
           const on = activeSection === tab.id;
           return (
@@ -105,7 +90,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
               type="button"
               onClick={() => setActiveSection(tab.id)}
               className={`h-10 px-4 flex items-center gap-2 rounded-xl text-sm font-semibold transition-all ${
-                on ? 'bg-primary text-white' : 'text-ink-3 hover:text-ink hover:bg-bg'
+                on ? "bg-primary text-white" : "text-ink-3 hover:text-ink hover:bg-bg"
               }`}
             >
               <Icon size={16} />
@@ -115,7 +100,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         })}
       </div>
 
-      {SHOW_AREAS_TAB && activeSection === 'counties' && (
+      {SHOW_AREAS_TAB && activeSection === "counties" && (
         <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
           <header className="flex items-start justify-between gap-4 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
             <div className="flex items-start gap-2.5">
@@ -163,69 +148,71 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                       </td>
                     </tr>
                   ) : (
-                    counties.map(c => {
+                    counties.map((c) => {
                       const fence = resolveFenceLists(c);
                       return (
-                      <tr
-                        key={c.id}
-                        className={`cursor-pointer ${
-                          zoneId === c.id ? 'bg-primary/5' : 'hover:bg-bg/40'
-                        }`}
-                        onClick={() => setMapAreaId(c.id)}
-                      >
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-semibold text-ink">{c.name}</p>
-                          <p className="text-[11px] text-ink-4 mt-0.5">
-                            {parsePolygon(c.polygon).length >= 3
-                              ? 'Drawn fence'
-                              : fence.zipCodes.length > 0
-                                ? `${fence.zipCodes.length} ZIPs`
-                                : fence.cities.length > 0
-                                  ? `${fence.cities.length} cities`
-                                  : ''}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 text-xs font-medium text-ink-3">{c.state || 'VA'}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                              c.status === 'active'
-                                ? 'bg-accent-light text-accent'
-                                : 'bg-bg text-ink-4'
-                            }`}
-                          >
-                            {c.status === 'active' ? 'On' : 'Off'}
-                          </span>
-                        </td>
-                        {canEdit && (
+                        <tr
+                          key={c.id}
+                          className={`cursor-pointer ${
+                            zoneId === c.id ? "bg-primary/5" : "hover:bg-bg/40"
+                          }`}
+                          onClick={() => setMapAreaId(c.id)}
+                        >
                           <td className="px-4 py-3">
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setSelectedCounty(c);
-                                  setMapAreaId(c.id);
-                                  setIsCountyModalOpen(true);
-                                }}
-                                className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setDeleteTarget({ type: 'county', id: c.id, label: c.name });
-                                }}
-                                className="p-1.5 text-urgent hover:bg-urgent/10 rounded-lg"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
+                            <p className="text-sm font-semibold text-ink">{c.name}</p>
+                            <p className="text-[11px] text-ink-4 mt-0.5">
+                              {parsePolygon(c.polygon).length >= 3
+                                ? "Drawn fence"
+                                : fence.zipCodes.length > 0
+                                  ? `${fence.zipCodes.length} ZIPs`
+                                  : fence.cities.length > 0
+                                    ? `${fence.cities.length} cities`
+                                    : ""}
+                            </p>
                           </td>
-                        )}
-                      </tr>
+                          <td className="px-4 py-3 text-xs font-medium text-ink-3">
+                            {c.state || "VA"}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                c.status === "active"
+                                  ? "bg-accent-light text-accent"
+                                  : "bg-bg text-ink-4"
+                              }`}
+                            >
+                              {c.status === "active" ? "On" : "Off"}
+                            </span>
+                          </td>
+                          {canEdit && (
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedCounty(c);
+                                    setMapAreaId(c.id);
+                                    setIsCountyModalOpen(true);
+                                  }}
+                                  className="p-1.5 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-lg"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget({ type: "county", id: c.id, label: c.name });
+                                  }}
+                                  className="p-1.5 text-urgent hover:bg-urgent/10 rounded-lg"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
                       );
                     })
                   )}
@@ -240,7 +227,7 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
                 onSelect={setMapAreaId}
                 canEdit={canEdit}
                 onEdit={() => {
-                  const area = counties.find(c => c.id === zoneId) || null;
+                  const area = counties.find((c) => c.id === zoneId) || null;
                   if (!area) return;
                   setSelectedCounty(area);
                   setIsCountyModalOpen(true);
@@ -251,56 +238,58 @@ export const CoverageTab = ({ role }: CoverageTabProps) => {
         </section>
       )}
 
-      {activeSection === 'funding' && <FundingSourcesPanel canEdit={canEdit} />}
+      {activeSection === "funding" && <FundingSourcesPanel canEdit={canEdit} />}
 
-      {activeSection === 'fees' && (
+      {activeSection === "fees" && (
         <div className="space-y-6 w-full max-w-2xl">
-        <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
-          <header className="flex items-start gap-2.5 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
-              1
-            </span>
-            <h2 className="text-sm font-semibold text-primary">Trip add-ons</h2>
-          </header>
-          <div className="p-5">
-            <label className="block max-w-xs text-xs font-semibold text-ink-3">
-              Extra stop
-              <div className="relative mt-1.5">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
-                <input
-                  type="number"
-                  step="0.50"
-                  min="0"
-                  disabled={!canEdit}
-                  value={rules.stopFee}
-                  onChange={e => updateRules({ stopFee: num(e.target.value, 0) })}
-                  className="input-base h-10 w-full pl-7"
-                />
-              </div>
-            </label>
-          </div>
-        </section>
+          <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
+            <header className="flex items-start gap-2.5 px-5 py-4 border-b border-line-2 bg-primary-tint/60">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
+                1
+              </span>
+              <h2 className="text-sm font-semibold text-primary">Trip add-ons</h2>
+            </header>
+            <div className="p-5">
+              <label className="block max-w-xs text-xs font-semibold text-ink-3">
+                Extra stop
+                <div className="relative mt-1.5">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    step="0.50"
+                    min="0"
+                    disabled={!canEdit}
+                    value={rules.stopFee}
+                    onChange={(e) => updateRules({ stopFee: num(e.target.value, 0) })}
+                    className="input-base h-10 w-full pl-7"
+                  />
+                </div>
+              </label>
+            </div>
+          </section>
 
-        <MobilityFeesSection canEdit={canEdit} />
+          <MobilityFeesSection canEdit={canEdit} />
         </div>
       )}
 
-      {activeSection === 'facilities' && (
+      {activeSection === "facilities" && (
         <Card className="p-5">
           <FacilitiesPanel canEdit={canEdit} />
         </Card>
       )}
 
       {SHOW_AREAS_TAB && (
-      <CountyModal
-        isOpen={isCountyModalOpen}
-        county={selectedCounty}
-        onClose={() => {
-          setIsCountyModalOpen(false);
-          setSelectedCounty(null);
-        }}
-        onSave={handleSaveCounty}
-      />
+        <CountyModal
+          isOpen={isCountyModalOpen}
+          county={selectedCounty}
+          onClose={() => {
+            setIsCountyModalOpen(false);
+            setSelectedCounty(null);
+          }}
+          onSave={handleSaveCounty}
+        />
       )}
 
       <DeleteConfirmModal

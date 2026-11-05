@@ -1,7 +1,7 @@
-import { FileWarning } from 'lucide-react';
-import { Card, Badge } from '@/shared/components/ui';
-import type { IIncidentReport } from '@/redux/apivtwo/dashboardOnvording';
-import { formatReportUser, reportCategory, statusLabel } from '@/features/reports/utils/helpers';
+import { FileWarning } from "lucide-react";
+import { Card, Badge } from "@/shared/components/ui";
+import type { IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
+import { formatReportUser, reportCategory, statusLabel } from "@/features/reports/utils/helpers";
 
 interface OpenReportsPanelProps {
   openReports: IIncidentReport[];
@@ -29,7 +29,7 @@ export const OpenReportsPanel = ({ openReports, onReviewClick }: OpenReportsPane
           <div
             key={report._id}
             onClick={onReviewClick}
-            onKeyDown={(e) => e.key === 'Enter' && onReviewClick()}
+            onKeyDown={(e) => e.key === "Enter" && onReviewClick()}
             role="button"
             tabIndex={0}
             className="px-4 py-3 flex items-center justify-between hover:bg-bg cursor-pointer transition-colors group"

@@ -1,267 +1,268 @@
-import { baseApi } from '../baseApi'
+import { baseApi } from "../baseApi";
 import {
   FILE_EXPORT_FALLBACK_NAMES,
   requestFileExport,
   type FileExportType,
-} from '@/utils/fileExportDownload'
+} from "@/utils/fileExportDownload";
 
 export interface IBookingUser {
-  _id: string
-  firstName: string
-  middleName?: string
-  lastName: string
-  profile?: string
-  id?: string
+  _id: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  profile?: string;
+  id?: string;
 }
 
 export interface IMobilityRequirement {
-  _id: string
-  name: string
-  price: number
-  icon?: string
-  status?: boolean
-  creator?: string
-  __v?: number
+  _id: string;
+  name: string;
+  price: number;
+  icon?: string;
+  status?: boolean;
+  creator?: string;
+  __v?: number;
 }
 
 export interface IBookingDriver {
-  _id: string
-  firstName: string
-  lastName: string
-  profile?: string
-  id?: string
+  _id: string;
+  firstName: string;
+  lastName: string;
+  profile?: string;
+  id?: string;
 }
 
 export interface IBookingCountyPayerRef {
-  _id?: string
-  name?: string
-  title?: string
-  payerName?: string
-  type?: string
+  _id?: string;
+  name?: string;
+  title?: string;
+  payerName?: string;
+  type?: string;
 }
 
 export interface IBookingCountyRef {
-  _id: string
-  payersId?: IBookingCountyPayerRef | string
-  countyName?: string
-  name?: string
+  _id: string;
+  payersId?: IBookingCountyPayerRef | string;
+  countyName?: string;
+  name?: string;
 }
 
 export interface IBookingPricingLeg {
-  leg?: string
-  zone?: string
-  priceMethod?: string
-  straightLineMileage?: number | null
-  calculatedRouteMileage?: number | null
-  billingMileage?: number | null
-  billingMileageSource?: string
-  fundingSourceCharge?: number
-  passengerCoPay?: number
+  leg?: string;
+  zone?: string;
+  priceMethod?: string;
+  straightLineMileage?: number | null;
+  calculatedRouteMileage?: number | null;
+  billingMileage?: number | null;
+  billingMileageSource?: string;
+  fundingSourceCharge?: number;
+  passengerCoPay?: number;
 }
 
 export interface IBooking {
-  _id: string
-  userId?: IBookingUser | string
-  pickupLocation: string | number
-  dropOffLocation: string | number
-  stopAddress?: string | number
-  mobilityRequirements?: IMobilityRequirement | string
-  tripNote?: string
-  internalPrivateNote?: string
-  tripType: 'round-trip' | 'one-way' | string
-  tripReason?: string
-  passengerSeats?: number
-  payerSource?: IPayerSource | string
-  countyId?: IBookingCountyRef | string
-  programContext?: string
-  serviceDate?: string
-  appointmentTime?: string
-  pickupTime?: string
-  returnTime?: string
-  recurringBooking?: boolean
-  selectedDate?: string[]
-  endDate?: string
-  driverId?: IBookingDriver | string
-  vehicleId?: string
-  bookingStatus?: 'pending' | 'assigned' | 'in-progress'|  'confirmed' | 'completed' | 'cancelled' | string
-  recurringBatchId?: string
-  price?: number
-  totalPrice?: number
-  passengerCoPay?: number
-  organizationContribution?: number
-  isApproved?: string
-  paymentStatus?: string
-  billingMileageSource?: string
-  pricingLegs?: IBookingPricingLeg[]
-  cancellationOutcome?: string
-  noShowOutcome?: string
-  createdAt?: string
-  updatedAt?: string
-  driverArrivedAt?: string
-  driverPicupAt?: string
-  __v?: number
+  _id: string;
+  userId?: IBookingUser | string;
+  pickupLocation: string | number;
+  dropOffLocation: string | number;
+  stopAddress?: string | number;
+  mobilityRequirements?: IMobilityRequirement | string;
+  tripNote?: string;
+  internalPrivateNote?: string;
+  tripType: "round-trip" | "one-way" | string;
+  tripReason?: string;
+  passengerSeats?: number;
+  payerSource?: IPayerSource | string;
+  countyId?: IBookingCountyRef | string;
+  programContext?: string;
+  serviceDate?: string;
+  appointmentTime?: string;
+  pickupTime?: string;
+  returnTime?: string;
+  recurringBooking?: boolean;
+  selectedDate?: string[];
+  endDate?: string;
+  driverId?: IBookingDriver | string;
+  vehicleId?: string;
+  bookingStatus?:
+    "pending" | "assigned" | "in-progress" | "confirmed" | "completed" | "cancelled" | string;
+  recurringBatchId?: string;
+  price?: number;
+  totalPrice?: number;
+  passengerCoPay?: number;
+  organizationContribution?: number;
+  isApproved?: string;
+  paymentStatus?: string;
+  billingMileageSource?: string;
+  pricingLegs?: IBookingPricingLeg[];
+  cancellationOutcome?: string;
+  noShowOutcome?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  driverArrivedAt?: string;
+  driverPicupAt?: string;
+  __v?: number;
 }
 
 export interface IBookingPagination {
-  total: number
-  limit: number
-  page: number
-  totalPage: number
+  total: number;
+  limit: number;
+  page: number;
+  totalPage: number;
 }
 
 export interface IGetAllBookingsResponse {
-  success: boolean
-  message: string
-  pagination?: IBookingPagination
-  data: IBooking[]
+  success: boolean;
+  message: string;
+  pagination?: IBookingPagination;
+  data: IBooking[];
 }
 
 export interface ISingleBookingResponse {
-  success: boolean
-  message: string
-  data: IBooking
+  success: boolean;
+  message: string;
+  data: IBooking;
 }
 
 export interface IScheduleOnboardingData {
-  todayTotalTrips: number
-  todayAssignedStatusTrips: number
-  todayInProgressStatusTrips: number
-  todayCompletedStatusTrips: number
-  todayCancelledStatusTrips: number
+  todayTotalTrips: number;
+  todayAssignedStatusTrips: number;
+  todayInProgressStatusTrips: number;
+  todayCompletedStatusTrips: number;
+  todayCancelledStatusTrips: number;
 }
 
 export interface IScheduleOnboardingResponse {
-  success: boolean
-  message: string
-  data: IScheduleOnboardingData
+  success: boolean;
+  message: string;
+  data: IScheduleOnboardingData;
 }
 
 export interface IPayerSource {
-  _id: string
-  name?: string
-  title?: string
-  payerName?: string
-  status?: boolean
-  [key: string]: any
+  _id: string;
+  name?: string;
+  title?: string;
+  payerName?: string;
+  status?: boolean;
+  [key: string]: any;
 }
 
 export interface IPayersListResponse {
-  success: boolean
-  message?: string
-  data: IPayerSource[]
+  success: boolean;
+  message?: string;
+  data: IPayerSource[];
 }
 
 export interface ICalculateBookingPriceBody {
-  pickupLocation: [number, number]
-  dropOffLocation: [number, number]
-  stopAddress?: [number, number]
-  payerSource: string
-  tripType: string
-  mobilityRequirements: string
-  countyId: string
+  pickupLocation: [number, number];
+  dropOffLocation: [number, number];
+  stopAddress?: [number, number];
+  payerSource: string;
+  tripType: string;
+  mobilityRequirements: string;
+  countyId: string;
 }
 
 export interface ICalculatedBookingPrice {
-  totalPrice: number
-  passengerCoPay: number
-  organizationContribution: number
-  zoneCoPay: number
-  milesPrice: number
-  mobilityTotalPrice: number
-  priceMethod: string
-  countyId: string
-  zone: string
+  totalPrice: number;
+  passengerCoPay: number;
+  organizationContribution: number;
+  zoneCoPay: number;
+  milesPrice: number;
+  mobilityTotalPrice: number;
+  priceMethod: string;
+  countyId: string;
+  zone: string;
 }
 
 export interface ICalculateBookingPriceResponse {
-  success: boolean
-  message: string
-  data: ICalculatedBookingPrice
+  success: boolean;
+  message: string;
+  data: ICalculatedBookingPrice;
 }
 
 export interface ICreateBookingPayload {
-  userId: string
-  pickupLocation: number[] | number
-  dropOffLocation: number[] | number
-  stopAddress?: number[] | number
-  mobilityRequirements?: string
-  tripNote?: string
-  internalPrivateNote?: string
-  tripType?: 'round-trip' | 'one-way' | string
-  tripReason?: string
-  passengerSeats?: number
-  payerSource: string
-  programContext?: string
-  serviceDate?: string
-  appointmentTime?: string
-  pickupTime?: string
-  returnTime?: string
-  recurringBooking?: boolean
-  selectedDate?: string[]
-  endDate?: string
-  driverId: string
-  vehicleId?: string
-  [key: string]: any
+  userId: string;
+  pickupLocation: number[] | number;
+  dropOffLocation: number[] | number;
+  stopAddress?: number[] | number;
+  mobilityRequirements?: string;
+  tripNote?: string;
+  internalPrivateNote?: string;
+  tripType?: "round-trip" | "one-way" | string;
+  tripReason?: string;
+  passengerSeats?: number;
+  payerSource: string;
+  programContext?: string;
+  serviceDate?: string;
+  appointmentTime?: string;
+  pickupTime?: string;
+  returnTime?: string;
+  recurringBooking?: boolean;
+  selectedDate?: string[];
+  endDate?: string;
+  driverId: string;
+  vehicleId?: string;
+  [key: string]: any;
 }
 
 export interface IGetBookingsQueryParams {
-  page?: number
-  limit?: number
-  search?: string
-  searchTerm?: string
-  payerSource?: string
-  payers?: string
-  status?: string
-  bookingStatus?: string
-  serviceDate?: string
-  startDate?: string
-  endDate?: string
-  driverId?: string
-  payerId?: string
-  sort?: string
+  page?: number;
+  limit?: number;
+  search?: string;
+  searchTerm?: string;
+  payerSource?: string;
+  payers?: string;
+  status?: string;
+  bookingStatus?: string;
+  serviceDate?: string;
+  startDate?: string;
+  endDate?: string;
+  driverId?: string;
+  payerId?: string;
+  sort?: string;
   /** When true, only bookings without a driver (`/booking/approved?unassign=true`). */
-  unassign?: boolean
-  [key: string]: any
+  unassign?: boolean;
+  [key: string]: any;
 }
 
-export type TripHistoryExportType = FileExportType
+export type TripHistoryExportType = FileExportType;
 
 export interface IExportTripHistoryArgs extends IGetBookingsQueryParams {
-  type: FileExportType
+  type: FileExportType;
 }
 
 const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
-  const queryParams: Record<string, string | number> = {}
-  if (params && typeof params === 'object') {
-    if (params.page != null) queryParams.page = params.page
-    if (params.limit != null) queryParams.limit = params.limit
+  const queryParams: Record<string, string | number> = {};
+  if (params && typeof params === "object") {
+    if (params.page != null) queryParams.page = params.page;
+    if (params.limit != null) queryParams.limit = params.limit;
 
-    const searchVal = params.searchTerm || params.search
+    const searchVal = params.searchTerm || params.search;
     if (searchVal) {
-      queryParams.searchTerm = searchVal
+      queryParams.searchTerm = searchVal;
     }
 
-    if (params.payerId && params.payerId !== 'all') {
-      queryParams.payerId = params.payerId
+    if (params.payerId && params.payerId !== "all") {
+      queryParams.payerId = params.payerId;
     }
 
-    const payerVal = params.payerSource || params.payers
-    if (payerVal && payerVal !== 'all') {
-      queryParams.payerSource = payerVal
+    const payerVal = params.payerSource || params.payers;
+    if (payerVal && payerVal !== "all") {
+      queryParams.payerSource = payerVal;
     }
 
-    if (params.serviceDate) queryParams.serviceDate = params.serviceDate
-    if (params.startDate) queryParams.startDate = params.startDate
-    if (params.endDate) queryParams.endDate = params.endDate
-    if (params.driverId && params.driverId !== 'all') queryParams.driverId = params.driverId
-    if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus
-    if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status
-    if (params.sort) queryParams.sort = params.sort
-    if (params.unassign === true) queryParams.unassign = 'true'
-    else if (params.unassign === false) queryParams.unassign = 'false'
+    if (params.serviceDate) queryParams.serviceDate = params.serviceDate;
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    if (params.driverId && params.driverId !== "all") queryParams.driverId = params.driverId;
+    if (params.bookingStatus) queryParams.bookingStatus = params.bookingStatus;
+    if (params.status && !queryParams.bookingStatus) queryParams.bookingStatus = params.status;
+    if (params.sort) queryParams.sort = params.sort;
+    if (params.unassign === true) queryParams.unassign = "true";
+    else if (params.unassign === false) queryParams.unassign = "false";
   }
-  return queryParams
-}
+  return queryParams;
+};
 
 const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
   const list = Array.isArray(response)
@@ -270,69 +271,69 @@ const normalizeBookingsResponse = (response: any): IGetAllBookingsResponse => {
       ? response.data
       : Array.isArray(response?.data?.data)
         ? response.data.data
-        : []
-  const pagination = response?.pagination || response?.data?.pagination
+        : [];
+  const pagination = response?.pagination || response?.data?.pagination;
   return {
     success: response?.success !== false,
-    message: response?.message || '',
+    message: response?.message || "",
     pagination,
     data: list,
-  }
-}
+  };
+};
 
 export const bookingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
       query: (params) => ({
-        url: '/booking',
-        method: 'GET',
+        url: "/booking",
+        method: "GET",
         params: buildQueryParams(params),
       }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
-              { type: 'bookings', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "bookings" as const, id: _id })),
+              { type: "bookings", id: "LIST" },
             ]
-          : [{ type: 'bookings', id: 'LIST' }],
+          : [{ type: "bookings", id: "LIST" }],
     }),
     getAllAssignedBookings: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
       query: (params) => ({
-        url: '/booking/approved',
-        method: 'GET',
+        url: "/booking/approved",
+        method: "GET",
         params: buildQueryParams(params),
       }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
-              { type: 'bookings', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "bookings" as const, id: _id })),
+              { type: "bookings", id: "LIST" },
             ]
-          : [{ type: 'bookings', id: 'LIST' }],
+          : [{ type: "bookings", id: "LIST" }],
     }),
 
     getAllTripHistory: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
       query: (params) => ({
-        url: '/booking/history',
-        method: 'GET',
+        url: "/booking/history",
+        method: "GET",
         params: buildQueryParams(params),
       }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
-              { type: 'bookings', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "bookings" as const, id: _id })),
+              { type: "bookings", id: "LIST" },
             ]
-          : [{ type: 'bookings', id: 'LIST' }],
+          : [{ type: "bookings", id: "LIST" }],
     }),
 
     exportTripHistory: builder.mutation<null, IExportTripHistoryArgs>({
       queryFn: async ({ type, ...filters }, _api, _extraOptions, baseQuery) =>
         requestFileExport(baseQuery as unknown as (args: Record<string, unknown>) => unknown, {
-          url: '/booking/history/export',
+          url: "/booking/history/export",
           params: buildQueryParams(filters),
           type,
           fallbackFileName: FILE_EXPORT_FALLBACK_NAMES.tripHistory[type],
@@ -341,8 +342,8 @@ export const bookingApi = baseApi.injectEndpoints({
 
     getAllPayers: builder.query<IPayersListResponse, void>({
       query: () => ({
-        url: '/payers',
-        method: 'GET',
+        url: "/payers",
+        method: "GET",
       }),
       transformResponse: (response: any): IPayersListResponse => ({
         success: response?.success !== false,
@@ -356,74 +357,75 @@ export const bookingApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'Payers' as const, id: _id })),
-              { type: 'Payers', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "Payers" as const, id: _id })),
+              { type: "Payers", id: "LIST" },
             ]
-          : [{ type: 'Payers', id: 'LIST' }],
+          : [{ type: "Payers", id: "LIST" }],
     }),
     calculateBookingPrice: builder.mutation<
       ICalculateBookingPriceResponse,
       ICalculateBookingPriceBody
     >({
       query: (body) => ({
-        url: '/booking/calculate-price',
-        method: 'POST',
+        url: "/booking/calculate-price",
+        method: "POST",
         body,
       }),
     }),
 
     manualCreateBooking: builder.mutation<ISingleBookingResponse, ICreateBookingPayload>({
       query: (body) => ({
-        url: '/booking',
-        method: 'POST',
+        url: "/booking",
+        method: "POST",
         body,
       }),
       invalidatesTags: [
-        { type: 'bookings', id: 'LIST' },
-        { type: 'Riders', id: 'LIST' },
+        { type: "bookings", id: "LIST" },
+        { type: "Riders", id: "LIST" },
       ],
     }),
 
-    updateBooking: builder.mutation<ISingleBookingResponse, { id: string; payload: Partial<ICreateBookingPayload> | Record<string, any> }>({
+    updateBooking: builder.mutation<
+      ISingleBookingResponse,
+      { id: string; payload: Partial<ICreateBookingPayload> | Record<string, any> }
+    >({
       query: ({ id, payload }) => ({
         url: `/booking/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: payload,
       }),
       invalidatesTags: [
-        { type: 'bookings', id: 'LIST' },
-        { type: 'Riders', id: 'LIST' },
+        { type: "bookings", id: "LIST" },
+        { type: "Riders", id: "LIST" },
       ],
     }),
-
 
     scheduleBooking: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
       query: (params) => ({
         url: `/bookings/schedule`,
-        method: 'GET',
+        method: "GET",
         params: buildQueryParams(params),
       }),
       transformResponse: normalizeBookingsResponse,
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ _id }) => ({ type: 'bookings' as const, id: _id })),
-              { type: 'bookings', id: 'LIST' },
+              ...result.data.map(({ _id }) => ({ type: "bookings" as const, id: _id })),
+              { type: "bookings", id: "LIST" },
             ]
-          : [{ type: 'bookings', id: 'LIST' }],
+          : [{ type: "bookings", id: "LIST" }],
     }),
 
     getScheduleOnboarding: builder.query<IScheduleOnboardingResponse, void>({
       query: () => ({
         url: `/bookings/schedule/onboarding`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: [{ type: 'bookings', id: 'LIST' }],
+      providesTags: [{ type: "bookings", id: "LIST" }],
     }),
- 
   }),
   overrideExisting: false,
-})
+});
 
 export const {
   useGetAllBookingsQuery,
@@ -436,4 +438,4 @@ export const {
   useExportTripHistoryMutation,
   useScheduleBookingQuery,
   useGetScheduleOnboardingQuery,
-} = bookingApi
+} = bookingApi;

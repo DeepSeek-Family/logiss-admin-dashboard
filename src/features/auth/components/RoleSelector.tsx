@@ -1,4 +1,4 @@
-import { ShieldAlert, Navigation, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Navigation, ArrowRight } from "lucide-react";
 
 interface RoleSelectorProps {
   handleRoleSelect: (role: string) => void;
@@ -14,7 +14,7 @@ export const RoleSelector = ({ handleRoleSelect }: RoleSelectorProps) => {
 
       <div className="space-y-4">
         <button
-          onClick={() => handleRoleSelect('dispatcher')}
+          onClick={() => handleRoleSelect("dispatcher")}
           className="w-full flex items-center justify-between p-5 border-2 border-line hover:border-primary hover:bg-primary-tint/20 rounded-xl transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -26,11 +26,14 @@ export const RoleSelector = ({ handleRoleSelect }: RoleSelectorProps) => {
               <p className="text-xs font-medium text-ink-4">Manage bookings & live tracking</p>
             </div>
           </div>
-          <ArrowRight size={20} className="text-primary opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300" />
+          <ArrowRight
+            size={20}
+            className="text-primary opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300"
+          />
         </button>
 
         <button
-          onClick={() => handleRoleSelect('admin')}
+          onClick={() => handleRoleSelect("admin")}
           className="w-full flex items-center justify-between p-5 border-2 border-line hover:border-accent hover:bg-accent-light/10 rounded-xl transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -42,7 +45,10 @@ export const RoleSelector = ({ handleRoleSelect }: RoleSelectorProps) => {
               <p className="text-xs font-medium text-ink-4">Manage fleet, drivers & reports</p>
             </div>
           </div>
-          <ArrowRight size={20} className="text-accent opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300" />
+          <ArrowRight
+            size={20}
+            className="text-accent opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300"
+          />
         </button>
       </div>
     </div>

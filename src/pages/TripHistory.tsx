@@ -1,1 +1,1 @@
-export { default } from '@/features/tripHistory/TripHistoryPage';
+export { default } from "@/features/tripHistory/TripHistoryPage";

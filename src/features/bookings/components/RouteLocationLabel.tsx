@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { parseLatLng } from '@/features/bookings/utils/helpers';
-import { reverseGeocodeLngLat } from '@/utils/geofenceEngine';
-import { loadGoogleMapsScript } from '@/shared/components/ui/GoogleAddressInput';
+import { useEffect, useMemo, useState } from "react";
+import { parseLatLng } from "@/features/bookings/utils/helpers";
+import { reverseGeocodeLngLat } from "@/utils/geofenceEngine";
+import { loadGoogleMapsScript } from "@/shared/components/ui/GoogleAddressInput";
 
 const COORDS_PATTERN = /^-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\./;
 
 export const looksLikeCoordinateLabel = (text?: string | null): boolean => {
-  const s = String(text || '').trim();
+  const s = String(text || "").trim();
   if (!s) return false;
   return COORDS_PATTERN.test(s) || /^-?\d{1,3}\.\d+$/.test(s);
 };
@@ -19,16 +19,16 @@ interface RouteLocationLabelProps {
 
 export const RouteLocationLabel = ({
   locationRaw,
-  displayFallback = '',
-  className = '',
+  displayFallback = "",
+  className = "",
 }: RouteLocationLabelProps) => {
   const parsed = useMemo(() => parseLatLng(locationRaw), [locationRaw]);
-  const fallback = displayFallback?.trim() || '';
+  const fallback = displayFallback?.trim() || "";
 
   const [text, setText] = useState(() => {
     if (fallback && !looksLikeCoordinateLabel(fallback)) return fallback;
-    if (parsed) return 'Loading…';
-    return fallback || '—';
+    if (parsed) return "Loading…";
+    return fallback || "—";
   });
 
   useEffect(() => {
@@ -37,12 +37,12 @@ export const RouteLocationLabel = ({
       return;
     }
     if (!parsed) {
-      setText(fallback || '—');
+      setText(fallback || "—");
       return;
     }
 
     let cancelled = false;
-    setText('Loading…');
+    setText("Loading…");
 
     void (async () => {
       if (import.meta.env.VITE_GOOGLE_MAPS) {
@@ -62,7 +62,7 @@ export const RouteLocationLabel = ({
     };
   }, [parsed?.lat, parsed?.lng, fallback]);
 
-  const widthClass = /\bmax-w-/.test(className) ? '' : 'max-w-[120px]';
+  const widthClass = /\bmax-w-/.test(className) ? "" : "max-w-[120px]";
 
   return (
     <span

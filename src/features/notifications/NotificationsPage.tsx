@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react';
-import { Megaphone, Loader2, AlertTriangle } from 'lucide-react';
-import { Pagination } from '@/shared/components/ui';
-import { NotificationList } from '@/features/notifications';
+import { useMemo, useState } from "react";
+import { Megaphone, Loader2, AlertTriangle } from "lucide-react";
+import { Pagination } from "@/shared/components/ui";
+import { NotificationList } from "@/features/notifications";
 import {
   useGetNotificationsQuery,
   useGetUnreadNotificationCountQuery,
   useMarkAllNotificationsReadMutation,
-} from '@/redux/api/notificationsApi';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
-import { toast } from 'react-hot-toast';
-import { useNotifications } from '@/hooks/useNotifications';
+} from "@/redux/api/notificationsApi";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { toast } from "react-hot-toast";
+import { useNotifications } from "@/hooks/useNotifications";
 const mapApiNotification = (n: {
   _id: string;
   title?: string;
@@ -21,14 +21,14 @@ const mapApiNotification = (n: {
   createdAt?: string;
 }) => ({
   id: n._id,
-  type: n.type || 'info',
+  type: n.type || "info",
   read: Boolean(n.read),
   icon: Megaphone,
-  color: 'text-primary',
-  bg: 'bg-primary-light',
-  category: n.category || '',
-  title: n.title || '',
-  message: n.message || n.text || '',
+  color: "text-primary",
+  bg: "bg-primary-light",
+  category: n.category || "",
+  title: n.title || "",
+  message: n.message || n.text || "",
   time: n.createdAt || new Date().toISOString(),
   action: null as string | null,
 });
@@ -45,7 +45,8 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
   const { data: apiUnreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] = useMarkAllNotificationsReadMutation();
+  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] =
+    useMarkAllNotificationsReadMutation();
 
   const {
     notifications: liveBroadcasts,
@@ -53,18 +54,15 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
     clear: clearLive,
   } = useNotifications();
 
-  const apiItems = useMemo(
-    () => (data?.data ?? []).map(mapApiNotification),
-    [data],
-  );
+  const apiItems = useMemo(() => (data?.data ?? []).map(mapApiNotification), [data]);
 
   const liveItems = useMemo(
     () =>
       liveBroadcasts.map((n) => ({
         ...n,
         icon: Megaphone,
-        color: 'text-primary',
-        bg: 'bg-primary-light',
+        color: "text-primary",
+        bg: "bg-primary-light",
         time: n.time || new Date().toISOString(),
       })),
     [liveBroadcasts],
@@ -78,9 +76,7 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
       seen.add(key);
       return true;
     });
-    return merged.sort(
-      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-    );
+    return merged.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
   }, [liveItems, apiItems]);
 
   const localUnread = combined.filter((n) => !n.read).length;
@@ -93,10 +89,10 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
     try {
       await markAllNotificationsRead().unwrap();
       markAllLiveRead();
-      toast.success('All notifications marked as read');
+      toast.success("All notifications marked as read");
       refetch();
     } catch (e: unknown) {
-      toast.error(apiErrorMessage(e, 'Failed to mark notifications as read'));
+      toast.error(apiErrorMessage(e, "Failed to mark notifications as read"));
     }
   };
 
@@ -132,7 +128,7 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
               disabled={isMarkingAllRead}
               className="text-xs text-primary hover:underline font-semibold disabled:opacity-50"
             >
-              {isMarkingAllRead ? 'Marking…' : 'Mark all as read'}
+              {isMarkingAllRead ? "Marking…" : "Mark all as read"}
             </button>
           )}
           {liveBroadcasts.length > 0 && (
@@ -151,7 +147,11 @@ const Notifications = ({ role: _role }: { role?: string | null }) => {
         <div className="flex items-center gap-2 text-sm text-urgent bg-urgent/5 border border-urgent/20 rounded-xl px-4 py-3">
           <AlertTriangle size={16} />
           Could not load notifications from the server.
-          <button type="button" onClick={() => refetch()} className="ml-auto text-xs font-semibold underline">
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="ml-auto text-xs font-semibold underline"
+          >
             Retry
           </button>
         </div>

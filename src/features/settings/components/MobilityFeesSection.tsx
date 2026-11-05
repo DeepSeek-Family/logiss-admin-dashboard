@@ -1,24 +1,18 @@
-import { useState, useCallback } from 'react';
-import {
-  Plus,
-  Edit2,
-  Accessibility,
-  Loader2,
-  AlertTriangle,
-} from 'lucide-react';
-import { Button } from '@/shared/components/ui';
-import { MobilityModal } from './MobilityModal';
-import { imageUrl } from '@/utils/imageUrl';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+import { useState, useCallback } from "react";
+import { Plus, Edit2, Accessibility, Loader2, AlertTriangle } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { MobilityModal } from "./MobilityModal";
+import { imageUrl } from "@/utils/imageUrl";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 import {
   useGetMobilitiesQuery,
   useCreateMobilityMutation,
   useUpdateMobilityMutation,
   type IMobility,
-} from '@/redux/api/mobilityApi';
-import toast from 'react-hot-toast';
+} from "@/redux/api/mobilityApi";
+import toast from "react-hot-toast";
 
-const actionBtn = 'h-10 rounded-xl px-4 text-sm';
+const actionBtn = "h-10 rounded-xl px-4 text-sm";
 
 export type MobilityModalItem = {
   id: string;
@@ -42,7 +36,7 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
   const [brokenIconIds, setBrokenIconIds] = useState<Set<string>>(() => new Set());
 
   const markIconBroken = useCallback((id: string) => {
-    setBrokenIconIds(prev => {
+    setBrokenIconIds((prev) => {
       if (prev.has(id)) return prev;
       const next = new Set(prev);
       next.add(id);
@@ -72,10 +66,10 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
             ...(payload.imageFile ? { image: payload.imageFile } : {}),
           },
         }).unwrap();
-        toast.success('Mobility updated');
+        toast.success("Mobility updated");
       } else {
         if (!payload.imageFile) {
-          toast.error('Please upload an icon image');
+          toast.error("Please upload an icon image");
           return;
         }
         await createMobility({
@@ -83,12 +77,12 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
           price: payload.price,
           image: payload.imageFile,
         }).unwrap();
-        toast.success('Mobility added');
+        toast.success("Mobility added");
       }
       setIsModalOpen(false);
       setSelected(null);
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to save mobility'));
+      toast.error(apiErrorMessage(err, "Failed to save mobility"));
     }
   };
 
@@ -129,8 +123,14 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
           {isError && (
             <div className="py-10 flex flex-col items-center gap-2 text-center">
               <AlertTriangle className="text-urgent opacity-60" size={28} />
-              <p className="text-sm text-ink-3">{apiErrorMessage(error, 'Failed to load mobility')}</p>
-              <button type="button" onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium">
+              <p className="text-sm text-ink-3">
+                {apiErrorMessage(error, "Failed to load mobility")}
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+              >
                 Retry
               </button>
             </div>
@@ -141,11 +141,14 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
               {items.length === 0 ? (
                 <div className="py-10 text-center text-sm text-ink-4">No mobility options yet</div>
               ) : (
-                items.map(mob => {
+                items.map((mob) => {
                   const iconUrl = imageUrl(mob.icon);
                   const showIcon = Boolean(iconUrl) && !brokenIconIds.has(mob._id);
                   return (
-                    <div key={mob._id} className={`flex items-center gap-3 min-h-12 py-3 px-4 ${mob.status === false ? 'opacity-50' : ''}`}>
+                    <div
+                      key={mob._id}
+                      className={`flex items-center gap-3 min-h-12 py-3 px-4 ${mob.status === false ? "opacity-50" : ""}`}
+                    >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {showIcon ? (
                           <img
@@ -160,7 +163,7 @@ export const MobilityFeesSection = ({ canEdit = true }: MobilityFeesSectionProps
                         <span className="text-sm font-semibold text-ink truncate">{mob.name}</span>
                       </div>
                       <span className="w-20 shrink-0 text-right text-sm font-semibold text-ink tabular-nums">
-                        {mob.price > 0 ? `+$${Number(mob.price).toFixed(2)}` : '$0'}
+                        {mob.price > 0 ? `+$${Number(mob.price).toFixed(2)}` : "$0"}
                       </span>
                       {canEdit && (
                         <button

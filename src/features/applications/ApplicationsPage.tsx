@@ -1,30 +1,42 @@
-import { useMemo, useState } from 'react';
-import { Loader2, CheckCircle2, X } from 'lucide-react';
-import { Pagination, EmptyState, QueryFeedback } from '@/shared/components/ui';
-import { FileCheck } from 'lucide-react';
-import { ApplicationCard, ApplicationDetails } from '@/features/applications';
+import { useMemo, useState } from "react";
+import { Loader2, CheckCircle2, X } from "lucide-react";
+import { Pagination, EmptyState, QueryFeedback } from "@/shared/components/ui";
+import { FileCheck } from "lucide-react";
+import { ApplicationCard, ApplicationDetails } from "@/features/applications";
 import {
   useGetDriverApplicationsQuery,
   useUpdateApplicationStatusMutation,
-} from '@/redux/api/driversApi';
-import { mapApiDriverApplication, type MappedDriverApplication } from '@/features/applications/utils/helpers';
-import { apiErrorMessage } from '@/features/bookings/utils/helpers';
+} from "@/redux/api/driversApi";
+import {
+  mapApiDriverApplication,
+  type MappedDriverApplication,
+} from "@/features/applications/utils/helpers";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 
 const Applications = ({ role: _role }: { role?: string | null }) => {
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [localStatusOverrides, setLocalStatusOverrides] = useState<
     Record<string, { status?: string; applicationStatus?: string; isAdminVerifiedDriver?: boolean }>
   >({});
 
-  const listParams = useMemo(() => ({
-    page: currentPage,
-    limit: itemsPerPage,
-  }), [currentPage, itemsPerPage]);
+  const listParams = useMemo(
+    () => ({
+      page: currentPage,
+      limit: itemsPerPage,
+    }),
+    [currentPage, itemsPerPage],
+  );
 
-  const { data: appsResponse, isLoading, isError, error, refetch } = useGetDriverApplicationsQuery(listParams, {
+  const {
+    data: appsResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetDriverApplicationsQuery(listParams, {
     refetchOnMountOrArgChange: true,
   });
   const [updateApplicationStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation();
@@ -45,15 +57,23 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
     ? applications.find((a) => a.id === selectedAppId) || applications[0] || null
     : applications[0] || null;
 
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  const patchStatus = async (app: MappedDriverApplication, applicationStatus: 'approved' | 'rejected', successMsg: string) => {
-    const isAdminVerifiedDriver = applicationStatus === 'approved';
+  const patchStatus = async (
+    app: MappedDriverApplication,
+    applicationStatus: "approved" | "rejected",
+    successMsg: string,
+  ) => {
+    const isAdminVerifiedDriver = applicationStatus === "approved";
     try {
-      await updateApplicationStatus({ id: app.id, applicationStatus, isAdminVerifiedDriver }).unwrap();
+      await updateApplicationStatus({
+        id: app.id,
+        applicationStatus,
+        isAdminVerifiedDriver,
+      }).unwrap();
       setLocalStatusOverrides((prev) => ({
         ...prev,
         [app.id]: {
@@ -62,9 +82,9 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
           isAdminVerifiedDriver: isAdminVerifiedDriver,
         },
       }));
-      showToast(successMsg, isAdminVerifiedDriver ? 'success' : 'error');
+      showToast(successMsg, isAdminVerifiedDriver ? "success" : "error");
     } catch (err) {
-      showToast(apiErrorMessage(err, 'Failed to update application'), 'error');
+      showToast(apiErrorMessage(err, "Failed to update application"), "error");
     }
   };
 
@@ -83,7 +103,7 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
     return (
       <QueryFeedback
         title="Failed to load applications"
-        message={apiErrorMessage(error, 'Unable to fetch driver applications')}
+        message={apiErrorMessage(error, "Unable to fetch driver applications")}
         onRetry={() => refetch()}
       />
     );
@@ -92,10 +112,12 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-white text-sm font-medium ${
-          toast.type === 'success' ? 'bg-accent' : 'bg-urgent'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle2 size={15} /> : <X size={15} />}
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-white text-sm font-medium ${
+            toast.type === "success" ? "bg-accent" : "bg-urgent"
+          }`}
+        >
+          {toast.type === "success" ? <CheckCircle2 size={15} /> : <X size={15} />}
           {toast.msg}
         </div>
       )}
@@ -116,14 +138,16 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
               title="No applications"
               description="New driver onboarding requests will appear here for review."
             />
-          ) : applications.map((app) => (
-            <ApplicationCard
-              key={app.id}
-              app={app}
-              selected={selectedApp?.id === app.id}
-              onClick={() => setSelectedAppId(app.id)}
-            />
-          ))}
+          ) : (
+            applications.map((app) => (
+              <ApplicationCard
+                key={app.id}
+                app={app}
+                selected={selectedApp?.id === app.id}
+                onClick={() => setSelectedAppId(app.id)}
+              />
+            ))
+          )}
           <div className="mt-auto pt-3">
             <Pagination
               currentPage={currentPage}
@@ -131,7 +155,10 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
-              onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
+              onItemsPerPageChange={(size) => {
+                setItemsPerPage(size);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
@@ -140,8 +167,10 @@ const Applications = ({ role: _role }: { role?: string | null }) => {
           {selectedApp ? (
             <ApplicationDetails
               selectedApp={selectedApp}
-              onApprove={() => patchStatus(selectedApp, 'approved', `${selectedApp.name} approved`)}
-              onReject={() => patchStatus(selectedApp, 'rejected', `${selectedApp.name}'s application rejected`)}
+              onApprove={() => patchStatus(selectedApp, "approved", `${selectedApp.name} approved`)}
+              onReject={() =>
+                patchStatus(selectedApp, "rejected", `${selectedApp.name}'s application rejected`)
+              }
               actionsDisabled={isUpdating}
             />
           ) : (

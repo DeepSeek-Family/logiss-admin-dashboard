@@ -1,1 +1,1 @@
-export { default } from '@/features/cms/CmsPage';
+export { default } from "@/features/cms/CmsPage";

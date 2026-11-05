@@ -1,6 +1,6 @@
-import { Search, Star, AlertTriangle, ShieldCheck, ChevronRight } from 'lucide-react';
-import { Card, Avatar, Pagination } from '@/shared/components/ui';
-import { SearchInput } from '@/shared/components/ui/SearchInput';
+import { Search, Star, AlertTriangle, ShieldCheck, ChevronRight } from "lucide-react";
+import { Card, Avatar, Pagination } from "@/shared/components/ui";
+import { SearchInput } from "@/shared/components/ui/SearchInput";
 
 interface DriversTableProps {
   search: string;
@@ -27,7 +27,7 @@ export const DriversTable = ({
   itemsPerPage,
   setItemsPerPage,
   onDriverClick,
-  getStatusBadge
+  getStatusBadge,
 }: DriversTableProps) => {
   return (
     <Card className="overflow-hidden">
@@ -52,7 +52,7 @@ export const DriversTable = ({
         <table className="w-full text-left">
           <thead className="bg-bg border-b border-line">
             <tr>
-              {['Driver', 'Vehicle', 'Status', 'Trips', 'Compliance'].map(h => (
+              {["Driver", "Vehicle", "Status", "Trips", "Compliance"].map((h) => (
                 <th key={h} className="px-5 py-2.5 type-th whitespace-nowrap">
                   {h}
                 </th>
@@ -62,29 +62,40 @@ export const DriversTable = ({
           </thead>
           <tbody className="divide-y divide-line">
             {paginatedDrivers.map((driver: any) => (
-              <tr key={driver.id} className="hover:bg-primary-tint/40 transition-colors group cursor-pointer" onClick={() => onDriverClick(driver.id)}>
+              <tr
+                key={driver.id}
+                className="hover:bg-primary-tint/40 transition-colors group cursor-pointer"
+                onClick={() => onDriverClick(driver.id)}
+              >
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0 w-10 h-10">
                       <Avatar initials={driver.initials} src={driver.image} size="md" />
-                      {driver.onDuty && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" />}
+                      {driver.onDuty && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" />
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-ink leading-tight truncate">{driver.name}</p>
+                      <p className="text-sm font-semibold text-ink leading-tight truncate">
+                        {driver.name}
+                      </p>
                       <p className="text-xs text-ink-4 mt-0.5">{driver.id}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-5 py-3">
-                  <p className="text-sm font-semibold text-ink whitespace-nowrap">{driver?.vehicle?.make || 'No Vehicle'}</p>
-                  <p className="text-xs font-medium text-ink-2 mt-0.5">{driver?.vehicle?.plate || '—'}</p>
+                  <p className="text-sm font-semibold text-ink whitespace-nowrap">
+                    {driver?.vehicle?.make || "No Vehicle"}
+                  </p>
+                  <p className="text-xs font-medium text-ink-2 mt-0.5">
+                    {driver?.vehicle?.plate || "—"}
+                  </p>
                 </td>
-                <td className="px-5 py-3">
-                  {getStatusBadge(driver.status)}
-                </td>
+                <td className="px-5 py-3">{getStatusBadge(driver.status)}</td>
                 <td className="px-5 py-3">
                   <p className="text-sm font-semibold text-ink tabular-nums">
-                    {driver?.tripsToday || 0} <span className="text-xs font-medium text-ink-3">today</span>
+                    {driver?.tripsToday || 0}{" "}
+                    <span className="text-xs font-medium text-ink-3">today</span>
                   </p>
                   <p className="text-xs font-medium text-ink-3 mt-0.5 flex items-center gap-1.5">
                     {(driver?.totalTrips || 0).toLocaleString()} total
@@ -115,7 +126,9 @@ export const DriversTable = ({
               <tr>
                 <td colSpan={6} className="px-5 py-12 text-center">
                   <Search size={28} className="mx-auto mb-2 text-ink-3" />
-                  <p className="text-sm font-medium text-ink-3">{search ? `No drivers match "${search}"` : 'No drivers found'}</p>
+                  <p className="text-sm font-medium text-ink-3">
+                    {search ? `No drivers match "${search}"` : "No drivers found"}
+                  </p>
                 </td>
               </tr>
             )}
@@ -129,7 +142,10 @@ export const DriversTable = ({
         totalItems={filteredCount}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
-        onItemsPerPageChange={(size) => { setItemsPerPage(size); setCurrentPage(1); }}
+        onItemsPerPageChange={(size) => {
+          setItemsPerPage(size);
+          setCurrentPage(1);
+        }}
       />
     </Card>
   );

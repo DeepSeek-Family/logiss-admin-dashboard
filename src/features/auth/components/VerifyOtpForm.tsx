@@ -12,12 +12,7 @@ interface VerifyOtpFormProps {
   onChangeEmail: () => void;
 }
 
-export const VerifyOtpForm = ({
-  email,
-  onSuccess,
-  onBack,
-  onChangeEmail,
-}: VerifyOtpFormProps) => {
+export const VerifyOtpForm = ({ email, onSuccess, onBack, onChangeEmail }: VerifyOtpFormProps) => {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState<number>(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -140,8 +135,7 @@ export const VerifyOtpForm = ({
       }
     } catch (err: any) {
       console.warn("Verify email error:", err);
-      const msg =
-        err?.data?.message || err?.message || "Invalid or expired verification code.";
+      const msg = err?.data?.message || err?.message || "Invalid or expired verification code.";
       toast.error(msg);
     }
   };

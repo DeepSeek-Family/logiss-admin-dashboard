@@ -1,9 +1,9 @@
-const fs = require('node:fs');
-const path = require('node:path');
+const fs = require("node:fs");
+const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, '..');
-const TARGETS = ['src', 'index.html', 'tailwind.config.js'];
-const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.html']);
+const ROOT = path.resolve(__dirname, "..");
+const TARGETS = ["src", "index.html", "tailwind.config.js"];
+const EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".css", ".html"]);
 const violations = [];
 
 const walk = (entry) => {
@@ -23,7 +23,7 @@ const addViolation = (file, line, message) => {
 };
 
 for (const file of TARGETS.flatMap(walk)) {
-  const content = fs.readFileSync(file, 'utf8');
+  const content = fs.readFileSync(file, "utf8");
   const lines = content.split(/\r?\n/);
 
   lines.forEach((line, index) => {
@@ -32,9 +32,17 @@ for (const file of TARGETS.flatMap(walk)) {
     for (const match of line.matchAll(/text-\[(\d+(?:\.\d+)?)px\]/g)) {
       const size = Number(match[1]);
       if (size < 12) {
-        addViolation(file, lineNumber, `Typography size ${size}px is below the 12px minimum. Use text-xs or a type-* token.`);
+        addViolation(
+          file,
+          lineNumber,
+          `Typography size ${size}px is below the 12px minimum. Use text-xs or a type-* token.`,
+        );
       } else {
-        addViolation(file, lineNumber, `Avoid arbitrary typography size ${size}px. Use the global text scale or a type-* token.`);
+        addViolation(
+          file,
+          lineNumber,
+          `Avoid arbitrary typography size ${size}px. Use the global text scale or a type-* token.`,
+        );
       }
     }
 
@@ -53,15 +61,19 @@ for (const file of TARGETS.flatMap(walk)) {
     }
 
     if (/\btracking-(tight|tighter)\b/.test(line)) {
-      addViolation(file, lineNumber, 'Negative letter spacing is not allowed. Use tracking-normal or positive tracking.');
+      addViolation(
+        file,
+        lineNumber,
+        "Negative letter spacing is not allowed. Use tracking-normal or positive tracking.",
+      );
     }
   });
 }
 
 if (violations.length > 0) {
-  console.error('Typography guard failed:\n');
-  console.error(violations.join('\n'));
+  console.error("Typography guard failed:\n");
+  console.error(violations.join("\n"));
   process.exit(1);
 }
 
-console.log('Typography guard passed.');
+console.log("Typography guard passed.");

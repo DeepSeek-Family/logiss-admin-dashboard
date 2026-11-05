@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Plus,
   Pencil,
@@ -13,17 +13,17 @@ import {
   RefreshCw,
   UserCheck,
   Users,
-} from 'lucide-react';
-import { toast } from 'react-hot-toast';
+} from "lucide-react";
+import { toast } from "react-hot-toast";
 import {
   useGetHelpAndFaqsQuery,
   useCreateHelpAndFaqMutation,
   useUpdateHelpAndFaqMutation,
   useDeleteHelpAndFaqMutation,
   FaqItem,
-} from '@/redux/api/helpAndFaqApi';
+} from "@/redux/api/helpAndFaqApi";
 
-const DEFAULT_ROLES = ['DISPATCHER', 'USER'];
+const DEFAULT_ROLES = ["DISPATCHER", "USER"];
 
 export const FaqPanel = () => {
   const { data: faqResponse, isLoading, isError, refetch } = useGetHelpAndFaqsQuery();
@@ -35,38 +35,39 @@ export const FaqPanel = () => {
 
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editQuestion, setEditQuestion] = useState('');
-  const [editAns, setEditAns] = useState('');
-  const [editRole, setEditRole] = useState('DISPATCHER');
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editAns, setEditAns] = useState("");
+  const [editRole, setEditRole] = useState("DISPATCHER");
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState("All");
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newQuestion, setNewQuestion] = useState('');
-  const [newAns, setNewAns] = useState('');
-  const [newRole, setNewRole] = useState('DISPATCHER');
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAns, setNewAns] = useState("");
+  const [newRole, setNewRole] = useState("DISPATCHER");
 
   // Collect unique categories/roles from API data plus defaults
   const categories = Array.from(
-    new Set([...DEFAULT_ROLES, ...faqs.map(f => f.role).filter(Boolean)])
+    new Set([...DEFAULT_ROLES, ...faqs.map((f) => f.role).filter(Boolean)]),
   );
 
-  const filtered = activeCategory === 'All'
-    ? faqs
-    : faqs.filter(f => f.role?.toUpperCase() === activeCategory.toUpperCase());
+  const filtered =
+    activeCategory === "All"
+      ? faqs
+      : faqs.filter((f) => f.role?.toUpperCase() === activeCategory.toUpperCase());
 
   const toggleExpand = (id: string) => {
-    setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const startEdit = (faq: FaqItem) => {
     setEditingId(faq._id);
     setEditQuestion(faq.question);
     setEditAns(faq.ans);
-    setEditRole(faq.role || 'DISPATCHER');
+    setEditRole(faq.role || "DISPATCHER");
     setShowAddForm(false);
-    setExpandedIds(prev => ({ ...prev, [faq._id]: true }));
+    setExpandedIds((prev) => ({ ...prev, [faq._id]: true }));
   };
 
   const cancelEdit = () => {
@@ -84,20 +85,20 @@ export const FaqPanel = () => {
           role: editRole,
         },
       }).unwrap();
-      toast.success('FAQ updated successfully');
+      toast.success("FAQ updated successfully");
       setEditingId(null);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to update FAQ');
+      toast.error(err?.data?.message || "Failed to update FAQ");
     }
   };
 
   const handleDeleteFaq = async (id: string) => {
     try {
       await deleteHelpAndFaq(id).unwrap();
-      toast.success('FAQ deleted successfully');
+      toast.success("FAQ deleted successfully");
       setDeleteConfirmId(null);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to delete FAQ');
+      toast.error(err?.data?.message || "Failed to delete FAQ");
     }
   };
 
@@ -109,20 +110,20 @@ export const FaqPanel = () => {
         ans: newAns.trim(),
         role: newRole,
       }).unwrap();
-      toast.success('FAQ created successfully');
-      setNewQuestion('');
-      setNewAns('');
-      setNewRole('DISPATCHER');
+      toast.success("FAQ created successfully");
+      setNewQuestion("");
+      setNewAns("");
+      setNewRole("DISPATCHER");
       setShowAddForm(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to create FAQ');
+      toast.error(err?.data?.message || "Failed to create FAQ");
     }
   };
 
   const categoryCount = (cat: string) =>
-    cat === 'All'
+    cat === "All"
       ? faqs.length
-      : faqs.filter(f => f.role?.toUpperCase() === cat.toUpperCase()).length;
+      : faqs.filter((f) => f.role?.toUpperCase() === cat.toUpperCase()).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -148,20 +149,20 @@ export const FaqPanel = () => {
 
       {/* Category Filter Pills */}
       <div className="flex flex-wrap gap-2">
-        {['All', ...categories].map(cat => (
+        {["All", ...categories].map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
               activeCategory === cat
-                ? 'bg-primary text-white border-primary shadow-sm'
-                : 'bg-white text-ink-2 border-line-2 hover:border-primary/40 hover:text-primary'
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white text-ink-2 border-line-2 hover:border-primary/40 hover:text-primary"
             }`}
           >
-            {cat === 'DISPATCHER' ? 'Dispatcher' : cat === 'USER' ? 'User' : cat}
+            {cat === "DISPATCHER" ? "Dispatcher" : cat === "USER" ? "User" : cat}
             <span
               className={`text-xs font-extrabold px-1.5 py-0.5 rounded-md ${
-                activeCategory === cat ? 'bg-white/20 text-white' : 'bg-bg text-ink-2'
+                activeCategory === cat ? "bg-white/20 text-white" : "bg-bg text-ink-2"
               }`}
             >
               {categoryCount(cat)}
@@ -191,19 +192,19 @@ export const FaqPanel = () => {
               Target Audience / Role <span className="text-urgent">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {DEFAULT_ROLES.map(r => (
+              {DEFAULT_ROLES.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setNewRole(r)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                     newRole === r
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-white text-ink-2 border-line-2 hover:border-primary/40'
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-ink-2 border-line-2 hover:border-primary/40"
                   }`}
                 >
-                  {r === 'DISPATCHER' ? <UserCheck size={14} /> : <Users size={14} />}
-                  {r === 'DISPATCHER' ? 'Dispatcher FAQ' : 'User FAQ'} ({r})
+                  {r === "DISPATCHER" ? <UserCheck size={14} /> : <Users size={14} />}
+                  {r === "DISPATCHER" ? "Dispatcher FAQ" : "User FAQ"} ({r})
                 </button>
               ))}
             </div>
@@ -216,7 +217,7 @@ export const FaqPanel = () => {
             <input
               type="text"
               value={newQuestion}
-              onChange={e => setNewQuestion(e.target.value)}
+              onChange={(e) => setNewQuestion(e.target.value)}
               placeholder="e.g. How do I reset a dispatcher password?"
               autoFocus
               className="w-full text-sm font-semibold text-ink border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:font-normal"
@@ -229,7 +230,7 @@ export const FaqPanel = () => {
             </label>
             <textarea
               value={newAns}
-              onChange={e => setNewAns(e.target.value)}
+              onChange={(e) => setNewAns(e.target.value)}
               placeholder="Write a clear, helpful answer..."
               rows={3}
               className="w-full text-sm text-ink font-medium border border-line-2 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none placeholder:font-normal"
@@ -240,8 +241,8 @@ export const FaqPanel = () => {
             <button
               onClick={() => {
                 setShowAddForm(false);
-                setNewQuestion('');
-                setNewAns('');
+                setNewQuestion("");
+                setNewAns("");
               }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-ink-2 hover:text-ink rounded-xl border border-line-2 bg-white transition-colors"
             >
@@ -288,7 +289,9 @@ export const FaqPanel = () => {
             <div className="py-12 flex flex-col items-center justify-center border border-dashed border-line-2 rounded-2xl bg-white">
               <HelpCircle size={28} className="text-ink-4 mb-2" />
               <p className="text-sm font-bold text-ink-2">No FAQs found</p>
-              <p className="text-xs text-ink-3 mt-0.5 font-medium">Click "Add New FAQ" to create one.</p>
+              <p className="text-xs text-ink-3 mt-0.5 font-medium">
+                Click "Add New FAQ" to create one.
+              </p>
             </div>
           )}
 
@@ -300,8 +303,8 @@ export const FaqPanel = () => {
                 key={faq._id}
                 className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
                   editingId === faq._id
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-line-2 bg-white hover:border-line'
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-line-2 bg-white hover:border-line"
                 }`}
               >
                 {/* Question Row */}
@@ -310,7 +313,7 @@ export const FaqPanel = () => {
                   onClick={() => editingId !== faq._id && toggleExpand(faq._id)}
                 >
                   <span className="text-xs font-black text-ink-3 w-5 shrink-0">
-                    {String(idx + 1).padStart(2, '0')}
+                    {String(idx + 1).padStart(2, "0")}
                   </span>
 
                   <div className="flex-1 min-w-0">
@@ -318,8 +321,8 @@ export const FaqPanel = () => {
                       <input
                         type="text"
                         value={editQuestion}
-                        onChange={e => setEditQuestion(e.target.value)}
-                        onClick={e => e.stopPropagation()}
+                        onChange={(e) => setEditQuestion(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
                         className="w-full text-sm font-bold text-ink border border-primary rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/10"
                       />
                     ) : (
@@ -330,16 +333,23 @@ export const FaqPanel = () => {
                   {/* Role Badge */}
                   <span
                     className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border shrink-0 uppercase tracking-wide ${
-                      roleUpper === 'DISPATCHER'
-                        ? 'bg-primary/10 text-primary border-primary/20'
-                        : 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+                      roleUpper === "DISPATCHER"
+                        ? "bg-primary/10 text-primary border-primary/20"
+                        : "bg-amber-500/10 text-amber-700 border-amber-500/20"
                     }`}
                   >
-                    {roleUpper === 'DISPATCHER' ? 'Dispatcher' : roleUpper === 'USER' ? 'User' : faq.role}
+                    {roleUpper === "DISPATCHER"
+                      ? "Dispatcher"
+                      : roleUpper === "USER"
+                        ? "User"
+                        : faq.role}
                   </span>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                  <div
+                    className="flex items-center gap-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {editingId === faq._id ? (
                       <>
                         <button
@@ -348,7 +358,11 @@ export const FaqPanel = () => {
                           className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-accent hover:bg-accent/90 rounded-lg transition-colors disabled:opacity-40"
                           title="Save"
                         >
-                          {isUpdating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                          {isUpdating ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Check size={13} />
+                          )}
                           Save
                         </button>
                         <button
@@ -379,7 +393,7 @@ export const FaqPanel = () => {
                               disabled={isDeleting}
                               className="px-2 py-1 text-xs font-bold text-white bg-urgent rounded-lg disabled:opacity-40"
                             >
-                              {isDeleting ? 'Deleting...' : 'Confirm'}
+                              {isDeleting ? "Deleting..." : "Confirm"}
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(null)}
@@ -407,7 +421,7 @@ export const FaqPanel = () => {
                             toggleExpand(faq._id);
                           }}
                           className="p-1.5 ml-1 text-ink-3 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-                          title={isExpanded ? 'Collapse Answer' : 'Expand Answer'}
+                          title={isExpanded ? "Collapse Answer" : "Expand Answer"}
                         >
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </button>
@@ -427,7 +441,7 @@ export const FaqPanel = () => {
                           </label>
                           <textarea
                             value={editAns}
-                            onChange={e => setEditAns(e.target.value)}
+                            onChange={(e) => setEditAns(e.target.value)}
                             rows={3}
                             className="w-full text-sm font-medium text-ink border border-line-2 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none"
                           />
@@ -437,19 +451,19 @@ export const FaqPanel = () => {
                             Target Audience / Role
                           </label>
                           <div className="flex gap-2">
-                            {DEFAULT_ROLES.map(r => (
+                            {DEFAULT_ROLES.map((r) => (
                               <button
                                 key={r}
                                 type="button"
                                 onClick={() => setEditRole(r)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                                   editRole === r
-                                    ? 'bg-primary text-white border-primary shadow-xs'
-                                    : 'bg-white text-ink-2 border-line-2 hover:border-primary/40'
+                                    ? "bg-primary text-white border-primary shadow-xs"
+                                    : "bg-white text-ink-2 border-line-2 hover:border-primary/40"
                                 }`}
                               >
-                                {r === 'DISPATCHER' ? <UserCheck size={13} /> : <Users size={13} />}
-                                {r === 'DISPATCHER' ? 'Dispatcher FAQ' : 'User FAQ'}
+                                {r === "DISPATCHER" ? <UserCheck size={13} /> : <Users size={13} />}
+                                {r === "DISPATCHER" ? "Dispatcher FAQ" : "User FAQ"}
                               </button>
                             ))}
                           </div>
@@ -477,5 +491,3 @@ export const FaqPanel = () => {
     </div>
   );
 };
-
-

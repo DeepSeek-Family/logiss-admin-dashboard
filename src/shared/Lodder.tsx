@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 interface LoaderProps {
   message?: string;
@@ -8,13 +8,13 @@ interface LoaderProps {
 }
 
 export const Loader = ({
-  message = 'Loading...',
-  className = '',
+  message = "Loading...",
+  className = "",
   fullScreen = false,
 }: LoaderProps) => (
   <div
     className={`flex flex-col items-center justify-center gap-4 animate-in fade-in duration-500 ${
-      fullScreen ? 'min-h-[60vh] w-full' : 'py-12 w-full'
+      fullScreen ? "min-h-[60vh] w-full" : "py-12 w-full"
     } ${className}`}
     role="status"
     aria-live="polite"

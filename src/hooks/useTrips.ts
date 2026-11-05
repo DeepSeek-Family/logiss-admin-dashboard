@@ -1,9 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
-import {
-  useGetAllBookingsQuery,
-  useUpdateBookingMutation,
-} from '@/redux/api/bookingApi';
-import { mapApiBooking, mapPatchToApiPayload } from '@/features/bookings/utils/helpers';
+import { useCallback, useMemo, useState } from "react";
+import { useGetAllBookingsQuery, useUpdateBookingMutation } from "@/redux/api/bookingApi";
+import { mapApiBooking, mapPatchToApiPayload } from "@/features/bookings/utils/helpers";
 
 export type Trip = ReturnType<typeof mapApiBooking>;
 
@@ -15,13 +12,10 @@ export const useTrips = (initialFilters: { status?: string } = {}) => {
   );
   const [updateBookingMutation] = useUpdateBookingMutation();
 
-  const allTrips = useMemo(
-    () => (data?.data ?? []).map(mapApiBooking),
-    [data],
-  );
+  const allTrips = useMemo(() => (data?.data ?? []).map(mapApiBooking), [data]);
 
   const trips = useMemo(() => {
-    if (!filters.status || filters.status === 'all') return allTrips;
+    if (!filters.status || filters.status === "all") return allTrips;
     return allTrips.filter((t) => t.status === filters.status);
   }, [allTrips, filters.status]);
 
@@ -37,7 +31,7 @@ export const useTrips = (initialFilters: { status?: string } = {}) => {
   return {
     trips,
     loading: isLoading,
-    error: isError ? 'Failed to load trips' : null,
+    error: isError ? "Failed to load trips" : null,
     setFilters,
     refresh: refetch,
     updateTrip,

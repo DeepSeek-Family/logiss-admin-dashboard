@@ -1,15 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Polygon, Polyline, Marker, useMap, useMapEvents } from 'react-leaflet';
-import { divIcon } from 'leaflet';
-import { Pencil, Check, Trash2 } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Polygon,
+  Polyline,
+  Marker,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
+import { divIcon } from "leaflet";
+import { Pencil, Check, Trash2 } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import "leaflet/dist/leaflet.css";
 
 const VA_CENTER: [number, number] = [37.43, -77.55];
 
 const vertexIcon = divIcon({
-  className: 'geofence-vertex',
-  html: '',
+  className: "geofence-vertex",
+  html: "",
   iconSize: [14, 14],
   iconAnchor: [7, 7],
 });
@@ -68,11 +76,11 @@ function DrawClicks({
   });
   useEffect(() => {
     const el = map.getContainer();
-    el.style.cursor = enabled ? 'crosshair' : '';
+    el.style.cursor = enabled ? "crosshair" : "";
     if (enabled) map.doubleClickZoom.disable();
     else map.doubleClickZoom.enable();
     return () => {
-      el.style.cursor = '';
+      el.style.cursor = "";
       map.doubleClickZoom.enable();
     };
   }, [enabled, map]);
@@ -127,28 +135,35 @@ export function GeofenceDrawMap({ polygon, onChange }: GeofenceDrawMapProps) {
           <FitFence positions={vertices} enabled={!drawing && vertices.length >= 3} />
           <DrawClicks
             enabled={drawing}
-            onAdd={pt => setDraft(d => [...d, pt])}
+            onAdd={(pt) => setDraft((d) => [...d, pt])}
             onFinish={() => finishRef.current()}
           />
           {!drawing && vertices.length >= 3 && (
             <Polygon
               positions={vertices}
-              pathOptions={{ color: '#2969CD', weight: 2, fillColor: '#2969CD', fillOpacity: 0.25 }}
+              pathOptions={{ color: "#2969CD", weight: 2, fillColor: "#2969CD", fillOpacity: 0.25 }}
             />
           )}
           {drawing && draft.length >= 3 && (
             <Polygon
               positions={draft}
-              pathOptions={{ color: '#2969CD', weight: 2, dashArray: '6 6', fillColor: '#2969CD', fillOpacity: 0.18 }}
+              pathOptions={{
+                color: "#2969CD",
+                weight: 2,
+                dashArray: "6 6",
+                fillColor: "#2969CD",
+                fillOpacity: 0.18,
+              }}
             />
           )}
           {drawing && draft.length === 2 && (
-            <Polyline positions={draft} pathOptions={{ color: '#2969CD', weight: 2, dashArray: '6 6' }} />
+            <Polyline
+              positions={draft}
+              pathOptions={{ color: "#2969CD", weight: 2, dashArray: "6 6" }}
+            />
           )}
           {drawing &&
-            draft.map((pt, i) => (
-              <Marker key={`d-${i}`} position={pt} icon={vertexIcon} />
-            ))}
+            draft.map((pt, i) => <Marker key={`d-${i}`} position={pt} icon={vertexIcon} />)}
           {!drawing &&
             vertices.map((pt, i) => (
               <Marker
@@ -157,10 +172,12 @@ export function GeofenceDrawMap({ polygon, onChange }: GeofenceDrawMapProps) {
                 icon={vertexIcon}
                 draggable
                 eventHandlers={{
-                  dragend: e => {
-                    const ll = (e.target as { getLatLng: () => { lat: number; lng: number } }).getLatLng();
+                  dragend: (e) => {
+                    const ll = (
+                      e.target as { getLatLng: () => { lat: number; lng: number } }
+                    ).getLatLng();
                     const next = vertices.map((p, idx) =>
-                      idx === i ? ([ll.lat, ll.lng] as [number, number]) : p
+                      idx === i ? ([ll.lat, ll.lng] as [number, number]) : p,
                     );
                     onChange(next);
                   },
@@ -170,7 +187,12 @@ export function GeofenceDrawMap({ polygon, onChange }: GeofenceDrawMapProps) {
         </MapContainer>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" className="h-10 rounded-xl px-3 text-sm" onClick={startDraw}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-xl px-3 text-sm"
+          onClick={startDraw}
+        >
           <Pencil size={14} /> Draw
         </Button>
         <Button
@@ -192,7 +214,9 @@ export function GeofenceDrawMap({ polygon, onChange }: GeofenceDrawMapProps) {
           <Trash2 size={14} /> Clear
         </Button>
         {drawing && (
-          <p className="text-xs text-ink-4">Click the map to add points, Finish to close the shape.</p>
+          <p className="text-xs text-ink-4">
+            Click the map to add points, Finish to close the shape.
+          </p>
         )}
       </div>
     </div>

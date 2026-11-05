@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -12,8 +20,8 @@ import {
   Loader2,
   AlertTriangle,
   Trash2,
-} from 'lucide-react';
-import { Button } from '@/shared/components/ui';
+} from "lucide-react";
+import { Button } from "@/shared/components/ui";
 import {
   useGetPayersQuery,
   useCreatePayerMutation,
@@ -23,13 +31,13 @@ import {
   useGetCountyByIdQuery,
   useSaveCountyMutation,
   useUpdateCountyMutation,
-} from '@/redux/api/coverageApi';
+} from "@/redux/api/coverageApi";
 import {
   PAYER_TYPE_OPTIONS,
   normalizePayerType,
   payerTypeLabel,
   type PayerType,
-} from '@/features/cms/constants/payerTypes';
+} from "@/features/cms/constants/payerTypes";
 import {
   PRICING_METHOD_LABELS,
   defaultMileageTiers,
@@ -43,38 +51,38 @@ import {
   type IMileageTier,
   type PayerCoverageDraft,
   type UiPricingMethod,
-} from '@/features/cms/utils/countyHelpers';
-import { apiErrorMessage, isMongoId } from '@/features/bookings/utils/helpers';
-import { parseGeoJsonDocument, parsePolygons } from '@/utils/geofenceEngine';
-import toast from 'react-hot-toast';
+} from "@/features/cms/utils/countyHelpers";
+import { apiErrorMessage, isMongoId } from "@/features/bookings/utils/helpers";
+import { parseGeoJsonDocument, parsePolygons } from "@/utils/geofenceEngine";
+import toast from "react-hot-toast";
 
-const METHODS: UiPricingMethod[] = ['flat_rate', 'per_mile', 'mileage_based'];
-const PAYER_QUERY_KEY = 'payer';
+const METHODS: UiPricingMethod[] = ["flat_rate", "per_mile", "mileage_based"];
+const PAYER_QUERY_KEY = "payer";
 
 const sentenceCase = (value: string) =>
-  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
 
 const typeChipTone = (type: string) => {
   const t = type.toLowerCase();
-  if (t.includes('government')) return 'bg-primary-tint text-primary border-primary/25';
-  if (t.includes('county')) return 'bg-primary-light text-primary-dark border-primary/20';
-  if (t.includes('city')) return 'bg-bg text-ink-2 border-line';
-  if (t.includes('insurance')) return 'bg-primary-tint text-primary border-primary/25';
-  if (t.includes('facility')) return 'bg-bg text-ink-2 border-line';
-  return 'bg-bg text-ink-2 border-line';
+  if (t.includes("government")) return "bg-primary-tint text-primary border-primary/25";
+  if (t.includes("county")) return "bg-primary-light text-primary-dark border-primary/20";
+  if (t.includes("city")) return "bg-bg text-ink-2 border-line";
+  if (t.includes("insurance")) return "bg-primary-tint text-primary border-primary/25";
+  if (t.includes("facility")) return "bg-bg text-ink-2 border-line";
+  return "bg-bg text-ink-2 border-line";
 };
 
 const listChip =
-  'inline-flex items-center justify-center box-border h-7 w-[6.5rem] shrink-0 rounded-full px-2.5 text-[11px] font-medium leading-none truncate border';
+  "inline-flex items-center justify-center box-border h-7 w-[6.5rem] shrink-0 rounded-full px-2.5 text-[11px] font-medium leading-none truncate border";
 
-const methodChipTone = 'bg-white text-ink-2 border-line';
+const methodChipTone = "bg-white text-ink-2 border-line";
 
-const actionBtn = 'h-10 rounded-xl px-4 text-sm';
+const actionBtn = "h-10 rounded-xl px-4 text-sm";
 
-const labelClass = 'text-xs font-semibold text-ink-4 uppercase mb-1.5 block';
+const labelClass = "text-xs font-semibold text-ink-4 uppercase mb-1.5 block";
 
 const controlBase =
-  'h-10 box-border text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all';
+  "h-10 box-border text-sm font-medium text-ink border border-line-2 rounded-xl px-3 bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all";
 
 const controlGrow = `${controlBase} w-full`;
 const controlSelect = `${controlBase} w-52`;
@@ -104,30 +112,30 @@ const ClearableNumberInput = ({
   className,
   onBlur,
   ...rest
-}: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'> & {
-  value: number
-  onValueChange: (value: number) => void
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & {
+  value: number;
+  onValueChange: (value: number) => void;
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [text, setText] = useState(() => String(value))
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState(() => String(value));
 
   useEffect(() => {
-    if (inputRef.current === document.activeElement) return
-    setText(String(value))
-  }, [value])
+    if (inputRef.current === document.activeElement) return;
+    setText(String(value));
+  }, [value]);
 
   const commit = () => {
-    const raw = text.trim()
-    if (raw === '' || raw === '-') {
-      onValueChange(0)
-      setText('0')
-      return
+    const raw = text.trim();
+    if (raw === "" || raw === "-") {
+      onValueChange(0);
+      setText("0");
+      return;
     }
-    const n = Number(raw)
-    const next = Number.isFinite(n) ? n : 0
-    onValueChange(next)
-    setText(String(next))
-  }
+    const n = Number(raw);
+    const next = Number.isFinite(n) ? n : 0;
+    onValueChange(next);
+    setText(String(next));
+  };
 
   return (
     <input
@@ -136,20 +144,20 @@ const ClearableNumberInput = ({
       type="number"
       className={className}
       value={text}
-      onChange={e => {
-        const next = e.target.value
-        setText(next)
-        if (next === '' || next === '-') return
-        const n = Number(next)
-        if (Number.isFinite(n)) onValueChange(n)
+      onChange={(e) => {
+        const next = e.target.value;
+        setText(next);
+        if (next === "" || next === "-") return;
+        const n = Number(next);
+        if (Number.isFinite(n)) onValueChange(n);
       }}
-      onBlur={e => {
-        commit()
-        onBlur?.(e)
+      onBlur={(e) => {
+        commit();
+        onBlur?.(e);
       }}
     />
-  )
-}
+  );
+};
 
 const MoneyInput = ({
   className,
@@ -158,18 +166,20 @@ const MoneyInput = ({
   onValueChange,
   disabled,
   placeholder,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
 }: {
-  className?: string
-  wrapperClassName?: string
-  value?: number
-  onValueChange: (value: number) => void
-  disabled?: boolean
-  placeholder?: string
-  'aria-label'?: string
+  className?: string;
+  wrapperClassName?: string;
+  value?: number;
+  onValueChange: (value: number) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  "aria-label"?: string;
 }) => (
-  <div className={`relative ${wrapperClassName ?? 'w-32'}`}>
-    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
+  <div className={`relative ${wrapperClassName ?? "w-32"}`}>
+    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">
+      $
+    </span>
     <ClearableNumberInput
       step="0.01"
       value={value}
@@ -177,16 +187,16 @@ const MoneyInput = ({
       disabled={disabled}
       placeholder={placeholder}
       aria-label={ariaLabel}
-      className={`${wrapperClassName ? controlGrow : controlValue} pl-7 min-w-0 ${className || ''}`}
+      className={`${wrapperClassName ? controlGrow : controlValue} pl-7 min-w-0 ${className || ""}`}
     />
   </div>
-)
+);
 
 const cloneDraft = (d: PayerCoverageDraft): PayerCoverageDraft => ({
   ...d,
-  mileageTiers: (d.mileageTiers || []).map(t => ({ ...t })),
+  mileageTiers: (d.mileageTiers || []).map((t) => ({ ...t })),
   geofencePolygons: parsePolygons(d.geofencePolygons),
-  geofenceFileName: d.geofenceFileName || '',
+  geofenceFileName: d.geofenceFileName || "",
   geofenceFile: d.geofenceFile,
 });
 
@@ -195,8 +205,8 @@ const fenceVertexCount = (rings: [number, number][][]) =>
 
 const areaSummary = (fileName?: string, rings?: [number, number][][]) => {
   if (fileName) return fileName;
-  if (rings && rings.length > 0) return 'Fence uploaded';
-  return 'No fence';
+  if (rings && rings.length > 0) return "Fence uploaded";
+  return "No fence";
 };
 
 const EditorSection = ({
@@ -222,8 +232,8 @@ const EditorSection = ({
     <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
       <header
         className={`flex items-center gap-2.5 px-4 ${
-          collapsible ? 'py-1.5' : 'py-3'
-        } ${expanded ? 'border-b border-line-2' : ''} bg-primary-tint/60`}
+          collapsible ? "py-1.5" : "py-3"
+        } ${expanded ? "border-b border-line-2" : ""} bg-primary-tint/60`}
       >
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white bg-primary">
           {n}
@@ -269,8 +279,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
 
   const payers = payersResponse?.data || [];
   const counties = countiesResponse?.data || [];
-  const urlPayerId = searchParams.get(PAYER_QUERY_KEY) || '';
-  const selectedId = payers.some(p => p._id === urlPayerId) ? urlPayerId : payers[0]?._id || '';
+  const urlPayerId = searchParams.get(PAYER_QUERY_KEY) || "";
+  const selectedId = payers.some((p) => p._id === urlPayerId) ? urlPayerId : payers[0]?._id || "";
 
   const {
     data: payerCountiesResponse,
@@ -281,21 +291,21 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   } = useGetCountiesByPayerQuery(selectedId, { skip: !isMongoId(selectedId) });
 
   const [draft, setDraft] = useState<PayerCoverageDraft | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState<PayerType>('government');
-  const [draftPayerType, setDraftPayerType] = useState<PayerType>('government');
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<PayerType>("government");
+  const [draftPayerType, setDraftPayerType] = useState<PayerType>("government");
   const [coversAreasOpen, setCoversAreasOpen] = useState(true);
   const geofenceInputRef = useRef<HTMLInputElement>(null);
   const hydratedKey = useRef<string | null>(null);
 
-  const selected = payers.find(p => p._id === selectedId) || null;
+  const selected = payers.find((p) => p._id === selectedId) || null;
   const payerCounties = payerCountiesResponse?.data || [];
   const selectedCounty = selectedId
     ? findCountyForPayer(payerCounties, selectedId) || payerCounties[0]
     : undefined;
-  const selectedCountyId = selectedCounty?._id || '';
+  const selectedCountyId = selectedCounty?._id || "";
   const {
     data: countyDetailResponse,
     isLoading: countyDetailLoading,
@@ -303,17 +313,23 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   } = useGetCountyByIdQuery(selectedCountyId, { skip: !isMongoId(selectedCountyId) });
   const countyForDraft = countyDetailResponse?.data ?? selectedCounty;
 
-  const selectPayer = useCallback((id: string) => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      next.set(PAYER_QUERY_KEY, id);
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
+  const selectPayer = useCallback(
+    (id: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set(PAYER_QUERY_KEY, id);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   useEffect(() => {
     if (!payers.length) return;
-    if (urlPayerId && payers.some(p => p._id === urlPayerId)) return;
+    if (urlPayerId && payers.some((p) => p._id === urlPayerId)) return;
     selectPayer(payers[0]._id);
   }, [payers, urlPayerId, selectPayer]);
 
@@ -332,7 +348,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     if (selectedCountyId && (countyDetailLoading || countyDetailFetching)) return;
 
     const county = countyForDraft;
-    const key = `${selected._id}:${county?._id || 'empty'}:${county?.updatedAt || ''}`;
+    const key = `${selected._id}:${county?._id || "empty"}:${county?.updatedAt || ""}`;
     if (hydratedKey.current === key) return;
 
     setDraftPayerType(normalizePayerType(selected.type));
@@ -352,7 +368,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     const q = search.trim().toLowerCase();
     if (!q) return payers;
     return payers.filter(
-      p => p.name.toLowerCase().includes(q) || payerTypeLabel(p.type).toLowerCase().includes(q)
+      (p) => p.name.toLowerCase().includes(q) || payerTypeLabel(p.type).toLowerCase().includes(q),
     );
   }, [payers, search]);
 
@@ -362,28 +378,23 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
       : findCountyForPayer(counties, payerId);
 
   const hydrateFromApi = (payerId: string) => {
-    const apiPayer = payers.find(p => p._id === payerId);
+    const apiPayer = payers.find((p) => p._id === payerId);
     if (!apiPayer) return;
-    const county =
-      payerId === selectedId
-        ? countyForDraft
-        : findCountyForPayer(counties, payerId);
+    const county = payerId === selectedId ? countyForDraft : findCountyForPayer(counties, payerId);
     setDraftPayerType(normalizePayerType(apiPayer.type));
     setDraft(cloneDraft(mapCountyToDraft(apiPayer, county)));
-    hydratedKey.current = `${payerId}:${county?._id || 'empty'}`;
+    hydratedKey.current = `${payerId}:${county?._id || "empty"}`;
   };
 
   const patchDraft = (updates: Partial<PayerCoverageDraft>) => {
-    setDraft(prev => (prev ? { ...prev, ...updates } : prev));
+    setDraft((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
   const applyUiMethod = (m: UiPricingMethod) => {
     const nextMethod = toUiPriceMethod(m);
-    setDraft(prev => {
+    setDraft((prev) => {
       if (!prev) return prev;
-      const tiers = prev.mileageTiers?.length
-        ? prev.mileageTiers
-        : defaultMileageTiers();
+      const tiers = prev.mileageTiers?.length ? prev.mileageTiers : defaultMileageTiers();
       return {
         ...prev,
         pricingMethod: nextMethod,
@@ -400,7 +411,10 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
       ? Number(lastTier.first_miles_price ?? lastTier.starting_mileage ?? 0)
       : 0;
     const span = lastTier
-      ? Math.max(5, Number(lastTier.first_miles_price ?? 0) - Number(lastTier.starting_mileage ?? 0))
+      ? Math.max(
+          5,
+          Number(lastTier.first_miles_price ?? 0) - Number(lastTier.starting_mileage ?? 0),
+        )
       : 5;
     patchDraft({
       mileageTiers: [
@@ -447,14 +461,14 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   const handleSave = async () => {
     if (!selected || !draft) return;
     if (!draft.name.trim()) {
-      toast.error('Payer name is required');
+      toast.error("Payer name is required");
       return;
     }
     const typeValue = normalizePayerType(draftPayerType);
 
     const payload = mapDraftToCountyInput(selected._id, draft);
     if (payload.passengerCopayInside <= 0 && payload.passengerCopayOutside <= 0) {
-      toast.error('Set at least one passenger copay (inside or outside).');
+      toast.error("Set at least one passenger copay (inside or outside).");
       return;
     }
 
@@ -473,9 +487,9 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
         geofenceFile: undefined,
         geofenceFileName: draft.geofenceFile?.name || draft.geofenceFileName,
       });
-      toast.success(countyId ? 'Payer updated' : 'Payer saved');
+      toast.success(countyId ? "Payer updated" : "Payer saved");
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to save payer'));
+      toast.error(apiErrorMessage(err, "Failed to save payer"));
     }
   };
 
@@ -496,12 +510,12 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
         hydratedKey.current = `${id}:empty`;
         selectPayer(id);
       }
-      setNewName('');
-      setNewType('government');
+      setNewName("");
+      setNewType("government");
       setShowAdd(false);
-      toast.success('Payer created');
+      toast.success("Payer created");
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Failed to create payer'));
+      toast.error(apiErrorMessage(err, "Failed to create payer"));
     }
   };
 
@@ -510,14 +524,14 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   const handleGeofenceFile = async (file: File | undefined) => {
     if (!file || !draft) return;
     if (file.size > MAX_GEOFENCE_BYTES) {
-      toast.error('File is too large to save (max 2 MB).');
+      toast.error("File is too large to save (max 2 MB).");
       return;
     }
     let parsed: unknown;
     try {
       parsed = JSON.parse(await file.text());
     } catch {
-      toast.error('That file is not valid JSON.');
+      toast.error("That file is not valid JSON.");
       return;
     }
     const result = parseGeoJsonDocument(parsed);
@@ -534,8 +548,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
   };
 
   const clearGeofence = () => {
-    patchDraft({ geofencePolygons: [], geofenceFileName: '', geofenceFile: undefined });
-    if (geofenceInputRef.current) geofenceInputRef.current.value = '';
+    patchDraft({ geofencePolygons: [], geofenceFileName: "", geofenceFile: undefined });
+    if (geofenceInputRef.current) geofenceInputRef.current.value = "";
   };
 
   const currentMethod = toUiPriceMethod(draft?.pricingMethod);
@@ -555,7 +569,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     return (
       <div className="py-16 flex flex-col items-center gap-3 text-center">
         <AlertTriangle className="text-urgent opacity-60" size={32} />
-        <p className="text-sm text-ink-3">{apiErrorMessage(error, 'Failed to load payers')}</p>
+        <p className="text-sm text-ink-3">{apiErrorMessage(error, "Failed to load payers")}</p>
         <button
           type="button"
           onClick={() => void refetch()}
@@ -593,16 +607,22 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
               <input
                 className={controlGrow}
                 value={newName}
-                onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                 placeholder="e.g. Powhatan DSS"
                 autoFocus
               />
             </div>
             <Field label="Type">
-              <select className={controlSelect} value={newType} onChange={e => setNewType(e.target.value as PayerType)}>
-                {PAYER_TYPE_OPTIONS.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+              <select
+                className={controlSelect}
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as PayerType)}
+              >
+                {PAYER_TYPE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -634,7 +654,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                 className={`${controlGrow} pl-9`}
                 placeholder="Search payers…"
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
@@ -644,41 +664,44 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                 <p className="text-sm font-medium text-ink-4">No payers</p>
               </div>
             )}
-            {filtered.map(p => {
+            {filtered.map((p) => {
               const county = countyForPayer(p._id);
               const isActive = p.isActive !== false;
               return (
-              <button
-                key={p._id}
-                type="button"
-                onClick={() => selectPayer(p._id)}
-                className={`w-full text-left px-4 py-3.5 border-l-[3px] transition-colors ${
-                  selectedId === p._id
-                    ? 'bg-primary/10 border-l-primary'
-                    : 'border-l-transparent hover:bg-bg'
-                } ${!isActive ? 'opacity-60' : ''}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-ink truncate">{p.name}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className={`${listChip} ${typeChipTone(payerTypeLabel(normalizePayerType(p.type)))}`}>
-                        {payerTypeLabel(normalizePayerType(p.type))}
-                      </span>
-                      {county?.priceMethod && (
-                        <span className={`${listChip} ${methodChipTone}`}>
-                          {methodChipLabel(county.priceMethod)}
+                <button
+                  key={p._id}
+                  type="button"
+                  onClick={() => selectPayer(p._id)}
+                  className={`w-full text-left px-4 py-3.5 border-l-[3px] transition-colors ${
+                    selectedId === p._id
+                      ? "bg-primary/10 border-l-primary"
+                      : "border-l-transparent hover:bg-bg"
+                  } ${!isActive ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-ink truncate">{p.name}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span
+                          className={`${listChip} ${typeChipTone(payerTypeLabel(normalizePayerType(p.type)))}`}
+                        >
+                          {payerTypeLabel(normalizePayerType(p.type))}
                         </span>
-                      )}
+                        {county?.priceMethod && (
+                          <span className={`${listChip} ${methodChipTone}`}>
+                            {methodChipLabel(county.priceMethod)}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <span
+                      className={`shrink-0 w-2.5 h-2.5 rounded-full ${isActive ? "bg-accent" : "bg-line"}`}
+                      title={isActive ? "Active" : "Inactive"}
+                    />
                   </div>
-                  <span
-                    className={`shrink-0 w-2.5 h-2.5 rounded-full ${isActive ? 'bg-accent' : 'bg-line'}`}
-                    title={isActive ? 'Active' : 'Inactive'}
-                  />
-                </div>
-              </button>
-            );})}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -691,7 +714,9 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
           ) : detailError && !draft ? (
             <div className="h-full min-h-[280px] flex flex-col items-center justify-center gap-3 bg-white text-center px-6">
               <AlertTriangle className="text-urgent opacity-60" size={28} />
-              <p className="text-sm text-ink-3">{apiErrorMessage(detailErr, 'Failed to load coverage')}</p>
+              <p className="text-sm text-ink-3">
+                {apiErrorMessage(detailErr, "Failed to load coverage")}
+              </p>
               <button
                 type="button"
                 onClick={() => void refetchPayerCounty()}
@@ -707,27 +732,33 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
           ) : (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <EditorSection n={1} title="Who" subtitle="Name, type, and whether this payer is active.">
+                <EditorSection
+                  n={1}
+                  title="Who"
+                  subtitle="Name, type, and whether this payer is active."
+                >
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="flex-1 min-w-[180px]">
                       <label className={labelClass}>Payer name</label>
                       <input
                         className={controlGrow}
                         value={draft.name}
-                        onChange={e => patchDraft({ name: e.target.value })}
+                        onChange={(e) => patchDraft({ name: e.target.value })}
                       />
                     </div>
                     <Field label="Type">
                       <select
                         className={controlSelect}
                         value={draftPayerType}
-                        onChange={e => {
+                        onChange={(e) => {
                           setDraftPayerType(normalizePayerType(e.target.value));
                         }}
                         disabled={!canEdit}
                       >
-                        {PAYER_TYPE_OPTIONS.map(t => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
+                        {PAYER_TYPE_OPTIONS.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label}
+                          </option>
                         ))}
                       </select>
                     </Field>
@@ -737,14 +768,14 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                       disabled={!canEdit}
                       className={`h-10 flex items-center gap-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${
                         draft.active
-                          ? 'bg-accent-light text-accent border-accent/30'
-                          : 'bg-white text-ink-4 border-line-2'
+                          ? "bg-accent-light text-accent border-accent/30"
+                          : "bg-white text-ink-4 border-line-2"
                       }`}
                     >
                       <span
-                        className={`w-2 h-2 rounded-full ${draft.active ? 'bg-accent' : 'bg-line'}`}
+                        className={`w-2 h-2 rounded-full ${draft.active ? "bg-accent" : "bg-line"}`}
                       />
-                      {draft.active ? 'Active' : 'Inactive'}
+                      {draft.active ? "Active" : "Inactive"}
                     </button>
                   </div>
                 </EditorSection>
@@ -754,7 +785,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                   title="Covers areas"
                   subtitle="Upload a GeoJSON fence. Pickup and dropoff both inside = inside copay."
                   open={coversAreasOpen}
-                  onToggle={() => setCoversAreasOpen(v => !v)}
+                  onToggle={() => setCoversAreasOpen((v) => !v)}
                   collapsedSummary={areaSummary(draft.geofenceFileName, draft.geofencePolygons)}
                 >
                   <input
@@ -762,7 +793,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     type="file"
                     accept=".json,.geojson,application/geo+json,application/json"
                     className="sr-only"
-                    onChange={e => {
+                    onChange={(e) => {
                       const file = e.target.files?.[0];
                       void handleGeofenceFile(file);
                     }}
@@ -781,7 +812,9 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                       variant="outline"
                       className={actionBtn}
                       onClick={clearGeofence}
-                      disabled={!draft.geofenceFileName && (draft.geofencePolygons || []).length === 0}
+                      disabled={
+                        !draft.geofenceFileName && (draft.geofencePolygons || []).length === 0
+                      }
                     >
                       Clear
                     </Button>
@@ -789,19 +822,21 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                   <p className="text-xs text-ink-3">
                     {(() => {
                       const rings = parsePolygons(draft.geofencePolygons);
-                      const name = draft.geofenceFileName || '';
+                      const name = draft.geofenceFileName || "";
                       const savedCounty = selected ? countyForPayer(selected._id) : undefined;
-                      const savedRings = savedCounty ? geoJsonToRings(savedCounty.coversAreasGeoJSON) : [];
+                      const savedRings = savedCounty
+                        ? geoJsonToRings(savedCounty.coversAreasGeoJSON)
+                        : [];
                       const saved =
                         !draft.geofenceFile &&
                         !!savedCounty &&
                         JSON.stringify(savedRings) === JSON.stringify(rings);
                       if (rings.length === 0) {
-                        return 'No fence file. Empty fence = all trips inside.';
+                        return "No fence file. Empty fence = all trips inside.";
                       }
                       const pts = fenceVertexCount(rings);
-                      const saveHint = saved ? 'saved' : 'not saved yet — click Save';
-                      return `${name || 'Fence'} · ${pts} points · ${saveHint}`;
+                      const saveHint = saved ? "saved" : "not saved yet — click Save";
+                      return `${name || "Fence"} · ${pts} points · ${saveHint}`;
                     })()}
                   </p>
                 </EditorSection>
@@ -818,10 +853,10 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                           id="payer-pricing-method"
                           className={controlSelect}
                           value={currentMethod}
-                          onChange={e => applyUiMethod(e.target.value as UiPricingMethod)}
+                          onChange={(e) => applyUiMethod(e.target.value as UiPricingMethod)}
                           disabled={!canEdit}
                         >
-                          {METHODS.map(m => (
+                          {METHODS.map((m) => (
                             <option key={m} value={m}>
                               {PRICING_METHOD_LABELS[m]}
                             </option>
@@ -829,29 +864,29 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                         </select>
                       </Field>
 
-                      {currentMethod === 'flat_rate' && (
+                      {currentMethod === "flat_rate" && (
                         <Field label="Flat rate">
                           <MoneyInput
                             value={draft.flatRate}
-                            onValueChange={n => patchDraft({ flatRate: n })}
+                            onValueChange={(n) => patchDraft({ flatRate: n })}
                             disabled={!canEdit}
                           />
                         </Field>
                       )}
 
-                      {currentMethod === 'per_mile' && (
+                      {currentMethod === "per_mile" && (
                         <>
                           <Field label="Starting fare">
                             <MoneyInput
                               value={draft.startingFare}
-                              onValueChange={n => patchDraft({ startingFare: n })}
+                              onValueChange={(n) => patchDraft({ startingFare: n })}
                               disabled={!canEdit}
                             />
                           </Field>
                           <Field label="First miles price">
                             <MoneyInput
                               value={draft.firstMilesPrice}
-                              onValueChange={n =>
+                              onValueChange={(n) =>
                                 patchDraft({ firstMilesPrice: n, includedRate: n })
                               }
                               disabled={!canEdit}
@@ -860,7 +895,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                           <Field label="Per mile">
                             <MoneyInput
                               value={draft.perMileRate}
-                              onValueChange={n => patchDraft({ perMileRate: n })}
+                              onValueChange={(n) => patchDraft({ perMileRate: n })}
                               disabled={!canEdit}
                             />
                           </Field>
@@ -868,7 +903,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                       )}
                     </div>
 
-                    {currentMethod === 'mileage_based' && (
+                    {currentMethod === "mileage_based" && (
                       <div className="rounded-xl border border-line-2 bg-white overflow-hidden">
                         <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 px-4 py-2.5 bg-primary-tint/50 border-b border-line-2">
                           <span className="text-[10px] font-bold text-ink-4 uppercase tracking-wide">
@@ -896,7 +931,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                                 step={1}
                                 className={`${controlGrow} min-w-0`}
                                 value={tier.starting_mileage}
-                                onValueChange={n =>
+                                onValueChange={(n) =>
                                   updateMileageTier(idx, { starting_mileage: n })
                                 }
                                 disabled={!canEdit}
@@ -908,7 +943,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                                 step={1}
                                 className={`${controlGrow} min-w-0`}
                                 value={tier.first_miles_price}
-                                onValueChange={n =>
+                                onValueChange={(n) =>
                                   updateMileageTier(idx, { first_miles_price: n })
                                 }
                                 disabled={!canEdit}
@@ -918,9 +953,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                               <MoneyInput
                                 wrapperClassName="w-full min-w-0"
                                 value={tier.per_mile_price}
-                                onValueChange={n =>
-                                  updateMileageTier(idx, { per_mile_price: n })
-                                }
+                                onValueChange={(n) => updateMileageTier(idx, { per_mile_price: n })}
                                 disabled={!canEdit}
                                 placeholder="0.00"
                                 aria-label={`Bracket ${idx + 1} rate`}
@@ -969,13 +1002,13 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     <Field label="Copay · inside">
                       <MoneyInput
                         value={draft.passengerCopayInside}
-                        onValueChange={n => patchDraft({ passengerCopayInside: n })}
+                        onValueChange={(n) => patchDraft({ passengerCopayInside: n })}
                       />
                     </Field>
                     <Field label="Copay · outside">
                       <MoneyInput
                         value={draft.passengerCopayOutside}
-                        onValueChange={n => patchDraft({ passengerCopayOutside: n })}
+                        onValueChange={(n) => patchDraft({ passengerCopayOutside: n })}
                       />
                     </Field>
                   </div>
@@ -1003,7 +1036,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     disabled={saving}
                   >
                     <CheckCircle2 size={16} />
-                    {saving ? 'Saving…' : hasExistingCounty ? 'Update' : 'Save'}
+                    {saving ? "Saving…" : hasExistingCounty ? "Update" : "Save"}
                   </Button>
                 </div>
               )}

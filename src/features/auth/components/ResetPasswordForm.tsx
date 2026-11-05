@@ -10,10 +10,7 @@ interface ResetPasswordFormProps {
   onBack: () => void;
 }
 
-export const ResetPasswordForm = ({
-  onSuccess,
-  onBack,
-}: ResetPasswordFormProps) => {
+export const ResetPasswordForm = ({ onSuccess, onBack }: ResetPasswordFormProps) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -51,7 +48,7 @@ export const ResetPasswordForm = ({
       }
 
       toast.success(
-        response.message || "Password reset successfully! Please log in with your new password."
+        response.message || "Password reset successfully! Please log in with your new password.",
       );
       onSuccess();
     } catch (err: any) {
@@ -81,14 +78,9 @@ export const ResetPasswordForm = ({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-ink-4 mb-2">
-            New Password
-          </label>
+          <label className="block text-xs font-medium text-ink-4 mb-2">New Password</label>
           <div className="relative">
-            <Lock
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
-              size={18}
-            />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
@@ -109,14 +101,9 @@ export const ResetPasswordForm = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-4 mb-2">
-            Confirm Password
-          </label>
+          <label className="block text-xs font-medium text-ink-4 mb-2">Confirm Password</label>
           <div className="relative">
-            <Lock
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4"
-              size={18}
-            />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" size={18} />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -139,19 +126,13 @@ export const ResetPasswordForm = ({
         {/* Realtime password helpers */}
         <div className="p-3 bg-bg rounded-xl border border-line-2 space-y-1.5 text-xs">
           <div className="flex items-center gap-2">
-            <CheckCircle2
-              size={14}
-              className={isLengthValid ? "text-green-600" : "text-ink-4"}
-            />
+            <CheckCircle2 size={14} className={isLengthValid ? "text-green-600" : "text-ink-4"} />
             <span className={isLengthValid ? "text-ink font-medium" : "text-ink-4"}>
               At least 6 characters
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2
-              size={14}
-              className={isMatchValid ? "text-green-600" : "text-ink-4"}
-            />
+            <CheckCircle2 size={14} className={isMatchValid ? "text-green-600" : "text-ink-4"} />
             <span className={isMatchValid ? "text-ink font-medium" : "text-ink-4"}>
               Passwords match
             </span>
