@@ -13,6 +13,15 @@ const BASE =
 const TOKEN = process.env.ACCESS_TOKEN || process.env.AUTH_TOKEN || "";
 
 const cases = [
+<<<<<<< HEAD
+  { name: 'trip-history-csv', path: '/booking/history/excel', type: 'csv' },
+  { name: 'payments-csv', path: '/payment/export', type: 'csv' },
+]
+
+const expectedContentType = {
+  csv: 'text/csv',
+}
+=======
   { name: "trip-history-pdf", path: "/booking/history/excel", type: "pdf" },
   { name: "trip-history-csv", path: "/booking/history/excel", type: "csv" },
   { name: "payments-pdf", path: "/payment/export", type: "pdf" },
@@ -23,6 +32,7 @@ const expectedContentType = {
   pdf: "application/pdf",
   csv: "text/csv",
 };
+>>>>>>> 56064147f947b8c24072703eee4e44d513aa94f9
 
 function parseCsvHeaderLine(text) {
   const normalized = text.replace(/^\uFEFF/, "");
@@ -56,6 +66,13 @@ async function runCase({ name, path, type }) {
   const buf = Buffer.from(await res.arrayBuffer());
   const head = buf.subarray(0, 4).toString("ascii");
 
+<<<<<<< HEAD
+  const csvText = buf.toString('utf8')
+  const headerLine = parseCsvHeaderLine(csvText)
+  const looksZip = head === 'PK\u0003\u0004' || head.startsWith('PK')
+  const ctOk = contentType.toLowerCase().includes('csv') || contentType.toLowerCase().includes('text/plain')
+  const hasCommas = headerLine.includes(',')
+=======
   if (type === "pdf") {
     const pdfOk = head === "%PDF";
     const ctOk = contentType.toLowerCase().includes(expectedContentType.pdf);
@@ -76,6 +93,7 @@ async function runCase({ name, path, type }) {
   const ctOk =
     contentType.toLowerCase().includes("csv") || contentType.toLowerCase().includes("text/plain");
   const hasCommas = headerLine.includes(",");
+>>>>>>> 56064147f947b8c24072703eee4e44d513aa94f9
 
   return {
     name,
@@ -100,6 +118,18 @@ async function main() {
     results.push(await runCase(testCase));
   }
 
+<<<<<<< HEAD
+  const tripCsv = results.find((r) => r.name === 'trip-history-csv')
+  const payCsv = results.find((r) => r.name === 'payments-csv')
+
+  if (tripCsv?.csvHeaderLine) {
+    console.log('\nTrip history CSV header:')
+    console.log(tripCsv.csvHeaderLine)
+  }
+  if (payCsv?.csvHeaderLine) {
+    console.log('\nPayments CSV header:')
+    console.log(payCsv.csvHeaderLine)
+=======
   const tripCsv = results.find((r) => r.name === "trip-history-csv");
   const tripPdf = results.find((r) => r.name === "trip-history-pdf");
   const payCsv = results.find((r) => r.name === "payments-csv");
@@ -112,6 +142,7 @@ async function main() {
   if (payCsv?.csvHeaderLine && payPdf?.ok) {
     console.log("\nPayments CSV header (compare visually to PDF table header row):");
     console.log(payCsv.csvHeaderLine);
+>>>>>>> 56064147f947b8c24072703eee4e44d513aa94f9
   }
 
   console.log("\nResults:");
