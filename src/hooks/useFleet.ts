@@ -94,6 +94,7 @@ export const normalizeVehicle = (v: any) => {
     ...v,
     id,
     _id: id,
+    image: resolveMediaUrl(v.image),
     assignedDriverId,
     driverId: assignedDriverId,
     assignedDriver,
