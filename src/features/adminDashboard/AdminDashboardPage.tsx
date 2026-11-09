@@ -13,7 +13,7 @@ const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-8   duration-500 pb-12">
+    <div className="pb-12 space-y-8 duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Executive Dashboard</h1>
@@ -30,41 +30,19 @@ const AdminDashboard = ({ role: _role }: { role?: string | null }) => {
       {/* KPI Stats */}
       <DashboardStats onNavigate={navigate} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Analytics */}
         <div className="lg:col-span-2">
           <TripDistributionChart />
         </div>
 
         {/* Action Tiles & Status */}
-        <div className="space-y-5">
+        <div className="space-y-5 ">
           <QuickActions onNavigate={navigate} />
-
-          <Card className="p-5 border-line-2 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
-                <Wrench size={15} className="text-urgent" /> Fleet Maintenance
-              </h3>
-              <Badge variant="urgent">2 Pending</Badge>
-            </div>
-            <p className="text-xs text-ink-4 mb-4 leading-relaxed">
-              Vehicles <strong className="text-ink">VEH-001</strong> and{" "}
-              <strong className="text-ink">VEH-005</strong> require immediate inspection based on
-              mileage milestones.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => navigate("/fleet")}
-            >
-              Review Maintenance
-            </Button>
-          </Card>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ActiveIncidents onNavigate={navigate} />
 
         <RecentActivity onNavigate={navigate} />
