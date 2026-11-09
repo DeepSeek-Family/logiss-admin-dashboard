@@ -40,7 +40,7 @@ const Field = ({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Not available"
-        className="w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg pl-10 pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-colors"
+        className="w-full pl-10 pr-4 text-sm font-medium transition-colors border h-11 rounded-xl border-line-2 text-ink bg-bg focus:outline-none focus:border-primary/30 focus:bg-white"
       />
     </div>
   </div>
@@ -131,8 +131,8 @@ const Profile = ({ role }: { role?: string | null }) => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-64 items-center justify-center text-ink-4">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-64 text-ink-4">
+        <Loader2 className="w-5 h-5 mr-2 animate-spin text-primary" />
         Loading profile…
       </div>
     );
@@ -148,14 +148,12 @@ const Profile = ({ role }: { role?: string | null }) => {
     );
   }
 
-  const phone = profile.phone || profile.contact;
-  const region = profile.reportingRegion || profile.region;
   const employeeId = getUserDisplayId(profile);
   const department = typeof profile.department === "string" ? profile.department : "";
 
   return (
-    <div className="max-w-2xl mx-auto pb-16 duration-300">
-      <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
+    <div className="max-w-2xl pb-16 mx-auto duration-300">
+      <div className="flex items-center gap-5 pb-8 mb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="type-page-title">{name}</h1>
@@ -170,12 +168,7 @@ const Profile = ({ role }: { role?: string | null }) => {
             </p>
           )}
         </div>
-        <Button
-          variant="primary"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="shrink-0"
-        >
+        <Button variant="primary" onClick={handleSave} disabled={isSaving} className="shrink-0">
           {isSaving ? (
             <>
               <Loader2 size={14} className="animate-spin" />
@@ -189,15 +182,15 @@ const Profile = ({ role }: { role?: string | null }) => {
 
       <Card className="p-6 space-y-6">
         <div>
-          <p className="type-th mb-4">Profile Photo</p>
+          <p className="mb-4 type-th">Profile Photo</p>
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-line shadow-md bg-bg flex items-center justify-center text-xl font-semibold text-primary">
+              <div className="flex items-center justify-center w-20 h-20 overflow-hidden text-xl font-semibold border-2 shadow-md rounded-2xl border-line bg-bg text-primary">
                 {displayImg ? (
                   <img
                     src={displayImg}
                     alt={name}
-                    className="w-full h-full object-cover"
+                    className="object-cover w-full h-full"
                     onError={() => setImageFailed(true)}
                   />
                 ) : (
@@ -234,7 +227,7 @@ const Profile = ({ role }: { role?: string | null }) => {
                     setPhoto(null);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
-                  className="block text-xs font-semibold text-ink-4 hover:text-urgent transition-colors"
+                  className="block text-xs font-semibold transition-colors text-ink-4 hover:text-urgent"
                 >
                   Remove
                 </button>
@@ -245,8 +238,8 @@ const Profile = ({ role }: { role?: string | null }) => {
         </div>
 
         <div className="pt-5 border-t border-line-2">
-          <p className="type-th mb-5">Personal Information</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <p className="mb-5 type-th">Personal Information</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Full Name" icon={User} value={fullName} onChange={setFullName} />
             <Field label="Email Address" icon={Mail} value={email} onChange={setEmail} />
             <Field label="Phone Number" icon={Phone} value={phone} onChange={setPhone} />
