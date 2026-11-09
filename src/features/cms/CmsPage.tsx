@@ -10,18 +10,15 @@ import {
   HelpCircle,
   Info,
   Save,
-  RotateCcw,
-  Clock,
   ExternalLink,
   Edit3,
-  CheckCircle,
   ChevronRight,
   Building2,
   Loader2,
   AlertTriangle,
 } from "lucide-react";
 
-import { Card, Button, Badge } from "@/shared/components/ui";
+import { Card, Button } from "@/shared/components/ui";
 
 import { useUpdateRuleMutation } from "@/redux/api/rulesApi";
 
@@ -55,15 +52,10 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const {
     data: supportResponse,
-
     isLoading: supportLoading,
-
     isUninitialized: supportUninitialized,
-
     isError: supportError,
-
     error: supportLoadError,
-
     refetch: refetchSupport,
   } = useGetCompanySupportQuery();
 
@@ -114,18 +106,12 @@ const CMS = ({ role }: { role?: string | null }) => {
 
   const [content, setContent] = useState<ContentState>({
     terms: "",
-
     privacy: "",
-
     faq: "",
-
     about: "",
   });
-
   const [orgSettings, setOrgSettings] = useState<OrgSettings>(defaultOrgSettings());
-
   const hasHydratedOrgFromApi = useRef(false);
-
   const applySupportToOrgForm = (record: NonNullable<typeof supportRecord>) => {
     setOrgSettings((prev) => ({
       ...mapApiCompanySupportToOrg(record),
@@ -133,7 +119,6 @@ const CMS = ({ role }: { role?: string | null }) => {
       status: prev.status,
     }));
   };
-
   useEffect(() => {
     if (supportBootLoading || !supportRecord?._id) return;
     if (hasHydratedOrgFromApi.current) return;
@@ -216,7 +201,6 @@ const CMS = ({ role }: { role?: string | null }) => {
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="type-page-title">Global Configuration</h1>
-
           <p className="mt-1 font-semibold tracking-wide text-ink-3">
             Manage organization details, legal pages, and help content
           </p>
@@ -225,11 +209,8 @@ const CMS = ({ role }: { role?: string | null }) => {
         <div className="flex gap-3">
           <Button
             variant="primary"
-
             icon={isSaving ? undefined : Save}
-
             onClick={handleSave}
-
             disabled={isSaving || (activePage === "org" && supportBootLoading)}
           >
             {isSaving ? "Saving..." : "Save All Changes"}
@@ -241,15 +222,11 @@ const CMS = ({ role }: { role?: string | null }) => {
         <aside className="space-y-2 lg:col-span-3">
           {pages.map((page) => {
             const isActive = activePage === page.id;
-
             return (
               <button
                 key={page.id}
-
                 type="button"
-
                 onClick={() => handleTabChange(page.id)}
-
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-colors text-left group ${
                   isActive
                     ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
@@ -266,7 +243,6 @@ const CMS = ({ role }: { role?: string | null }) => {
                   >
                     <page.icon size={17} />
                   </div>
-
                   <div className="min-w-0">
                     <p
                       className={`text-sm font-semibold truncate transition-colors ${
@@ -305,9 +281,7 @@ const CMS = ({ role }: { role?: string | null }) => {
               {activePageData?.type === "text" ? (
                 <ContentEditor
                   activePage={activePage}
-
                   content={content}
-
                   setContent={setContent}
                 />
               ) : activePageData?.type === "faq" ? (
@@ -328,9 +302,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                   <button
                     type="button"
-
                     onClick={() => refetchSupport()}
-
                     className="px-4 py-2 text-sm font-medium text-white rounded-xl bg-primary"
                   >
                     Retry
@@ -339,13 +311,10 @@ const CMS = ({ role }: { role?: string | null }) => {
               ) : (
                 <OrgSettingsForm
                   orgSettings={orgSettings}
-
                   setOrgSettings={setOrgSettings}
-
                   disabled={isSaving}
                 />
               )}
-
               <div className="flex items-center justify-between p-4 mt-8 border rounded-lg bg-bg border-line-2">
                 <div className="flex gap-4">
                   <button

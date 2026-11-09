@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import {
   Search,
   X,
-  MapPin,
-  CalendarClock,
   Plus,
   Accessibility,
   Bed,
@@ -248,7 +246,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
   return (
     <div className="fixed inset-0 bg-ink/50 backdrop-blur-md z-[60] flex items-center justify-center p-4 md:p-6   duration-300">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden border border-line-2">
-        <div className="flex items-center justify-between px-8 py-5 border-b border-line-2 bg-white sticky top-0 z-10">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 bg-white border-b border-line-2">
           <div>
             <h3 className="text-xl font-semibold text-ink">Manual Booking Console</h3>
             <p className="text-xs text-ink-4 uppercase tracking-[0.1em] mt-0.5">
@@ -257,14 +255,14 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-bg rounded-xl text-ink-4 transition-colors"
+            className="p-2 transition-colors hover:bg-bg rounded-xl text-ink-4"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6 custom-scrollbar">
-          <div className="flex items-center bg-bg p-1 rounded-2xl mb-5 border border-line-2 shadow-inner max-w-xs mx-auto">
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          <div className="flex items-center max-w-xs p-1 mx-auto mb-5 border shadow-inner bg-bg rounded-2xl border-line-2">
             {["new", "existing"].map((t) => (
               <button
                 key={t}
@@ -293,19 +291,19 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                         setSelectedExistingRider(null);
                       }}
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-4">
+                    <div className="absolute -translate-y-1/2 right-4 top-1/2 text-ink-4">
                       <Search size={18} />
                     </div>
                   </div>
                   {existingSearch && !selectedExistingRider && (
-                    <div className="border border-line-2 rounded-2xl overflow-hidden divide-y divide-line-2 max-h-48 overflow-y-auto shadow-lg bg-white">
+                    <div className="overflow-hidden overflow-y-auto bg-white border divide-y shadow-lg border-line-2 rounded-2xl divide-line-2 max-h-48">
                       {filteredRiders.length > 0 ? (
                         filteredRiders.map((r: any, i: number) => (
                           <button
                             key={i}
                             type="button"
                             onClick={() => selectRider(r)}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors text-left"
+                            className="flex items-center w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-bg"
                           >
                             <Avatar initials={r?.initials || "??"} size="xs" />
                             <div>
@@ -348,7 +346,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                     <div className="relative">
                       <Phone
                         size={14}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4"
+                        className="absolute -translate-y-1/2 left-4 top-1/2 text-ink-4"
                       />
                       <input
                         className={`${inputClass} pl-10`}
@@ -359,7 +357,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                     </div>
                   </div>
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4 flex items-center font-medium text-xs">
+                    <div className="absolute flex items-center text-xs font-medium -translate-y-1/2 left-4 top-1/2 text-ink-4">
                       PAY
                     </div>
                     <input
@@ -374,7 +372,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                     <div className="relative">
                       <ShieldCheck
                         size={14}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4"
+                        className="absolute -translate-y-1/2 left-4 top-1/2 text-ink-4"
                       />
                       <input
                         className={`${inputClass} pl-10`}
@@ -386,7 +384,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                     <div className="relative">
                       <UserIcon
                         size={14}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4"
+                        className="absolute -translate-y-1/2 left-4 top-1/2 text-ink-4"
                       />
                       <input
                         className={`${inputClass} pl-10`}
@@ -468,7 +466,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                 <button
                   type="button"
                   onClick={addStop}
-                  className="ml-10 text-xs font-medium text-primary flex items-center gap-1"
+                  className="flex items-center gap-1 ml-10 text-xs font-medium text-primary"
                 >
                   <Plus size={14} /> ADD STOP
                 </button>
@@ -500,12 +498,12 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="space-y-4">
                 <SectionHeader title="Scheduling" icon={Clock} />
                 <div className="space-y-4">
                   <div className="relative">
-                    <p className="text-xs font-medium text-ink-4 uppercase mb-1 ml-1">Pickup</p>
+                    <p className="mb-1 ml-1 text-xs font-medium uppercase text-ink-4">Pickup</p>
                     <input
                       required
                       type="datetime-local"
@@ -515,7 +513,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                     />
                   </div>
                   <div className="relative">
-                    <p className="text-xs font-medium text-ink-4 uppercase mb-1 ml-1">
+                    <p className="mb-1 ml-1 text-xs font-medium uppercase text-ink-4">
                       Appointment Time
                     </p>
                     <input
@@ -525,7 +523,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                       onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
                     />
                   </div>
-                  <div className="flex bg-bg p-1 rounded-xl border border-line-2">
+                  <div className="flex p-1 border bg-bg rounded-xl border-line-2">
                     {["one_way", "round_trip"].map((t) => (
                       <button
                         key={t}
@@ -561,7 +559,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
                             <img
                               src={opt.iconUrl}
                               alt={opt.name}
-                              className="w-4 h-4 object-contain"
+                              className="object-contain w-4 h-4"
                             />
                           ) : (
                             <IconComp size={16} />
@@ -577,7 +575,7 @@ export const ManualTripModal: React.FC<ManualTripModalProps> = ({
           </form>
         </div>
 
-        <div className="px-8 py-5 border-t border-line-2 bg-bg flex gap-4 shrink-0 rounded-b-3xl">
+        <div className="flex gap-4 px-8 py-5 border-t border-line-2 bg-bg shrink-0 rounded-b-3xl">
           <Button variant="outline" className="flex-1" onClick={onClose}>
             Cancel
           </Button>

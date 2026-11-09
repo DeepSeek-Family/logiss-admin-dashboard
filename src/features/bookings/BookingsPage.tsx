@@ -1,41 +1,17 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Clock,
-  MapPin,
-  Phone,
-  ChevronRight,
-  CheckCircle2,
-  User,
-  Users,
-  CalendarClock,
-  AlertOctagon,
-  Navigation,
-  Repeat,
-  MoveRight,
-  ArrowRight,
-  Check,
-  Trash2,
-  XCircle,
+
   Plus,
   Loader2,
-  Edit2,
-  ExternalLink,
-  List,
   Map as MapIcon,
 } from "lucide-react";
 import {
-  Card,
-  Avatar,
-  Badge,
   Button,
-  TripStatusBadge,
-  Pagination,
   ConfirmationModal,
 } from "@/shared/components/ui";
 import { ManualTripModal } from "@/components/ManualTripModal";
-import { quoteFares, quotePenalty, findFundingPolicy } from "@/hooks/usePricing";
-import { formatTime, formatDateTime, formatShortDate, tripTypeLabel, money } from "@/utils/helpers";
+import {  quotePenalty, findFundingPolicy } from "@/hooks/usePricing";
 import { CancelTripModal } from "@/features/reports";
 import { toast } from "react-hot-toast";
 import {
@@ -701,7 +677,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
         />
       )}
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="type-page-title">Booking Requests</h1>
           <p className="text-sm text-ink-4 mt-0.5">
@@ -723,8 +699,8 @@ const Bookings = ({ role }: { role?: string | null }) => {
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-5 items-start">
-        <div className="flex-1 min-w-0 w-full">
+      <div className="flex flex-col items-start gap-5 xl:flex-row">
+        <div className="flex-1 w-full min-w-0">
           <BookingsList
             activeTab={activeTab}
             setActiveTab={setActiveTab}

@@ -20,15 +20,12 @@ import {
 } from "lucide-react";
 import {
   Avatar,
-  Badge,
-  Button,
   GoogleMapsRouteButton,
   Pagination,
   SearchInput,
 } from "@/shared/components/ui";
 import { formatShortDate, formatTripId } from "@/utils/helpers";
 import { DollarSign } from "lucide-react";
-import { usePricing } from "@/hooks/usePricing";
 import { useGetAllPayersQuery } from "@/redux/api/bookingApi";
 import { DriverAssignSelect } from "./DriverAssignSelect";
 import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from "../utils/helpers";
@@ -207,7 +204,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
 
   return (
-    <div className="flex flex-col gap-4 flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 gap-4">
       <div className="flex items-center gap-1 border-b border-line-2 shrink-0">
         <button
           className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === "pending" ? "border-primary text-primary" : "border-transparent text-ink-4 hover:text-ink hover:border-line-2"}`}
@@ -251,7 +248,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap shrink-0">
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         <SearchInput
           className="w-full sm:w-72"
           placeholder="Search rider or ID..."
@@ -275,7 +272,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           <select
             value={fundingFilter}
             onChange={(e) => setFundingFilter(e.target.value)}
-            className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+            className="py-2 pl-3 pr-8 text-xs font-medium bg-white border outline-none appearance-none cursor-pointer border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary h-9"
           >
             <option value="all">All Payers</option>
             {payersList.map((payer) => (
@@ -292,7 +289,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             <select
               value={assignFilter}
               onChange={(e) => setAssignFilter(e.target.value as DriverAssignmentFilter)}
-              className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
+              className="py-2 pl-3 pr-8 text-xs font-medium bg-white border outline-none appearance-none cursor-pointer border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary h-9"
             >
               <option value="">All</option>
               <option value="unassigned">Unassigned</option>
@@ -302,14 +299,14 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         )}
       </div>
 
-      <div className="bg-white border border-line-2 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-white border shadow-sm border-line-2 rounded-xl">
         {/* Bulk-action bar — consistent with Trip History; appears on selection */}
         {selectedTrips.length > 0 && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-primary-tint/40 border-b border-primary/20    duration-200 shrink-0">
             <span className="text-xs font-semibold text-primary-dark whitespace-nowrap">
               {selectedTrips.length} selected
             </span>
-            <div className="h-4 w-px bg-primary/20" />
+            <div className="w-px h-4 bg-primary/20" />
 
             {activeTab === "confirmed" && (
               <div className="flex items-center gap-1.5 min-w-[220px]">
@@ -359,15 +356,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
         {filteredTrips.length > 0 ? (
           <>
-            <div className="overflow-auto flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-auto">
               <table className="w-full text-left">
-                <thead className="bg-bg border-b border-line-2 sticky top-0 z-10">
+                <thead className="sticky top-0 z-10 border-b bg-bg border-line-2">
                   <tr className="border-b border-line-2 bg-bg/50">
                     {activeTab === "pending" && (
                       <th className="pl-4 pr-2 py-2.5 w-8">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-line-2 text-primary focus:ring-primary/20 transition-colors cursor-pointer"
+                          className="w-4 h-4 transition-colors rounded cursor-pointer border-line-2 text-primary focus:ring-primary/20"
                           checked={
                             paginatedBookings.length > 0 &&
                             paginatedBookings.every((b: any) => selectedTrips.includes(b.id))
@@ -434,12 +431,12 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       className={`border-b border-line-2 transition-colors cursor-pointer ${selectedMapId === booking.id ? "bg-primary-tint/40 ring-1 ring-inset ring-primary/30" : selectedTrips.includes(booking.id) ? "bg-accent-light/10" : "hover:bg-bg/50"} ${booking.isUrgent ? "border-l-4 border-l-urgent border-urgent/30 bg-urgent-light/10" : ""}`}
                     >
                       {activeTab === "pending" && (
-                        <td className="pl-4 pr-2 py-3" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedTrips.includes(booking.id)}
                             onChange={() => toggleSelectTrip(booking.id)}
-                            className="w-4 h-4 rounded border-line text-primary cursor-pointer"
+                            className="w-4 h-4 rounded cursor-pointer border-line text-primary"
                           />
                         </td>
                       )}
@@ -450,7 +447,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           {activeTab === "pending" && (
                             <button
                               title="Approve"
-                              className="p-2 text-accent hover:bg-accent-light rounded-xl transition-colors"
+                              className="p-2 transition-colors text-accent hover:bg-accent-light rounded-xl"
                               onClick={() => handleApprove(booking.id)}
                             >
                               <Check size={16} />
@@ -458,14 +455,14 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           )}
                           <button
                             title="Edit ride details"
-                            className="p-2 text-ink-4 hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
+                            className="p-2 transition-colors text-ink-4 hover:text-primary hover:bg-primary/10 rounded-xl"
                             onClick={() => onEditTrip(booking.id)}
                           >
                             <Pencil size={15} />
                           </button>
                           <button
                             title="Cancel / delete ride"
-                            className="p-2 text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-colors"
+                            className="p-2 transition-colors text-ink-4 hover:text-urgent hover:bg-urgent/10 rounded-xl"
                             onClick={() => updateTrip(booking.id, { status: "cancelled" })}
                           >
                             <Trash2 size={15} />
@@ -522,7 +519,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                             src={resolveMediaUrl(booking?.rider?.profile)}
                             size="xs"
                           />
-                          <p className="text-xs font-medium text-ink leading-tight whitespace-nowrap">
+                          <p className="text-xs font-medium leading-tight text-ink whitespace-nowrap">
                             {booking?.rider?.name || "Unknown"}
                           </p>
                         </div>
@@ -536,7 +533,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                           if (lower.includes("wheelchair")) {
                             return (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                <Accessibility size={13} className="shrink-0 text-indigo-600" />
+                                <Accessibility size={13} className="text-indigo-600 shrink-0" />
                                 {m}
                               </span>
                             );
@@ -608,7 +605,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                             ? PENDING_TAB_STATUS_OPTIONS
                             : STATUS_OPTIONS
                           ).map((o) => (
-                            <option key={o.value} value={o.value} className="text-ink bg-white">
+                            <option key={o.value} value={o.value} className="bg-white text-ink">
                               {o.label}
                             </option>
                           ))}
@@ -660,7 +657,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                               </span>
                             </div>
                           ) : (
-                            <ArrowRight size={12} className="text-ink-4 shrink-0 mx-1" />
+                            <ArrowRight size={12} className="mx-1 text-ink-4 shrink-0" />
                           )}
 
                           <MapPin size={13} className="text-urgent shrink-0" />
@@ -837,7 +834,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
             </div>
           </>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center py-20 text-ink-4">
+          <div className="flex flex-col items-center justify-center flex-1 py-20 text-ink-4">
             <CheckCircle2 size={48} className="mb-4 opacity-20" />
             <p className="font-medium text-ink">Queue Empty</p>
             <p className="text-sm">No bookings match your criteria.</p>

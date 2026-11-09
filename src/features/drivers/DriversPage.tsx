@@ -124,11 +124,11 @@ const Drivers = ({ role }: { role?: string | null }) => {
 
   if (isLoading && drivers.length === 0) {
     return (
-      <div className="flex flex-col gap-4   duration-300 pb-12">
+      <div className="flex flex-col gap-4 pb-12 duration-300">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="w-48 h-8 bg-line-2 rounded-xl animate-pulse"></div>
-            <div className="w-64 h-4 bg-line-2 rounded-lg animate-pulse"></div>
+            <div className="w-64 h-4 rounded-lg bg-line-2 animate-pulse"></div>
           </div>
         </div>
         <div className="h-[400px] bg-bg rounded-2xl animate-pulse"></div>
@@ -139,14 +139,14 @@ const Drivers = ({ role }: { role?: string | null }) => {
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertTriangle size={48} className="text-urgent mb-4 opacity-50" />
-        <h3 className="text-lg font-semibold text-ink mb-2">Failed to load drivers</h3>
-        <p className="text-ink-3 text-sm mb-4">
+        <AlertTriangle size={48} className="mb-4 opacity-50 text-urgent" />
+        <h3 className="mb-2 text-lg font-semibold text-ink">Failed to load drivers</h3>
+        <p className="mb-4 text-sm text-ink-3">
           {apiErrorMessage(error, "Unable to fetch drivers")}
         </p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+          className="px-4 py-2 text-sm font-medium text-white rounded-xl bg-primary"
         >
           Retry
         </button>
@@ -156,7 +156,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
 
   if (selectedDriverId && !selectedDriver && historyLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <Loader2 size={28} className="text-primary animate-spin" />
         <p className="text-sm text-ink-4">Loading driver...</p>
       </div>
@@ -238,7 +238,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
   }
 
   return (
-    <div className="flex flex-col gap-4   duration-300 pb-12">
+    <div className="flex flex-col gap-4 pb-12 duration-300">
       {showAddModal && (
         <AddDriverModal
           saving={isCreatingDriver}
@@ -260,7 +260,7 @@ const Drivers = ({ role }: { role?: string | null }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="type-page-title">Driver Network</h1>
-          <p className="text-sm font-medium text-ink-3 mt-1">
+          <p className="mt-1 text-sm font-medium text-ink-3">
             Manage driver accounts and compliance
           </p>
         </div>
