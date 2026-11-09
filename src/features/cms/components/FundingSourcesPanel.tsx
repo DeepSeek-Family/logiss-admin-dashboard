@@ -519,14 +519,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
     }
   };
 
-  const MAX_GEOFENCE_BYTES = 2 * 1024 * 1024;
-
   const handleGeofenceFile = async (file: File | undefined) => {
     if (!file || !draft) return;
-    if (file.size > MAX_GEOFENCE_BYTES) {
-      toast.error("File is too large to save (max 2 MB).");
-      return;
-    }
     let parsed: unknown;
     try {
       parsed = JSON.parse(await file.text());
