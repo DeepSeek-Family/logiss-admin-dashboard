@@ -1,110 +1,185 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User, Mail, Phone, MapPin, Camera, Loader2, CheckCircle2 } from "lucide-react";
-import { Card, Badge, Button } from "@/shared/components/ui";
+import toast from "react-hot-toast";
+import { Card, Badge, Button, QueryFeedback } from "@/shared/components/ui";
+import {
+  getUserDisplayId,
+  getUserFullName,
+  getUserInitials,
+  getUserProfileImage,
+  getUserRoleLabel,
+} from "@/shared/utils/userProfileDisplay";
+import { getUserFacingApiError } from "@/utils/apiError";
+import { resolveMediaUrl } from "@/utils/imageUrl";
+import {
+  useGetCurrentUserProfileQuery,
+  useUpdateCurrentUserProfileMutation,
+} from "@/redux/api/userApi";
 
-const PROFILES = {
-  admin: {
-    name: "Marcus A. Holloway",
-    email: "m.holloway@logiss.com",
-    phone: "(804) 555-0882",
-    region: "Richmond, VA",
-    role: "Administrator",
-    employeeId: "LOGISS-882",
-    department: "Operations & Fleet",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
-  },
-  dispatcher: {
-    name: "Sandra K. Reynolds",
-    email: "s.reynolds@logiss.com",
-    phone: "(804) 555-0941",
-    region: "Richmond, VA",
-    role: "Dispatch Officer",
-    employeeId: "LOGISS-941",
-    department: "Dispatch Center",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-  },
-};
+const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
 
 const Field = ({
   label,
   icon: Icon,
   value,
-  readOnly,
+  onChange,
 }: {
   label: string;
-  icon?: any;
+  icon: typeof User;
   value: string;
-  readOnly?: boolean;
+  onChange: (value: string) => void;
 }) => (
   <div>
     <p className="text-xs font-semibold text-ink-4 mb-1.5">{label}</p>
     <div className="relative">
-      {Icon && (
-        <Icon
-          size={14}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none"
-        />
-      )}
+      <Icon
+        size={14}
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none"
+      />
       <input
-        defaultValue={value}
-        readOnly={readOnly}
-        className={`w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg ${Icon ? "pl-10" : "pl-4"} pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-colors ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Not available"
+        className="w-full h-11 rounded-xl border border-line-2 text-sm font-medium text-ink bg-bg pl-10 pr-4 focus:outline-none focus:border-primary/30 focus:bg-white transition-colors"
       />
     </div>
   </div>
 );
 
 const Profile = ({ role }: { role?: string | null }) => {
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { data, error, isError, isLoading, refetch } = useGetCurrentUserProfileQuery();
+  const [updateProfile, { isLoading: isSaving }] = useUpdateCurrentUserProfileMutation();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [region, setRegion] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const profile = data?.data;
+  const name = getUserFullName(profile);
+  const initials = getUserInitials(profile);
+  const profileImage = resolveMediaUrl(getUserProfileImage(profile));
+  const displayImg = previewImg || (!imageFailed ? profileImage : undefined);
 
-  const p = PROFILES[role as keyof typeof PROFILES] || PROFILES.dispatcher;
-  const displayImg = previewImg || p.image;
+  useEffect(() => {
+    setImageFailed(false);
+  }, [profileImage]);
 
-  const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }, 900);
+  useEffect(() => {
+    if (!profile) return;
+    setFullName(getUserFullName(profile) === "User" ? "" : getUserFullName(profile));
+    setEmail(profile.email || "");
+    setPhone(profile.phone || profile.contact || "");
+    setRegion(profile.reportingRegion || profile.region || "");
+  }, [profile]);
+
+  const handleSave = async () => {
+    const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length === 0) {
+      toast.error("Full name is required.");
+      return;
+    }
+
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+    const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "";
+
+    try {
+      const result = await updateProfile({
+        firstName,
+        middleName,
+        lastName,
+        email,
+        contact: phone,
+        region,
+        ...(photo ? { profile: photo } : {}),
+      }).unwrap();
+      setPhoto(null);
+      setPreviewImg(null);
+      if (fileRef.current) fileRef.current.value = "";
+      toast.success(result.message || "Profile updated successfully.");
+    } catch (saveError) {
+      toast.error(getUserFacingApiError(saveError));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreviewImg(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
+      toast.error("Photo is too large (max 2 MB).");
+      e.target.value = "";
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Upload a JPG, PNG, or WebP photo.");
+      e.target.value = "";
+      return;
+    }
+    setPhoto(file);
+    setPreviewImg(URL.createObjectURL(file));
   };
 
+  useEffect(
+    () => () => {
+      if (previewImg) URL.revokeObjectURL(previewImg);
+    },
+    [previewImg],
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-64 items-center justify-center text-ink-4">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
+        Loading profile…
+      </div>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <QueryFeedback
+        title="Unable to load profile"
+        message={getUserFacingApiError(error)}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
+
+  const phone = profile.phone || profile.contact;
+  const region = profile.reportingRegion || profile.region;
+  const employeeId = getUserDisplayId(profile);
+  const department = typeof profile.department === "string" ? profile.department : "";
+
   return (
-    <div className="max-w-2xl mx-auto pb-16   duration-300">
-      {/* Header */}
+    <div className="max-w-2xl mx-auto pb-16 duration-300">
       <div className="flex items-center gap-5 mb-8 pb-8 border-b border-line-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="type-page-title">{p.name}</h1>
+            <h1 className="type-page-title">{name}</h1>
             <Badge variant="primary-light" className="text-xs">
-              {p.role}
+              {getUserRoleLabel(profile, role)}
             </Badge>
           </div>
-          <p className="text-sm text-ink-4 mt-0.5">
-            {p.employeeId} · {p.department}
-          </p>
+          {(employeeId !== "Not available" || department) && (
+            <p className="text-sm text-ink-4 mt-0.5">
+              {employeeId}
+              {department ? ` · ${department}` : ""}
+            </p>
+          )}
         </div>
-        <Button variant="primary" onClick={handleSave} disabled={saving} className="shrink-0">
-          {saving ? (
+        <Button
+          variant="primary"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="shrink-0"
+        >
+          {isSaving ? (
             <>
-              <Loader2 size={14} className="animate-spin inline mr-1.5" />
+              <Loader2 size={14} className="animate-spin" />
               Saving
-            </>
-          ) : saved ? (
-            <>
-              <CheckCircle2 size={14} className="inline mr-1.5" />
-              Saved
             </>
           ) : (
             "Save Changes"
@@ -113,13 +188,21 @@ const Profile = ({ role }: { role?: string | null }) => {
       </div>
 
       <Card className="p-6 space-y-6">
-        {/* Photo Upload */}
         <div>
           <p className="type-th mb-4">Profile Photo</p>
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-line shadow-md bg-bg">
-                <img src={displayImg} alt={p.name} className="w-full h-full object-cover" />
+              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-line shadow-md bg-bg flex items-center justify-center text-xl font-semibold text-primary">
+                {displayImg ? (
+                  <img
+                    src={displayImg}
+                    alt={name}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageFailed(true)}
+                  />
+                ) : (
+                  initials
+                )}
               </div>
               {previewImg && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent rounded-full flex items-center justify-center shadow">
@@ -145,7 +228,12 @@ const Profile = ({ role }: { role?: string | null }) => {
               </Button>
               {previewImg && (
                 <button
-                  onClick={() => setPreviewImg(null)}
+                  type="button"
+                  onClick={() => {
+                    setPreviewImg(null);
+                    setPhoto(null);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
                   className="block text-xs font-semibold text-ink-4 hover:text-urgent transition-colors"
                 >
                   Remove
@@ -156,14 +244,13 @@ const Profile = ({ role }: { role?: string | null }) => {
           </div>
         </div>
 
-        {/* Personal Info */}
         <div className="pt-5 border-t border-line-2">
           <p className="type-th mb-5">Personal Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Full Name" icon={User} value={p.name} />
-            <Field label="Email Address" icon={Mail} value={p.email} />
-            <Field label="Phone Number" icon={Phone} value={p.phone} />
-            <Field label="Reporting Region" icon={MapPin} value={p.region} />
+            <Field label="Full Name" icon={User} value={fullName} onChange={setFullName} />
+            <Field label="Email Address" icon={Mail} value={email} onChange={setEmail} />
+            <Field label="Phone Number" icon={Phone} value={phone} onChange={setPhone} />
+            <Field label="Reporting Region" icon={MapPin} value={region} onChange={setRegion} />
           </div>
         </div>
       </Card>

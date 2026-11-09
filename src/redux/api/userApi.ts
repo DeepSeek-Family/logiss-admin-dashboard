@@ -14,6 +14,57 @@ export interface IAuthUserDetailResponse {
   data: IUserDetail;
 }
 
+export interface ICurrentUserProfile {
+  _id?: string;
+  id?: string;
+  userId?: string;
+  employeeId?: string;
+  employeeID?: string;
+  staffId?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  name?: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  contact?: string;
+  role?: string;
+  profile?: string;
+  image?: string;
+  avatar?: string;
+  region?: string;
+  reportingRegion?: string;
+  department?: string;
+  [key: string]: unknown;
+}
+
+export interface ICurrentUserProfileResponse {
+  success: boolean;
+  message?: string;
+  data: ICurrentUserProfile;
+}
+
+export interface IUpdateCurrentUserProfileInput {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email: string;
+  contact: string;
+  region: string;
+  profile?: File;
+}
+
+const normalizeCurrentUserProfile = (response: unknown): ICurrentUserProfileResponse => {
+  const body = response as Record<string, unknown> | null | undefined;
+  const data = (body?.data ?? body) as ICurrentUserProfile;
+  return {
+    success: body?.success !== false,
+    message: body?.message as string | undefined,
+    data,
+  };
+};
+
 const normalizeAuthUserDetail = (response: unknown): IAuthUserDetailResponse => {
   const body = response as Record<string, unknown> | null | undefined;
   const data = (body?.data ?? body) as IUserDetail;
@@ -49,6 +100,39 @@ const unwrapBannedUser = (response: unknown): IBannedUser | undefined => {
 
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getCurrentUserProfile: builder.query<ICurrentUserProfileResponse, void>({
+      query: () => ({
+        url: "/user/profile",
+        method: "GET",
+      }),
+      transformResponse: normalizeCurrentUserProfile,
+      providesTags: [{ type: "User", id: "PROFILE" }],
+    }),
+    updateCurrentUserProfile: builder.mutation<
+      ICurrentUserProfileResponse,
+      IUpdateCurrentUserProfileInput
+    >({
+      query: ({ profile, ...fields }) => {
+        if (!profile) {
+          return {
+            url: "/user",
+            method: "PATCH",
+            body: fields,
+          };
+        }
+
+        const formData = new FormData();
+        Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+        formData.append("profile", profile);
+        return {
+          url: "/user",
+          method: "PATCH",
+          body: formData,
+        };
+      },
+      transformResponse: normalizeCurrentUserProfile,
+      invalidatesTags: [{ type: "User" }],
+    }),
     getAuthUserById: builder.query<IAuthUserDetailResponse, string>({
       query: (id) => ({
         url: `/auth/user/${id}`,
@@ -83,4 +167,9 @@ export const userApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useGetAuthUserByIdQuery, useToggleUserBannedMutation } = userApi;
+export const {
+  useGetCurrentUserProfileQuery,
+  useUpdateCurrentUserProfileMutation,
+  useGetAuthUserByIdQuery,
+  useToggleUserBannedMutation,
+} = userApi;
