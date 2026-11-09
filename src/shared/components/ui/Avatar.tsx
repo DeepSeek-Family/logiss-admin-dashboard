@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { resolveMediaUrl } from "@/utils/imageUrl";
 
 const avatarMap: { [key: string]: string } = {
   DW: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
@@ -48,7 +49,8 @@ export const Avatar: React.FC<AvatarProps> = ({
     full: "w-full h-full",
   };
 
-  const imageSrc = !imgFailed && src ? src : !src ? avatarMap[initials] : undefined;
+  const imageSrc =
+    !imgFailed && src ? resolveMediaUrl(src) : !src ? avatarMap[initials] : undefined;
   const roundedClass = shape === "square" ? "rounded-[inherit]" : "rounded-full";
 
   return (

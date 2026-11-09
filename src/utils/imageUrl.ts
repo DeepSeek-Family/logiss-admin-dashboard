@@ -34,11 +34,7 @@ export const imageUrl = (path?: string | null): string => {
     return "";
   }
 
-  if (
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("data:")
-  ) {
+  if (/^(?:https?:)?\/\//i.test(trimmed) || /^(?:data|blob):/i.test(trimmed)) {
     return trimmed;
   }
 
