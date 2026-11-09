@@ -59,9 +59,6 @@ import toast from "react-hot-toast";
 const METHODS: UiPricingMethod[] = ["flat_rate", "per_mile", "mileage_based"];
 const PAYER_QUERY_KEY = "payer";
 
-const sentenceCase = (value: string) =>
-  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
-
 const typeChipTone = (type: string) => {
   const t = type.toLowerCase();
   if (t.includes("government")) return "bg-primary-tint text-primary border-primary/25";
@@ -177,7 +174,7 @@ const MoneyInput = ({
   "aria-label"?: string;
 }) => (
   <div className={`relative ${wrapperClassName ?? "w-32"}`}>
-    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">
+    <span className="absolute text-sm -translate-y-1/2 pointer-events-none left-3 top-1/2 text-ink-4">
       $
     </span>
     <ClearableNumberInput
@@ -229,20 +226,20 @@ const EditorSection = ({
   const collapsible = Boolean(onToggle);
   const expanded = !collapsible || Boolean(open);
   return (
-    <section className="rounded-xl border border-line-2 bg-white overflow-hidden">
+    <section className="overflow-hidden bg-white border rounded-xl border-line-2">
       <header
         className={`flex items-center gap-2.5 px-4 ${
           collapsible ? "py-1.5" : "py-3"
         } ${expanded ? "border-b border-line-2" : ""} bg-primary-tint/60`}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-primary">
+        <span className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shrink-0 bg-primary">
           {n}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center min-w-0 gap-2">
             <h3 className="text-sm font-semibold shrink-0 text-primary">{title}</h3>
             {!expanded && collapsedSummary && (
-              <p className="min-w-0 truncate text-xs font-normal text-ink-4">{collapsedSummary}</p>
+              <p className="min-w-0 text-xs font-normal truncate text-ink-4">{collapsedSummary}</p>
             )}
           </div>
           {expanded && subtitle && <p className="text-xs text-ink-4 mt-0.5">{subtitle}</p>}
@@ -250,7 +247,7 @@ const EditorSection = ({
         {collapsible && (
           <button
             type="button"
-            className="h-10 w-10 shrink-0 flex items-center justify-center text-ink-4 hover:text-ink hover:bg-white/80 rounded-xl"
+            className="flex items-center justify-center w-10 h-10 shrink-0 text-ink-4 hover:text-ink hover:bg-white/80 rounded-xl"
             aria-expanded={expanded}
             aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
             onClick={onToggle}
@@ -552,7 +549,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
 
   if (isLoading) {
     return (
-      <div className="py-16 flex flex-col items-center gap-3 text-ink-4">
+      <div className="flex flex-col items-center gap-3 py-16 text-ink-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-sm">Loading payers…</p>
       </div>
@@ -561,13 +558,13 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
 
   if (isError) {
     return (
-      <div className="py-16 flex flex-col items-center gap-3 text-center">
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
         <AlertTriangle className="text-urgent opacity-60" size={32} />
         <p className="text-sm text-ink-3">{apiErrorMessage(error, "Failed to load payers")}</p>
         <button
           type="button"
           onClick={() => void refetch()}
-          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+          className="px-4 py-2 text-sm font-medium text-white rounded-xl bg-primary"
         >
           Retry
         </button>
@@ -593,8 +590,8 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
       </div>
 
       {showAdd && (
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-3">
-          <p className="text-xs font-bold text-primary uppercase tracking-wider">New Payer</p>
+        <div className="p-4 space-y-3 border bg-primary/5 border-primary/20 rounded-2xl">
+          <p className="text-xs font-bold tracking-wider uppercase text-primary">New Payer</p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[200px]">
               <label className={labelClass}>Name</label>
@@ -640,10 +637,10 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[520px]">
-        <div className="lg:col-span-4 rounded-2xl border border-line-2 bg-white overflow-hidden flex flex-col">
+        <div className="flex flex-col overflow-hidden bg-white border lg:col-span-4 rounded-2xl border-line-2">
           <div className="p-3 border-b border-line-2">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+              <Search size={16} className="absolute -translate-y-1/2 left-3 top-1/2 text-ink-4" />
               <input
                 className={`${controlGrow} pl-9`}
                 placeholder="Search payers…"
@@ -654,7 +651,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
           </div>
           <div className="flex-1 overflow-y-auto divide-y divide-line-2/60 max-h-[560px]">
             {filtered.length === 0 && (
-              <div className="py-10 text-center px-4">
+              <div className="px-4 py-10 text-center">
                 <p className="text-sm font-medium text-ink-4">No payers</p>
               </div>
             )}
@@ -673,9 +670,9 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                   } ${!isActive ? "opacity-60" : ""}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-ink truncate">{p.name}</p>
-                      <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate text-ink">{p.name}</p>
+                      <div className="flex items-center gap-2 mt-2">
                         <span
                           className={`${listChip} ${typeChipTone(payerTypeLabel(normalizePayerType(p.type)))}`}
                         >
@@ -714,7 +711,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
               <button
                 type="button"
                 onClick={() => void refetchPayerCounty()}
-                className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+                className="px-4 py-2 text-sm font-medium text-white rounded-xl bg-primary"
               >
                 Retry
               </button>
@@ -725,7 +722,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                 <EditorSection
                   n={1}
                   title="Who"
@@ -898,18 +895,18 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                     </div>
 
                     {currentMethod === "mileage_based" && (
-                      <div className="rounded-xl border border-line-2 bg-white overflow-hidden">
+                      <div className="overflow-hidden bg-white border rounded-xl border-line-2">
                         <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 px-4 py-2.5 bg-primary-tint/50 border-b border-line-2">
-                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold tracking-wide uppercase text-ink-4">
                             From (miles)
                           </span>
-                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold tracking-wide uppercase text-ink-4">
                             To (miles)
                           </span>
-                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide">
+                          <span className="text-xs font-bold tracking-wide uppercase text-ink-4">
                             Rate ($)
                           </span>
-                          <span className="text-xs font-bold text-ink-4 uppercase tracking-wide text-right pr-1">
+                          <span className="pr-1 text-xs font-bold tracking-wide text-right uppercase text-ink-4">
                             Actions
                           </span>
                         </div>
@@ -957,14 +954,14 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
                                   <button
                                     type="button"
                                     onClick={() => removeMileageTier(idx)}
-                                    className="h-10 w-10 shrink-0 flex items-center justify-center text-urgent/80 hover:text-urgent hover:bg-urgent/10 rounded-xl transition-colors cursor-pointer"
+                                    className="flex items-center justify-center w-10 h-10 transition-colors cursor-pointer shrink-0 text-urgent/80 hover:text-urgent hover:bg-urgent/10 rounded-xl"
                                     title={`Remove bracket ${idx + 1}`}
                                     aria-label={`Remove bracket ${idx + 1}`}
                                   >
                                     <Trash2 size={16} />
                                   </button>
                                 ) : (
-                                  <span className="h-10 w-10" aria-hidden />
+                                  <span className="w-10 h-10" aria-hidden />
                                 )}
                               </div>
                             </div>
@@ -1010,7 +1007,7 @@ export const FundingSourcesPanel = ({ canEdit = true }: FundingSourcesPanelProps
               </div>
 
               {canEdit && (
-                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-line-2 bg-white shrink-0">
+                <div className="flex items-center justify-end gap-3 px-5 py-4 bg-white border-t border-line-2 shrink-0">
                   <Button
                     variant="outline"
                     size="md"

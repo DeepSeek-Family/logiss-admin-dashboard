@@ -1,7 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Wrench } from "lucide-react";
-import { Card, Badge, Button } from "@/shared/components/ui";
-
 import {
   DashboardStats,
   TripDistributionChart,

@@ -6,7 +6,6 @@ import {
   Building2,
   MapPin,
   Headphones,
-  Globe,
   Clock,
   ShieldCheck,
 } from "lucide-react";
@@ -61,7 +60,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
   return (
     <fieldset
       disabled={disabled}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-8    duration-300 disabled:opacity-60"
+      className="grid grid-cols-1 gap-8 duration-300 lg:grid-cols-2 disabled:opacity-60"
     >
       {/* Left Column — Contact Channels */}
       <div className="space-y-5">
@@ -145,7 +144,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
             />
           </Field>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="System Timezone" icon={Clock}>
               <input
                 type="text"
@@ -176,7 +175,7 @@ export const OrgSettingsForm: React.FC<OrgSettingsFormProps> = ({
               />
               <textarea
                 rows={3}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-line-2 rounded-lg text-sm font-medium text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors outline-none resize-none placeholder:text-ink-4 shadow-2xs"
+                className="w-full py-3 pr-4 text-sm font-medium transition-colors bg-white border rounded-lg outline-none resize-none pl-11 border-line-2 text-ink focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-ink-4 shadow-2xs"
                 value={orgSettings.address}
                 onChange={set("address")}
                 placeholder="2200 Broad St, Suite 400, Richmond VA 23230"

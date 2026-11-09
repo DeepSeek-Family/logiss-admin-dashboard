@@ -1,6 +1,6 @@
 import { Flag, AlertTriangle } from "lucide-react";
 import { Card, Badge, Button } from "@/shared/components/ui";
-import { useGetAllReportsQuery, type IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
+import { useGetAllReportsQuery } from "@/redux/apivtwo/dashboardOnvording";
 import { Loader } from "@/shared/Lodder";
 import { timeAgo } from "@/utils/helpers";
 import { reportCardSubtitle, reportCategory, statusLabel } from "@/features/reports/utils/helpers";
@@ -40,9 +40,9 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
     .slice(0, PREVIEW_LIMIT);
 
   return (
-    <Card className="p-6 border-line-2 shadow-sm">
+    <Card className="p-6 shadow-sm border-line-2">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
           <Flag size={16} className="text-urgent" /> Active Incident Reports
         </h3>
         <button
@@ -75,25 +75,25 @@ export const ActiveIncidents = ({ onNavigate }: ActiveIncidentsProps) => {
             return (
               <div
                 key={report._id}
-                className="flex items-center justify-between p-3 bg-bg hover:bg-line-2 transition-colors rounded-xl cursor-pointer shadow-sm border border-transparent hover:border-line-2"
+                className="flex items-center justify-between p-3 transition-colors border border-transparent shadow-sm cursor-pointer bg-bg hover:bg-line-2 rounded-xl hover:border-line-2"
                 onClick={() => onNavigate("/reports")}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center min-w-0 gap-3">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${tone.icon}`}
                   >
                     <AlertTriangle size={14} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-ink truncate">
+                    <p className="text-xs font-medium truncate text-ink">
                       {reportCategory(report)}
                     </p>
-                    <p className="text-xs text-ink-4 truncate">
+                    <p className="text-xs truncate text-ink-4">
                       {subtitle} · {when}
                     </p>
                   </div>
                 </div>
-                <Badge variant={tone.badge} className="shrink-0 ml-3">
+                <Badge variant={tone.badge} className="ml-3 shrink-0">
                   {statusLabel(report.reportStatus)}
                 </Badge>
               </div>
