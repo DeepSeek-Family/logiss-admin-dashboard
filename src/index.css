@@ -12,6 +12,14 @@
       sans-serif;
   }
 
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
   body,
   input,
   select,
@@ -31,6 +39,7 @@
   body {
     @apply font-sans text-base leading-normal text-ink antialiased;
     background: #f4f6f8;
+    margin: 0;
   }
 
   :focus-visible {
@@ -182,6 +191,16 @@
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Keep the application sidebar scrollable without showing a second page scrollbar. */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 .geofence-map .leaflet-container {

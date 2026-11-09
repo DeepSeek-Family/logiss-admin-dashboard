@@ -33,6 +33,7 @@ const CreateBooking = lazy(() => import("../pages/CreateBooking"));
 const PushNotifications = lazy(() => import("../pages/PushNotifications"));
 const ServiceCoverage = lazy(() => import("../pages/ServiceCoverage"));
 const SystemLogs = lazy(() => import("../pages/SystemLogs"));
+const FundingSourceSetup = lazy(() => import("../pages/FundingSourceSetup"));
 
 type LazyPage = React.LazyExoticComponent<React.ComponentType<any>>;
 
@@ -98,4 +99,5 @@ export const authenticatedRoutes: AppRouteConfig[] = [
   { path: "cms", Component: CMS, allowedRoles: ["admin", "dispatcher"] },
   { path: "support", Component: CMS, allowedRoles: ["admin", "dispatcher"] },
   { path: "push", Component: PushNotifications, allowedRoles: ["admin", "dispatcher"] },
+  { path: "funding-source-setup", Component: FundingSourceSetup, allowedRoles: ["admin"] },
 ];
