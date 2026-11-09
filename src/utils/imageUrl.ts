@@ -34,14 +34,29 @@ export const imageUrl = (path?: string | null): string => {
     return "";
   }
 
-  if (/^(?:https?:)?\/\//i.test(trimmed) || /^(?:data|blob):/i.test(trimmed)) {
+  if (/^(?:data|blob):/i.test(trimmed)) {
     return trimmed;
   }
 
-  const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  const isAbsoluteUrl = /^(?:https?:)?\/\//i.test(trimmed);
+  let normalizedPath: string;
+  if (isAbsoluteUrl) {
+    try {
+      const url = new URL(trimmed, "http://localhost");
+      normalizedPath = `${url.pathname}${url.search}${url.hash}`;
+    } catch {
+      return trimmed;
+    }
+  } else {
+    normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  }
 
   if (import.meta.env.DEV && isStaticMediaPath(normalizedPath)) {
     return normalizedPath;
+  }
+
+  if (isAbsoluteUrl) {
+    return trimmed;
   }
 
   const origin = getMediaOrigin();
