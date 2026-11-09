@@ -94,7 +94,7 @@ const Profile = ({ role }: { role?: string | null }) => {
         lastName,
         contact: phone,
         region,
-        ...(photo ? { profile: photo } : {}),
+        ...(photo ? { image: photo } : {}),
       }).unwrap();
       setPhoto(null);
       setPreviewImg(null);

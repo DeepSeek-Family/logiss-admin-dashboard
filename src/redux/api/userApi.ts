@@ -49,10 +49,9 @@ export interface IUpdateCurrentUserProfileInput {
   firstName: string;
   middleName?: string;
   lastName: string;
-  email: string;
   contact: string;
   region: string;
-  profile?: File;
+  image?: File;
 }
 
 const normalizeCurrentUserProfile = (response: unknown): ICurrentUserProfileResponse => {
@@ -112,8 +111,8 @@ export const userApi = baseApi.injectEndpoints({
       ICurrentUserProfileResponse,
       IUpdateCurrentUserProfileInput
     >({
-      query: ({ profile, ...fields }) => {
-        if (!profile) {
+      query: ({ image, ...fields }) => {
+        if (!image) {
           return {
             url: "/user",
             method: "PATCH",
@@ -123,7 +122,7 @@ export const userApi = baseApi.injectEndpoints({
 
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
-        formData.append("profile", profile);
+        formData.append("image", image);
         return {
           url: "/user",
           method: "PATCH",
