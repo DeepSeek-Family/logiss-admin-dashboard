@@ -27,4 +27,5 @@ export const ROUTES = {
   cms: "/cms",
   support: "/support",
   push: "/push",
+  fundingSourceSetup: "/funding-source-setup",
 } as const;

@@ -55,6 +55,11 @@ export const PERMISSION_GROUPS: PermGroup[] = [
       { key: "/settings", label: "Settings", path: "/settings" },
       { key: "/profile", label: "Profile", path: "/profile" },
       { key: "/dashboard/system-logs", label: "System Logs", path: "/dashboard/system-logs" },
+      {
+        key: "/funding-source-setup",
+        label: "Funding Sources",
+        path: "/funding-source-setup",
+      },
     ],
   },
 ];

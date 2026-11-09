@@ -29,6 +29,7 @@ import {
   Loader2,
   Menu,
   X,
+  PanelsTopLeft,
 } from "lucide-react";
 import { Avatar, Badge, Button } from "@/shared/components/ui";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -174,6 +175,12 @@ const NAV_CONFIG: NavConfigGroup[] = [
         label: "System Logs",
         icon: Activity,
         roles: ["admin", "dispatcher"],
+      },
+      {
+        id: ROUTES.fundingSourceSetup,
+        label: "Funding Sources",
+        icon: PanelsTopLeft,
+        roles: ["admin"],
       },
     ],
   },
