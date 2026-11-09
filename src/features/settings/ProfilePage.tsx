@@ -23,11 +23,13 @@ const Field = ({
   icon: Icon,
   value,
   onChange,
+  readOnly = false,
 }: {
   label: string;
   icon: typeof User;
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
+  readOnly?: boolean;
 }) => (
   <div>
     <p className="text-xs font-semibold text-ink-4 mb-1.5">{label}</p>
@@ -38,9 +40,10 @@ const Field = ({
       />
       <input
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange?.(event.target.value)}
+        readOnly={readOnly}
         placeholder="Not available"
-        className="w-full pl-10 pr-4 text-sm font-medium transition-colors border h-11 rounded-xl border-line-2 text-ink bg-bg focus:outline-none focus:border-primary/30 focus:bg-white"
+        className={`w-full pl-10 pr-4 text-sm font-medium transition-colors border h-11 rounded-xl border-line-2 text-ink bg-bg focus:outline-none ${readOnly ? "opacity-60 cursor-not-allowed" : "focus:border-primary/30 focus:bg-white"}`}
       />
     </div>
   </div>
@@ -50,7 +53,6 @@ const Profile = ({ role }: { role?: string | null }) => {
   const { data, error, isError, isLoading, refetch } = useGetCurrentUserProfileQuery();
   const [updateProfile, { isLoading: isSaving }] = useUpdateCurrentUserProfileMutation();
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [region, setRegion] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -70,7 +72,6 @@ const Profile = ({ role }: { role?: string | null }) => {
   useEffect(() => {
     if (!profile) return;
     setFullName(getUserFullName(profile) === "User" ? "" : getUserFullName(profile));
-    setEmail(profile.email || "");
     setPhone(profile.phone || profile.contact || "");
     setRegion(profile.reportingRegion || profile.region || "");
   }, [profile]);
@@ -91,7 +92,6 @@ const Profile = ({ role }: { role?: string | null }) => {
         firstName,
         middleName,
         lastName,
-        email,
         contact: phone,
         region,
         ...(photo ? { profile: photo } : {}),
@@ -241,7 +241,7 @@ const Profile = ({ role }: { role?: string | null }) => {
           <p className="mb-5 type-th">Personal Information</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Full Name" icon={User} value={fullName} onChange={setFullName} />
-            <Field label="Email Address" icon={Mail} value={email} onChange={setEmail} />
+            <Field label="Email Address" icon={Mail} value={profile.email || ""} readOnly />
             <Field label="Phone Number" icon={Phone} value={phone} onChange={setPhone} />
             <Field label="Reporting Region" icon={MapPin} value={region} onChange={setRegion} />
           </div>
