@@ -212,12 +212,12 @@ const CMS = ({ role }: { role?: string | null }) => {
   const activePageData = pages.find((p) => p.id === activePage);
 
   return (
-    <div className="flex flex-col gap-6   duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col gap-6 duration-500">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="type-page-title">Global Configuration</h1>
 
-          <p className="text-ink-3 font-semibold mt-1 tracking-wide">
+          <p className="mt-1 font-semibold tracking-wide text-ink-3">
             Manage organization details, legal pages, and help content
           </p>
         </div>
@@ -237,8 +237,8 @@ const CMS = ({ role }: { role?: string | null }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <aside className="lg:col-span-3 space-y-2">
+      <div className="grid items-start grid-cols-1 gap-8 lg:grid-cols-12">
+        <aside className="space-y-2 lg:col-span-3">
           {pages.map((page) => {
             const isActive = activePage === page.id;
 
@@ -256,7 +256,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                     : "border-line-2 bg-white hover:border-primary/20 hover:bg-bg/50"
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center min-w-0 gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                       isActive
@@ -289,11 +289,11 @@ const CMS = ({ role }: { role?: string | null }) => {
           })}
         </aside>
 
-        <div className="lg:col-span-9 space-y-6">
-          <Card className="p-0 overflow-hidden border-line-2 shadow-sm">
-            <div className="p-6 border-b border-line-2 bg-bg/30 flex items-center justify-between">
+        <div className="space-y-6 lg:col-span-9">
+          <Card className="p-0 overflow-hidden shadow-sm border-line-2">
+            <div className="flex items-center justify-between p-6 border-b border-line-2 bg-bg/30">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg border border-line-2 shadow-sm">
+                <div className="p-2 bg-white border rounded-lg shadow-sm border-line-2">
                   <Edit3 size={18} className="text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-ink">Editor: {activePageData?.label}</h3>
@@ -313,13 +313,13 @@ const CMS = ({ role }: { role?: string | null }) => {
               ) : activePageData?.type === "faq" ? (
                 <FaqPanel />
               ) : supportBootLoading ? (
-                <div className="py-16 flex flex-col items-center gap-2 text-ink-4">
+                <div className="flex flex-col items-center gap-2 py-16 text-ink-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
 
                   <p className="text-sm">Loading organization settings…</p>
                 </div>
               ) : supportError ? (
-                <div className="py-16 flex flex-col items-center gap-3 text-center">
+                <div className="flex flex-col items-center gap-3 py-16 text-center">
                   <AlertTriangle className="text-urgent opacity-60" size={32} />
 
                   <p className="text-sm text-ink-3">
@@ -331,7 +331,7 @@ const CMS = ({ role }: { role?: string | null }) => {
 
                     onClick={() => refetchSupport()}
 
-                    className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
+                    className="px-4 py-2 text-sm font-medium text-white rounded-xl bg-primary"
                   >
                     Retry
                   </button>
@@ -346,15 +346,7 @@ const CMS = ({ role }: { role?: string | null }) => {
                 />
               )}
 
-              <div className="mt-8 flex items-center justify-between p-4 bg-bg rounded-lg border border-line-2">
-                <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-ink-3" />
-
-                  <p className="text-sm text-ink-4 italic">
-                    Changes made here affect all dispatch terminals globally.
-                  </p>
-                </div>
-
+              <div className="flex items-center justify-between p-4 mt-8 border rounded-lg bg-bg border-line-2">
                 <div className="flex gap-4">
                   <button
                     type="button"
