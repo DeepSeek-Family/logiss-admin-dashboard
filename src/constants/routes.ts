@@ -15,8 +15,6 @@ export const ROUTES = {
   reports: "/reports",
   trips: "/trips",
   schedule: "/schedule",
-  coverage: "/coverage",
-  coveragePayer: (id: string) => `/coverage?payer=${encodeURIComponent(id)}`,
   settings: "/settings",
   profile: "/profile",
   fleet: "/fleet",
@@ -27,5 +25,8 @@ export const ROUTES = {
   cms: "/cms",
   support: "/support",
   push: "/push",
+  fundingSources: "/funding-sources",
   fundingSourceSetup: "/funding-source-setup",
+  fundingSourceEdit: (id: string) =>
+    `/funding-source-setup?id=${encodeURIComponent(id)}`,
 } as const;

@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Inbox,
   Map,
-  MapPin,
   Users,
   FileCheck,
   Flag,
@@ -157,12 +156,6 @@ const NAV_CONFIG: NavConfigGroup[] = [
         roles: ["admin", "dispatcher"],
       },
       {
-        id: ROUTES.coverage,
-        label: "Service & Tariffs",
-        icon: MapPin,
-        roles: ["admin", "dispatcher"],
-      },
-      {
         id: ROUTES.staff,
         label: "Dispatch Management",
         icon: UserPlus,
@@ -177,7 +170,7 @@ const NAV_CONFIG: NavConfigGroup[] = [
         roles: ["admin", "dispatcher"],
       },
       {
-        id: ROUTES.fundingSourceSetup,
+        id: ROUTES.fundingSources,
         label: "Funding Sources",
         icon: PanelsTopLeft,
         roles: ["admin"],
@@ -239,7 +232,8 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
   /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
-  const routeOutletKey = location.pathname;
+  // Remount outlet when the route changes so a prior page crash cannot leave a blank pane.
+  const routeOutletKey = `${location.pathname}:${location.key}`;
   const { data: unreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
     skip: !hasAuthToken,
     refetchOnMountOrArgChange: true,
@@ -318,7 +312,7 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
 
   const pathForAccessCheck = React.useCallback((pathname: string) => {
     if (pathname.startsWith("/fleet/")) return ROUTES.fleet;
-    if (pathname.startsWith("/coverage")) return ROUTES.coverage;
+    if (pathname.startsWith("/funding-source")) return ROUTES.fundingSources;
     return pathname.split("?")[0];
   }, []);
 
@@ -386,7 +380,9 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
                       ? page === ROUTES.dashboard
                       : item.id === ROUTES.transactions
                         ? page === "/finance" || page === "/transactions"
-                        : page === item.id || (item.id !== "/" && page.startsWith(item.id));
+                        : item.id === ROUTES.fundingSources
+                          ? page.startsWith("/funding-source")
+                          : page === item.id || (item.id !== "/" && page.startsWith(item.id));
 
                 return (
                   <NavItem
