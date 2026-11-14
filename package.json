@@ -1,5 +1,5 @@
 {
-  "name": "kabir-dispatcher",
+  "name": "Logiss_Dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,8 +7,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "node init && vite",
-    "build": "node init && vite build",
+    "dev": "vite",
+    "build": "vite build",
     "lint": "eslint . && node scripts/check-typography.cjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
@@ -21,6 +21,7 @@
     "firebase": "^12.19.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.11.0",
+    "proj4": "^2.23.0",
     "react": "^19.2.5",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.5",

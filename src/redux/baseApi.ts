@@ -115,6 +115,7 @@ export const baseApi = createApi({
     "bookings",
     "Payers",
     "Counties",
+    "FundingSources",
     "Riders",
     "Facilities",
     "Mobility",
