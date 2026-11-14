@@ -10,7 +10,7 @@ import { PrivateRoute } from "@/router/PrivateRoute";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { logout } from "@/redux/slice/authSlice";
 import { AUTH_TOKEN_KEY, ROLE_STORAGE_KEY, LEGACY_AUTH_TOKEN_KEY } from "@/constants/auth-storage";
-import { isTokenExpired, clearAuthStorage, initCrossTabAuthSync } from "@/utils/authSession";
+import { clearAuthStorage, initCrossTabAuthSync } from "@/utils/authSession";
 import {
   AppRouteConfig,
   SessionRole,
@@ -179,12 +179,12 @@ function App() {
               <Route
                 path="*"
                 element={
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <h1 className="text-6xl font-semibold text-ink opacity-20 mb-4">404</h1>
-                    <p className="text-lg text-ink-4 mb-6">
+                  <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                    <h1 className="mb-4 text-6xl font-semibold text-ink opacity-20">404</h1>
+                    <p className="mb-6 text-lg text-ink-4">
                       This page does not exist or was moved.
                     </p>
-                    <div className="flex flex-wrap gap-3 justify-center">
+                    <div className="flex flex-wrap justify-center gap-3">
                       <Button variant="outline" onClick={() => window.history.back()}>
                         Go back
                       </Button>

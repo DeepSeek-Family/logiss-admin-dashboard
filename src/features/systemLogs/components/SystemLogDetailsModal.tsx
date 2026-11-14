@@ -23,12 +23,12 @@ const DetailValue = ({ value }: { value: unknown }) => {
   const formattedValue = formatAuditValue(value);
   if (isJsonLikeValue(value)) {
     return (
-      <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-bg p-3 text-xs text-ink-2">
+      <pre className="p-3 overflow-auto text-xs break-words whitespace-pre-wrap rounded-lg max-h-48 bg-bg text-ink-2">
         {formattedValue}
       </pre>
     );
   }
-  return <span className="break-words text-sm text-ink">{formattedValue}</span>;
+  return <span className="text-sm break-words text-ink">{formattedValue}</span>;
 };
 
 export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalProps) => {
@@ -64,7 +64,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
         tabIndex={-1}
         className="relative z-10 flex max-h-[calc(100vh-24px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-line-2 bg-white shadow-lg outline-none"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line-2 px-5 py-4 sm:px-6">
+        <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-line-2 sm:px-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="system-log-details-title" className="text-lg font-semibold text-ink">
@@ -84,21 +84,21 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="flex-1 min-h-0 px-5 py-5 space-y-6 overflow-y-auto sm:px-6">
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-xl border border-line-2 bg-bg/30 p-3">
+            <div className="p-3 border rounded-xl border-line-2 bg-bg/30">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-4">
                 <User size={13} /> Actor
               </p>
               <p className="mt-1.5 text-sm font-semibold text-ink">{getSystemLogActorName(log)}</p>
               <p className="mt-0.5 break-all text-xs text-ink-4">{getSystemLogActorEmail(log)}</p>
             </div>
-            <div className="rounded-xl border border-line-2 bg-bg/30 p-3">
+            <div className="p-3 border rounded-xl border-line-2 bg-bg/30">
               <p className="text-xs font-semibold text-ink-4">Role and module</p>
               <p className="mt-1.5 text-sm font-semibold text-ink">{log.actorRole || "—"}</p>
               <p className="mt-0.5 text-xs capitalize text-ink-4">{log.module || "—"}</p>
             </div>
-            <div className="rounded-xl border border-line-2 bg-bg/30 p-3">
+            <div className="p-3 border rounded-xl border-line-2 bg-bg/30">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-4">
                 <Clock size={13} /> Timestamp
               </p>
@@ -116,7 +116,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
             </div>
             <div>
               <p className="text-xs font-semibold text-ink-4">Entity ID</p>
-              <p className="mt-1 break-all font-mono text-sm text-ink">{log.entityId || "—"}</p>
+              <p className="mt-1 font-mono text-sm break-all text-ink">{log.entityId || "—"}</p>
             </div>
             <div className="sm:col-span-2">
               <p className="text-xs font-semibold text-ink-4">Description</p>
@@ -129,7 +129,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
               Changed fields ({log.changes?.length || 0})
             </h3>
             {log.changes?.length ? (
-              <div className="overflow-x-auto rounded-xl border border-line-2">
+              <div className="overflow-x-auto border rounded-xl border-line-2">
                 <table className="w-full min-w-[620px] text-left">
                   <thead className="bg-bg">
                     <tr>
@@ -141,7 +141,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
                   <tbody className="divide-y divide-line-2">
                     {log.changes.map((change, index) => (
                       <tr key={`${change.field}-${index}`}>
-                        <td className="px-4 py-3 align-top text-xs font-semibold text-ink">
+                        <td className="px-4 py-3 text-xs font-semibold align-top text-ink">
                           {humanizeFieldName(change.field)}
                         </td>
                         <td className="max-w-xs px-4 py-3 align-top">
@@ -156,7 +156,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
                 </table>
               </div>
             ) : (
-              <p className="rounded-xl border border-line-2 bg-bg/30 p-4 text-sm text-ink-4">
+              <p className="p-4 text-sm border rounded-xl border-line-2 bg-bg/30 text-ink-4">
                 No field-level changes were recorded.
               </p>
             )}
@@ -169,7 +169,7 @@ export const SystemLogDetailsModal = ({ log, onClose }: SystemLogDetailsModalPro
             </section>
           )}
         </div>
-        <div className="flex justify-end border-t border-line-2 bg-bg/30 px-5 py-4 sm:px-6">
+        <div className="flex justify-end px-5 py-4 border-t border-line-2 bg-bg/30 sm:px-6">
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Close
           </Button>

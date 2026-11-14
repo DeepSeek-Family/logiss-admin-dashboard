@@ -34,7 +34,6 @@ export const PERMISSION_GROUPS: PermGroup[] = [
     perms: [
       { key: "/trips", label: "Trip History", path: "/trips" },
       { key: "/schedule", label: "Scheduled Trips", path: "/schedule" },
-      { key: "/coverage", label: "Service Coverage", path: "/coverage" },
     ],
   },
   {
@@ -56,8 +55,13 @@ export const PERMISSION_GROUPS: PermGroup[] = [
       { key: "/profile", label: "Profile", path: "/profile" },
       { key: "/dashboard/system-logs", label: "System Logs", path: "/dashboard/system-logs" },
       {
-        key: "/funding-source-setup",
+        key: "/funding-sources",
         label: "Funding Sources",
+        path: "/funding-sources",
+      },
+      {
+        key: "/funding-source-setup",
+        label: "Funding Source Setup",
         path: "/funding-source-setup",
       },
     ],

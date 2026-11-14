@@ -56,11 +56,39 @@ export interface ICountyZonePricing {
   outside?: ICountyZonePricingSide;
 }
 
+export interface ICountyGeofence {
+  name?: string;
+  isActive?: boolean;
+  geometry?: {
+    type?: string;
+    coordinates?: unknown;
+  };
+}
+
+export interface ICountyPricingRule {
+  ruleName?: string;
+  billingClass?: string;
+  area?: "inside" | "outside" | "both";
+  method?: string;
+  flatRate?: number;
+  includedMiles?: number;
+  baseRate?: number;
+  additionalMileRate?: number;
+  brackets?: Array<{ from?: number; to?: number | null; amount?: number }>;
+}
+
 export interface ICounty {
   _id: string;
   payersId?: ICountyPayerRef | string;
+  fundingSourceId?: string | { _id?: string } | null;
   coversAreasGeoJSON?: ICountyGeoJSON | null;
+  /** Contract display name when using Funding Source Contract payload. */
+  name?: string;
   countyName?: string;
+  programName?: string;
+  organizationType?: string;
+  description?: string;
+  geofences?: ICountyGeofence[];
   priceMethod?: CountyPriceMethod | string;
   flat_rate_price?: number;
   starting_fare?: number;
@@ -73,8 +101,51 @@ export interface ICounty {
   outsidePrice?: number;
   passengerCopayInside?: number;
   passengerCopayOutside?: number;
+  authorizeCopayAtBooking?: boolean;
+  captureCopayAfterCompletedTrip?: boolean;
+  mileageRounding?: string;
+  mileageSource?: string;
   zonePricing?: ICountyZonePricing;
-  mobilityBillingMap?: { mobilityId: string; billingClass: string }[];
+  pricingRules?: ICountyPricingRule[];
+  mobilityBillingMap?: {
+    mobilityId?: string;
+    spaceType?: string;
+    billingClass?: string;
+    status?: "enabled" | "disabled";
+  }[];
+  eligibility?: {
+    authorizationIdRequired?: boolean;
+    monthlyTripLimit?: number;
+    allowAdminOverride?: boolean;
+    eligibilityNotes?: string;
+  };
+  programRules?: {
+    extraStopsAllowed?: boolean;
+    companionsAllowed?: boolean;
+    maximumCompanions?: number;
+    companionCharge?: number;
+    tripReasons?: Array<{
+      name?: string;
+      inside?: string;
+      outside?: string;
+      maxMiles?: number | null;
+    }>;
+  };
+  cancellationNoShow?: {
+    freeCancellationWindowHours?: number;
+    lateCancellationPassenger?: number;
+    lateCancellationFundingSource?: number;
+    noShowPassenger?: number;
+    noShowFundingSource?: number;
+  };
+  reporting?: {
+    templateName?: string;
+    columns?: string[];
+    complaintResponseDeadlineHours?: number;
+    safetyIncidentReportingDeadlineHours?: number;
+  };
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -169,7 +240,7 @@ const buildCountyFormData = (input: ISaveCountyInput): FormData => {
   return formData;
 };
 
-const unwrapCounty = (response: any): ICounty | undefined => {
+export const unwrapCounty = (response: any): ICounty | undefined => {
   const raw = response?.data ?? response;
   if (Array.isArray(raw)) return raw[0];
   if (raw && typeof raw === "object" && (raw._id || raw.payersId)) return raw as ICounty;
@@ -337,6 +408,57 @@ export const coverageApi = baseApi.injectEndpoints({
         }
       },
     }),
+    /** Full Funding Source Contract create (pricingRules, geofences[], eligibility, …). */
+    createCountyContract: builder.mutation<
+      ICountyMutationResponse,
+      { formData: FormData; payersId: string }
+    >({
+      query: ({ formData }) => ({
+        url: "/counties",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Counties", id: "LIST" },
+        { type: "Counties", id: `PAYER_${arg.payersId}` },
+      ],
+      async onQueryStarted({ payersId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const saved = unwrapCounty(data);
+          if (!saved) return;
+          mergeCountyCaches(dispatch, payersId, saved);
+        } catch {
+          /* cache stays until invalidation refetch */
+        }
+      },
+    }),
+    /** Full Funding Source Contract update. */
+    updateCountyContract: builder.mutation<
+      ICountyMutationResponse,
+      { id: string; formData: FormData; payersId: string }
+    >({
+      query: ({ id, formData }) => ({
+        url: `/counties/${id}`,
+        method: "PATCH",
+        body: formData,
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Counties", id: arg.id },
+        { type: "Counties", id: "LIST" },
+        { type: "Counties", id: `PAYER_${arg.payersId}` },
+      ],
+      async onQueryStarted({ payersId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const saved = unwrapCounty(data);
+          if (!saved) return;
+          mergeCountyCaches(dispatch, payersId, saved);
+        } catch {
+          /* cache stays until invalidation refetch */
+        }
+      },
+    }),
     updateCounty: builder.mutation<ICountyMutationResponse, { id: string; body: ISaveCountyInput }>(
       {
         query: ({ id, body }) => ({
@@ -410,6 +532,8 @@ export const {
   useGetCountyByIdQuery,
   useGetCountiesByPayerQuery,
   useSaveCountyMutation,
+  useCreateCountyContractMutation,
+  useUpdateCountyContractMutation,
   useUpdateCountyMutation,
   useGetFacilitiesQuery,
   useCreateFacilityMutation,
