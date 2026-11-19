@@ -67,6 +67,11 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     }
   }, [searchParams, paramName, controlledValue, text]);
 
+  // Keep setSearchParams off the dep list — some router builds change its identity
+  // every render, which would reset this timer and re-emit forever.
+  const setSearchParamsRef = useRef(setSearchParams);
+  setSearchParamsRef.current = setSearchParams;
+
   // Debounced effect for URL and callback triggers (do not depend on `searchParams` — avoids re-fire on every URL replace).
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,7 +79,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
       const trimmed = text.trim();
 
-      setSearchParams(
+      setSearchParamsRef.current(
         (prev) => {
           const currentParam = prev.get(paramName) || prev.get("search") || "";
           if (trimmed === currentParam) return prev;
@@ -99,7 +104,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [text, debounceMs, paramName, setSearchParams]);
+  }, [text, debounceMs, paramName]);
 
   const handleClear = () => {
     setText("");

@@ -19,6 +19,12 @@ export interface TripReasonRule {
 
 export interface SpaceTypeRule {
   id: string;
+  /**
+   * Mobility `_id`. The pricing engine resolves the billing class by this id,
+   * so a mapping without it is never applied to a trip.
+   */
+  mobilityId: string;
+  /** Mobility name, kept as the display label. */
   spaceType: string;
   billingClass: string;
   enabled: boolean;
@@ -27,6 +33,7 @@ export interface SpaceTypeRule {
 /** UI + API contract methods (`base_plus_mile` / `mileage_bracket` kept as aliases). */
 export type PricingMethod =
   | "flat_rate"
+  | "per_mile"
   | "base_plus_mile"
   | "base_plus_additional_mileage"
   | "mileage_bracket"
@@ -38,7 +45,8 @@ export type MileageSource = "calculated_route" | "actual_gps" | "straight_line";
 export interface MileageBracket {
   id: string;
   from: number;
-  to: number;
+  /** `null` = open-ended ("and above"). Only the last bracket may be open. */
+  to: number | null;
   amount: number;
 }
 
@@ -96,6 +104,8 @@ export interface FundingSourceDraft {
   geofences: GeofenceEntry[];
   geofenceFiles: GeofenceFileChip[];
   mileageRounding: MileageRounding;
+  /** Decimal places billing miles round to (0 = whole miles). */
+  mileagePrecision: number;
   billingMileageSource: MileageSource;
   spaceTypes: SpaceTypeRule[];
   pricingRules: PricingRule[];

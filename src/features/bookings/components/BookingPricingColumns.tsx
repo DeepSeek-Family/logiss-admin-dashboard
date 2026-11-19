@@ -1,5 +1,5 @@
 import { money } from "@/utils/helpers";
-import { formatPricingZone, zoneBadgeTone } from "@/features/bookings/utils/helpers";
+import { fareTotal, formatPricingZone, zoneBadgeTone } from "@/features/bookings/utils/helpers";
 
 type PricingRow = {
   pricingZoneLabel?: string;
@@ -12,6 +12,10 @@ type PricingRow = {
   costToCounty?: number;
   cost?: number;
 };
+
+const rowCopay = (row: PricingRow) => row.passengerCopay ?? row.copay ?? 0;
+const rowPayerCharge = (row: PricingRow) =>
+  row.fundingSourceCharge ?? row.costToCounty ?? row.cost ?? 0;
 
 export const BookingZoneCell = ({ row }: { row: PricingRow }) => {
   const label =
@@ -50,13 +54,20 @@ export const BookingMilesCell = ({ row }: { row: PricingRow }) => {
 
 export const BookingCopayCell = ({ row }: { row: PricingRow }) => (
   <span className="text-xs font-semibold text-ink tabular-nums whitespace-nowrap">
-    {money(row.passengerCopay ?? row.copay ?? 0)}
+    {money(rowCopay(row))}
   </span>
 );
 
 export const BookingPayerChargeCell = ({ row }: { row: PricingRow }) => (
   <span className="text-xs font-semibold text-primary tabular-nums whitespace-nowrap">
-    {money(row.fundingSourceCharge ?? row.costToCounty ?? row.cost ?? 0)}
+    {money(rowPayerCharge(row))}
+  </span>
+);
+
+/** Total = payer charge + passenger copay. */
+export const BookingTotalCell = ({ row }: { row: PricingRow }) => (
+  <span className="text-xs font-bold text-ink tabular-nums whitespace-nowrap">
+    {money(fareTotal(rowPayerCharge(row), rowCopay(row)))}
   </span>
 );
 
@@ -65,4 +76,5 @@ export const BOOKING_PRICING_HEADERS = [
   "Miles",
   "Passenger copay",
   "Payer charge",
+  "Total",
 ] as const;

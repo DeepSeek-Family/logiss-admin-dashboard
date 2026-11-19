@@ -56,7 +56,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
   const [bookingSearch, setBookingSearch] = useState(
     () => searchParams.get("searchTerm") || searchParams.get("search") || "",
   );
-  const [fundingFilter, setFundingFilter] = useState("all");
+  const [countyFilter, setCountyFilter] = useState("all");
   const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
   const [driverSearch, setDriverSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,11 +71,11 @@ const Bookings = ({ role }: { role?: string | null }) => {
     if (searchTerm) {
       params.searchTerm = searchTerm;
     }
-    if (fundingFilter && fundingFilter !== "all") {
-      params.payerSource = fundingFilter;
+    if (countyFilter && countyFilter !== "all") {
+      params.countyId = countyFilter;
     }
     return params;
-  }, [currentPage, itemsPerPage, bookingSearch, fundingFilter]);
+  }, [currentPage, itemsPerPage, bookingSearch, countyFilter]);
 
   const confirmedListParams = useMemo(() => {
     const params = { ...baseListParams };
@@ -100,7 +100,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     isFetching: pendingFetching,
     isError: pendingError,
     refetch: refetchPendingBookings,
-  } = useGetAllBookingsQuery(pendingQueryParams, { refetchOnMountOrArgChange: true });
+  } = useGetAllBookingsQuery(pendingQueryParams);
 
   const {
     data: assignedResponse,
@@ -108,7 +108,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     isFetching: assignedFetching,
     isError: assignedError,
     refetch: refetchAssignedBookings,
-  } = useGetAllAssignedBookingsQuery(confirmedQueryParams, { refetchOnMountOrArgChange: true });
+  } = useGetAllAssignedBookingsQuery(confirmedQueryParams);
 
   const stalePendingRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
   const staleAssignedRowsRef = useRef<ReturnType<typeof mapApiBooking>[]>([]);
@@ -167,18 +167,12 @@ const Bookings = ({ role }: { role?: string | null }) => {
 
   const { data: apiDriversResponse, refetch: refetchDrivers } = useGetDriversQuery(
     { page: 1, limit: 200 },
-    {
-      skip: activeTab !== "confirmed",
-      refetchOnMountOrArgChange: true,
-    },
+    { skip: activeTab !== "confirmed" },
   );
 
   const { data: searchedDriversResponse, isFetching: searchingDrivers } = useGetDriversQuery(
     { page: 1, limit: 50, searchTerm: debouncedDriverSearch },
-    {
-      skip: activeTab !== "confirmed" || !debouncedDriverSearch,
-      refetchOnMountOrArgChange: true,
-    },
+    { skip: activeTab !== "confirmed" || !debouncedDriverSearch },
   );
 
   const apiDrivers = useMemo(
@@ -340,7 +334,7 @@ const Bookings = ({ role }: { role?: string | null }) => {
     return merged;
   }, [apiDrivers, bookingsList]);
 
-  // Search and payer filtering are applied server-side via listParams.
+  // Search and county filtering are applied server-side via listParams.
   const filteredTrips = currentTabBookings;
 
   const totalPages =
@@ -706,9 +700,9 @@ const Bookings = ({ role }: { role?: string | null }) => {
             setActiveTab={setActiveTab}
             bookingSearch={bookingSearch}
             setBookingSearch={setBookingSearch}
-            fundingFilter={fundingFilter}
-            setFundingFilter={(v: string) => {
-              setFundingFilter(v);
+            countyFilter={countyFilter}
+            setCountyFilter={(v: string) => {
+              setCountyFilter(v);
               setCurrentPage(1);
             }}
             assignFilter={assignFilter}

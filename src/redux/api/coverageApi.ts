@@ -104,11 +104,14 @@ export interface ICounty {
   authorizeCopayAtBooking?: boolean;
   captureCopayAfterCompletedTrip?: boolean;
   mileageRounding?: string;
+  /** Decimal places billing miles are rounded to (0 = whole miles). */
+  mileagePrecision?: number;
   mileageSource?: string;
   zonePricing?: ICountyZonePricing;
   pricingRules?: ICountyPricingRule[];
   mobilityBillingMap?: {
-    mobilityId?: string;
+    /** Mobility `_id` — the pricing engine resolves the billing class by this id. */
+    mobilityId?: string | { _id?: string } | null;
     spaceType?: string;
     billingClass?: string;
     status?: "enabled" | "disabled";
@@ -155,6 +158,28 @@ export interface ICountiesResponse {
   success: boolean;
   message?: string;
   data: ICounty[];
+}
+
+/** Picker row — name only. Never carries geofences or rate cards. */
+export interface ICountyName {
+  _id: string;
+  name?: string;
+  isActive?: boolean;
+  /** Linked payer — needed for booking create/quote without loading the payer list. */
+  payersId?: string;
+  /**
+   * Allowed trip-reason names from `programRules.tripReasons`.
+   * `undefined` = not loaded; `[]` = contract has none configured.
+   */
+  tripReasons?: string[];
+  /** True when the list response included programRules.tripReasons. */
+  tripReasonsLoaded?: boolean;
+}
+
+export interface ICountyNamesResponse {
+  success: boolean;
+  message?: string;
+  data: ICountyName[];
 }
 
 export interface ICountyMutationResponse {
@@ -258,7 +283,6 @@ const mergeCountyCaches = (
     else draft.data.push(saved);
   };
   dispatch(coverageApi.util.updateQueryData("getCounties", undefined, mergeCounty));
-  dispatch(coverageApi.util.updateQueryData("getCountiesByPayer", payersId, mergeCounty));
 };
 
 export interface IPayersResponse {
@@ -352,6 +376,33 @@ export const coverageApi = baseApi.injectEndpoints({
             ]
           : [{ type: "Counties", id: "LIST" }],
     }),
+    /** Booking / history pickers — name + payersId + allowed trip reasons only. */
+    getCountyNames: builder.query<ICountyNamesResponse, void>({
+      query: () => ({
+        url: "/counties",
+        method: "GET",
+        // `v` busts RTK cache from older name-only responses that lacked tripReasons.
+        params: { fields: "name,isActive,payersId,programRules.tripReasons", v: 2 },
+      }),
+      transformResponse: (response: any): ICountyNamesResponse => ({
+        success: response?.success !== false,
+        message: response?.message,
+        data: normalizeList<ICounty>(response).map((county) => {
+          const rawReasons = county.programRules?.tripReasons;
+          return {
+            _id: county._id,
+            name: county.name,
+            isActive: county.isActive,
+            payersId: countyPayerId(county) || undefined,
+            tripReasonsLoaded: Array.isArray(rawReasons),
+            tripReasons: Array.isArray(rawReasons)
+              ? rawReasons.map((r) => String(r?.name || "").trim()).filter(Boolean)
+              : undefined,
+          };
+        }),
+      }),
+      providesTags: [{ type: "Counties", id: "LIST" }, { type: "Counties", id: "NAMES" }],
+    }),
     getCountyById: builder.query<{ success: boolean; message?: string; data?: ICounty }, string>({
       query: (id) => ({ url: `/counties/${id}`, method: "GET" }),
       transformResponse: (response: any) => {
@@ -367,25 +418,6 @@ export const coverageApi = baseApi.injectEndpoints({
         };
       },
       providesTags: (_r, _e, id) => [{ type: "Counties", id }],
-    }),
-    getCountiesByPayer: builder.query<ICountiesResponse, string>({
-      query: (payerId) => ({ url: `/counties/admin/${payerId}`, method: "GET" }),
-      transformResponse: (response: any): ICountiesResponse => ({
-        success: response?.success !== false,
-        message: response?.message,
-        data: normalizeList<ICounty>(response),
-      }),
-      providesTags: (result, _e, payerId) =>
-        result?.data
-          ? [
-              ...result.data.map(({ _id }) => ({ type: "Counties" as const, id: _id })),
-              { type: "Counties", id: `PAYER_${payerId}` },
-              { type: "Counties", id: "LIST" },
-            ]
-          : [
-              { type: "Counties", id: `PAYER_${payerId}` },
-              { type: "Counties", id: "LIST" },
-            ],
     }),
     saveCounty: builder.mutation<ICountyMutationResponse, ISaveCountyInput>({
       query: (input) => ({
@@ -529,8 +561,8 @@ export const {
   useCreatePayerMutation,
   useUpdatePayerMutation,
   useGetCountiesQuery,
+  useGetCountyNamesQuery,
   useGetCountyByIdQuery,
-  useGetCountiesByPayerQuery,
   useSaveCountyMutation,
   useCreateCountyContractMutation,
   useUpdateCountyContractMutation,

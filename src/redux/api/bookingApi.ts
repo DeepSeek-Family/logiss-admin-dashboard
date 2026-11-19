@@ -50,6 +50,7 @@ export interface IBookingCountyRef {
 export interface IBookingPricingLeg {
   leg?: string;
   zone?: string;
+  billingClass?: string;
   priceMethod?: string;
   straightLineMileage?: number | null;
   calculatedRouteMileage?: number | null;
@@ -86,10 +87,17 @@ export interface IBooking {
   bookingStatus?:
     "pending" | "assigned" | "in-progress" | "confirmed" | "completed" | "cancelled" | string;
   recurringBatchId?: string;
+  /**
+   * Legacy response-only alias of `passengerCoPay` (rider apps / old rows).
+   * The admin never sends or stores it.
+   */
   price?: number;
-  totalPrice?: number;
+  /** Rider pays this only. */
   passengerCoPay?: number;
+  /** Funding source / county charge — the full FS amount, copay is not subtracted. */
   organizationContribution?: number;
+  /** `organizationContribution + passengerCoPay`. */
+  totalPrice?: number;
   isApproved?: string;
   paymentStatus?: string;
   billingMileageSource?: string;
@@ -156,22 +164,54 @@ export interface ICalculateBookingPriceBody {
   pickupLocation: [number, number];
   dropOffLocation: [number, number];
   stopAddress?: [number, number];
-  payerSource: string;
+  /** Optional when `countyId` is set — server resolves the contract from the county. */
+  payerSource?: string;
   tripType: string;
   mobilityRequirements: string;
   countyId: string;
+  /** Used for contract rules (auth / monthly limit / trip reason). */
+  userId?: string;
+  serviceDate?: string;
+  tripReason?: string;
+  passengerSeats?: number;
+  adminOverride?: boolean;
+  adminOverrideReason?: string;
 }
 
+/**
+ * Quote from `POST /booking/calculate-price`.
+ * The three fare fields are the same ones a booking stores:
+ * `totalPrice = organizationContribution + passengerCoPay`.
+ */
 export interface ICalculatedBookingPrice {
-  totalPrice: number;
+  /** Rider pays this only. */
   passengerCoPay: number;
+  /** Funding source / county charge — the full FS amount, copay is not subtracted. */
   organizationContribution: number;
-  zoneCoPay: number;
-  milesPrice: number;
-  mobilityTotalPrice: number;
+  /** `organizationContribution + passengerCoPay`. */
+  totalPrice: number;
+  /** Engine name for `organizationContribution` (includes any companion fee). */
+  fundingSourceCharge?: number;
   priceMethod: string;
   countyId: string;
+  /** Zone of the outbound leg. */
   zone: string;
+  /** One entry per billable leg (round trip = outbound + return). */
+  legs?: IBookingPricingLeg[];
+  /** Miles the contract billed on, after source selection and rounding. */
+  billingMileage?: number;
+  billingMileageSource?: string;
+  calculatedRouteMileage?: number | null;
+  actualGpsMileage?: number | null;
+  straightLineMileage?: number;
+  cancellationOutcome?: string;
+  noShowOutcome?: string;
+  /** Same value as `passengerCoPay`. */
+  zoneCoPay?: number;
+  /** Total billing miles — a distance, not a dollar amount, despite the name. */
+  milesPrice?: number;
+  /** Always 0: mobility is priced through the billing class, not as an add-on. */
+  mobilityTotalPrice?: number;
 }
 
 export interface ICalculateBookingPriceResponse {
@@ -191,7 +231,8 @@ export interface ICreateBookingPayload {
   tripType?: "round-trip" | "one-way" | string;
   tripReason?: string;
   passengerSeats?: number;
-  payerSource: string;
+  /** Optional when `countyId` is set — server resolves payer from the county. */
+  payerSource?: string;
   programContext?: string;
   serviceDate?: string;
   appointmentTime?: string;
@@ -210,15 +251,14 @@ export interface IGetBookingsQueryParams {
   limit?: number;
   search?: string;
   searchTerm?: string;
-  payerSource?: string;
-  payers?: string;
+  /** Filter bookings by county id (all booking lists, trip history, export, schedule). */
+  countyId?: string;
   status?: string;
   bookingStatus?: string;
   serviceDate?: string;
   startDate?: string;
   endDate?: string;
   driverId?: string;
-  payerId?: string;
   sort?: string;
   /** When true, only bookings without a driver (`/booking/approved?unassign=true`). */
   unassign?: boolean;
@@ -255,13 +295,8 @@ const buildQueryParams = (params?: IGetBookingsQueryParams | void) => {
       queryParams.searchTerm = searchVal;
     }
 
-    if (params.payerId && params.payerId !== "all") {
-      queryParams.payerId = params.payerId;
-    }
-
-    const payerVal = params.payerSource || params.payers;
-    if (payerVal && payerVal !== "all") {
-      queryParams.payerSource = payerVal;
+    if (params.countyId && params.countyId !== "all") {
+      queryParams.countyId = params.countyId;
     }
 
     if (params.serviceDate) queryParams.serviceDate = params.serviceDate;

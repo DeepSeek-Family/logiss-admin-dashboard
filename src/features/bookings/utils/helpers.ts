@@ -325,6 +325,34 @@ const pricingNum = (value: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/**
+ * Booking trip reasons accepted by the API (`AppointmentType`).
+ * A contract's trip-reason rule only applies when its name is one of these.
+ */
+export const TRIP_REASONS = [
+  "Medical Appointment",
+  "Dialysis",
+  "Chemotherapy",
+  "Physical Therapy",
+  "Hospital Discharge",
+  "Specialist Visit",
+  "Routine Checkup",
+  "Eye Exam",
+  "Dental",
+  "Personal",
+] as const;
+
+/** Money is always 2-dp — same rounding as the backend `toMoney`. */
+export const toMoney = (value: unknown): number =>
+  Math.round((pricingNum(value) + Number.EPSILON) * 100) / 100;
+
+/**
+ * `totalPrice = organizationContribution + passengerCoPay`.
+ * The org share is the full funding-source charge; copay is never netted out of it.
+ */
+export const fareTotal = (organizationContribution: unknown, passengerCoPay: unknown): number =>
+  toMoney(toMoney(organizationContribution) + toMoney(passengerCoPay));
+
 export const normalizePricingLegs = (raw: unknown): IBookingPricingLeg[] => {
   if (!Array.isArray(raw)) return [];
   return raw.filter((item) => item && typeof item === "object") as IBookingPricingLeg[];
@@ -372,20 +400,6 @@ export const zoneBadgeTone = (zone?: string | null): string => {
   return "text-ink-3 bg-bg border-line-2";
 };
 
-/** Payer display name from populated `countyId.payersId` (e.g. "Dhaka City"). */
-export const countyPayerNameFromBooking = (booking: {
-  countyId?: IBooking["countyId"];
-}): string => {
-  const county = booking.countyId;
-  if (!county || typeof county !== "object") return "";
-  const payersId = county.payersId;
-  if (payersId && typeof payersId === "object") {
-    const name = payersId.name || payersId.title || payersId.payerName;
-    if (name && String(name).trim()) return String(name).trim();
-  }
-  return "";
-};
-
 export const payerSourceObjectLabel = (payer: unknown): string => {
   if (!payer || typeof payer !== "object") return "";
   const p = payer as { name?: string; title?: string; payerName?: string };
@@ -418,9 +432,10 @@ export const mapApiBooking = (b: IBooking) => {
       ? b.mobilityRequirements
       : undefined);
   const payerObj = typeof b.payerSource === "object" && b.payerSource ? b.payerSource : null;
-  const countyPayerName = countyPayerNameFromBooking(b);
+  // Payer comes from booking.payerSource (County.payersId is no longer populated).
   const payerSourceName = payerSourceObjectLabel(payerObj);
-  const fundingSourceLabel = countyPayerName || payerSourceName || b.programContext || "";
+  const countyPayerName = payerSourceName;
+  const fundingSourceLabel = payerSourceName || b.programContext || "";
 
   const riderName = personName(userObj) || "Rider";
   const driverName = personName(driverObj) || undefined;
@@ -436,12 +451,21 @@ export const mapApiBooking = (b: IBooking) => {
   const legTotals = sumPricingLegs(pricingLegs);
   const primaryZone = pricingLegs[0]?.zone;
   const pricingZoneLabel = pricingZonesDisplay(pricingLegs);
-  const passengerCopay =
-    b.passengerCoPay != null ? pricingNum(b.passengerCoPay) : legTotals.passengerCoPay;
-  const fundingSourceCharge =
+  // `price` is only a legacy alias of the copay, so it may back-fill the copay
+  // but never the funding-source charge.
+  const passengerCopay = toMoney(
+    b.passengerCoPay != null
+      ? b.passengerCoPay
+      : pricingLegs.length
+        ? legTotals.passengerCoPay
+        : b.price,
+  );
+  const fundingSourceCharge = toMoney(
     b.organizationContribution != null
-      ? pricingNum(b.organizationContribution)
-      : legTotals.fundingSourceCharge || pricingNum(b.price);
+      ? b.organizationContribution
+      : legTotals.fundingSourceCharge,
+  );
+  const totalPrice = fareTotal(fundingSourceCharge, passengerCopay);
   const billingMileage = legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined;
 
   return {
@@ -508,14 +532,18 @@ export const mapApiBooking = (b: IBooking) => {
     notes: b.tripNote,
     internalPrivateNote: b.internalPrivateNote,
     privateNotes: b.internalPrivateNote,
+    // Three fare amounts — never merged:
+    //   passengerCopay       rider pays
+    //   fundingSourceCharge  funding source / county pays (organizationContribution)
+    //   totalPrice           fundingSourceCharge + passengerCopay
     price: passengerCopay,
     cost: fundingSourceCharge,
     copay: passengerCopay,
     passengerCopay,
     fundingSourceCharge,
-    totalPrice: b.totalPrice,
-    organizationContribution: b.organizationContribution,
-    passengerCoPay: b.passengerCoPay,
+    totalPrice,
+    organizationContribution: fundingSourceCharge,
+    passengerCoPay: passengerCopay,
     pricingLegs,
     pricingZoneLabel,
     primaryPricingZone: primaryZone,
@@ -704,19 +732,8 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     }
   }
 
-  // 18. Price (price) -> number
-  const priceVal =
-    patch.price !== undefined
-      ? patch.price
-      : patch.fundingSourceCharge !== undefined
-        ? patch.fundingSourceCharge
-        : patch.cost;
-  if (priceVal !== undefined && priceVal !== null && priceVal !== "") {
-    const numPrice = Number(priceVal);
-    if (!Number.isNaN(numPrice)) {
-      payload.price = numPrice;
-    }
-  }
+  // Fare is never sent: the server owns passengerCoPay / organizationContribution /
+  // totalPrice and re-prices the booking itself when a pricing input changes.
 
   return payload;
 };
