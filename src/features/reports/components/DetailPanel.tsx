@@ -8,7 +8,7 @@ import {
   useUpdateReportStatusMutation,
 } from "@/redux/apivtwo/dashboardOnvording";
 import { useGetDispatchersQuery } from "@/redux/api/dispatcherManagementApi";
-import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { apiErrorMessage, fareTotal } from "@/features/bookings/utils/helpers";
 import { ReportLocationField } from "./ReportLocationField";
 
 import { Loader } from "@/shared/Lodder";
@@ -136,7 +136,11 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
       trip.pickupLocation ||
       trip.dropOffLocation ||
       trip.bookingStatus ||
+      trip.passengerCoPay != null ||
       trip.price != null);
+
+  // `price` on old rows is the copay; it is never the payer charge.
+  const tripCopay = trip?.passengerCoPay ?? trip?.price;
 
   const currentAssignee = merged.assignedUserId;
   const currentAssigneeId =
@@ -344,8 +348,26 @@ export const DetailPanel = ({ reportId, previewReport }: DetailPanelProps) => {
                     />
 
                     <Field
-                      label="Fare"
-                      value={trip.price != null ? money(trip.price) : undefined}
+                      label="Passenger copay"
+                      value={tripCopay != null ? money(tripCopay) : undefined}
+                    />
+
+                    <Field
+                      label="Payer charge"
+                      value={
+                        trip.organizationContribution != null
+                          ? money(trip.organizationContribution)
+                          : undefined
+                      }
+                    />
+
+                    <Field
+                      label="Total"
+                      value={
+                        trip.organizationContribution != null
+                          ? money(fareTotal(trip.organizationContribution, tripCopay))
+                          : undefined
+                      }
                     />
                   </>
                 ) : null}

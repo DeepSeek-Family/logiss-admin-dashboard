@@ -39,9 +39,10 @@ import {
   BookingMilesCell,
   BookingCopayCell,
   BookingPayerChargeCell,
+  BookingTotalCell,
 } from "@/features/bookings/components/BookingPricingColumns";
 import { RouteLocationLabel } from "@/features/bookings/components/RouteLocationLabel";
-import { useGetAllPayersQuery } from "@/redux/api/bookingApi";
+import { useGetCountyNamesQuery } from "@/redux/api/coverageApi";
 import { ServiceDateFilter } from "./ServiceDateFilter";
 import { DriverAssignSelect } from "@/features/bookings/components/DriverAssignSelect";
 import type { TripHistoryDriver, TripHistoryRecord, TripUpdateHandler } from "../types";
@@ -84,13 +85,14 @@ interface TripArchiveTabProps {
   /** Locate this trip's vehicle on the side map. */
   onRowSelect?: (id: string | null) => void;
   selectedMapId?: string | null;
-  /** Search, driver, payer and date are sent to `/booking/history` by the page. */
+  /** Search, driver, county and date are sent to `/booking/history` by the page. */
   search: string;
   setSearch: (v: string) => void;
   driverFilter: string;
   setDriverFilter: (v: string) => void;
-  payerFilter: string;
-  setPayerFilter: (v: string) => void;
+  /** County id, or "all". */
+  countyFilter: string;
+  setCountyFilter: (v: string) => void;
   assignFilter: DriverAssignmentFilter;
   setAssignFilter: (v: DriverAssignmentFilter) => void;
   /** `YYYY-MM-DD`, or '' for all dates. */
@@ -173,8 +175,8 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   setSearch,
   driverFilter,
   setDriverFilter,
-  payerFilter,
-  setPayerFilter,
+  countyFilter,
+  setCountyFilter,
   assignFilter,
   setAssignFilter,
   serviceDate,
@@ -190,12 +192,12 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   onExportSelected,
   updateTrip,
 }) => {
-  const { data: payersResponse } = useGetAllPayersQuery();
-  const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
+  const { data: countyNamesResponse } = useGetCountyNamesQuery();
+  const countiesList = (countyNamesResponse?.data || []).filter((c) => c.isActive !== false);
 
   // Anything past the booking stage belongs here — i.e. not pending_review, OR already
   // has a driver assigned (so a driver-assigned trip always shows in Trip History).
-  // Search, date, driver, payer and pagination are filtered server-side.
+  // Search, date, driver, county and pagination are filtered server-side.
   const filteredTrips = (trips || []).filter(
     (t: any) => t?.status !== "pending_review" || t?.driverId,
   );
@@ -252,22 +254,22 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               </select>
             </div>
 
-            {/* Payer Filter */}
+            {/* County Filter */}
             <div className="flex items-center gap-2">
-              <DollarSign size={12} className="text-ink-4" />
-              <span className="text-xs text-ink-4">Payer</span>
+              <MapPin size={12} className="text-ink-4" />
+              <span className="text-xs text-ink-4">County</span>
               <select
-                value={payerFilter}
+                value={countyFilter}
                 onChange={(e) => {
-                  setPayerFilter(e.target.value);
+                  setCountyFilter(e.target.value);
                   onPageChange(1);
                 }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
-                <option value="all">All Payers</option>
-                {payersList.map((payer) => (
-                  <option key={payer._id} value={payer._id}>
-                    {payer.name || payer.title || payer.payerName || payer._id}
+                <option value="all">All Counties</option>
+                {countiesList.map((county) => (
+                  <option key={county._id} value={county._id}>
+                    {county.name || county._id}
                   </option>
                 ))}
               </select>
@@ -355,6 +357,9 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 </th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">
                   Payer charge
+                </th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[90px]">
+                  Total
                 </th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[140px]">Program</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">User Note</th>
@@ -667,6 +672,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
 
                   <td className="px-3 py-2.5 text-right min-w-[100px]">
                     <BookingPayerChargeCell row={trip} />
+                  </td>
+
+                  <td className="px-3 py-2.5 text-right min-w-[90px]">
+                    <BookingTotalCell row={trip} />
                   </td>
 
                   <td className="px-3.5 py-3 min-w-[140px]">

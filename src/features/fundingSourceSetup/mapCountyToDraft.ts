@@ -40,7 +40,14 @@ const asPricingMethod = (method?: string): PricingMethod => {
   if (value === "mileage_brackets" || value === "mileage_bracket" || value === "mileage_based") {
     return "mileage_brackets";
   }
+  if (value === "per_mile") return "per_mile";
   return "flat_rate";
+};
+
+const mobilityIdOf = (raw?: string | { _id?: string } | null) => {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw;
+  return String(raw._id || "");
 };
 
 const mapTripReasons = (county: ICounty): TripReasonRule[] => {
@@ -60,6 +67,7 @@ const mapSpaceTypes = (county: ICounty): SpaceTypeRule[] => {
   if (!rows.length) return [newSpaceType()];
   return rows.map((r) => ({
     id: makeId(),
+    mobilityId: mobilityIdOf(r.mobilityId),
     spaceType: String(r.spaceType || "").trim(),
     billingClass: String(r.billingClass || "").trim(),
     enabled: r.status !== "disabled",
@@ -83,7 +91,7 @@ const mapPricingRules = (county: ICounty): PricingRule[] => {
         ? (r.brackets || []).map((b) => ({
             id: makeId(),
             from: Number(b.from) || 0,
-            to: Number(b.to) || 0,
+            to: b.to == null ? null : Number(b.to),
             amount: Number(b.amount) || 0,
           }))
         : [newBracket()],
@@ -149,6 +157,7 @@ export const mapCountyToDraft = (county: ICounty): FundingSourceDraft => {
     geofences: mapGeofenceEntries(county),
     geofenceFiles: [],
     mileageRounding: (county.mileageRounding as MileageRounding) || "none",
+    mileagePrecision: Number(county.mileagePrecision) || 0,
     billingMileageSource: (county.mileageSource as MileageSource) || "calculated_route",
     spaceTypes: mapSpaceTypes(county),
     pricingRules: mapPricingRules(county),

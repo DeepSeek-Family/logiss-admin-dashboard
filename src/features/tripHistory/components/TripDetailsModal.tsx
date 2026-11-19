@@ -36,7 +36,12 @@ import {
   money,
   formatTripId,
 } from "../../../utils/helpers";
-import { isMongoId, parseLatLng, extractBookingStopsCoords } from "../../bookings/utils/helpers";
+import {
+  isMongoId,
+  parseLatLng,
+  extractBookingStopsCoords,
+  fareTotal,
+} from "../../bookings/utils/helpers";
 import { createDirectionalRoutePolyline, getDrivingRoutePath } from "@/utils/googleDrivingRoute";
 import {
   PRICING_METHOD_LABELS,
@@ -292,7 +297,6 @@ export const TripDetailsModal = ({
     escort: trip?.escort || "",
     notes: trip?.tripNote || trip?.notes || "",
     privateNotes: trip?.internalPrivateNote || trip?.privateNotes || "",
-    cost: trip?.price ?? trip?.fundingSourceCharge ?? trip?.cost ?? 0,
     driverId: initialDriverId,
   });
 
@@ -318,6 +322,10 @@ export const TripDetailsModal = ({
     const n = parseFloat(String(v ?? "").replace(/[^\d.]/g, ""));
     return isNaN(n) ? 0 : n;
   };
+
+  // `trip.price` is a copay alias, so it is never used as the payer charge.
+  const billingCopay = numF(trip?.passengerCopay ?? trip?.copay);
+  const billingPayerCharge = numF(trip?.fundingSourceCharge ?? trip?.cost);
 
   const auditEvents: any[] =
     Array.isArray(trip?.auditTrail) && trip.auditTrail.length
@@ -373,8 +381,7 @@ export const TripDetailsModal = ({
       });
     }
 
-    const priceNum = numF(form.cost);
-
+    // No fare in the patch: the server re-prices the booking from its contract.
     const patch: Record<string, any> = {
       scheduledDate: form.scheduledDate,
       serviceDate: form.scheduledDate,
@@ -405,8 +412,6 @@ export const TripDetailsModal = ({
       tripNote: form.notes,
       privateNotes: form.privateNotes,
       internalPrivateNote: form.privateNotes,
-      price: priceNum,
-      cost: priceNum,
       phone: form.phone,
       auditTrail: newAudit,
       rider: {
@@ -1095,25 +1100,32 @@ export const TripDetailsModal = ({
                 <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
                   <CreditCard size={14} /> Billing & Price
                 </h3>
-                <div className="space-y-4">
-                  <div className="bg-primary/5 p-4 rounded-xl border border-primary/15">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
-                      Trip Price ($)
-                    </p>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={String(form.cost)}
-                        onChange={(e) => set("cost", e.target.value)}
-                        className={INPUT}
-                      />
-                    ) : (
-                      <p className="text-2xl font-bold text-primary">
-                        {money(Number(form.cost) || 0)}
-                      </p>
-                    )}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-ink-3">Passenger copay</span>
+                    <span className="font-semibold text-ink tabular-nums">
+                      {money(billingCopay)}
+                    </span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-ink-3">Payer charge</span>
+                    <span className="font-semibold text-primary tabular-nums">
+                      {money(billingPayerCharge)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between bg-primary/5 px-4 py-3 rounded-xl border border-primary/15">
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                      Total
+                    </span>
+                    <span className="text-2xl font-bold text-primary tabular-nums">
+                      {money(fareTotal(billingPayerCharge, billingCopay))}
+                    </span>
+                  </div>
+                  {isEditing && (
+                    <p className="text-xs text-ink-4">
+                      Fare is set by the funding source contract and recalculated on save.
+                    </p>
+                  )}
                 </div>
               </section>
 

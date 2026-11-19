@@ -62,12 +62,12 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     () => searchParams.get("searchTerm") || searchParams.get("search") || "",
   );
   const [driverFilter, setDriverFilter] = useState("all");
-  const [payerFilter, setPayerFilter] = useState("all");
+  /** County filter shared by the header and the table filter bar ("all" = no filter). */
+  const [countyFilter, setCountyFilter] = useState("all");
   const [assignFilter, setAssignFilter] = useState<DriverAssignmentFilter>("");
   const [serviceDate, setServiceDate] = useState("");
   const [historyStartDate, setHistoryStartDate] = useState("");
   const [historyEndDate, setHistoryEndDate] = useState("");
-  const [historyPayerId, setHistoryPayerId] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItemsPerPage, setHistoryItemsPerPage] = useState(10);
 
@@ -81,11 +81,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     historySearch,
     serviceDate,
     driverFilter,
-    payerFilter,
+    countyFilter,
     assignFilter,
     historyStartDate,
     historyEndDate,
-    historyPayerId,
   ]);
 
   const historyQueryParams = useMemo(() => {
@@ -97,10 +96,9 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     if (searchTerm) params.searchTerm = searchTerm;
     if (serviceDate) params.serviceDate = serviceDate;
     if (driverFilter !== "all") params.driverId = driverFilter;
-    if (payerFilter !== "all") params.payerSource = payerFilter;
+    if (countyFilter !== "all") params.countyId = countyFilter;
     if (historyStartDate) params.startDate = historyStartDate;
     if (historyEndDate) params.endDate = historyEndDate;
-    if (historyPayerId) params.payerId = historyPayerId;
     const unassign = assignFilterToUnassignQuery(assignFilter);
     if (unassign !== undefined) params.unassign = unassign;
     return params;
@@ -108,11 +106,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
     historySearch,
     serviceDate,
     driverFilter,
-    payerFilter,
+    countyFilter,
     assignFilter,
     historyStartDate,
     historyEndDate,
-    historyPayerId,
     historyPage,
     historyItemsPerPage,
   ]);
@@ -420,10 +417,10 @@ const TripHistory = ({ role }: { role?: string | null }) => {
             <TripHistoryRangeFilters
               startDate={historyStartDate}
               endDate={historyEndDate}
-              payerId={historyPayerId}
+              countyId={countyFilter === "all" ? "" : countyFilter}
               onStartDateChange={setHistoryStartDate}
               onEndDateChange={setHistoryEndDate}
-              onPayerIdChange={setHistoryPayerId}
+              onCountyIdChange={(value) => setCountyFilter(value || "all")}
               dateRangeError={dateRangeError}
             />
 
@@ -473,8 +470,8 @@ const TripHistory = ({ role }: { role?: string | null }) => {
               setSearch={setHistorySearch}
               driverFilter={driverFilter}
               setDriverFilter={setDriverFilter}
-              payerFilter={payerFilter}
-              setPayerFilter={setPayerFilter}
+              countyFilter={countyFilter}
+              setCountyFilter={setCountyFilter}
               assignFilter={assignFilter}
               setAssignFilter={setAssignFilter}
               serviceDate={serviceDate}

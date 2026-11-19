@@ -25,7 +25,7 @@ import {
 import toast from "react-hot-toast";
 import { Badge, Button, Card } from "@/shared/components/ui";
 import { ROUTES } from "@/constants/routes";
-import { apiErrorMessage } from "@/features/bookings/utils/helpers";
+import { apiErrorMessage, TRIP_REASONS } from "@/features/bookings/utils/helpers";
 import {
   useCreatePayerMutation,
   useCreateCountyContractMutation,
@@ -37,8 +37,11 @@ import {
   useCreateFundingSourceMutation,
   useUpdateFundingSourceMutation,
 } from "@/redux/api/fundingSourcesApi";
+import { useGetMobilitiesQuery } from "@/redux/api/mobilityApi";
 import {
   buildCountyContractFormData,
+  buildCountyContractPatchFormData,
+  isSpaceTypeRowComplete,
   mapOrganizationToFundingSourceType,
   mapOrganizationToPayerType,
 } from "./buildContractFormData";
@@ -66,6 +69,17 @@ import type {
   SpaceTypeRule,
   TripReasonRule,
 } from "./types";
+
+/** Draft fields mirrored onto the linked Funding Source record. */
+const FUNDING_SOURCE_DRAFT_KEYS = [
+  "name",
+  "organizationType",
+  "programName",
+  "description",
+  "effectiveFrom",
+  "effectiveUntil",
+  "isActive",
+] as const satisfies readonly (keyof FundingSourceDraft)[];
 
 const input =
   "mt-1.5 h-10 w-full rounded-xl border border-line-2 bg-white px-3 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10";
@@ -262,6 +276,8 @@ const FundingSourceSetupPage = () => {
   /** Parent keeps files in a ref so the giant form does not rebuild on every pick. */
   const uploadedFilesRef = useRef<File[]>([]);
   const existingGeofencesRef = useRef<ExistingGeofence[]>([]);
+  /** Draft as loaded from the server, used to send only changed fields on edit. */
+  const baselineDraftRef = useRef<FundingSourceDraft | null>(null);
   const editMetaRef = useRef<{ payersId: string; fundingSourceId: string }>({
     payersId: "",
     fundingSourceId: "",
@@ -271,17 +287,24 @@ const FundingSourceSetupPage = () => {
   const [updateFundingSource] = useUpdateFundingSourceMutation();
   const [createCountyContract] = useCreateCountyContractMutation();
   const [updateCountyContract] = useUpdateCountyContractMutation();
+  const { data: mobilitiesResponse } = useGetMobilitiesQuery();
+  const mobilityOptions = (mobilitiesResponse?.data || []).filter(
+    (m) => m._id && m.status !== false,
+  );
 
   useEffect(() => {
     if (!isEdit) {
       setEditHydrated(false);
       existingGeofencesRef.current = [];
+      baselineDraftRef.current = null;
       editMetaRef.current = { payersId: "", fundingSourceId: "" };
       return;
     }
     const county = countyResponse?.data;
     if (!county?._id) return;
-    setDraft(mapCountyToDraft(county));
+    const loaded = mapCountyToDraft(county);
+    baselineDraftRef.current = loaded;
+    setDraft(loaded);
     existingGeofencesRef.current = extractExistingGeofences(county);
     editMetaRef.current = {
       payersId: resolveCountyPayersId(county),
@@ -298,10 +321,15 @@ const FundingSourceSetupPage = () => {
     const next: Record<string, string> = {};
     if (!draft.name.trim()) next.name = "Funding Source name is required";
     if (!draft.effectiveFrom) next.effectiveFrom = "Effective date is required";
+    const invalidReason = draft.tripReasons.find(
+      (r) => r.name.trim() && !(TRIP_REASONS as readonly string[]).includes(r.name.trim()),
+    );
     if (!draft.tripReasons.some((r) => r.name.trim()))
       next.tripReasons = "Add at least one trip reason";
-    if (!draft.spaceTypes.some((r) => r.spaceType.trim() && r.billingClass.trim()))
-      next.spaceTypes = "Add at least one mapping";
+    else if (invalidReason)
+      next.tripReasons = `"${invalidReason.name.trim()}" is not a valid trip reason — pick one from the list`;
+    if (!draft.spaceTypes.some(isSpaceTypeRowComplete))
+      next.spaceTypes = "Map at least one mobility to a billing class";
     if (!draft.pricingRules.some((r) => r.name.trim() && r.billingClass.trim()))
       next.pricing = "Add at least one pricing rule";
     const hasNewFiles = uploadedFilesRef.current.length > 0;
@@ -325,7 +353,6 @@ const FundingSourceSetupPage = () => {
     setSaving(true);
     try {
       let geofenceFile: File | null = null;
-      let geofences = existingGeofencesRef.current;
       if (hasNewFiles) {
         geofenceFile = await mergeGeoJsonFiles(uploadedFilesRef.current);
         if (!geofenceFile) {
@@ -334,22 +361,31 @@ const FundingSourceSetupPage = () => {
           setSaving(false);
           return;
         }
-        geofences = [];
       }
 
       if (isEdit && editId) {
         const payersId = editMetaRef.current.payersId;
         if (!payersId) throw new Error("This county is missing payersId — cannot update");
         const fundingSourceId = editMetaRef.current.fundingSourceId || undefined;
-        const formData = buildCountyContractFormData({
+        const baseline = baselineDraftRef.current;
+        if (!baseline) throw new Error("Contract is still loading — try again");
+        const { formData, changedKeys } = buildCountyContractPatchFormData({
+          baseline,
           draft,
           payersId,
           fundingSourceId,
-          geofences,
           geofenceFile,
         });
+        if (!changedKeys.length) {
+          toast("No changes to save");
+          setSaving(false);
+          return;
+        }
         await updateCountyContract({ id: editId, formData, payersId }).unwrap();
-        if (fundingSourceId) {
+        const fundingSourceChanged = FUNDING_SOURCE_DRAFT_KEYS.some(
+          (key) => baseline[key] !== draft[key],
+        );
+        if (fundingSourceId && fundingSourceChanged) {
           try {
             await updateFundingSource({
               id: fundingSourceId,
@@ -601,12 +637,21 @@ const FundingSourceSetupPage = () => {
           key={r.id}
           className="grid gap-3 rounded-xl border border-line-2 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]"
         >
-          <input
+          <select
             className={input}
             value={r.name}
             onChange={(e) => updateReason(r.id, { name: e.target.value })}
-            placeholder="Medical, Work…"
-          />
+          >
+            <option value="">Select trip reason…</option>
+            {TRIP_REASONS.map((reason) => (
+              <option key={reason} value={reason}>
+                {reason}
+              </option>
+            ))}
+            {r.name && !(TRIP_REASONS as readonly string[]).includes(r.name) && (
+              <option value={r.name}>{r.name} (invalid — pick another)</option>
+            )}
+          </select>
           <label className="text-xs font-medium">
             Inside
             <select
@@ -679,7 +724,7 @@ const FundingSourceSetupPage = () => {
         }}
       />
       {errors.geofences && <p className="text-xs text-urgent">{errors.geofences}</p>}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <label className="text-sm font-medium">
           Mileage rounding
           <select
@@ -693,6 +738,11 @@ const FundingSourceSetupPage = () => {
             <option value="down">Always round down</option>
           </select>
         </label>
+        <NumberField
+          label="Mileage precision (decimals)"
+          value={draft.mileagePrecision}
+          onChange={(v) => set("mileagePrecision", Math.max(0, Math.min(6, Math.round(v))))}
+        />
         <label className="text-sm font-medium">
           Billing mileage source
           <select
@@ -710,6 +760,10 @@ const FundingSourceSetupPage = () => {
   );
   const spaceTypes = (
     <div className="space-y-4">
+      <p className="text-xs text-ink-4">
+        Pricing resolves the billing class by mobility id. Pick the rider space type, then the class
+        the rate card uses.
+      </p>
       <div className="flex justify-end">
         <Button
           size="sm"
@@ -726,13 +780,25 @@ const FundingSourceSetupPage = () => {
           className="grid gap-3 rounded-xl border border-line-2 p-4 md:grid-cols-[1fr_1fr_160px_auto]"
         >
           <label className="text-xs font-medium">
-            Space Type
-            <input
+            Space Type (mobility)
+            <select
               className={input}
-              value={r.spaceType}
-              onChange={(e) => updateSpace(r.id, { spaceType: e.target.value })}
-              placeholder="Walker, WAV…"
-            />
+              value={r.mobilityId}
+              onChange={(e) => {
+                const mobility = mobilityOptions.find((m) => m._id === e.target.value);
+                updateSpace(r.id, {
+                  mobilityId: e.target.value,
+                  spaceType: mobility?.name || r.spaceType,
+                });
+              }}
+            >
+              <option value="">Select mobility…</option>
+              {mobilityOptions.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-xs font-medium">
             Billing Class
@@ -864,6 +930,9 @@ const FundingSourceSetupPage = () => {
           )}
           {(r.method === "mileage_bracket" || r.method === "mileage_brackets") && (
             <div className="space-y-2">
+              <p className="text-xs text-ink-4">
+                Leave &quot;To&quot; blank for an open-ended last bracket (and above).
+              </p>
               {r.brackets.map((b) => (
                 <div key={b.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
                   <input
@@ -883,11 +952,17 @@ const FundingSourceSetupPage = () => {
                     aria-label="To mileage"
                     className={input}
                     type="number"
-                    value={b.to}
+                    placeholder="and above"
+                    value={b.to ?? ""}
                     onChange={(e) =>
                       updatePricing(r.id, {
                         brackets: r.brackets.map((x) =>
-                          x.id === b.id ? { ...x, to: Number(e.target.value) } : x,
+                          x.id === b.id
+                            ? {
+                                ...x,
+                                to: e.target.value === "" ? null : Number(e.target.value),
+                              }
+                            : x,
                         ),
                       })
                     }
@@ -919,7 +994,11 @@ const FundingSourceSetupPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => updatePricing(r.id, { brackets: [...r.brackets, newBracket()] })}
+                onClick={() => {
+                  const last = r.brackets[r.brackets.length - 1];
+                  const from = last?.to != null ? last.to : last?.from || 0;
+                  updatePricing(r.id, { brackets: [...r.brackets, newBracket(from)] });
+                }}
               >
                 <Plus size={13} /> Add bracket
               </Button>

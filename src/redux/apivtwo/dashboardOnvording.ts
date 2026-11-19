@@ -36,7 +36,11 @@ export interface IIncidentReportTrip {
   selectedDate?: string[];
   endDate?: string;
   bookingStatus?: string;
+  /** Legacy alias of `passengerCoPay` on old rows. */
   price?: number;
+  passengerCoPay?: number;
+  organizationContribution?: number;
+  totalPrice?: number;
 }
 
 export type ReportResolutionStatus = "pending" | "approved" | "rejected";

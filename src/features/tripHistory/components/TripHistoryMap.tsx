@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { Card, Avatar, TripStatusBadge, loadGoogleMapsScript } from "@/shared/components/ui";
 import { formatTime, formatShortDate, money } from "@/utils/helpers";
-import { parseLatLng, extractBookingStopsCoords } from "@/features/bookings/utils/helpers";
+import {
+  parseLatLng,
+  extractBookingStopsCoords,
+  fareTotal,
+} from "@/features/bookings/utils/helpers";
 import {
   createDirectionalRoutePolyline,
   getDrivingRouteDetails,
@@ -588,8 +592,19 @@ export const TripHistoryMap: React.FC<TripHistoryMapProps> = ({
                 </p>
               </div>
               <div className="bg-bg rounded-lg px-2.5 py-2 border border-line-2">
-                <p className="text-xs text-ink-4">Trip cost</p>
-                <p className="text-xs font-semibold text-ink">{money(selected.cost || 0)}</p>
+                <p className="text-xs text-ink-4">Total</p>
+                <p className="text-xs font-semibold text-ink">
+                  {money(
+                    fareTotal(
+                      selected.fundingSourceCharge ?? selected.cost,
+                      selected.passengerCopay ?? selected.copay,
+                    ),
+                  )}
+                </p>
+                <p className="text-xs text-ink-4 truncate">
+                  Payer {money(Number(selected.fundingSourceCharge ?? selected.cost) || 0)} + copay{" "}
+                  {money(Number(selected.passengerCopay ?? selected.copay) || 0)}
+                </p>
               </div>
               <div className="col-span-2 bg-bg rounded-lg px-2.5 py-2 border border-line-2">
                 <p className="text-xs text-ink-4">Reason</p>

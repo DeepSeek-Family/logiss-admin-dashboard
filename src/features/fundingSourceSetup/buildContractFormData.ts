@@ -31,8 +31,11 @@ const toApiPricingMethod = (method: PricingMethod): ApiPricingMethod => {
   if (method === "mileage_bracket" || method === "mileage_brackets") {
     return "mileage_brackets";
   }
+  if (method === "per_mile") return "per_mile";
   return "flat_rate";
 };
+
+const bracketTo = (to: number | null | undefined) => (to == null ? null : Number(to));
 
 const toCountyPriceMethod = (method: ApiPricingMethod): ApiPriceMethod => {
   if (method === "base_plus_additional_mileage") return "first_x_miles";
@@ -84,7 +87,7 @@ const mapPricingRule = (rule: PricingRule) => {
     additionalMileRate: Number(rule.extraMileRate) || 0,
     brackets: rule.brackets.map((b) => ({
       from: Number(b.from) || 0,
-      to: Number(b.to) || 0,
+      to: bracketTo(b.to),
       amount: Number(b.amount) || 0,
     })),
   };
@@ -110,7 +113,7 @@ const topLevelFromFirstRule = (rule: PricingRule) => {
       priceMethod,
       mileage_brackets: rule.brackets.map((b) => ({
         min_mileage: b.from,
-        max_mileage: b.to,
+        max_mileage: bracketTo(b.to),
         charge: b.amount,
       })),
     };
@@ -121,6 +124,13 @@ const topLevelFromFirstRule = (rule: PricingRule) => {
     per_mile_rate: rule.extraMileRate ?? 0,
   };
 };
+
+/** A billing-class row is usable when it names a billing class and a mobility or space type. */
+export const isSpaceTypeRowComplete = (r: {
+  mobilityId: string;
+  spaceType: string;
+  billingClass: string;
+}) => Boolean(r.billingClass.trim() && (r.mobilityId.trim() || r.spaceType.trim()));
 
 export type BuildContractBodyArgs = {
   draft: FundingSourceDraft;
@@ -180,11 +190,13 @@ export const buildCountyContractBody = ({
         })),
     },
     mileageRounding: draft.mileageRounding,
+    mileagePrecision: Number(draft.mileagePrecision) || 0,
     mileageSource: draft.billingMileageSource,
     mobilityBillingMap: draft.spaceTypes
-      .filter((r) => r.spaceType.trim() && r.billingClass.trim())
+      .filter(isSpaceTypeRowComplete)
       .map((r) => ({
-        spaceType: r.spaceType.trim(),
+        mobilityId: r.mobilityId.trim() || undefined,
+        spaceType: r.spaceType.trim() || undefined,
         billingClass: r.billingClass.trim(),
         status: r.enabled ? "enabled" : "disabled",
       })),
@@ -221,9 +233,8 @@ export const buildCountyContractBody = ({
 };
 
 /** Multipart FormData for POST/PATCH /counties (parseCountyUpload reads `data` + optional `file`). */
-export const buildCountyContractFormData = (args: BuildContractBodyArgs): FormData => {
+const buildCountyContractPayload = (args: BuildContractBodyArgs): Record<string, unknown> => {
   const body = buildCountyContractBody(args);
-  const formData = new FormData();
 
   // Always send numeric price fields as real numbers inside JSON `data`
   // (FormData string fields were dropping / failing Zod when priceMethod=flat_rate).
@@ -270,10 +281,78 @@ export const buildCountyContractFormData = (args: BuildContractBodyArgs): FormDa
     if (payload[key] === undefined) delete payload[key];
   });
 
+  return payload;
+};
+
+export const buildCountyContractFormData = (args: BuildContractBodyArgs): FormData => {
+  const payload = buildCountyContractPayload(args);
+  const useFile = Boolean(args.geofenceFile) && (!args.geofences || args.geofences.length === 0);
+  const formData = new FormData();
   formData.append("data", JSON.stringify(payload));
   if (useFile && args.geofenceFile) {
     formData.append("file", args.geofenceFile);
   }
-
   return formData;
+};
+
+/** Price fields travel together: if any one changes, the whole pricing group is sent. */
+const PRICE_KEYS = [
+  "priceMethod",
+  "pricingRules",
+  "flat_rate_price",
+  "initial_miles",
+  "initial_charge",
+  "additional_per_mile",
+  "mileage_brackets",
+  "base_rate",
+  "per_mile_rate",
+] as const;
+
+export type BuildContractPatchArgs = {
+  /** Draft as it was loaded from the server. */
+  baseline: FundingSourceDraft;
+  /** Draft as the user left it. */
+  draft: FundingSourceDraft;
+  payersId: string;
+  fundingSourceId?: string | null;
+  /** Only set when the user uploaded new geofence files. */
+  geofenceFile?: File | null;
+};
+
+/**
+ * PATCH body for editing a county: only the fields that differ from what was loaded.
+ * Geofences are sent only when a new file was uploaded.
+ */
+export const buildCountyContractPatchFormData = ({
+  baseline,
+  draft,
+  payersId,
+  fundingSourceId,
+  geofenceFile,
+}: BuildContractPatchArgs): { formData: FormData; changedKeys: string[] } => {
+  const common = { payersId, fundingSourceId, geofences: [] };
+  const before = buildCountyContractPayload({ ...common, draft: baseline });
+  const after = buildCountyContractPayload({ ...common, draft });
+
+  const same = (key: string) => JSON.stringify(before[key]) === JSON.stringify(after[key]);
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  const changed: Record<string, unknown> = {};
+
+  const priceChanged = PRICE_KEYS.some((key) => !same(key));
+  for (const key of keys) {
+    if (key === "payersId" || key === "geofences") continue;
+    if ((PRICE_KEYS as readonly string[]).includes(key)) {
+      if (priceChanged && after[key] !== undefined) changed[key] = after[key];
+      continue;
+    }
+    if (!same(key) && after[key] !== undefined) changed[key] = after[key];
+  }
+
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(changed));
+  if (geofenceFile) formData.append("file", geofenceFile);
+
+  const changedKeys = Object.keys(changed);
+  if (geofenceFile) changedKeys.push("geofences");
+  return { formData, changedKeys };
 };

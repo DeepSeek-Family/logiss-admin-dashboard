@@ -17,6 +17,7 @@ import {
   Info,
   User,
   Loader2,
+  DollarSign,
 } from "lucide-react";
 import {
   Avatar,
@@ -25,8 +26,7 @@ import {
   SearchInput,
 } from "@/shared/components/ui";
 import { formatShortDate, formatTripId } from "@/utils/helpers";
-import { DollarSign } from "lucide-react";
-import { useGetAllPayersQuery } from "@/redux/api/bookingApi";
+import { useGetCountyNamesQuery } from "@/redux/api/coverageApi";
 import { DriverAssignSelect } from "./DriverAssignSelect";
 import { isRoundTrip, resolveMediaUrl, type DriverAssignmentFilter } from "../utils/helpers";
 import {
@@ -34,6 +34,7 @@ import {
   BookingMilesCell,
   BookingCopayCell,
   BookingPayerChargeCell,
+  BookingTotalCell,
 } from "./BookingPricingColumns";
 import { RouteLocationLabel } from "./RouteLocationLabel";
 
@@ -130,8 +131,8 @@ interface BookingsListProps {
   setActiveTab: (tab: string) => void;
   bookingSearch: string;
   setBookingSearch: (val: string) => void;
-  fundingFilter: string;
-  setFundingFilter: (val: string) => void;
+  countyFilter: string;
+  setCountyFilter: (val: string) => void;
   assignFilter?: DriverAssignmentFilter;
   setAssignFilter?: (val: DriverAssignmentFilter) => void;
   pendingCount?: number;
@@ -168,8 +169,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   setActiveTab,
   bookingSearch,
   setBookingSearch,
-  fundingFilter,
-  setFundingFilter,
+  countyFilter,
+  setCountyFilter,
   assignFilter = "",
   setAssignFilter,
   pendingCount,
@@ -200,8 +201,8 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   selectedMapId,
   isFetching,
 }) => {
-  const { data: payersResponse } = useGetAllPayersQuery();
-  const payersList = (payersResponse?.data || []).filter((p) => p.status !== false);
+  const { data: countyNamesResponse } = useGetCountyNamesQuery();
+  const countiesList = (countyNamesResponse?.data || []).filter((c) => c.isActive !== false);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-4">
@@ -267,17 +268,17 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           />
         )}
         <div className="flex items-center gap-2">
-          <DollarSign size={12} className="text-ink-4" />
-          <span className="text-xs text-ink-4">Payer</span>
+          <MapPin size={12} className="text-ink-4" />
+          <span className="text-xs text-ink-4">County</span>
           <select
-            value={fundingFilter}
-            onChange={(e) => setFundingFilter(e.target.value)}
+            value={countyFilter}
+            onChange={(e) => setCountyFilter(e.target.value)}
             className="py-2 pl-3 pr-8 text-xs font-medium bg-white border outline-none appearance-none cursor-pointer border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary h-9"
           >
-            <option value="all">All Payers</option>
-            {payersList.map((payer) => (
-              <option key={payer._id} value={payer._id}>
-                {payer.name || payer.title || payer.payerName || payer._id}
+            <option value="all">All Counties</option>
+            {countiesList.map((county) => (
+              <option key={county._id} value={county._id}>
+                {county.name || county._id}
               </option>
             ))}
           </select>
@@ -414,6 +415,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     </th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[100px]">
                       Payer charge
+                    </th>
+                    <th className="px-3.5 py-3 type-th whitespace-nowrap text-right min-w-[90px]">
+                      Total
                     </th>
                     <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[150px]">
                       User Note
@@ -793,6 +797,10 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
                       <td className="px-3 py-2.5 text-right min-w-[100px]">
                         <BookingPayerChargeCell row={booking} />
+                      </td>
+
+                      <td className="px-3 py-2.5 text-right min-w-[90px]">
+                        <BookingTotalCell row={booking} />
                       </td>
 
                       {/* User Note (from rider app) */}

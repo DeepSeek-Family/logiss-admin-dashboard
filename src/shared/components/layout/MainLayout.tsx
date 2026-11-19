@@ -231,9 +231,10 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const mainScrollRef = React.useRef<HTMLElement>(null);
-  /** Remount outlet only on route path changes — not on search/filter query params (avoids full-page flash). */
-  // Remount outlet when the route changes so a prior page crash cannot leave a blank pane.
-  const routeOutletKey = `${location.pathname}:${location.key}`;
+  // Remount only when the path changes. Including `location.key` remounted on every
+  // search/tab query update (SearchInput, booking tabs) and retriggered RTK
+  // `refetchOnMountOrArgChange` in a loop.
+  const routeOutletKey = location.pathname;
   const { data: unreadCount = 0 } = useGetUnreadNotificationCountQuery(undefined, {
     skip: !hasAuthToken,
     refetchOnMountOrArgChange: true,

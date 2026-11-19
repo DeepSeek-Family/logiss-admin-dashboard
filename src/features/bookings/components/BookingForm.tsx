@@ -44,14 +44,13 @@ import { money } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import {
   useGetAllBookingsQuery,
-  useGetAllPayersQuery,
   useCalculateBookingPriceMutation,
   useManualCreateBookingMutation,
   ICreateBookingPayload,
   ICalculatedBookingPrice,
   ICalculateBookingPriceBody,
 } from "@/redux/api/bookingApi";
-import { useGetCountiesByPayerQuery } from "@/redux/api/coverageApi";
+import { useGetCountyNamesQuery } from "@/redux/api/coverageApi";
 import { useGetRidersQuery } from "@/redux/api/ridersApi";
 import { useGetDriversQuery } from "@/redux/api/driversApi";
 import { useGetMobilitiesQuery } from "@/redux/api/mobilityApi";
@@ -67,16 +66,16 @@ import {
   isMongoId,
   apiErrorMessage,
   validateServiceScheduleTimes,
+  fareTotal,
+  toMoney,
+  TRIP_REASONS,
 } from "../utils/helpers";
 import {
-  quoteFares,
   usePricing,
-  type CountyConfig,
   evaluateTripBoundary,
   detectCountyFromAddress,
   findFundingPolicy,
 } from "@/hooks/usePricing";
-import type { ICounty } from "@/redux/api/coverageApi";
 import { geocodeAddress } from "@/utils/geofenceEngine";
 
 const inputClass =
@@ -84,20 +83,16 @@ const inputClass =
 const disabledInputClass =
   "w-full px-3 py-1.5 bg-bg border border-line-2 rounded-lg text-sm text-ink-3 outline-none opacity-50 cursor-not-allowed h-9 shadow-none";
 
-const mapApiCountiesToConfig = (rows: ICounty[]): CountyConfig[] =>
-  rows
-    .filter((c) => c.isActive !== false && String(c.countyName || "").trim())
-    .map((c) => ({
-      id: c._id,
-      name: String(c.countyName || "").trim(),
-      state: "VA",
-      localFare: Number(c.insidePrice ?? c.flat_rate_price ?? 0),
-      status: "active" as const,
-      notes: "",
-      zipCodes: [],
-      cities: [],
-      polygon: [],
-    }));
+const MILEAGE_SOURCE_LABELS: Record<string, string> = {
+  straight_line: "straight line",
+  calculated_route: "calculated route",
+  actual_gps: "actual GPS",
+};
+
+const formatMiles = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? `${Number(n.toFixed(2))} mi` : "—";
+};
 
 const MOBILITY_ICON_MAP: { [key: string]: any } = {
   User,
@@ -120,8 +115,13 @@ export const BookingForm = () => {
   const [calculatedPrice, setCalculatedPrice] = useState<ICalculatedBookingPrice | null>(null);
   const [priceAgreed, setPriceAgreed] = useState(false);
   const { data: bookingsResponse } = useGetAllBookingsQuery({ page: 1, limit: 100 });
-  const { data: payersResponse } = useGetAllPayersQuery();
   const { data: mobilitiesResponse } = useGetMobilitiesQuery();
+  // County contracts for the picker — name (+ payersId) only; no geofence payload.
+  const { data: countyNamesResponse } = useGetCountyNamesQuery();
+  const countyOptions = useMemo(
+    () => (countyNamesResponse?.data || []).filter((c) => c.isActive !== false && isMongoId(c._id)),
+    [countyNamesResponse],
+  );
 
   // Rider backend search state
   const [existingSearch, setExistingSearch] = useState("");
@@ -176,7 +176,6 @@ export const BookingForm = () => {
     () => extractBookingPeople(bookingsResponse?.data || []),
     [bookingsResponse],
   );
-  const apiPayers = (payersResponse?.data || []).filter((p) => isMongoId(p._id));
 
   const [form, setForm] = useState({
     firstName: "",
@@ -189,6 +188,7 @@ export const BookingForm = () => {
     fundingSourceId: "",
     fundingSource: "",
     payerSourceId: "",
+    countyId: "",
     program: "Medicaid NEMT",
     source: "",
     authNotes: "",
@@ -203,7 +203,7 @@ export const BookingForm = () => {
     tripType: "one-way",
     isWillCall: false,
     mobility: "Ambulatory",
-    tripReason: "Medical Appointment",
+    tripReason: "",
     totalSeats: 1,
     additionalNotes: "",
     privateNotes: "",
@@ -217,16 +217,12 @@ export const BookingForm = () => {
     actualMiles: 0,
   });
 
-  const payerIdForCounties = isMongoId(form.payerSourceId) ? form.payerSourceId : "";
-  const { data: countiesByPayerResponse } = useGetCountiesByPayerQuery(payerIdForCounties, {
-    skip: !payerIdForCounties,
-  });
-
-  const availableCounties = useMemo(() => {
-    const fromApi = mapApiCountiesToConfig(countiesByPayerResponse?.data || []);
-    if (fromApi.length > 0) return fromApi;
-    return (pricing.counties || []).filter((c) => c.status === "active");
-  }, [countiesByPayerResponse, pricing.counties]);
+  // Local service areas feed only the on-screen boundary hint; the server
+  // decides the real zone when it prices the trip.
+  const availableCounties = useMemo(
+    () => (pricing.counties || []).filter((c) => c.status === "active"),
+    [pricing.counties],
+  );
 
   const availableMobility = useMemo(() => {
     const rawMobilities: any[] = Array.isArray(mobilitiesResponse?.data)
@@ -270,6 +266,7 @@ export const BookingForm = () => {
   const riderDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [riderCounty, setRiderCounty] = useState<{ id: string; name: string } | null>(null);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (riderDropdownRef.current && !riderDropdownRef.current.contains(event.target as Node)) {
@@ -297,20 +294,49 @@ export const BookingForm = () => {
   );
   const [stopsGps, setStopsGps] = useState<([number, number] | undefined)[]>([]);
 
-  const apiCountyId = useMemo(() => {
-    const list = (countiesByPayerResponse?.data || []).filter((c) => c.isActive !== false);
-    if (!list.length) return "";
+  // Contract the quote is priced under. Prefer an explicit county pick, then the
+  // rider's county, then match by name / first active contract.
+  const quoteCounty = useMemo(() => {
+    const byId = (id: string) => countyOptions.find((c) => c._id === id);
+    if (isMongoId(form.countyId)) {
+      const known = byId(form.countyId);
+      return {
+        id: form.countyId,
+        name: known?.name || form.county || "",
+        payersId: known?.payersId || form.payerSourceId || "",
+      };
+    }
+    if (riderCounty) {
+      const known = byId(riderCounty.id);
+      return {
+        id: riderCounty.id,
+        name: known?.name || riderCounty.name,
+        payersId: known?.payersId || "",
+      };
+    }
+    if (!countyOptions.length) return null;
     const countyName = form.county?.trim().toLowerCase();
     const byName = countyName
-      ? list.find(
+      ? countyOptions.find(
           (c) =>
-            String(c.countyName || "")
+            String(c.name || "")
               .trim()
               .toLowerCase() === countyName,
         )
       : undefined;
-    return (byName || list[0])._id;
-  }, [countiesByPayerResponse, form.county]);
+    const county = byName || countyOptions[0];
+    return {
+      id: county._id,
+      name: String(county.name || "").trim(),
+      payersId: county.payersId || "",
+    };
+  }, [riderCounty, countyOptions, form.county, form.countyId, form.payerSourceId]);
+  const apiCountyId = quoteCounty?.id || "";
+  const apiPayerId = isMongoId(quoteCounty?.payersId)
+    ? String(quoteCounty?.payersId)
+    : isMongoId(form.payerSourceId)
+      ? form.payerSourceId
+      : "";
 
   useEffect(() => {
     if (availableMobility.length > 0) {
@@ -355,6 +381,8 @@ export const BookingForm = () => {
       email: r.email || "",
       phone: r.contact || "",
       authorizationId: r.authorizationID || "",
+      countyId: (typeof r.county === "string" ? r.county : r.county?._id) || "",
+      countyName: (typeof r.county === "object" && r.county?.name) || "",
     }));
 
   const apiDriversList = useMemo(() => {
@@ -443,6 +471,13 @@ export const BookingForm = () => {
 
   const handleSelectRider = (rider: any) => {
     setSelectedUserId(rider._id || rider.id || "");
+    const riderCountyId = isMongoId(rider.countyId) ? rider.countyId : "";
+    const knownCounty = riderCountyId
+      ? countyOptions.find((c) => c._id === riderCountyId)
+      : undefined;
+    setRiderCounty(
+      riderCountyId ? { id: riderCountyId, name: knownCounty?.name || rider.countyName || "" } : null,
+    );
     setForm((prev) => ({
       ...prev,
       firstName: rider.firstName || (rider.name || "").split(" ")[0] || "",
@@ -452,34 +487,20 @@ export const BookingForm = () => {
       email: rider.email || "",
       passengerId: rider._id || rider.id || "",
       authId: rider.authorizationId || rider.authId || prev.authId,
+      ...(riderCountyId
+        ? {
+            countyId: riderCountyId,
+            county: knownCounty?.name || rider.countyName || prev.county,
+            payerSourceId: knownCounty?.payersId || prev.payerSourceId,
+            fundingSource: knownCounty?.name || rider.countyName || prev.fundingSource,
+          }
+        : {}),
     }));
     setExistingSearch("");
     setDebouncedRiderSearch("");
     setIsRiderDropdownOpen(false);
     toast.success(`Selected ${rider.name}`);
   };
-
-  const quote = quoteFares(
-    {
-      county: form.county,
-      insideCounty: form.insideCounty,
-      tripType: form.tripType,
-      miles: form.estMiles,
-      calculatedMiles: form.estMiles,
-      actualMiles: form.actualMiles || undefined,
-      mobility: form.mobility,
-      stops: form.stops,
-      fundingSourceId: form.fundingSourceId || selectedPolicy?.id,
-      fundingSource: form.fundingSource || selectedPolicy?.name,
-      pickup: form.pickup,
-      dropoff: form.dropoff,
-      tripDate:
-        selectedDates[0] instanceof Date
-          ? selectedDates[0].toISOString()
-          : String(selectedDates[0] || ""),
-    },
-    pricing,
-  );
 
   const boundaryEval = evaluateTripBoundary(
     form.pickup,
@@ -586,6 +607,9 @@ export const BookingForm = () => {
     tripGps.dropoff,
   ]);
 
+  // A quote is only valid for the inputs it was priced with. Trip reason, seats,
+  // rider and service date all feed the contract rules, so they drop it too.
+  const quoteServiceDate = selectedDates[0] != null ? toYmd(selectedDates[0]) : "";
   useEffect(() => {
     setCalculatedPrice(null);
     setPriceAgreed(false);
@@ -593,9 +617,14 @@ export const BookingForm = () => {
     form.pickup,
     form.dropoff,
     form.stops.join("|"),
+    form.countyId,
     form.payerSourceId,
     form.tripType,
     form.mobilityId,
+    form.tripReason,
+    form.totalSeats,
+    selectedUserId,
+    quoteServiceDate,
     tripGps.pickup?.join(","),
     tripGps.dropoff?.join(","),
     stopsGps.map((s) => s?.join(",") ?? "").join("|"),
@@ -635,10 +664,16 @@ export const BookingForm = () => {
   }, [form.fundingSourceId, pricing.fundingPolicies?.length]);
 
   useEffect(() => {
-    if (form.payerSourceId || apiPayers.length === 0) return;
-    setForm((prev) => ({ ...prev, payerSourceId: apiPayers[0]._id }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiPayers.length, form.payerSourceId]);
+    if (form.countyId || countyOptions.length === 0) return;
+    const first = countyOptions[0];
+    setForm((prev) => ({
+      ...prev,
+      countyId: first._id,
+      county: String(first.name || "").trim(),
+      payerSourceId: first.payersId || "",
+      fundingSource: String(first.name || "").trim(),
+    }));
+  }, [countyOptions, form.countyId]);
 
   useEffect(() => {
     if (form.mobilityId || availableMobility.length === 0) return;
@@ -650,68 +685,145 @@ export const BookingForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableMobility.length, form.mobilityId]);
 
-  const selectedPayerLabel = useMemo(() => {
-    const p = apiPayers.find((x) => x._id === form.payerSourceId);
-    return p?.name || p?.title || p?.payerName || "Payer";
-  }, [apiPayers, form.payerSourceId]);
+  const selectedCountyLabel = quoteCounty?.name || form.county || "County";
+
+  // Backend hard-blocks any reason not listed on the county contract.
+  // TEST county currently has only "asdf" — never fall back to the full enum
+  // while a contract with its own list is selected.
+  const selectedCountyMeta = useMemo(
+    () => countyOptions.find((c) => c._id === apiCountyId),
+    [countyOptions, apiCountyId],
+  );
+  const allowedTripReasons = useMemo(() => {
+    if (selectedCountyMeta?.tripReasonsLoaded) {
+      return selectedCountyMeta.tripReasons || [];
+    }
+    return [...TRIP_REASONS];
+  }, [selectedCountyMeta]);
+
+  useEffect(() => {
+    if (!selectedCountyMeta?.tripReasonsLoaded) return;
+    const allowed = selectedCountyMeta.tripReasons || [];
+    if (!allowed.length) {
+      if (form.tripReason) setForm((prev) => ({ ...prev, tripReason: "" }));
+      return;
+    }
+    if (allowed.includes(form.tripReason)) return;
+    setForm((prev) => ({ ...prev, tripReason: allowed[0] }));
+  }, [selectedCountyMeta, form.tripReason]);
 
   const formatPriceMethodLabel = (method?: string) =>
     String(method || "")
       .replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase()) || "Pricing";
 
-  const buildCalculatePricePayload = (): ICalculateBookingPriceBody | null => {
-    const pickupRaw = tripGps.pickup || toLocationValue(form.pickup);
-    const dropoffRaw = tripGps.dropoff || toLocationValue(form.dropoff);
-    if (pickupRaw == null || dropoffRaw == null) return null;
-
+  const resolveMobilityId = () => {
     const mobilityOption = availableMobility.find(
       (m: any) => m.id === form.mobilityId || m.name === form.mobility,
     );
-    const mobilityId = isMongoId(form.mobilityId)
-      ? form.mobilityId
-      : isMongoId(mobilityOption?.id)
-        ? (mobilityOption?.id ?? "")
-        : "";
-    const payerSource = form.payerSourceId;
-    if (!isMongoId(payerSource) || !isMongoId(mobilityId) || !isMongoId(apiCountyId)) return null;
+    if (isMongoId(form.mobilityId)) return form.mobilityId;
+    if (isMongoId(mobilityOption?.id)) return String(mobilityOption?.id);
+    return "";
+  };
+
+  /** What still blocks Show Price — county is enough; payer is optional when countyId is set. */
+  const priceBlockers = useMemo(() => {
+    const blockers: string[] = [];
+    if (!form.pickup.trim() && !tripGps.pickup) blockers.push("pickup location");
+    if (!form.dropoff.trim() && !tripGps.dropoff) blockers.push("dropoff location");
+    if (!isMongoId(apiCountyId)) blockers.push("county / funding source");
+    if (!isMongoId(resolveMobilityId())) blockers.push("mobility");
+    if (selectedCountyMeta?.tripReasonsLoaded) {
+      const allowed = selectedCountyMeta.tripReasons || [];
+      if (!allowed.length) {
+        blockers.push("trip reason (configure on Funding Source Setup)");
+      } else if (!form.tripReason || !allowed.includes(form.tripReason)) {
+        blockers.push("valid trip reason for this county");
+      }
+    } else if (!form.tripReason.trim()) {
+      blockers.push("trip reason");
+    }
+    return blockers;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    form.pickup,
+    form.dropoff,
+    form.mobilityId,
+    form.mobility,
+    form.tripReason,
+    tripGps.pickup,
+    tripGps.dropoff,
+    apiCountyId,
+    availableMobility,
+    selectedCountyMeta,
+  ]);
+
+  const canCalculatePrice = priceBlockers.length === 0;
+
+  const buildCalculatePricePayload = (
+    pickupRaw: [number, number],
+    dropoffRaw: [number, number],
+  ): ICalculateBookingPriceBody | null => {
+    const mobilityId = resolveMobilityId();
+    if (!isMongoId(mobilityId) || !isMongoId(apiCountyId)) return null;
 
     const stopIdx = form.stops.findIndex((s) => s.trim());
     const stopValue = stopIdx >= 0 ? form.stops[stopIdx].trim() : "";
     const stopRaw = stopIdx >= 0 ? stopsGps[stopIdx] || toLocationValue(stopValue) : undefined;
 
+    const userId = selectedUserId || form.passengerId.trim();
+    const serviceDate = quoteServiceDate || undefined;
+
     const payload: ICalculateBookingPriceBody = {
       pickupLocation: toGeoJsonPosition(pickupRaw),
       dropOffLocation: toGeoJsonPosition(dropoffRaw),
-      payerSource,
       tripType: form.tripType,
       mobilityRequirements: mobilityId,
       countyId: apiCountyId,
+      tripReason: form.tripReason,
+      passengerSeats: form.totalSeats,
     };
+    if (isMongoId(apiPayerId)) payload.payerSource = apiPayerId;
     if (stopRaw != null) payload.stopAddress = toGeoJsonPosition(stopRaw);
+    if (isMongoId(userId)) payload.userId = userId;
+    if (serviceDate) payload.serviceDate = serviceDate;
     return payload;
   };
 
-  const canCalculatePrice = buildCalculatePricePayload() != null;
-
   const handleShowPrice = async () => {
-    const payload = buildCalculatePricePayload();
-    if (!payload) {
-      if (!isMongoId(form.payerSourceId)) {
-        toast.error("Please select a payer");
-        return;
-      }
-      if (!isMongoId(apiCountyId)) {
-        toast.error("No county coverage found for this payer");
-        return;
-      }
-      if (!isMongoId(form.mobilityId)) {
-        toast.error("Please select mobility requirement");
-        return;
-      }
-      toast.error("Please enter valid pickup and dropoff locations");
+    if (priceBlockers.length) {
+      toast.error(`Add ${priceBlockers.join(", ")} before calculating price`);
       return;
     }
+
+    let pickupRaw = tripGps.pickup || toLocationValue(form.pickup);
+    let dropoffRaw = tripGps.dropoff || toLocationValue(form.dropoff);
+
+    if (!pickupRaw && form.pickup.trim()) {
+      pickupRaw = await geocodeAddress(form.pickup);
+    }
+    if (!dropoffRaw && form.dropoff.trim()) {
+      dropoffRaw = await geocodeAddress(form.dropoff);
+    }
+
+    if (!pickupRaw || !dropoffRaw) {
+      toast.error(
+        "Could not locate pickup/dropoff. Pick an address from search, or enter a fuller address.",
+      );
+      return;
+    }
+
+    setTripGps((prev) => ({
+      pickup: prev.pickup || pickupRaw || undefined,
+      dropoff: prev.dropoff || dropoffRaw || undefined,
+    }));
+
+    const payload = buildCalculatePricePayload(pickupRaw, dropoffRaw);
+    if (!payload) {
+      toast.error("Please select county and mobility before calculating price");
+      return;
+    }
+
     try {
       const res = await calculateBookingPrice(payload).unwrap();
       setCalculatedPrice(res.data);
@@ -722,9 +834,26 @@ export const BookingForm = () => {
     }
   };
 
-  const passengerCopay = calculatedPrice?.passengerCoPay ?? 0;
-  const payerCharge = calculatedPrice?.organizationContribution ?? 0;
+  // The three fare amounts, exactly as the booking stores them:
+  //   passengerCoPay            rider pays
+  //   organizationContribution  funding source pays (full charge, copay not netted out)
+  //   totalPrice                organizationContribution + passengerCoPay
+  const passengerCopay = toMoney(calculatedPrice?.passengerCoPay);
+  const payerCharge = toMoney(calculatedPrice?.organizationContribution);
+  const totalPrice = fareTotal(payerCharge, passengerCopay);
   const dueToDriver = Math.max(0, passengerCopay - form.advancePaid);
+
+  const quoteLegs = calculatedPrice?.legs ?? [];
+  // Companion fees are added to the funding-source charge on top of the legs.
+  const companionFee = quoteLegs.length
+    ? Math.max(
+        0,
+        toMoney(payerCharge - quoteLegs.reduce((sum, leg) => sum + toMoney(leg.fundingSourceCharge), 0)),
+      )
+    : 0;
+  const quoteZone = calculatedPrice ? String(calculatedPrice.zone || "").toLowerCase() : "";
+  // Before a quote the pill shows the local boundary estimate; after, the priced zone.
+  const pillInside = quoteZone ? quoteZone === "inside" : boundaryEval.isInsideCounty;
 
   const scheduleTimeValidation = useMemo(
     () =>
@@ -759,7 +888,7 @@ export const BookingForm = () => {
 
   const resetManualDispatchForm = () => {
     const defaultMobility = availableMobility.find((m: any) => isMongoId(m.id));
-    const defaultPayer = apiPayers[0];
+    const defaultCounty = countyOptions[0];
     const defaultPolicy = fundingPolicies[0];
     setForm({
       firstName: "",
@@ -770,12 +899,13 @@ export const BookingForm = () => {
       authId: "",
       passengerId: "",
       fundingSourceId: defaultPolicy?.id || "",
-      fundingSource: defaultPolicy?.name || "",
-      payerSourceId: defaultPayer?._id || "",
+      fundingSource: defaultCounty?.name || defaultPolicy?.name || "",
+      payerSourceId: defaultCounty?.payersId || "",
+      countyId: defaultCounty?._id || "",
       program: "Medicaid NEMT",
       source: "",
       authNotes: "",
-      county: availableCounties[0]?.name || "",
+      county: defaultCounty?.name || availableCounties[0]?.name || "",
       insideCounty: true,
       pickup: "",
       dropoff: "",
@@ -786,7 +916,7 @@ export const BookingForm = () => {
       tripType: "one-way",
       isWillCall: false,
       mobility: defaultMobility?.name || "Ambulatory",
-      tripReason: "Medical Appointment",
+      tripReason: "",
       totalSeats: 1,
       additionalNotes: "",
       privateNotes: "",
@@ -803,6 +933,7 @@ export const BookingForm = () => {
     setStopsGps([]);
     setSelectedDriver(null);
     setSelectedUserId("");
+    setRiderCounty(null);
     setIsRecurring(false);
     setRecurringDays([]);
     setRecurringEndDate("");
@@ -851,12 +982,11 @@ export const BookingForm = () => {
       toast.error("Please assign a driver");
       return;
     }
-    const payerSource =
-      form.payerSourceId || (isMongoId(form.fundingSourceId) ? form.fundingSourceId : "");
-    if (!isMongoId(payerSource)) {
-      toast.error("Please select a valid payer");
+    if (!isMongoId(apiCountyId)) {
+      toast.error("Please select a county / funding source contract");
       return;
     }
+    const payerSource = apiPayerId || undefined;
     if (isRecurring && recurringDays.length === 0) {
       toast.error("Please select at least one day for recurring booking");
       return;
@@ -917,8 +1047,9 @@ export const BookingForm = () => {
         appointmentTime: toApiTime(form.appointmentTime),
         recurringBooking: isRecurring,
         driverId,
-        payerSource,
+        countyId: apiCountyId,
       };
+      if (isMongoId(payerSource)) payload.payerSource = payerSource;
       if (stopAddress != null) payload.stopAddress = toGeoJsonPosition(stopAddress);
       if (mobilityId) payload.mobilityRequirements = mobilityId;
       if (form.additionalNotes.trim()) payload.tripNote = form.additionalNotes.trim();
@@ -994,6 +1125,7 @@ export const BookingForm = () => {
                   type="button"
                   onClick={() => {
                     setSelectedUserId("");
+                    setRiderCounty(null);
                     setExistingSearch("");
                     setDebouncedRiderSearch("");
                     setForm((prev) => ({
@@ -1262,27 +1394,29 @@ export const BookingForm = () => {
                 + Add Stop
               </button>
 
-              {/* Smart Geofence Auto-Detection Pill */}
+              {/* Zone pill: the priced zone and copay once quoted, a local estimate before */}
               {form.pickup && form.dropoff && (
                 <div
                   className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-                    boundaryEval.isInsideCounty
+                    pillInside
                       ? "bg-accent-light/40 border-accent/30 text-ink"
                       : "bg-primary/5 border-primary/20 text-ink"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-2 h-2 rounded-full ${boundaryEval.isInsideCounty ? "bg-accent" : "bg-primary"}`}
+                      className={`w-2 h-2 rounded-full ${pillInside ? "bg-accent" : "bg-primary"}`}
                     />
-                    <span className="font-semibold">{boundaryEval.boundaryLabel}</span>
+                    <span className="font-semibold">
+                      {calculatedPrice
+                        ? quoteCounty?.name || "Priced zone"
+                        : boundaryEval.boundaryLabel}
+                    </span>
                   </div>
-                  <span
-                    className={`font-bold ${boundaryEval.isInsideCounty ? "text-accent" : "text-primary"}`}
-                  >
-                    {boundaryEval.isInsideCounty
-                      ? `Inside · Copay ${money(selectedPolicy?.passengerCopayInside ?? quote.customerUnit)}`
-                      : `Outside · Copay ${money(selectedPolicy?.passengerCopayOutside ?? quote.customerUnit)}`}
+                  <span className={`font-bold ${pillInside ? "text-accent" : "text-primary"}`}>
+                    {calculatedPrice
+                      ? `${pillInside ? "Inside" : "Outside"} · Copay ${money(passengerCopay)}`
+                      : `${pillInside ? "Inside" : "Outside"} (estimate)`}
                   </span>
                 </div>
               )}
@@ -1418,17 +1552,26 @@ export const BookingForm = () => {
                   value={form.tripReason}
                   onChange={(e) => setForm({ ...form, tripReason: e.target.value })}
                 >
-                  <option value="Medical Appointment">Medical Appointment</option>
-                  <option value="Dialysis">Dialysis</option>
-                  <option value="Chemotherapy">Chemotherapy</option>
-                  <option value="Physical Therapy">Physical Therapy</option>
-                  <option value="Hospital Discharge">Hospital Discharge</option>
-                  <option value="Specialist Visit">Specialist Visit</option>
-                  <option value="Routine Checkup">Routine Checkup</option>
-                  <option value="Eye Exam">Eye Exam</option>
-                  <option value="Dental">Dental</option>
-                  <option value="Personal">Personal</option>
+                  {!form.tripReason && <option value="">Select trip reason…</option>}
+                  {allowedTripReasons.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
                 </select>
+                {selectedCountyMeta?.tripReasonsLoaded &&
+                  (selectedCountyMeta.tripReasons?.length ?? 0) === 0 && (
+                    <p className="text-xs text-warning mt-1">
+                      This county has no trip reasons configured — add them in Funding Source Setup
+                      (use the exact API names, e.g. Medical Appointment).
+                    </p>
+                  )}
+                {selectedCountyMeta?.tripReasonsLoaded &&
+                  (selectedCountyMeta.tripReasons?.length ?? 0) > 0 && (
+                    <p className="text-xs text-ink-4 mt-1">
+                      Only reasons configured on {selectedCountyLabel} are listed.
+                    </p>
+                  )}
               </div>
             </div>
             <div className="flex items-center justify-between pt-5 border-t border-line-2 mt-5">
@@ -1454,11 +1597,11 @@ export const BookingForm = () => {
               </div>
             </div>
 
-            {/* Payer & Program Context */}
+            {/* County contract & Program Context */}
             <div className="pt-5 border-t border-line-2 mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-ink-3">
-                  Payer <span className="text-urgent">*</span>
+                  County / Funding Source <span className="text-urgent">*</span>
                 </label>
                 <div className="relative">
                   <DollarSign
@@ -1468,25 +1611,25 @@ export const BookingForm = () => {
                   <select
                     required
                     className={`${inputClass} pl-8`}
-                    value={form.payerSourceId}
+                    value={form.countyId}
                     onChange={(e) => {
-                      const p = apiPayers.find((x) => x._id === e.target.value);
-                      const local = fundingPolicies.find(
-                        (x) => x.name === (p?.name || p?.title || p?.payerName),
-                      );
+                      const county = countyOptions.find((c) => c._id === e.target.value);
                       setForm({
                         ...form,
-                        payerSourceId: e.target.value,
-                        fundingSource: p?.name || p?.title || p?.payerName || "",
-                        fundingSourceId: local?.id || form.fundingSourceId,
+                        countyId: e.target.value,
+                        county: String(county?.name || "").trim(),
+                        payerSourceId: county?.payersId || "",
+                        fundingSource: String(county?.name || "").trim(),
                         manualFareOverride: false,
                       });
                     }}
                   >
-                    {apiPayers.length === 0 && <option value="">No payers from API</option>}
-                    {apiPayers.map((fs) => (
-                      <option key={fs._id} value={fs._id}>
-                        {fs.name || fs.title || fs.payerName || fs._id}
+                    {countyOptions.length === 0 && (
+                      <option value="">No county contracts from API</option>
+                    )}
+                    {countyOptions.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.name || c._id}
                       </option>
                     ))}
                   </select>
@@ -1800,7 +1943,7 @@ export const BookingForm = () => {
             {!calculatedPrice ? (
               <div className="py-6 flex flex-col items-center gap-3 text-center">
                 <p className="text-xs text-ink-4 max-w-sm">
-                  Calculate fare from pickup, dropoff, payer, mobility, and county coverage before
+                  Calculate fare from pickup, dropoff, county contract, and mobility before
                   dispatch.
                 </p>
                 <Button
@@ -1815,8 +1958,7 @@ export const BookingForm = () => {
                 </Button>
                 {!canCalculatePrice && (
                   <p className="text-xs font-medium text-ink-3">
-                    Complete pickup, dropoff, payer, mobility, and ensure county coverage exists for
-                    the payer.
+                    Still needed: {priceBlockers.join(", ")}.
                   </p>
                 )}
               </div>
@@ -1824,51 +1966,80 @@ export const BookingForm = () => {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="font-semibold text-ink-3">
-                    {selectedPayerLabel} · {formatPriceMethodLabel(calculatedPrice.priceMethod)}
+                    {[
+                      selectedCountyLabel,
+                      formatPriceMethodLabel(calculatedPrice.priceMethod),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                   <Badge variant="bg" className="text-xs capitalize border border-line-2">
                     {calculatedPrice.zone} zone
                   </Badge>
                 </div>
 
+                {/* The three fare lines: copay, funding source charge, total */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-white p-4 rounded-2xl border border-line-2">
                     <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide">
                       Passenger Copay
                     </p>
-                    <p className="text-xs text-ink-4 mt-0.5">
-                      Zone copay {money(calculatedPrice.zoneCoPay)} · rider-facing
-                    </p>
+                    <p className="text-xs text-ink-4 mt-0.5">Paid by the rider</p>
                     <p className="text-2xl font-semibold text-ink mt-2">{money(passengerCopay)}</p>
                   </div>
                   <div className="bg-white p-4 rounded-2xl border border-primary/20 ring-1 ring-primary/10">
                     <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                      Payer Charge
+                      Funding Source Charge
                     </p>
-                    <p className="text-xs text-ink-4 mt-0.5">Organization contribution · admin</p>
+                    <p className="text-xs text-ink-4 mt-0.5">Paid by {selectedCountyLabel}</p>
                     <p className="text-2xl font-semibold text-primary mt-2">{money(payerCharge)}</p>
                   </div>
                 </div>
 
+                <div className="bg-white px-4 py-3 rounded-2xl border border-ink/15 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-ink uppercase tracking-wide">Total</p>
+                    <p className="text-xs text-ink-4 mt-0.5">
+                      Funding source charge {money(payerCharge)} + passenger copay{" "}
+                      {money(passengerCopay)}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-semibold text-ink">{money(totalPrice)}</p>
+                </div>
+
                 <div className="rounded-2xl border border-line-2 bg-white px-4 py-3 text-xs space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-ink-4">Total trip price</span>
-                    <span className="font-semibold text-ink">
-                      {money(calculatedPrice.totalPrice)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink-4">Mileage component</span>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-ink-4">Billing miles</span>
                     <span className="font-medium text-ink">
-                      {money(calculatedPrice.milesPrice)}
+                      {formatMiles(calculatedPrice.billingMileage ?? calculatedPrice.milesPrice)}
+                      {calculatedPrice.billingMileageSource
+                        ? ` · ${
+                            MILEAGE_SOURCE_LABELS[calculatedPrice.billingMileageSource] ||
+                            formatPriceMethodLabel(calculatedPrice.billingMileageSource)
+                          }`
+                        : ""}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink-4">Mobility add-on</span>
-                    <span className="font-medium text-ink">
-                      {money(calculatedPrice.mobilityTotalPrice)}
-                    </span>
-                  </div>
+                  {quoteLegs.length > 1 &&
+                    quoteLegs.map((leg, idx) => (
+                      <div key={`${leg.leg}-${idx}`} className="flex justify-between gap-3">
+                        <span className="text-ink-4 capitalize">
+                          {leg.leg || `Leg ${idx + 1}`} · {leg.zone} · {formatMiles(leg.billingMileage)}
+                        </span>
+                        <span className="font-medium text-ink">
+                          {money(toMoney(leg.fundingSourceCharge))} + {money(toMoney(leg.passengerCoPay))}{" "}
+                          copay
+                        </span>
+                      </div>
+                    ))}
+                  {companionFee > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-ink-4">
+                        Companion fee ({form.totalSeats - 1}) · in funding source charge
+                      </span>
+                      <span className="font-medium text-ink">{money(companionFee)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-white p-4 rounded-2xl border border-line-2 flex justify-between items-center shadow-sm">
@@ -1916,9 +2087,15 @@ export const BookingForm = () => {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-ink-3">Payer Charge</span>
+                      <span className="text-ink-3">Funding Source Charge</span>
                       <span className="font-semibold text-primary">
                         {money(payerCharge * recurringDates.length)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t border-primary/10 pt-1">
+                      <span className="font-medium text-ink">Total</span>
+                      <span className="font-semibold text-ink">
+                        {money(totalPrice * recurringDates.length)}
                       </span>
                     </div>
                   </div>
