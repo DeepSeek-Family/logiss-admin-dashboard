@@ -13,6 +13,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui";
+import { filterSafeUploadFiles } from "@/shared/utils/fileSecurity";
 import {
   DRIVER_EXPERIENCE_OPTIONS,
   DRIVER_LICENSE_CLASS_OPTIONS,
@@ -90,20 +91,27 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
     return "";
   };
 
-  const addLicenseFiles = (files: File[]) => {
+  const addLicenseFiles = async (files: File[]) => {
     const current: LicensePhotoState[] = form.licensePhotos || [];
     const room = 3 - current.length;
     if (room <= 0) {
       setStepError("You can upload up to 3 license images.");
       return;
     }
-    const next = files.slice(0, room);
-    const tooBig = next.find((file) => file.size > 10 * 1024 * 1024);
+    const candidates = files.slice(0, room);
+    const tooBig = candidates.find((file) => file.size > 10 * 1024 * 1024);
     if (tooBig) {
       setStepError("Each license file must be under 10MB.");
       return;
     }
-    setStepError("");
+    // Block fake images / executables / files with hidden scripts
+    const { safe: next, errors } = await filterSafeUploadFiles(candidates, "image");
+    if (errors.length) {
+      setStepError(errors.join(" "));
+      if (!next.length) return;
+    } else {
+      setStepError("");
+    }
     set("licensePhotos", [
       ...current,
       ...next.map((file) => ({
@@ -117,7 +125,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length) addLicenseFiles(files);
+    if (files.length) void addLicenseFiles(files);
     e.target.value = "";
   };
 
@@ -389,7 +397,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept="image/png,image/jpeg,image/webp"
+                  accept="image/png,image/jpeg"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="driver-license-file"

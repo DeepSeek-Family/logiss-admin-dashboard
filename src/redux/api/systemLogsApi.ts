@@ -99,8 +99,16 @@ export const systemLogsApi = baseApi.injectEndpoints({
       },
       transformResponse: normalizeSystemLogsResponse,
     }),
+    // "SUPER_ADMIN" + each dispatcher middleName (used by the Actor role filter)
+    getSystemLogActorRoles: builder.query<string[], void>({
+      query: () => ({ url: "/system-logs/actor-roles", method: "GET" }),
+      transformResponse: (response: { data?: unknown }) =>
+        Array.isArray(response?.data)
+          ? response.data.filter((role): role is string => typeof role === "string")
+          : [],
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetSystemLogsQuery } = systemLogsApi;
+export const { useGetSystemLogsQuery, useGetSystemLogActorRolesQuery } = systemLogsApi;
