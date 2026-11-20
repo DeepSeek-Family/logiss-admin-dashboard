@@ -3,6 +3,7 @@ import { Activity, Eye, RefreshCw, RotateCcw, Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Badge, Button, Card, Pagination, QueryFeedback } from "@/shared/components/ui";
 import {
+  useGetSystemLogActorRolesQuery,
   useGetSystemLogsQuery,
   type SystemLog,
   type SystemLogsQueryParams,
@@ -16,7 +17,6 @@ import {
 
 const DEFAULT_PAGE_SIZE = 20;
 const ACTION_OPTIONS = ["CREATE", "UPDATE", "DELETE"];
-const ROLE_OPTIONS = ["SUPER_ADMIN", "DISPATCHER"];
 
 const actionVariant = (action: string) =>
   action === "CREATE" ? "accent" : action === "DELETE" ? "urgent" : "primary";
@@ -34,6 +34,7 @@ const SystemLogsPage = () => {
   const limit = safePositiveNumber(searchParams.get("limit"), DEFAULT_PAGE_SIZE);
   const moduleFilter = searchParams.get("module") || "";
   const actorRole = searchParams.get("actorRole") || "";
+  const { data: actorRoleOptions = ["SUPER_ADMIN"] } = useGetSystemLogActorRolesQuery();
   const action = searchParams.get("action") || "";
   const entityIdFromUrl = searchParams.get("entityId") || "";
   const [entityIdInput, setEntityIdInput] = useState(entityIdFromUrl);
@@ -143,9 +144,9 @@ const SystemLogsPage = () => {
                 className="h-10 w-full rounded-xl border border-line-2 bg-white px-3 text-xs font-medium text-ink outline-none focus:border-primary"
               >
                 <option value="">All roles</option>
-                {ROLE_OPTIONS.map((roleName) => (
+                {actorRoleOptions.map((roleName) => (
                   <option key={roleName} value={roleName}>
-                    {roleName}
+                    {roleName.toUpperCase()}
                   </option>
                 ))}
               </select>

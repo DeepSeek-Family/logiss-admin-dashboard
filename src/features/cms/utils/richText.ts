@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 const HTML_TAG = /<(?:p|div|br|strong|b|em|i|ul|ol|li|blockquote|a|span|code|s|strike|u|h[1-6])\b/i;
 
 export function isProbablyHtml(value: string): boolean {
@@ -135,15 +137,35 @@ export function htmlToPlainText(html: string): string {
   return (doc.body.textContent ?? "").replace(/\u00a0/g, " ").trim();
 }
 
-export function stripUnsafeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  doc.querySelectorAll("script, iframe, object, embed, form").forEach((node) => node.remove());
-  doc.querySelectorAll("*").forEach((el) => {
-    for (const attr of [...el.attributes]) {
-      if (attr.name.toLowerCase().startsWith("on")) {
-        el.removeAttribute(attr.name);
-      }
+// Formatting the CMS editor produces; everything else (script, iframe, svg,
+// form, meta, style, event handlers, javascript:/data: links…) is removed.
+const ALLOWED_TAGS = [
+  "p", "br", "hr", "div", "span", "b", "strong", "i", "em", "u", "s", "strike",
+  "del", "ins", "sub", "sup", "small", "mark", "blockquote", "code", "pre",
+  "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "a",
+  "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
+];
+const ALLOWED_ATTR = ["href", "title", "target", "rel", "class"];
+
+let hooksAdded = false;
+const addLinkHook = () => {
+  if (hooksAdded) return;
+  hooksAdded = true;
+  // Links opening a new tab can't reach back into this page
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
+      node.setAttribute("rel", "noopener noreferrer");
     }
   });
-  return doc.body.innerHTML;
+};
+
+/** Removes malicious/injected HTML (XSS) and keeps safe formatting. */
+export function stripUnsafeHtml(html: string): string {
+  addLinkHook();
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|\/(?!\/)|#)/i,
+    ALLOW_DATA_ATTR: false,
+  });
 }

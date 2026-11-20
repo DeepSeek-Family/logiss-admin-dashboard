@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { FileUp, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/shared/components/ui";
+import { checkUploadFile } from "@/shared/utils/fileSecurity";
 import { makeId } from "./defaults";
 import { ensureWgs84Geometry } from "./reprojectGeoJson";
 
@@ -130,16 +131,23 @@ export const GeofenceUploadField = ({ onFilesChange }: Props) => {
     });
   };
 
-  const onPick = (list: FileList | null) => {
+  const onPick = async (list: FileList | null) => {
     if (!list?.length) return;
+    const picked = Array.from(list);
 
     const nextFiles = [...filesRef.current];
     const nextChips = [...chips];
     let added = 0;
 
-    for (const file of Array.from(list)) {
+    for (const file of picked) {
       if (!isGeoJsonName(file.name)) {
         toast.error(`${file.name}: only .json / .geojson allowed`);
+        continue;
+      }
+      // Block binaries / files with hidden scripts before upload
+      const securityError = await checkUploadFile(file, "geojson");
+      if (securityError) {
+        toast.error(securityError);
         continue;
       }
       if (nextFiles.some((f) => f.name === file.name && f.size === file.size)) continue;
@@ -185,8 +193,10 @@ export const GeofenceUploadField = ({ onFilesChange }: Props) => {
           accept={accept}
           multiple
           onChange={(e) => {
-            onPick(e.target.files);
-            e.target.value = "";
+            const input = e.target;
+            void onPick(input.files).finally(() => {
+              input.value = "";
+            });
           }}
         />
       </label>

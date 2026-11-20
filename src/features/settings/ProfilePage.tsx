@@ -11,6 +11,7 @@ import {
 } from "@/shared/utils/userProfileDisplay";
 import { getUserFacingApiError } from "@/utils/apiError";
 import { resolveMediaUrl } from "@/utils/imageUrl";
+import { checkUploadFile } from "@/shared/utils/fileSecurity";
 import {
   useGetCurrentUserProfileQuery,
   useUpdateCurrentUserProfileMutation,
@@ -105,17 +106,20 @@ const Profile = ({ role }: { role?: string | null }) => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
     if (file.size > MAX_PROFILE_PHOTO_BYTES) {
       toast.error("Photo is too large (max 2 MB).");
-      e.target.value = "";
+      input.value = "";
       return;
     }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Upload a JPG, PNG, or WebP photo.");
-      e.target.value = "";
+    // Real JPG/PNG only; blocks executables and files with hidden scripts
+    const error = await checkUploadFile(file, "image");
+    if (error) {
+      toast.error(error);
+      input.value = "";
       return;
     }
     setPhoto(file);
@@ -207,7 +211,7 @@ const Profile = ({ role }: { role?: string | null }) => {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg"
                 className="hidden"
                 onChange={handleFileChange}
               />
