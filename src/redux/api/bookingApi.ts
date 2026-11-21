@@ -492,6 +492,22 @@ export const bookingApi = baseApi.injectEndpoints({
       ],
     }),
 
+    /** Randomly spreads unassigned bookings across on-duty drivers (runs on a server worker). */
+    bulkAssignDrivers: builder.mutation<
+      { success: boolean; message: string; data: IBulkAssignResult },
+      IBulkAssignBody | void
+    >({
+      query: (body) => ({
+        url: `/booking/bulk-assign`,
+        method: "POST",
+        body: body || {},
+      }),
+      invalidatesTags: [
+        { type: "bookings", id: "LIST" },
+        { type: "Drivers", id: "ACTIVE" },
+      ],
+    }),
+
     scheduleBooking: builder.query<IGetAllBookingsResponse, IGetBookingsQueryParams | void>({
       query: (params) => ({
         url: `/bookings/schedule`,
@@ -519,7 +535,22 @@ export const bookingApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
+export interface IBulkAssignBody {
+  bookingIds?: string[];
+  driverIds?: string[];
+  countyId?: string;
+}
+
+export interface IBulkAssignResult {
+  totalBookings: number;
+  totalDrivers: number;
+  assigned: number;
+  skipped: string[];
+  assignments: { bookingId: string; driverId: string; driverName: string }[];
+}
+
 export const {
+  useBulkAssignDriversMutation,
   useGetAllBookingsQuery,
   useGetAllPayersQuery,
   useCalculateBookingPriceMutation,
