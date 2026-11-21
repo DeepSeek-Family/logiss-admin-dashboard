@@ -37,6 +37,7 @@ import {
   BookingTotalCell,
 } from "./BookingPricingColumns";
 import { RouteLocationLabel } from "./RouteLocationLabel";
+import { RandomAssignButton } from "./RandomAssignButton";
 
 // ── Inline edit helpers (mirrors Trip History table) ──────────────────────────
 const INLINE_INPUT =
@@ -297,6 +298,14 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               <option value="assigned">Assigned</option>
             </select>
           </div>
+        )}
+        {activeTab === "confirmed" && (
+          <RandomAssignButton
+            className="ml-auto"
+            countyFilter={countyFilter}
+            selectedTrips={selectedTrips}
+            onAssigned={() => setSelectedTrips([])}
+          />
         )}
       </div>
 
