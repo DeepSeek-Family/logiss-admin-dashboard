@@ -7,13 +7,16 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "predev": "node scripts/security/scan-malware.cjs",
     "dev": "vite",
+    "prebuild": "node scripts/security/scan-malware.cjs",
     "build": "vite build",
     "lint": "eslint . && node scripts/check-typography.cjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview --port 6001"
+    "preview": "vite preview --port 6001",
+    "prepare": "git config core.hooksPath .githooks || exit 0"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
