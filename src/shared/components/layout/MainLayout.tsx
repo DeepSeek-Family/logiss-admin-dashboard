@@ -38,7 +38,7 @@ import { ROUTES } from "@/constants/routes";
 import { can } from "@/features/userAccess/permissions";
 import toast from "react-hot-toast";
 import { getDefaultRoute } from "@/routes/appRoutes";
-import { useGetAuthUserByIdQuery } from "@/redux/api/userApi";
+import { useGetCurrentUserProfileQuery } from "@/redux/api/userApi";
 import { resolveMediaUrl } from "@/utils/imageUrl";
 import {
   getUserDisplayId,
@@ -206,9 +206,10 @@ const MainLayout = ({ role, onLogout }: MainLayoutProps) => {
       }
     })();
 
-  const storedUserId = String(storedUser?._id || storedUser?.id || storedUser?.userId || "");
-  const { data: authenticatedUserResponse } = useGetAuthUserByIdQuery(storedUserId, {
-    skip: !hasAuthToken || !storedUserId,
+  // Login only returns { role, tokens } — no _id or name — so load the
+  // signed-in user from the token (/user/profile) instead of by stored id.
+  const { data: authenticatedUserResponse } = useGetCurrentUserProfileQuery(undefined, {
+    skip: !hasAuthToken,
     refetchOnMountOrArgChange: true,
   });
   const currentUser = React.useMemo<AuthenticatedUserProfile | null>(() => {
