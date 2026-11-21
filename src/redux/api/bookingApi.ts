@@ -87,6 +87,8 @@ export interface IBooking {
   bookingStatus?:
     "pending" | "assigned" | "in-progress" | "confirmed" | "completed" | "cancelled" | string;
   recurringBatchId?: string;
+  /** Super-admin-only display status (always "completed"); absent for other roles. */
+  adminStatus?: string;
   /**
    * Legacy response-only alias of `passengerCoPay` (rider apps / old rows).
    * The admin never sends or stores it.

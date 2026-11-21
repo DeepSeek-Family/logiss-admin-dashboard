@@ -495,6 +495,8 @@ export const mapApiBooking = (b: IBooking) => {
     mobilityPrice: mobilityObj?.price || 0,
     status: mappedStatus,
     rawStatus: b.bookingStatus,
+    /** Super admin only — backend sends it to no other role. */
+    adminStatus: b.adminStatus,
     scheduledTime:
       combineServiceDateTime(b.serviceDate, pickupTime) || b.createdAt || new Date().toISOString(),
     serviceDate: b.serviceDate,
