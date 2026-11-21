@@ -118,6 +118,21 @@ export const dispatcherManagementApi = baseApi.injectEndpoints({
         { type: "Dispatchers", id: "LIST" },
       ],
     }),
+    /** Replace a dispatcher's page access (PATCH /user/dispatcher/:id/routes). */
+    updateDispatcherRoutes: builder.mutation<
+      { success: boolean; message?: string },
+      { id: string; accessScope: string[] }
+    >({
+      query: ({ id, accessScope }) => ({
+        url: `/user/dispatcher/${id}/routes`,
+        method: "PATCH",
+        body: { accessScope },
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Dispatchers", id: arg.id },
+        { type: "Dispatchers", id: "LIST" },
+      ],
+    }),
     deleteDispatcher: builder.mutation<{ success: boolean; message?: string }, string>({
       query: (id) => ({
         url: `/user/dispatcher/${id}`,
@@ -137,5 +152,6 @@ export const {
   useLazyGetDispatchersQuery,
   useCreateDispatcherMutation,
   useUpdateDispatcherMutation,
+  useUpdateDispatcherRoutesMutation,
   useDeleteDispatcherMutation,
 } = dispatcherManagementApi;
