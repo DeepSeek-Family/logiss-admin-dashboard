@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Building2 } from "lucide-react";
+import { Mail, Building2, Pencil } from "lucide-react";
 import { Card, Badge, Avatar } from "@/shared/components/ui";
 import { ALL_PERMISSIONS } from "../permissions";
 import { AccessScopeModal } from "./AccessScopeModal";
@@ -15,6 +15,11 @@ const scopeTriggerClass =
 
 export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTableProps) => {
   const [scopeUser, setScopeUser] = useState<any | null>(null);
+  const [scopeEdit, setScopeEdit] = useState(false);
+  const openScope = (user: any, edit = false) => {
+    setScopeEdit(edit);
+    setScopeUser(user);
+  };
 
   return (
     <>
@@ -70,7 +75,7 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                         <button
                           type="button"
                           className={scopeTriggerClass}
-                          onClick={() => setScopeUser(user)}
+                          onClick={() => openScope(user)}
                         >
                           <span className="text-xs font-medium text-primary underline-offset-2 hover:underline">
                             Full access · {ALL_PERMISSIONS.length} pages
@@ -80,7 +85,7 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                         <button
                           type="button"
                           className={scopeTriggerClass}
-                          onClick={() => setScopeUser(user)}
+                          onClick={() => openScope(user)}
                         >
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-3 hover:text-primary">
                             <Building2 size={11} className="text-ink-4" />
@@ -91,7 +96,7 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                         <button
                           type="button"
                           className={scopeTriggerClass}
-                          onClick={() => setScopeUser(user)}
+                          onClick={() => openScope(user)}
                         >
                           <Badge variant="primary" className="text-xs cursor-pointer">
                             {user.permissions?.length ?? 0} / {ALL_PERMISSIONS.length} permissions
@@ -111,6 +116,16 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                       <span className="text-xs text-ink-4">{user.lastLogin}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-2">
+                      {user.role === "dispatcher" && (
+                        <button
+                          type="button"
+                          onClick={() => openScope(user, true)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border shadow-2xs bg-primary/10 text-primary border-primary/30 hover:bg-primary hover:text-white"
+                        >
+                          <Pencil size={12} /> Edit Access
+                        </button>
+                      )}
                       {user.id !== "LOGISS-882" && (
                         <button
                           type="button"
@@ -126,6 +141,7 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
                           {user.status === "active" ? "Revoke Access" : "Restore Access"}
                         </button>
                       )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -135,7 +151,11 @@ export const UsersTable = ({ users, onRevokeAccess, onRestoreAccess }: UsersTabl
         </div>
       </Card>
 
-      {scopeUser ? <AccessScopeModal user={scopeUser} onClose={() => setScopeUser(null)} /> : null}
+      {scopeUser ? <AccessScopeModal
+          user={scopeUser}
+          startInEdit={scopeEdit}
+          onClose={() => setScopeUser(null)}
+        /> : null}
     </>
   );
 };

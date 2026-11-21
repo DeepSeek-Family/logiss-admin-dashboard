@@ -186,6 +186,9 @@ export const BookingDetailsSidebar: React.FC<BookingDetailsSidebarProps> = ({
                   {formatTripId(selectedBooking?.id || selectedBooking?._id)}
                 </span>
                 <TripStatusBadge status={selectedBooking.status} />
+                {selectedBooking.adminStatus && (
+                  <TripStatusBadge status={selectedBooking.adminStatus} />
+                )}
               </div>
               <h2 className="text-base font-semibold text-ink">Booking Details</h2>
             </div>

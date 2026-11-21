@@ -76,13 +76,13 @@ export const RandomAssignButton = ({
         {isLoading
           ? "Assigning…"
           : useSelection
-            ? `Random Assign (${selectedTrips.length} selected)`
-            : `Random Assign All (${unassignedCount})`}
+            ? `Auto-Assign ${selectedTrips.length} Selected to Active Drivers`
+            : `Auto-Assign ${unassignedCount} Unassigned to Active Drivers`}
       </button>
 
       <ConfirmationModal
         isOpen={open}
-        title="Random Bulk Assign"
+        title="Auto-Assign Bookings to Active Drivers"
         message={
           useSelection
             ? `Randomly assign active drivers to the ${selectedTrips.length} selected booking(s), one at a time? Bookings that already have a driver are skipped. Each driver gets a push notification.`
