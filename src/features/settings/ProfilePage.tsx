@@ -12,6 +12,7 @@ import {
 import { getUserFacingApiError } from "@/utils/apiError";
 import { resolveMediaUrl } from "@/utils/imageUrl";
 import { checkUploadFile } from "@/shared/utils/fileSecurity";
+import { CONTACT_FORMAT_HINT, normalizeContact } from "@/shared/utils/phone";
 import {
   useGetCurrentUserProfileQuery,
   useUpdateCurrentUserProfileMutation,
@@ -84,6 +85,13 @@ const Profile = ({ role }: { role?: string | null }) => {
       return;
     }
 
+    // Phone is optional here, but when provided it must be a valid number (any country).
+    const contact = phone.trim() ? normalizeContact(phone) : "";
+    if (contact === null) {
+      toast.error(CONTACT_FORMAT_HINT);
+      return;
+    }
+
     const firstName = nameParts[0];
     const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
     const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "";
@@ -93,7 +101,7 @@ const Profile = ({ role }: { role?: string | null }) => {
         firstName,
         middleName,
         lastName,
-        contact: phone,
+        contact,
         region,
         ...(photo ? { image: photo } : {}),
       }).unwrap();

@@ -17,6 +17,7 @@ import { filterSafeUploadFiles } from "@/shared/utils/fileSecurity";
 import {
   DRIVER_EXPERIENCE_OPTIONS,
   DRIVER_LICENSE_CLASS_OPTIONS,
+  CONTACT_FORMAT_HINT,
   normalizeContact,
   normalizeDriverExperience,
   normalizeLicenseClass,
@@ -68,7 +69,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         return "Please fill in all required personal information fields.";
       }
       if (!normalizeContact(form.phone)) {
-        return "Enter a valid contact number, for example +8801712345678.";
+        return CONTACT_FORMAT_HINT;
       }
       if (!form.password) return "Password is required.";
       if (form.password.length < 6) return "Password must be at least 6 characters.";
@@ -156,7 +157,7 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
     const contact = normalizeContact(form.phone);
     if (!contact) {
-      setStepError("Enter a valid contact number, for example +8801712345678.");
+      setStepError(CONTACT_FORMAT_HINT);
       return;
     }
     if (!form.password?.trim()) {
@@ -286,7 +287,10 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value)}
-                    placeholder="+8801712345678"
+                    placeholder="+1 202 555 0123"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                   />
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Users, Check, Eye, EyeOff } from "lucide-react";
 import { Button, Badge } from "@/shared/components/ui";
 import { PERMISSION_GROUPS, ALL_PERMISSIONS } from "../permissions";
+import { CONTACT_FORMAT_HINT, CONTACT_PLACEHOLDER, normalizeContact } from "@/shared/utils/phone";
 
 export interface InviteData {
   firstName: string;
@@ -31,6 +32,17 @@ export const InviteUserModal = ({
   isSubmitting = false,
 }: InviteUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [contactError, setContactError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    if (!normalizeContact(inviteData.contact || "")) {
+      e.preventDefault();
+      setContactError(CONTACT_FORMAT_HINT);
+      return;
+    }
+    setContactError("");
+    onSubmit(e);
+  };
   const perms = inviteData.permissions || [];
 
   const togglePerm = (key: string) => {
@@ -69,7 +81,7 @@ export const InviteUserModal = ({
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
             {/* Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -135,10 +147,19 @@ export const InviteUserModal = ({
                   type="tel"
                   required
                   value={inviteData.contact || ""}
-                  onChange={(e) => setInviteData({ ...inviteData, contact: e.target.value })}
+                  onChange={(e) => {
+                    setInviteData({ ...inviteData, contact: e.target.value });
+                    if (contactError) setContactError("");
+                  }}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  aria-invalid={Boolean(contactError)}
                   className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-primary/10 outline-none"
-                  placeholder="+8801609502136"
+                  placeholder={CONTACT_PLACEHOLDER}
                 />
+                {contactError && (
+                  <p className="mt-1.5 text-xs font-semibold text-urgent">{contactError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-ink-3 mb-1.5">Password</label>

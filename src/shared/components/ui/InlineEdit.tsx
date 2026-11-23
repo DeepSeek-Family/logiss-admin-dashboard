@@ -90,3 +90,62 @@ export const InlineTextInput = ({
     />
   );
 };
+
+// "2026-11-23 09:05:00" | ISO -> "2026-11-23T09:05" for <input type="datetime-local">.
+const toDateTimeLocal = (value?: string): string => {
+  if (!value) return "";
+  const m = String(value)
+    .trim()
+    .match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+  return m ? `${m[1]}T${m[2]}` : "";
+};
+
+interface InlineDateTimeInputProps {
+  /** Stored as "yyyy-MM-dd HH:mm:ss". */
+  value?: string;
+  /** Receives "yyyy-MM-dd HH:mm:ss", or "" when cleared. */
+  onCommit: (value: string) => void;
+  className?: string;
+  ariaLabel?: string;
+}
+
+/**
+ * Date + time editor for trip timestamps. Saves once on blur / Enter instead of
+ * on every keystroke, so editing the hour and minute is a single update.
+ */
+export const InlineDateTimeInput = ({
+  value,
+  onCommit,
+  className = "",
+  ariaLabel,
+}: InlineDateTimeInputProps) => {
+  const initial = toDateTimeLocal(value);
+  const [draftValue, setDraftValue] = useState(initial);
+
+  useEffect(() => setDraftValue(toDateTimeLocal(value)), [value]);
+
+  const commit = () => {
+    if (draftValue === initial) return;
+    onCommit(draftValue ? `${draftValue.replace("T", " ")}:00` : "");
+  };
+
+  return (
+    <input
+      type="datetime-local"
+      value={draftValue}
+      aria-label={ariaLabel}
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+      onChange={(event) => setDraftValue(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key === "Escape") {
+          setDraftValue(initial);
+          event.currentTarget.blur();
+        }
+      }}
+      className={`${INLINE_EDIT_INPUT_CLASS} w-[188px] ${className}`}
+    />
+  );
+};

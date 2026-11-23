@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, Users, BarChart3, AlertTriangle, Loader2 } from "lucide-react";
+import { Truck, Users, BarChart3, AlertTriangle, Loader2, Car } from "lucide-react";
 import { StatCard } from "@/shared/components/ui";
 import { useTrips } from "@/hooks/useTrips";
 import {
   useGetAllReportsQuery,
+  useGetDashboardOverviewQuery,
   useGetRecentPendingBookingsQuery,
 } from "@/redux/apivtwo/dashboardOnvording";
 import { useGetAllActiveDriversQuery } from "@/redux/api/driversApi";
@@ -46,6 +47,11 @@ const Operations = ({ role }: { role?: string | null }) => {
     skip: !canViewDashboardWidgets(role),
     refetchOnMountOrArgChange: true,
   });
+  const { data: overviewRes, isLoading: overviewLoading } = useGetDashboardOverviewQuery(
+    undefined,
+    { skip: !canViewDashboardWidgets(role) },
+  );
+  const totalVehicles: number | undefined = overviewRes?.data?.totalVehicles;
   const reports = reportsData?.data ?? [];
   const activeDuties = activeDriversRes?.data ?? [];
   const onDutyTotal = activeDriversRes?.pagination?.total ?? 0;
@@ -96,7 +102,21 @@ const Operations = ({ role }: { role?: string | null }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.fleet)}
+          className="text-left cursor-pointer transition-transform hover:scale-[1.02] active:scale-95"
+          title="Open fleet"
+        >
+          <StatCard
+            label="Total Fleet Vehicles"
+            value={overviewLoading ? "…" : (totalVehicles ?? 0)}
+            sub={`${onDutyTotal} drivers on duty`}
+            icon={Car}
+            accent="primary"
+          />
+        </button>
         <StatCard
           label="Trips Today"
           value={tripsToday}

@@ -461,9 +461,7 @@ export const mapApiBooking = (b: IBooking) => {
         : b.price,
   );
   const fundingSourceCharge = toMoney(
-    b.organizationContribution != null
-      ? b.organizationContribution
-      : legTotals.fundingSourceCharge,
+    b.organizationContribution != null ? b.organizationContribution : legTotals.fundingSourceCharge,
   );
   const totalPrice = fareTotal(fundingSourceCharge, passengerCopay);
   const billingMileage = legTotals.billingMileage > 0 ? legTotals.billingMileage : undefined;
@@ -505,6 +503,7 @@ export const mapApiBooking = (b: IBooking) => {
     appointmentTime,
     driverArrivedAt: b.driverArrivedAt || "",
     driverPicupAt: b.driverPicupAt || "",
+    driverDropOffAt: b.driverDropOffAt || "",
     returnTime,
     returnPickup: returnTime,
     driverId:
@@ -732,6 +731,11 @@ export const mapPatchToApiPayload = (patch: Record<string, any>): Record<string,
     } else {
       payload.bookingStatus = patch.status;
     }
+  }
+
+  // 18. Trip timestamps staff can correct ("yyyy-MM-dd HH:mm:ss", "" clears).
+  for (const key of ["driverArrivedAt", "driverPicupAt", "driverDropOffAt"] as const) {
+    if (key in patch) payload[key] = patch[key] ? String(patch[key]) : "";
   }
 
   // Fare is never sent: the server owns passengerCoPay / organizationContribution /

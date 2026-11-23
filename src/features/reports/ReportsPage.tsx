@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Eye, Search, X } from "lucide-react";
+import { AlertTriangle, Eye, Flag, Search, X } from "lucide-react";
 import { Button, Pagination } from "@/shared/components/ui";
 import { Loader } from "@/shared/Lodder";
 import { useGetAllReportsQuery, type IIncidentReport } from "@/redux/apivtwo/dashboardOnvording";
 import { DetailPanel } from "@/features/reports";
+import { CreateReportModal } from "@/features/reports/components/CreateReportModal";
 import { formatDateTime } from "@/utils/helpers";
 import {
   formatReportUser,
@@ -23,6 +24,7 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
   const [activeTab, setActiveTab] = useState<(typeof REPORT_STATUS_TABS)[number]["id"]>("pending");
   const [search, setSearch] = useState("");
   const [selectedReport, setSelectedReport] = useState<IIncidentReport | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -107,20 +109,26 @@ const Reports = ({ role: _role }: { role?: string | null }) => {
             Review filed reports and the trips they belong to
           </p>
         </div>
-        <label className="flex w-full sm:w-72 items-center gap-2 rounded-lg border border-line-2 bg-white px-3 py-2.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-          <Search size={16} className="shrink-0 text-ink-4" />
-          <input
-            type="search"
-            placeholder="Search reports..."
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
-          />
-        </label>
+        <div className="flex w-full sm:w-auto flex-col-reverse gap-3 sm:flex-row sm:items-center">
+          <label className="flex w-full sm:w-72 items-center gap-2 rounded-lg border border-line-2 bg-white px-3 py-2.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+            <Search size={16} className="shrink-0 text-ink-4" />
+            <input
+              type="search"
+              placeholder="Search reports..."
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
+            />
+          </label>
+          <Button variant="danger" onClick={() => setShowCreate(true)} className="shrink-0">
+            <Flag size={16} /> New Report
+          </Button>
+        </div>
       </header>
+      {showCreate && <CreateReportModal onClose={() => setShowCreate(false)} />}
 
       <section className="overflow-hidden rounded-xl border border-line-2 bg-white shadow-sm">
         <div className="flex min-h-14 items-center justify-between border-b border-line-2 px-4 sm:px-5">

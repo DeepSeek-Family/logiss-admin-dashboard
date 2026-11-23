@@ -54,13 +54,13 @@ export const TripHistoryRangeFilters: React.FC<TripHistoryRangeFiltersProps> = (
       </div>
       <div className="flex items-center gap-2">
         <MapPin size={12} className="text-ink-4" />
-        <span className="text-xs text-ink-4">County</span>
+        <span className="text-xs text-ink-4">Funding Source</span>
         <select
           value={countyId}
           onChange={(e) => onCountyIdChange(e.target.value)}
           className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
         >
-          <option value="">All</option>
+          <option value="">All Funding Sources</option>
           {counties.map((county) => (
             <option key={county._id} value={county._id}>
               {county.name || county._id}

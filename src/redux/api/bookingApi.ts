@@ -110,6 +110,7 @@ export interface IBooking {
   updatedAt?: string;
   driverArrivedAt?: string;
   driverPicupAt?: string;
+  driverDropOffAt?: string;
   __v?: number;
 }
 

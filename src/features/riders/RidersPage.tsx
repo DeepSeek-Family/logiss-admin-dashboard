@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, Loader2, UserPlus } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { CreateRiderModal } from "@/features/riders/components/CreateRiderModal";
 import { useGetRidersQuery, useGetRiderHistoryQuery, type IRider } from "@/redux/api/ridersApi";
 import { useGetAuthUserByIdQuery, useToggleUserBannedMutation } from "@/redux/api/userApi";
 import { mapApiBooking, apiErrorMessage } from "@/features/bookings/utils/helpers";
@@ -30,6 +32,7 @@ const Riders = ({ role }: { role?: string | null }) => {
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editSuccessToast, setEditSuccessToast] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, any>>({});
 
@@ -265,7 +268,11 @@ const Riders = ({ role }: { role?: string | null }) => {
             Manage patient profiles, mobility needs, and trip history
           </p>
         </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <UserPlus size={16} /> New Rider
+        </Button>
       </div>
+      {showCreateModal && <CreateRiderModal onClose={() => setShowCreateModal(false)} />}
 
       <RiderKpiStrip riders={riders} total={pagination?.total} />
 

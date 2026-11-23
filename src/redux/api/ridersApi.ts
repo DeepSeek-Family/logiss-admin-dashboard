@@ -81,6 +81,24 @@ export interface IGetRiderHistoryResponse {
   data: IBooking[];
 }
 
+/** Admin/dispatcher creates a rider (role USER). The server marks it verified
+ * and emails a generated password to the rider. */
+export interface ICreateRiderInput {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email: string;
+  contact: string;
+  dateOfBirth?: string;
+  authorizationID?: string;
+}
+
+export interface ICreateRiderResponse {
+  success: boolean;
+  message: string;
+  data: IRider & { credentialsEmailSent?: boolean };
+}
+
 const normalizeRidersResponse = (response: any): IGetRidersResponse => {
   const list = Array.isArray(response)
     ? response
@@ -158,8 +176,16 @@ export const ridersApi = baseApi.injectEndpoints({
         { type: "bookings", id: "LIST" },
       ],
     }),
+    createRider: builder.mutation<ICreateRiderResponse, ICreateRiderInput>({
+      query: (body) => ({
+        url: "/user-management",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Riders", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetRidersQuery, useGetRiderHistoryQuery } = ridersApi;
+export const { useGetRidersQuery, useGetRiderHistoryQuery, useCreateRiderMutation } = ridersApi;

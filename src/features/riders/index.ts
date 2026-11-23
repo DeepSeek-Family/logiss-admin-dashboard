@@ -4,3 +4,4 @@ export * from "./components/RiderKpiStrip";
 export * from "./components/RidersTable";
 export * from "./components/EditRiderModal";
 export * from "./utils/helpers";
+export * from "./components/CreateRiderModal";

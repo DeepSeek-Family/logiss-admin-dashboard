@@ -203,6 +203,13 @@ export interface ISaveCountyInput {
   file?: File;
 }
 
+/**
+ * County create/update can carry a large geofence file. These requests have
+ * no time limit (0 disables fetchBaseQuery's default 20s timeout): they must
+ * run until the server finishes.
+ */
+const NO_TIMEOUT = 0;
+
 export const countyPayerId = (county?: ICounty | null): string => {
   if (!county?.payersId) return "";
   return typeof county.payersId === "string" ? county.payersId : county.payersId._id || "";
@@ -401,7 +408,10 @@ export const coverageApi = baseApi.injectEndpoints({
           };
         }),
       }),
-      providesTags: [{ type: "Counties", id: "LIST" }, { type: "Counties", id: "NAMES" }],
+      providesTags: [
+        { type: "Counties", id: "LIST" },
+        { type: "Counties", id: "NAMES" },
+      ],
     }),
     getCountyById: builder.query<{ success: boolean; message?: string; data?: ICounty }, string>({
       query: (id) => ({ url: `/counties/${id}`, method: "GET" }),
@@ -449,6 +459,7 @@ export const coverageApi = baseApi.injectEndpoints({
         url: "/counties",
         method: "POST",
         body: formData,
+        timeout: NO_TIMEOUT,
       }),
       invalidatesTags: (_r, _e, arg) => [
         { type: "Counties", id: "LIST" },
@@ -474,6 +485,7 @@ export const coverageApi = baseApi.injectEndpoints({
         url: `/counties/${id}`,
         method: "PATCH",
         body: formData,
+        timeout: NO_TIMEOUT,
       }),
       invalidatesTags: (_r, _e, arg) => [
         { type: "Counties", id: arg.id },

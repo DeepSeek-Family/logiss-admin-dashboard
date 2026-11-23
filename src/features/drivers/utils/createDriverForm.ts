@@ -47,17 +47,7 @@ export const normalizeDriverExperience = (value: string): DriverExperience | nul
   return null;
 };
 
-/** Backend accepts Bangladesh numbers as `+8801XXXXXXXXX`. */
-export const normalizeContact = (value: string): string | null => {
-  const raw = String(value || "").replace(/[^\d+]/g, "");
-  const compact = raw.startsWith("+")
-    ? `+${raw.slice(1).replace(/\D/g, "")}`
-    : raw.replace(/\D/g, "");
-  if (/^\+8801[3-9]\d{8}$/.test(compact)) return compact;
-  if (/^8801[3-9]\d{8}$/.test(compact)) return `+${compact}`;
-  if (/^01[3-9]\d{8}$/.test(compact)) return `+88${compact}`;
-  return null;
-};
+export { normalizeContact, CONTACT_FORMAT_HINT } from "@/shared/utils/phone";
 
 export const toIsoDate = (ymd: string): string => {
   if (!ymd) return "";

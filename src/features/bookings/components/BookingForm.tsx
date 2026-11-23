@@ -29,6 +29,7 @@ import {
   ChevronDown,
   Check,
   Loader2,
+  UserPlus,
 } from "lucide-react";
 import {
   Card,
@@ -55,6 +56,8 @@ import { useGetRidersQuery } from "@/redux/api/ridersApi";
 import { useGetDriversQuery } from "@/redux/api/driversApi";
 import { useGetMobilitiesQuery } from "@/redux/api/mobilityApi";
 import { riderFullName } from "@/features/riders/utils/helpers";
+import { CreateRiderModal } from "@/features/riders/components/CreateRiderModal";
+import type { IRider } from "@/redux/api/ridersApi";
 import {
   extractBookingPeople,
   resolveMediaUrl,
@@ -263,6 +266,7 @@ export const BookingForm = () => {
   }, [mobilitiesResponse, apiPeople.mobility, pricing.mobilityTypes]);
 
   const [isRiderDropdownOpen, setIsRiderDropdownOpen] = useState(false);
+  const [showCreateRider, setShowCreateRider] = useState(false);
   const riderDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -476,7 +480,9 @@ export const BookingForm = () => {
       ? countyOptions.find((c) => c._id === riderCountyId)
       : undefined;
     setRiderCounty(
-      riderCountyId ? { id: riderCountyId, name: knownCounty?.name || rider.countyName || "" } : null,
+      riderCountyId
+        ? { id: riderCountyId, name: knownCounty?.name || rider.countyName || "" }
+        : null,
     );
     setForm((prev) => ({
       ...prev,
@@ -500,6 +506,26 @@ export const BookingForm = () => {
     setDebouncedRiderSearch("");
     setIsRiderDropdownOpen(false);
     toast.success(`Selected ${rider.name}`);
+  };
+
+  // A rider just created from the "New passenger" modal: map it to the same
+  // shape as the search results and select it for this booking.
+  const handleRiderCreated = (r: IRider) => {
+    const countyId = (typeof r.county === "string" ? r.county : r.county?._id) || "";
+    handleSelectRider({
+      id: r._id,
+      _id: r._id,
+      name: riderFullName(r),
+      firstName: r.firstName,
+      middleName: r.middleName,
+      lastName: r.lastName,
+      profile: r.profile,
+      email: r.email || "",
+      phone: r.contact || "",
+      authorizationId: r.authorizationID || "",
+      countyId,
+      countyName: (typeof r.county === "object" && r.county?.name) || "",
+    });
   };
 
   const boundaryEval = evaluateTripBoundary(
@@ -848,7 +874,9 @@ export const BookingForm = () => {
   const companionFee = quoteLegs.length
     ? Math.max(
         0,
-        toMoney(payerCharge - quoteLegs.reduce((sum, leg) => sum + toMoney(leg.fundingSourceCharge), 0)),
+        toMoney(
+          payerCharge - quoteLegs.reduce((sum, leg) => sum + toMoney(leg.fundingSourceCharge), 0),
+        ),
       )
     : 0;
   const quoteZone = calculatedPrice ? String(calculatedPrice.zone || "").toLowerCase() : "";
@@ -1120,31 +1148,43 @@ export const BookingForm = () => {
           <Card className="p-6 border-line-2 bg-white shadow-none !overflow-visible relative z-40">
             <div className="flex justify-between items-center mb-4">
               <SectionHeader title="1. Passenger Identification" icon={UserIcon} />
-              {selectedUserId && (
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedUserId("");
-                    setRiderCounty(null);
-                    setExistingSearch("");
-                    setDebouncedRiderSearch("");
-                    setForm((prev) => ({
-                      ...prev,
-                      firstName: "",
-                      middleName: "",
-                      lastName: "",
-                      phone: "",
-                      email: "",
-                      passengerId: "",
-                      authId: "",
-                    }));
-                    setIsRiderDropdownOpen(true);
+                    setIsRiderDropdownOpen(false);
+                    setShowCreateRider(true);
                   }}
-                  className="text-xs text-urgent hover:underline font-medium"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
-                  Clear passenger
+                  <UserPlus size={14} /> New passenger
                 </button>
-              )}
+                {selectedUserId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUserId("");
+                      setRiderCounty(null);
+                      setExistingSearch("");
+                      setDebouncedRiderSearch("");
+                      setForm((prev) => ({
+                        ...prev,
+                        firstName: "",
+                        middleName: "",
+                        lastName: "",
+                        phone: "",
+                        email: "",
+                        passengerId: "",
+                        authId: "",
+                      }));
+                      setIsRiderDropdownOpen(true);
+                    }}
+                    className="text-xs text-urgent hover:underline font-medium"
+                  >
+                    Clear passenger
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -1273,10 +1313,22 @@ export const BookingForm = () => {
                         );
                       })
                     ) : (
-                      <div className="text-center p-4 text-xs text-ink-4">
-                        {existingSearch.trim()
-                          ? "No matching passengers found."
-                          : "No passengers available."}
+                      <div className="text-center p-4 text-xs text-ink-4 space-y-2">
+                        <p>
+                          {existingSearch.trim()
+                            ? "No matching passengers found."
+                            : "No passengers available."}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRiderDropdownOpen(false);
+                            setShowCreateRider(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                        >
+                          <UserPlus size={14} /> Create a new passenger
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1966,10 +2018,7 @@ export const BookingForm = () => {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="font-semibold text-ink-3">
-                    {[
-                      selectedCountyLabel,
-                      formatPriceMethodLabel(calculatedPrice.priceMethod),
-                    ]
+                    {[selectedCountyLabel, formatPriceMethodLabel(calculatedPrice.priceMethod)]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
@@ -2024,11 +2073,12 @@ export const BookingForm = () => {
                     quoteLegs.map((leg, idx) => (
                       <div key={`${leg.leg}-${idx}`} className="flex justify-between gap-3">
                         <span className="text-ink-4 capitalize">
-                          {leg.leg || `Leg ${idx + 1}`} · {leg.zone} · {formatMiles(leg.billingMileage)}
+                          {leg.leg || `Leg ${idx + 1}`} · {leg.zone} ·{" "}
+                          {formatMiles(leg.billingMileage)}
                         </span>
                         <span className="font-medium text-ink">
-                          {money(toMoney(leg.fundingSourceCharge))} + {money(toMoney(leg.passengerCoPay))}{" "}
-                          copay
+                          {money(toMoney(leg.fundingSourceCharge))} +{" "}
+                          {money(toMoney(leg.passengerCoPay))} copay
                         </span>
                       </div>
                     ))}
@@ -2138,6 +2188,13 @@ export const BookingForm = () => {
           </Button>
         </div>
       </form>
+      {showCreateRider && (
+        <CreateRiderModal
+          initialName={existingSearch}
+          onClose={() => setShowCreateRider(false)}
+          onCreated={handleRiderCreated}
+        />
+      )}
     </div>
   );
 };
