@@ -172,6 +172,7 @@ export const buildCountyContractBody = ({
     eligibility: {
       authorizationIdRequired: draft.authorizationRequired,
       monthlyTripLimit: draft.monthlyTripLimit,
+      dailyTripLimit: draft.dailyTripLimit,
       allowAdminOverride: draft.overrideAllowed,
       eligibilityNotes: draft.riderEligibilityNotes.trim() || undefined,
     },

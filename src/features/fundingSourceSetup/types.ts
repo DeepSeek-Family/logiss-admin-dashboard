@@ -94,6 +94,8 @@ export interface FundingSourceDraft {
   isActive: boolean;
   authorizationRequired: boolean;
   monthlyTripLimit: number;
+  /** Max trips per rider per service day (0 = unlimited). */
+  dailyTripLimit: number;
   overrideAllowed: boolean;
   riderEligibilityNotes: string;
   extraStopsAllowed: boolean;

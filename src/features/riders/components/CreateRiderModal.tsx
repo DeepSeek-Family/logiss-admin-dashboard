@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, BadgeCheck, Loader2, UserPlus, X } from "lucide-react";
 import toast from "react-hot-toast";
-import { Button } from "@/shared/components/ui";
+import { Button, GoogleAddressInput } from "@/shared/components/ui";
+import { geocodeAddress } from "@/utils/geofenceEngine";
 import { useCreateRiderMutation, type IRider } from "@/redux/api/ridersApi";
 import { getUserFacingApiError } from "@/utils/apiError";
 import { CONTACT_FORMAT_HINT, CONTACT_PLACEHOLDER, normalizeContact } from "@/shared/utils/phone";
@@ -47,6 +48,9 @@ export const CreateRiderModal = ({ onClose, onCreated, initialName }: CreateRide
     dateOfBirth: "",
     authorizationID: "",
   }));
+  const [homeAddress, setHomeAddress] = useState("");
+  /** [latitude, longitude] from the Google picker; cleared whenever the text is edited. */
+  const [homeCoords, setHomeCoords] = useState<[number, number] | null>(null);
   const [error, setError] = useState("");
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +63,7 @@ export const CreateRiderModal = ({ onClose, onCreated, initialName }: CreateRide
     if (!form.lastName.trim()) return "Last name is required.";
     if (!EMAIL_PATTERN.test(form.email.trim())) return "Enter a valid email address.";
     if (!normalizeContact(form.contact)) return CONTACT_FORMAT_HINT;
+    if (!homeAddress.trim()) return "Home address is required.";
     if (form.dateOfBirth && form.dateOfBirth >= todayYmd()) {
       return "Date of birth must be in the past.";
     }
@@ -73,6 +78,17 @@ export const CreateRiderModal = ({ onClose, onCreated, initialName }: CreateRide
       return;
     }
 
+    // Typed but not picked from the suggestions: try to locate it once.
+    let coords = homeCoords;
+    if (!coords) {
+      coords = await geocodeAddress(homeAddress.trim());
+      if (!coords) {
+        setError("Could not locate the home address. Pick it from the Google suggestions.");
+        return;
+      }
+    }
+    const [lat, lng] = coords;
+
     try {
       const res = await createRider({
         firstName: form.firstName.trim(),
@@ -82,6 +98,7 @@ export const CreateRiderModal = ({ onClose, onCreated, initialName }: CreateRide
         contact: normalizeContact(form.contact) as string,
         dateOfBirth: form.dateOfBirth || undefined,
         authorizationID: form.authorizationID.trim() || undefined,
+        homeAddress: { address: homeAddress.trim(), coordinates: [lng, lat] },
       }).unwrap();
 
       if (res.data?.credentialsEmailSent === false) {
@@ -232,6 +249,28 @@ export const CreateRiderModal = ({ onClose, onCreated, initialName }: CreateRide
                   placeholder="Optional"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="rider-home">
+                Home address *
+              </label>
+              <GoogleAddressInput
+                value={homeAddress}
+                onChange={(address) => {
+                  setHomeAddress(address);
+                  setHomeCoords(null);
+                  if (error) setError("");
+                }}
+                onSelectCoords={(c) => setHomeCoords(c)}
+                placeholder="Search the passenger's home address..."
+                className={inputClass}
+              />
+              <p className="text-xs text-ink-4 mt-1">
+                {homeCoords
+                  ? `Located: ${homeCoords[0].toFixed(5)}, ${homeCoords[1].toFixed(5)}`
+                  : "Pick from the suggestions to save the exact location. Used as the default pickup."}
+              </p>
             </div>
 
             <p className="flex items-center gap-1.5 text-xs text-ink-4">

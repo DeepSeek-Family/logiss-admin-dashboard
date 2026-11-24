@@ -119,6 +119,7 @@ export interface ICounty {
   eligibility?: {
     authorizationIdRequired?: boolean;
     monthlyTripLimit?: number;
+    dailyTripLimit?: number;
     allowAdminOverride?: boolean;
     eligibilityNotes?: string;
   };
@@ -174,6 +175,19 @@ export interface ICountyName {
   tripReasons?: string[];
   /** True when the list response included programRules.tripReasons. */
   tripReasonsLoaded?: boolean;
+  /** Full per-reason rules (inside/outside permission, max miles). */
+  tripReasonRules?: ICountyTripReasonRule[];
+  /** Program rules the booking form checks before quoting (mirrors backend contract rules). */
+  extraStopsAllowed?: boolean;
+  companionsAllowed?: boolean;
+  maximumCompanions?: number | null;
+}
+
+export interface ICountyTripReasonRule {
+  name: string;
+  inside: "allowed" | "blocked";
+  outside: "allowed" | "blocked";
+  maxMiles?: number | null;
 }
 
 export interface ICountyNamesResponse {
@@ -389,22 +403,36 @@ export const coverageApi = baseApi.injectEndpoints({
         url: "/counties",
         method: "GET",
         // `v` busts RTK cache from older name-only responses that lacked tripReasons.
-        params: { fields: "name,isActive,payersId,programRules.tripReasons", v: 2 },
+        params: { fields: "name,isActive,payersId,programRules", v: 3 },
       }),
       transformResponse: (response: any): ICountyNamesResponse => ({
         success: response?.success !== false,
         message: response?.message,
         data: normalizeList<ICounty>(response).map((county) => {
-          const rawReasons = county.programRules?.tripReasons;
+          const program: any = county.programRules || {};
+          const rawReasons = program.tripReasons;
+          const reasonRules: ICountyTripReasonRule[] | undefined = Array.isArray(rawReasons)
+            ? rawReasons
+                .map((r: any) => ({
+                  name: String(r?.name || "").trim(),
+                  inside: r?.inside === "blocked" ? ("blocked" as const) : ("allowed" as const),
+                  outside: r?.outside === "blocked" ? ("blocked" as const) : ("allowed" as const),
+                  maxMiles: typeof r?.maxMiles === "number" ? r.maxMiles : null,
+                }))
+                .filter((r) => r.name)
+            : undefined;
           return {
             _id: county._id,
             name: county.name,
             isActive: county.isActive,
             payersId: countyPayerId(county) || undefined,
             tripReasonsLoaded: Array.isArray(rawReasons),
-            tripReasons: Array.isArray(rawReasons)
-              ? rawReasons.map((r) => String(r?.name || "").trim()).filter(Boolean)
-              : undefined,
+            tripReasons: reasonRules?.map((r) => r.name),
+            tripReasonRules: reasonRules,
+            extraStopsAllowed: program.extraStopsAllowed,
+            companionsAllowed: program.companionsAllowed,
+            maximumCompanions:
+              typeof program.maximumCompanions === "number" ? program.maximumCompanions : null,
           };
         }),
       }),

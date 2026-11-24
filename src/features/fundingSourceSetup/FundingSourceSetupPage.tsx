@@ -592,6 +592,11 @@ const FundingSourceSetupPage = () => {
         value={draft.monthlyTripLimit}
         onChange={(v) => set("monthlyTripLimit", v)}
       />
+      <NumberField
+        label="Daily trip limit (0 = unlimited)"
+        value={draft.dailyTripLimit}
+        onChange={(v) => set("dailyTripLimit", v)}
+      />
       <Toggle
         on={draft.overrideAllowed}
         setOn={(v) => set("overrideAllowed", v)}

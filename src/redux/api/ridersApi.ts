@@ -36,6 +36,7 @@ export interface IRider {
   isBanned?: boolean;
   isAdminVerifiedDriver?: boolean;
   county?: string | IRiderCounty | null;
+  homeAddress?: IRiderHomeAddress | null;
   email?: string;
   contact?: string;
   applicationStatus?: string;
@@ -91,6 +92,13 @@ export interface ICreateRiderInput {
   contact: string;
   dateOfBirth?: string;
   authorizationID?: string;
+  homeAddress?: IRiderHomeAddress;
+}
+
+/** Passenger home; `coordinates` are [longitude, latitude] (GeoJSON order). */
+export interface IRiderHomeAddress {
+  address: string;
+  coordinates?: [number, number];
 }
 
 export interface ICreateRiderResponse {

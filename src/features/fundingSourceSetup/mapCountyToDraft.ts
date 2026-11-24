@@ -32,6 +32,12 @@ const ymd = (value?: string | null) => {
   return d.toISOString().slice(0, 10);
 };
 
+/** Keeps a saved 0; only falls back when the value is missing or not a number. */
+const numberOr = (value: unknown, fallback: number) => {
+  const n = Number(value);
+  return value == null || value === "" || Number.isNaN(n) ? fallback : n;
+};
+
 const asPricingMethod = (method?: string): PricingMethod => {
   const value = String(method || "").toLowerCase();
   if (value === "base_plus_additional_mileage" || value === "base_plus_mile") {
@@ -147,6 +153,7 @@ export const mapCountyToDraft = (county: ICounty): FundingSourceDraft => {
     isActive: county.isActive !== false,
     authorizationRequired: eligibility?.authorizationIdRequired !== false,
     monthlyTripLimit: Number(eligibility?.monthlyTripLimit) || 0,
+    dailyTripLimit: Number(eligibility?.dailyTripLimit) || 0,
     overrideAllowed: Boolean(eligibility?.allowAdminOverride),
     riderEligibilityNotes: eligibility?.eligibilityNotes || "",
     extraStopsAllowed: Boolean(program?.extraStopsAllowed),
@@ -174,7 +181,7 @@ export const mapCountyToDraft = (county: ICounty): FundingSourceDraft => {
     reportFields: reporting?.columns?.length
       ? [...reporting.columns]
       : [...emptyFundingSourceDraft.reportFields],
-    complaintSlaHours: Number(reporting?.complaintResponseDeadlineHours) || 72,
-    incidentSlaHours: Number(reporting?.safetyIncidentReportingDeadlineHours) || 24,
+    complaintSlaHours: numberOr(reporting?.complaintResponseDeadlineHours, 72),
+    incidentSlaHours: numberOr(reporting?.safetyIncidentReportingDeadlineHours, 24),
   };
 };
