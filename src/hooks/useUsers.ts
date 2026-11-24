@@ -4,6 +4,7 @@ import {
   useCreateDispatcherMutation,
 } from "@/redux/api/dispatcherManagementApi";
 import { useToggleUserBannedMutation } from "@/redux/api/userApi";
+import { CONTACT_FORMAT_HINT, normalizeContact } from "@/shared/utils/phone";
 
 export interface User {
   id: string;
@@ -69,6 +70,9 @@ export const useUsers = () => {
 
       const accessScope = rawPermissions.map((p: string) => (p.startsWith("/") ? p : `/${p}`));
 
+      const contact = normalizeContact(userData.contact || "");
+      if (!contact) throw new Error(CONTACT_FORMAT_HINT);
+
       const roleText = (userData.role || "").trim();
 
       const payload = {
@@ -77,7 +81,7 @@ export const useUsers = () => {
         lastName,
         email: userData.email || "",
         password: userData.password || "Password@123",
-        contact: userData.contact || "+8801609502136",
+        contact,
         accessScope,
       };
 

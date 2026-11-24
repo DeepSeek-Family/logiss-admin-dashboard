@@ -1,12 +1,38 @@
-import { Car, Calendar, RotateCcw, Settings } from "lucide-react";
+import { useState } from "react";
+import { Car, Calendar, Flag, RotateCcw, Settings, UserPlus } from "lucide-react";
 import { Card } from "@/shared/components/ui";
 import { ROUTES } from "@/constants/routes";
+import { CreateRiderModal } from "@/features/riders/components/CreateRiderModal";
+import { CreateReportModal } from "@/features/reports/components/CreateReportModal";
 
 interface QuickActionsProps {
   onNavigate: (path: string) => void;
 }
 
-const ACTIONS = [
+type ModalKind = "rider" | "report";
+
+type Action = {
+  icon: React.ElementType;
+  label: string;
+  iconCls: string;
+  bgCls: string;
+} & ({ path: string; modal?: never } | { modal: ModalKind; path?: never });
+
+const ACTIONS: Action[] = [
+  {
+    icon: UserPlus,
+    label: "New Rider",
+    modal: "rider",
+    iconCls: "text-primary",
+    bgCls: "bg-primary/10",
+  },
+  {
+    icon: Flag,
+    label: "New Report",
+    modal: "report",
+    iconCls: "text-urgent",
+    bgCls: "bg-urgent/10",
+  },
   {
     icon: Car,
     label: "Fleet Manager",
@@ -38,16 +64,19 @@ const ACTIONS = [
 ];
 
 export const QuickActions = ({ onNavigate }: QuickActionsProps) => {
+  const [openModal, setOpenModal] = useState<ModalKind | null>(null);
+
   return (
     <Card className="p-5 border-line-2 shadow-sm">
       <h3 className="text-xs font-semibold text-ink-4 uppercase tracking-wide mb-4">
         Quick Actions
       </h3>
       <div className="grid grid-cols-2 gap-3">
-        {ACTIONS.map(({ icon: Icon, label, path, iconCls, bgCls }) => (
+        {ACTIONS.map(({ icon: Icon, label, path, modal, iconCls, bgCls }) => (
           <button
-            key={path}
-            onClick={() => onNavigate(path)}
+            key={label}
+            type="button"
+            onClick={() => (modal ? setOpenModal(modal) : onNavigate(path as string))}
             className="flex flex-col items-center gap-2.5 p-4 bg-bg border border-line-2 rounded-xl hover:border-primary/30 hover:bg-white transition-colors text-center group hover:shadow-sm"
           >
             <div
@@ -59,6 +88,9 @@ export const QuickActions = ({ onNavigate }: QuickActionsProps) => {
           </button>
         ))}
       </div>
+
+      {openModal === "rider" && <CreateRiderModal onClose={() => setOpenModal(null)} />}
+      {openModal === "report" && <CreateReportModal onClose={() => setOpenModal(null)} />}
     </Card>
   );
 };

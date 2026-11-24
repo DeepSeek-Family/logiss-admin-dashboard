@@ -45,6 +45,15 @@ export interface IIncidentReportTrip {
 
 export type ReportResolutionStatus = "pending" | "approved" | "rejected";
 
+/** Body for POST /reports. `reportedBy` is set by the server from the token. */
+export interface ICreateReportBody {
+  tripId: string;
+  /** The rider or driver the report is about. */
+  userId: string;
+  reason: string;
+  internalNote?: string;
+}
+
 export interface IUpdateReportStatusBody {
   assignedUserId?: string;
   reportStatus?: ReportResolutionStatus;
@@ -236,6 +245,15 @@ export const dashboardOnvordingApi = baseApi.injectEndpoints({
       transformResponse: normalizeReport,
       providesTags: (_result, _error, id) => [{ type: "all_reports", id }],
     }),
+    createReport: builder.mutation<IIncidentReport, ICreateReportBody>({
+      query: (body) => ({
+        url: "/reports",
+        method: "POST",
+        body,
+      }),
+      transformResponse: normalizeReport,
+      invalidatesTags: [{ type: "all_reports", id: "LIST" }],
+    }),
     updateReportStatus: builder.mutation<
       IIncidentReport,
       { id: string; body: IUpdateReportStatusBody }
@@ -298,6 +316,7 @@ export const {
   useGetDashboardAnalyticsQuery,
   useGetAllReportsQuery,
   useGetSingleReportQuery,
+  useCreateReportMutation,
   useUpdateReportStatusMutation,
   useGetActiveTripsQuery,
   useGetRecentPendingBookingsQuery,

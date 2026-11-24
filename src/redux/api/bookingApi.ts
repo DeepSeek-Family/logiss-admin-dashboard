@@ -110,6 +110,7 @@ export interface IBooking {
   updatedAt?: string;
   driverArrivedAt?: string;
   driverPicupAt?: string;
+  driverDropOffAt?: string;
   __v?: number;
 }
 
@@ -243,7 +244,8 @@ export interface ICreateBookingPayload {
   recurringBooking?: boolean;
   selectedDate?: string[];
   endDate?: string;
-  driverId: string;
+  /** Optional — booking can be created without a driver and assigned later. */
+  driverId?: string;
   vehicleId?: string;
   [key: string]: any;
 }
@@ -456,6 +458,17 @@ export const bookingApi = baseApi.injectEndpoints({
             ]
           : [{ type: "Payers", id: "LIST" }],
     }),
+    /** Live contract-rule check (real geofence zone) — never throws on violations. */
+    checkBookingRules: builder.mutation<
+      { success: boolean; message?: string; data: IBookingRulesCheck },
+      IBookingRulesCheckBody
+    >({
+      query: (body) => ({
+        url: "/booking/check-rules",
+        method: "POST",
+        body,
+      }),
+    }),
     calculateBookingPrice: builder.mutation<
       ICalculateBookingPriceResponse,
       ICalculateBookingPriceBody
@@ -537,6 +550,24 @@ export const bookingApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
+export interface IBookingRulesCheckBody {
+  pickupLocation: [number, number];
+  dropOffLocation: [number, number];
+  stopAddress?: [number, number];
+  countyId: string;
+  userId?: string;
+  serviceDate?: string;
+  tripReason?: string;
+  passengerSeats?: number;
+}
+
+export interface IBookingRulesCheck {
+  countyId: string;
+  zone: "inside" | "outside";
+  violations: string[];
+  allowAdminOverride: boolean;
+}
+
 export interface IBulkAssignBody {
   bookingIds?: string[];
   driverIds?: string[];
@@ -556,6 +587,7 @@ export const {
   useGetAllBookingsQuery,
   useGetAllPayersQuery,
   useCalculateBookingPriceMutation,
+  useCheckBookingRulesMutation,
   useManualCreateBookingMutation,
   useUpdateBookingMutation,
   useGetAllAssignedBookingsQuery,

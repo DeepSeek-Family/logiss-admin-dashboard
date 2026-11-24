@@ -17,12 +17,16 @@ import { filterSafeUploadFiles } from "@/shared/utils/fileSecurity";
 import {
   DRIVER_EXPERIENCE_OPTIONS,
   DRIVER_LICENSE_CLASS_OPTIONS,
+  CONTACT_FORMAT_HINT,
   normalizeContact,
   normalizeDriverExperience,
   normalizeLicenseClass,
   type ICreateDriverInput,
 } from "@/features/drivers/utils/createDriverForm";
 import type { DriverExperience, DriverLicenseClass } from "@/redux/api/driversApi";
+
+/** Must match the backend User model `password.minlength`. */
+const MIN_DRIVER_PASSWORD_LENGTH = 8;
 
 type LicensePhotoState = {
   file: File;
@@ -68,10 +72,11 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
         return "Please fill in all required personal information fields.";
       }
       if (!normalizeContact(form.phone)) {
-        return "Enter a valid contact number, for example +8801712345678.";
+        return CONTACT_FORMAT_HINT;
       }
-      if (!form.password) return "Password is required.";
-      if (form.password.length < 6) return "Password must be at least 6 characters.";
+      if (!form.password.trim()) return "Password is required.";
+      if (form.password.trim().length < MIN_DRIVER_PASSWORD_LENGTH)
+        return `Password must be at least ${MIN_DRIVER_PASSWORD_LENGTH} characters.`;
       return "";
     }
     if (step === 2) {
@@ -156,11 +161,15 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
 
     const contact = normalizeContact(form.phone);
     if (!contact) {
-      setStepError("Enter a valid contact number, for example +8801712345678.");
+      setStepError(CONTACT_FORMAT_HINT);
       return;
     }
     if (!form.password?.trim()) {
       setStepError("Password is required.");
+      return;
+    }
+    if (form.password.trim().length < MIN_DRIVER_PASSWORD_LENGTH) {
+      setStepError(`Password must be at least ${MIN_DRIVER_PASSWORD_LENGTH} characters.`);
       return;
     }
 
@@ -286,7 +295,10 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     className="w-full bg-bg border border-line-2 rounded-xl px-4 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value)}
-                    placeholder="+8801712345678"
+                    placeholder="+1 202 555 0123"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
@@ -312,7 +324,8 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     className="w-full bg-bg border border-line-2 rounded-xl pl-4 pr-10 py-3 text-sm text-ink outline-none focus:border-primary transition-colors focus:bg-white"
                     value={form.password}
                     onChange={(e) => set("password", e.target.value)}
-                    placeholder="Set a password"
+                    placeholder={`At least ${MIN_DRIVER_PASSWORD_LENGTH} characters`}
+                    minLength={MIN_DRIVER_PASSWORD_LENGTH}
                   />
                   <button
                     type="button"
@@ -322,6 +335,13 @@ export const AddDriverModal = ({ onClose, onSave, saving = false }: AddDriverMod
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {form.password.length > 0 &&
+                  form.password.trim().length < MIN_DRIVER_PASSWORD_LENGTH && (
+                    <p className="text-xs text-urgent mt-1">
+                      Password must be at least {MIN_DRIVER_PASSWORD_LENGTH} characters (
+                      {form.password.trim().length}/{MIN_DRIVER_PASSWORD_LENGTH}).
+                    </p>
+                  )}
               </div>
             </div>
           )}

@@ -16,13 +16,13 @@ export const DashboardStats = ({ onNavigate }: DashboardStatsProps) => {
   }
   const dashboardData = dashboardOverview?.data;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       <div
         className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-95"
         onClick={() => onNavigate("/fleet")}
       >
         <StatCard
-          label="Total Fleet Vehicles"
+          label="Total Fleet"
           value={`${dashboardData?.totalVehicles} Vehicles`}
           icon={Car}
           accent="primary"
@@ -45,7 +45,7 @@ export const DashboardStats = ({ onNavigate }: DashboardStatsProps) => {
       >
         <StatCard
           label="Total Trips (Month)"
-          value={`${dashboardData?.totalTrips} Trips`}
+          value={`${dashboardData?.totalTrips ?? 0} Trips`}
           icon={Calendar}
           accent="primary"
         />
@@ -56,7 +56,7 @@ export const DashboardStats = ({ onNavigate }: DashboardStatsProps) => {
       >
         <StatCard
           label="Revenue (Month)"
-          value={`${money(dashboardData?.totalRevenue)} USD`}
+          value={`${money(dashboardData?.totalRevenue ?? 0)} USD`}
           icon={TrendingUp}
           accent="accent"
         />

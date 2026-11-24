@@ -19,12 +19,7 @@ import {
   Loader2,
   DollarSign,
 } from "lucide-react";
-import {
-  Avatar,
-  GoogleMapsRouteButton,
-  Pagination,
-  SearchInput,
-} from "@/shared/components/ui";
+import { Avatar, GoogleMapsRouteButton, Pagination, SearchInput } from "@/shared/components/ui";
 import { formatShortDate, formatTripId } from "@/utils/helpers";
 import { useGetCountyNamesQuery } from "@/redux/api/coverageApi";
 import { DriverAssignSelect } from "./DriverAssignSelect";
@@ -270,13 +265,16 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         )}
         <div className="flex items-center gap-2">
           <MapPin size={12} className="text-ink-4" />
-          <span className="text-xs text-ink-4">County</span>
+          <span className="text-xs text-ink-4" id="funding-source-filter-label">
+            Funding Source
+          </span>
           <select
+            aria-labelledby="funding-source-filter-label"
             value={countyFilter}
             onChange={(e) => setCountyFilter(e.target.value)}
             className="py-2 pl-3 pr-8 text-xs font-medium bg-white border outline-none appearance-none cursor-pointer border-line rounded-xl text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary h-9"
           >
-            <option value="all">All Counties</option>
+            <option value="all">All Funding Sources</option>
             {countiesList.map((county) => (
               <option key={county._id} value={county._id}>
                 {county.name || county._id}

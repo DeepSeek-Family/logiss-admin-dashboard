@@ -36,6 +36,7 @@ export interface IRider {
   isBanned?: boolean;
   isAdminVerifiedDriver?: boolean;
   county?: string | IRiderCounty | null;
+  homeAddress?: IRiderHomeAddress | null;
   email?: string;
   contact?: string;
   applicationStatus?: string;
@@ -79,6 +80,31 @@ export interface IGetRiderHistoryResponse {
   message: string;
   pagination?: IBookingPagination;
   data: IBooking[];
+}
+
+/** Admin/dispatcher creates a rider (role USER). The server marks it verified
+ * and emails a generated password to the rider. */
+export interface ICreateRiderInput {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email: string;
+  contact: string;
+  dateOfBirth?: string;
+  authorizationID?: string;
+  homeAddress?: IRiderHomeAddress;
+}
+
+/** Passenger home; `coordinates` are [longitude, latitude] (GeoJSON order). */
+export interface IRiderHomeAddress {
+  address: string;
+  coordinates?: [number, number];
+}
+
+export interface ICreateRiderResponse {
+  success: boolean;
+  message: string;
+  data: IRider & { credentialsEmailSent?: boolean };
 }
 
 const normalizeRidersResponse = (response: any): IGetRidersResponse => {
@@ -158,8 +184,16 @@ export const ridersApi = baseApi.injectEndpoints({
         { type: "bookings", id: "LIST" },
       ],
     }),
+    createRider: builder.mutation<ICreateRiderResponse, ICreateRiderInput>({
+      query: (body) => ({
+        url: "/user-management",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Riders", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetRidersQuery, useGetRiderHistoryQuery } = ridersApi;
+export const { useGetRidersQuery, useGetRiderHistoryQuery, useCreateRiderMutation } = ridersApi;

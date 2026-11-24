@@ -114,7 +114,7 @@ export default function FundingSourcesPage() {
           <Building2 className="mx-auto mb-3 text-ink-4" size={28} />
           <p className="text-sm font-medium text-ink">No counties yet</p>
           <p className="mt-1 text-xs text-ink-4">
-            Create a Funding Source Contract to add the first county.
+            Create a funding source to add the first county.
           </p>
           <Button
             variant="primary"

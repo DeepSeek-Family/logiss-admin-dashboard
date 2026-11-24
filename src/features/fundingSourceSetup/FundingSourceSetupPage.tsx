@@ -1,11 +1,4 @@
-import {
-  Component,
-  useEffect,
-  useRef,
-  useState,
-  type ErrorInfo,
-  type ReactNode,
-} from "react";
+import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Accessibility,
@@ -25,7 +18,7 @@ import {
 import toast from "react-hot-toast";
 import { Badge, Button, Card } from "@/shared/components/ui";
 import { ROUTES } from "@/constants/routes";
-import { apiErrorMessage, TRIP_REASONS } from "@/features/bookings/utils/helpers";
+import { apiErrorMessage } from "@/features/bookings/utils/helpers";
 import {
   useCreatePayerMutation,
   useCreateCountyContractMutation,
@@ -53,6 +46,7 @@ import {
   newTripReason,
 } from "./defaults";
 import { GeofenceUploadField, mergeGeoJsonFiles } from "./GeofenceUploadField";
+import { CreateMobilityModal } from "./CreateMobilityModal";
 import {
   extractExistingGeofences,
   mapCountyToDraft,
@@ -182,12 +176,15 @@ const NumberField = ({
   label,
   value,
   onChange,
+  compact = false,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  /** Smaller label, matching the other fields inside repeated rows. */
+  compact?: boolean;
 }) => (
-  <label className="block text-sm font-medium text-ink-2">
+  <label className={`block font-medium ${compact ? "text-xs" : "text-sm text-ink-2"}`}>
     {label}
     <input
       className={input}
@@ -209,10 +206,7 @@ const firstErrorSection = (next: Record<string, string>): FundingSection => {
   return "general";
 };
 
-class SetupErrorBoundary extends Component<
-  { children: ReactNode },
-  { error: Error | null }
-> {
+class SetupErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null };
 
   static getDerivedStateFromError(error: Error) {
@@ -272,6 +266,8 @@ const FundingSourceSetupPage = () => {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [reportFieldDraft, setReportFieldDraft] = useState("");
+  // undefined = closed; null = opened from "New mobility"; string = mapping row id.
+  const [mobilityModalRow, setMobilityModalRow] = useState<string | null | undefined>(undefined);
   const [editHydrated, setEditHydrated] = useState(false);
   /** Parent keeps files in a ref so the giant form does not rebuild on every pick. */
   const uploadedFilesRef = useRef<File[]>([]);
@@ -321,13 +317,13 @@ const FundingSourceSetupPage = () => {
     const next: Record<string, string> = {};
     if (!draft.name.trim()) next.name = "Funding Source name is required";
     if (!draft.effectiveFrom) next.effectiveFrom = "Effective date is required";
-    const invalidReason = draft.tripReasons.find(
-      (r) => r.name.trim() && !(TRIP_REASONS as readonly string[]).includes(r.name.trim()),
+    // Trip reasons are free text; names must be unique (case-insensitive).
+    const reasonNames = draft.tripReasons.map((r) => r.name.trim()).filter(Boolean);
+    const duplicateReason = reasonNames.find(
+      (name, i) => reasonNames.findIndex((n) => n.toLowerCase() === name.toLowerCase()) !== i,
     );
-    if (!draft.tripReasons.some((r) => r.name.trim()))
-      next.tripReasons = "Add at least one trip reason";
-    else if (invalidReason)
-      next.tripReasons = `"${invalidReason.name.trim()}" is not a valid trip reason — pick one from the list`;
+    if (!reasonNames.length) next.tripReasons = "Add at least one trip reason";
+    else if (duplicateReason) next.tripReasons = `"${duplicateReason}" is listed more than once`;
     if (!draft.spaceTypes.some(isSpaceTypeRowComplete))
       next.spaceTypes = "Map at least one mobility to a billing class";
     if (!draft.pricingRules.some((r) => r.name.trim() && r.billingClass.trim()))
@@ -459,8 +455,8 @@ const FundingSourceSetupPage = () => {
           : apiErrorMessage(
               err,
               isEdit
-                ? "Could not update Funding Source Contract"
-                : "Could not create Funding Source Contract",
+                ? "Could not update funding source"
+                : "Could not create funding source",
             );
       setFormError(message);
       if (/WGS84|CRS|GeoJSON|Feature/i.test(message)) {
@@ -491,6 +487,28 @@ const FundingSourceSetupPage = () => {
       "pricingRules",
       draft.pricingRules.map((r) => (r.id === id ? { ...r, ...patch } : r)),
     );
+
+  const CREATE_MOBILITY = "__create_mobility__";
+
+  // Put a newly created mobility on the row that asked for it, or on a new row.
+  const applyCreatedMobility = (mobility: { _id: string; name: string }) => {
+    const patch = { mobilityId: mobility._id, spaceType: mobility.name };
+    const rowId = mobilityModalRow;
+    if (rowId) {
+      updateSpace(rowId, patch);
+      return;
+    }
+    const emptyRow = draft.spaceTypes.find((r) => !r.mobilityId && !r.spaceType.trim());
+    if (emptyRow) updateSpace(emptyRow.id, patch);
+    else set("spaceTypes", [...draft.spaceTypes, { ...newSpaceType(), ...patch }]);
+  };
+
+  const addReportField = () => {
+    const value = reportFieldDraft.trim();
+    if (!value) return;
+    set("reportFields", [...draft.reportFields, value]);
+    setReportFieldDraft("");
+  };
 
   const general = (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -574,6 +592,11 @@ const FundingSourceSetupPage = () => {
         value={draft.monthlyTripLimit}
         onChange={(v) => set("monthlyTripLimit", v)}
       />
+      <NumberField
+        label="Daily trip limit (0 = unlimited)"
+        value={draft.dailyTripLimit}
+        onChange={(v) => set("dailyTripLimit", v)}
+      />
       <Toggle
         on={draft.overrideAllowed}
         setOn={(v) => set("overrideAllowed", v)}
@@ -635,23 +658,18 @@ const FundingSourceSetupPage = () => {
       {draft.tripReasons.map((r) => (
         <div
           key={r.id}
-          className="grid gap-3 rounded-xl border border-line-2 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]"
+          className="grid items-end gap-3 rounded-xl border border-line-2 p-4 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_auto]"
         >
-          <select
-            className={input}
-            value={r.name}
-            onChange={(e) => updateReason(r.id, { name: e.target.value })}
-          >
-            <option value="">Select trip reason…</option>
-            {TRIP_REASONS.map((reason) => (
-              <option key={reason} value={reason}>
-                {reason}
-              </option>
-            ))}
-            {r.name && !(TRIP_REASONS as readonly string[]).includes(r.name) && (
-              <option value={r.name}>{r.name} (invalid — pick another)</option>
-            )}
-          </select>
+          <label className="text-xs font-medium sm:col-span-2 lg:col-span-1">
+            Trip reason
+            <input
+              className={input}
+              value={r.name}
+              maxLength={100}
+              onChange={(e) => updateReason(r.id, { name: e.target.value })}
+              placeholder="e.g. Medical Appointment"
+            />
+          </label>
           <label className="text-xs font-medium">
             Inside
             <select
@@ -678,8 +696,10 @@ const FundingSourceSetupPage = () => {
             label="Max miles"
             value={r.maximumMiles}
             onChange={(v) => updateReason(r.id, { maximumMiles: v })}
+            compact
           />
           <button
+            type="button"
             aria-label="Remove reason"
             onClick={() =>
               set(
@@ -687,7 +707,7 @@ const FundingSourceSetupPage = () => {
                 draft.tripReasons.filter((x) => x.id !== r.id),
               )
             }
-            className="mt-6 h-10 p-2 text-urgent"
+            className="flex h-10 w-10 items-center justify-center justify-self-end rounded-lg text-urgent hover:bg-urgent/10"
           >
             <Trash2 size={16} />
           </button>
@@ -764,8 +784,12 @@ const FundingSourceSetupPage = () => {
         Pricing resolves the billing class by mobility id. Pick the rider space type, then the class
         the rate card uses.
       </p>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" size="sm" variant="primary" onClick={() => setMobilityModalRow(null)}>
+          <Plus size={14} /> New mobility
+        </Button>
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => set("spaceTypes", [...draft.spaceTypes, newSpaceType()])}
@@ -777,7 +801,7 @@ const FundingSourceSetupPage = () => {
       {draft.spaceTypes.map((r) => (
         <div
           key={r.id}
-          className="grid gap-3 rounded-xl border border-line-2 p-4 md:grid-cols-[1fr_1fr_160px_auto]"
+          className="grid items-end gap-3 rounded-xl border border-line-2 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_160px_auto]"
         >
           <label className="text-xs font-medium">
             Space Type (mobility)
@@ -785,6 +809,10 @@ const FundingSourceSetupPage = () => {
               className={input}
               value={r.mobilityId}
               onChange={(e) => {
+                if (e.target.value === CREATE_MOBILITY) {
+                  setMobilityModalRow(r.id);
+                  return;
+                }
                 const mobility = mobilityOptions.find((m) => m._id === e.target.value);
                 updateSpace(r.id, {
                   mobilityId: e.target.value,
@@ -798,6 +826,7 @@ const FundingSourceSetupPage = () => {
                   {m.name}
                 </option>
               ))}
+              <option value={CREATE_MOBILITY}>+ Create new mobility…</option>
             </select>
           </label>
           <label className="text-xs font-medium">
@@ -821,6 +850,7 @@ const FundingSourceSetupPage = () => {
             </select>
           </label>
           <button
+            type="button"
             aria-label="Remove mapping"
             onClick={() =>
               set(
@@ -828,12 +858,19 @@ const FundingSourceSetupPage = () => {
                 draft.spaceTypes.filter((x) => x.id !== r.id),
               )
             }
-            className="mt-6 h-10 p-2 text-urgent"
+            className="flex h-10 w-10 items-center justify-center justify-self-end rounded-lg text-urgent hover:bg-urgent/10"
           >
             <Trash2 size={16} />
           </button>
         </div>
       ))}
+      {mobilityModalRow !== undefined && (
+        <CreateMobilityModal
+          existingNames={(mobilitiesResponse?.data || []).map((m) => m.name)}
+          onClose={() => setMobilityModalRow(undefined)}
+          onCreated={applyCreatedMobility}
+        />
+      )}
     </div>
   );
   const pricing = (
@@ -850,7 +887,7 @@ const FundingSourceSetupPage = () => {
       {errors.pricing && <p className="text-xs text-urgent">{errors.pricing}</p>}
       {draft.pricingRules.map((r) => (
         <div key={r.id} className="space-y-4 rounded-xl border border-line-2 p-4">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-xs font-medium">
               Rule name
               <input
@@ -910,7 +947,7 @@ const FundingSourceSetupPage = () => {
             />
           )}
           {(r.method === "base_plus_mile" || r.method === "base_plus_additional_mileage") && (
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid items-end gap-3 sm:grid-cols-3">
               <NumberField
                 label="Included miles"
                 value={r.includedMiles}
@@ -933,11 +970,19 @@ const FundingSourceSetupPage = () => {
               <p className="text-xs text-ink-4">
                 Leave &quot;To&quot; blank for an open-ended last bracket (and above).
               </p>
+              {r.brackets.length > 0 && (
+                <div className="grid grid-cols-[1fr_1fr_1fr_2.5rem] gap-2 text-xs font-medium text-ink-3">
+                  <span>From (mi)</span>
+                  <span>To (mi)</span>
+                  <span>Amount</span>
+                  <span />
+                </div>
+              )}
               {r.brackets.map((b) => (
-                <div key={b.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+                <div key={b.id} className="grid grid-cols-[1fr_1fr_1fr_2.5rem] items-center gap-2">
                   <input
                     aria-label="From mileage"
-                    className={input}
+                    className={`${input} !mt-0`}
                     type="number"
                     value={b.from}
                     onChange={(e) =>
@@ -950,7 +995,7 @@ const FundingSourceSetupPage = () => {
                   />
                   <input
                     aria-label="To mileage"
-                    className={input}
+                    className={`${input} !mt-0`}
                     type="number"
                     placeholder="and above"
                     value={b.to ?? ""}
@@ -969,7 +1014,7 @@ const FundingSourceSetupPage = () => {
                   />
                   <input
                     aria-label="Bracket amount"
-                    className={input}
+                    className={`${input} !mt-0`}
                     type="number"
                     value={b.amount}
                     onChange={(e) =>
@@ -981,11 +1026,12 @@ const FundingSourceSetupPage = () => {
                     }
                   />
                   <button
+                    type="button"
                     aria-label="Remove bracket"
                     onClick={() =>
                       updatePricing(r.id, { brackets: r.brackets.filter((x) => x.id !== b.id) })
                     }
-                    className="mt-1 p-2 text-urgent"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-urgent hover:bg-urgent/10"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -1092,21 +1138,26 @@ const FundingSourceSetupPage = () => {
       </label>
       <div>
         <p className="text-sm font-semibold">Columns included in the exported report</p>
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
-            className={input}
+            className={`${input} !mt-0 min-w-0 flex-1`}
             value={reportFieldDraft}
             onChange={(e) => setReportFieldDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addReportField();
+              }
+            }}
             placeholder="Enter a column name, such as Driver Name"
           />
           <Button
+            type="button"
+            size="sm"
             variant="outline"
-            onClick={() => {
-              const value = reportFieldDraft.trim();
-              if (!value) return;
-              set("reportFields", [...draft.reportFields, value]);
-              setReportFieldDraft("");
-            }}
+            className="h-10 shrink-0 whitespace-nowrap"
+            onClick={addReportField}
+            disabled={!reportFieldDraft.trim()}
           >
             <Plus size={13} /> Add column
           </Button>
@@ -1190,7 +1241,7 @@ const FundingSourceSetupPage = () => {
             <Badge variant="primary-light">Super Admin only</Badge>
           </div>
           <h1 className="type-page-title">
-            {isEdit ? "Edit Funding Source Contract" : "Create a Funding Source Contract"}
+            {isEdit ? "Edit Funding Source" : "New Funding Source"}
           </h1>
           <p className="mt-1 text-sm text-ink-4">
             {isEdit
@@ -1224,7 +1275,11 @@ const FundingSourceSetupPage = () => {
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => navigate(ROUTES.fundingSources)} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={() => navigate(ROUTES.fundingSources)}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button
@@ -1236,10 +1291,10 @@ const FundingSourceSetupPage = () => {
               {saving
                 ? isEdit
                   ? "Saving…"
-                  : "Creating contract…"
+                  : "Creating…"
                 : isEdit
                   ? "Save changes"
-                  : "Create Funding Source Contract"}
+                  : "Create Funding Source"}
             </Button>
           </div>
         </div>

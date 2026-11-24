@@ -22,12 +22,13 @@ import {
   Avatar,
   InlineTextInput,
   InlineTimeInput,
+  InlineDateTimeInput,
   INLINE_EDIT_INPUT_CLASS,
   GoogleMapsRouteButton,
   Pagination,
   SearchInput,
 } from "@/shared/components/ui";
-import { formatShortDate, formatTripId, formatTime } from "@/utils/helpers";
+import { formatShortDate, formatTripId } from "@/utils/helpers";
 import {
   isRoundTrip,
   resolveMediaUrl,
@@ -156,13 +157,6 @@ const resolveTripTimes = (trip: any) => ({
   arrival: trip.arrivalTime || to24h(trip.actualDropoff) || demoTimeFor(trip, "arrival"),
 });
 
-const displayTime = (val?: string) => {
-  if (!val) return "—";
-  const hhmm = to24h(val) || (val.length >= 16 ? val.slice(11, 16) : "");
-  if (hhmm) return to12h(hhmm);
-  return formatTime(val) || val;
-};
-
 export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
   trips,
   drivers,
@@ -254,10 +248,10 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
               </select>
             </div>
 
-            {/* County Filter */}
+            {/* Funding Source Filter */}
             <div className="flex items-center gap-2">
               <MapPin size={12} className="text-ink-4" />
-              <span className="text-xs text-ink-4">County</span>
+              <span className="text-xs text-ink-4">Funding Source</span>
               <select
                 value={countyFilter}
                 onChange={(e) => {
@@ -266,7 +260,7 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 }}
                 className="bg-white border border-line rounded-xl py-2 pl-3 pr-8 text-xs font-medium text-ink focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none h-9 cursor-pointer appearance-none"
               >
-                <option value="all">All Counties</option>
+                <option value="all">All Funding Sources</option>
                 {countiesList.map((county) => (
                   <option key={county._id} value={county._id}>
                     {county.name || county._id}
@@ -328,11 +322,14 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[90px]">Date</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[105px]">Pickup Time</th>
                 <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[95px]">Appt</th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[200px]">
                   Driver Arrived
                 </th>
-                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[120px]">
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[200px]">
                   Driver Pickup
+                </th>
+                <th className="px-3.5 py-3 type-th whitespace-nowrap min-w-[200px]">
+                  Driver Drop-off
                 </th>
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[200px]">Rider</th>
                 <th className="px-4 py-3 type-th whitespace-nowrap min-w-[150px]">Mobility</th>
@@ -425,16 +422,28 @@ export const TripArchiveTab: React.FC<TripArchiveTabProps> = ({
                     />
                   </td>
 
-                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
-                    <span className="text-xs font-medium text-ink whitespace-nowrap">
-                      {displayTime(trip?.driverArrivedAt)}
-                    </span>
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[200px]">
+                    <InlineDateTimeInput
+                      value={trip?.driverArrivedAt}
+                      ariaLabel={`Driver arrived time for ${formatTripId(trip.id)}`}
+                      onCommit={(driverArrivedAt) => updateTrip(trip.id, { driverArrivedAt })}
+                    />
                   </td>
 
-                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[120px]">
-                    <span className="text-xs font-medium text-ink whitespace-nowrap">
-                      {displayTime(trip?.driverPicupAt)}
-                    </span>
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[200px]">
+                    <InlineDateTimeInput
+                      value={trip?.driverPicupAt}
+                      ariaLabel={`Driver pickup time for ${formatTripId(trip.id)}`}
+                      onCommit={(driverPicupAt) => updateTrip(trip.id, { driverPicupAt })}
+                    />
+                  </td>
+
+                  <td className="px-3.5 py-3 whitespace-nowrap min-w-[200px]">
+                    <InlineDateTimeInput
+                      value={trip?.driverDropOffAt}
+                      ariaLabel={`Driver drop-off time for ${formatTripId(trip.id)}`}
+                      onCommit={(driverDropOffAt) => updateTrip(trip.id, { driverDropOffAt })}
+                    />
                   </td>
 
                   <td className="px-4 py-3 min-w-[200px]">
